@@ -1,0 +1,279 @@
+use std::error::Error;
+use std::fmt::{self, Display};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Verification {
+    pub verified: bool,
+    pub compiled_size: i32,
+    pub error_description: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CompatibilityFixture {
+    pub name: &'static str,
+    pub source: &'static str,
+    pub expected_size: Option<i32>,
+    pub expected_error_contains: Option<&'static str>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExecutableProgram {
+    pub(crate) statements: Vec<ExecutableStatement>,
+    pub(crate) actions: Vec<ExecutableAction>,
+    pub(crate) requires_runtime: bool,
+}
+
+impl ExecutableProgram {
+    pub fn actions(&self) -> &[ExecutableAction] {
+        &self.actions
+    }
+
+pub fn requires_runtime(&self) -> bool {
+        self.requires_runtime
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ExecutableAction {
+    Move(f64),
+    Rotate(f64),
+    Mine,
+    Dump(i32),
+    StartScan(f64),
+    AwaitScanResult,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ExecutableStatement {
+    Action(ExecutableAction),
+    DynamicAction(ExecutableActionExpression),
+    Sequence(Vec<ExecutableStatement>),
+    Declare {
+        name: String,
+        value: Option<ExecutableExpression>,
+    },
+    Assign {
+        name: String,
+        value: ExecutableExpression,
+    },
+    Expression(ExecutableExpression),
+    If {
+        condition: ExecutableExpression,
+        true_body: Box<ExecutableStatement>,
+        false_body: Option<Box<ExecutableStatement>>,
+    },
+    While {
+        condition: ExecutableExpression,
+        body: Option<Box<ExecutableStatement>>,
+        is_do_while: bool,
+    },
+}
+
+impl ExecutableStatement {
+    pub(crate) fn requires_runtime(&self) -> bool {
+        match self {
+            ExecutableStatement::Action(_) => false,
+            ExecutableStatement::DynamicAction(_) => true,
+            ExecutableStatement::Sequence(statements) => {
+                statements.iter().any(ExecutableStatement::requires_runtime)
+            }
+            ExecutableStatement::Declare { .. }
+            | ExecutableStatement::Assign { .. }
+            | ExecutableStatement::Expression(_) => true,
+            ExecutableStatement::If { .. } | ExecutableStatement::While { .. } => true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ExecutableActionExpression {
+    Move(ExecutableExpression),
+    Rotate(ExecutableExpression),
+    Dump(ExecutableExpression),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ExecutableExpression {
+    Number(f64),
+    Variable(String),
+    VariableUpdate {
+        name: String,
+        operator: VariableOperator,
+    },
+    UnaryNot(Box<ExecutableExpression>),
+    Binary {
+        operator: Operator,
+        left: Box<ExecutableExpression>,
+        right: Box<ExecutableExpression>,
+    },
+    Time,
+    Ore(Box<ExecutableExpression>),
+    Scan(Option<Box<ExecutableExpression>>),
+    OreDistance,
+    OreType,
+    RobotProperty(RobotProperty),
+    Move(Box<ExecutableExpression>),
+    Rotate(Box<ExecutableExpression>),
+    Dump(Box<ExecutableExpression>),
+    Action(ExecutableAction),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RobotProperty {
+    ForwardSpeed,
+    BackwardSpeed,
+    RotateSpeed,
+    ScanTime,
+    ScanDistance,
+    OreCap,
+    MaxCycles,
+    MiningSpeed,
+    CpuSpeed,
+    Orientation,
+    XPos,
+    YPos,
+}
+
+impl RobotProperty {
+    pub(crate) fn from_name(name: &str, line: usize) -> Result<Self, CompileError> {
+        match name {
+            "forwardSpeed" => Ok(Self::ForwardSpeed),
+            "backwardSpeed" => Ok(Self::BackwardSpeed),
+            "rotateSpeed" => Ok(Self::RotateSpeed),
+            "scanTime" => Ok(Self::ScanTime),
+            "scanDistance" => Ok(Self::ScanDistance),
+            "oreCap" => Ok(Self::OreCap),
+            "maxCycles" => Ok(Self::MaxCycles),
+            "miningSpeed" => Ok(Self::MiningSpeed),
+            "cpuSpeed" => Ok(Self::CpuSpeed),
+            "orientation" => Ok(Self::Orientation),
+            "xPos" => Ok(Self::XPos),
+            "yPos" => Ok(Self::YPos),
+            other => Err(CompileError::new(format!(
+                "Syntax error at line {line}. Unknown robot property '{other}'"
+            ))),
+        }
+    }
+
+    pub(crate) fn value(self, robot: &RobotProperties) -> f64 {
+        match self {
+            Self::ForwardSpeed => robot.forward_speed,
+            Self::BackwardSpeed => robot.backward_speed,
+            Self::RotateSpeed => robot.rotate_speed,
+            Self::ScanTime => robot.scan_time,
+            Self::ScanDistance => robot.scan_distance,
+            Self::OreCap => robot.ore_cap,
+            Self::MaxCycles => robot.max_cycles,
+            Self::MiningSpeed => robot.mining_speed,
+            Self::CpuSpeed => robot.cpu_speed,
+            Self::Orientation => robot.orientation,
+            Self::XPos => robot.x_pos,
+            Self::YPos => robot.y_pos,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct RobotProperties {
+    pub forward_speed: f64,
+    pub backward_speed: f64,
+    pub rotate_speed: f64,
+    pub scan_time: f64,
+    pub scan_distance: f64,
+    pub ore_cap: f64,
+    pub max_cycles: f64,
+    pub mining_speed: f64,
+    pub cpu_speed: f64,
+    pub orientation: f64,
+    pub x_pos: f64,
+    pub y_pos: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExecutionContext {
+    pub time_left: i32,
+    pub ore: [i32; 10],
+    pub action_result: Option<f64>,
+    pub scan_time: i32,
+    pub scan_started: bool,
+    pub scan_complete: bool,
+    pub scan_distance: f64,
+    pub scan_ore_type: f64,
+    pub robot: RobotProperties,
+}
+
+impl ExecutionContext {
+    pub fn from_runtime(time_left: i32, ore: [i32; 10], action_result: Option<f64>) -> Self {
+        Self {
+            time_left,
+            ore,
+            action_result,
+            scan_time: 0,
+            scan_started: false,
+            scan_complete: false,
+            scan_distance: -1.0,
+            scan_ore_type: 0.0,
+            robot: RobotProperties::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ProgramStep {
+    Cpu,
+    Action(ExecutableAction),
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompileError {
+    message: String,
+}
+
+impl CompileError {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
+    }
+}
+
+impl Display for CompileError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl Error for CompileError {}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ValueType {
+    Bool,
+    Int,
+    Double,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum VariableOperator {
+    None,
+    PreIncrement,
+    PreDecrement,
+    PostIncrement,
+    PostDecrement,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Operator {
+    Undefined,
+    Addition,
+    Subtraction,
+    Multiply,
+    Division,
+    Mod,
+    Larger,
+    Smaller,
+    LargerEqual,
+    SmallerEqual,
+    Equal,
+    NotEqual,
+    And,
+    Or,
+}

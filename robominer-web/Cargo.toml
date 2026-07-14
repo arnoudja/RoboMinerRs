@@ -1,0 +1,20 @@
+[package]
+name = "robominer-web"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+clap = { version = "4.6.1", features = ["derive"] }
+hmac = "0.12.1"
+robominer-db = { version = "0.1.0", path = "../robominer-db" }
+robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
+sha2 = "0.10.9"
+tokio = { version = "1.52.1", features = ["rt", "rt-multi-thread"] }
+
+[dev-dependencies]
+robominer-engine = { path = "../robominer-engine" }
+robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }
+serial_test = "3.2.0"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }

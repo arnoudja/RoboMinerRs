@@ -1,0 +1,60 @@
+{
+  "scenario": "claim_multiple_ore_types",
+  "claimed_queues": 1,
+  "queues": [
+    {
+      "queue_index": 0,
+      "claimed": true,
+      "ore_results": [
+        {
+          "ore_index": 0,
+          "amount": 10,
+          "tax": 2
+        },
+        {
+          "ore_index": 1,
+          "amount": 4,
+          "tax": 1
+        }
+      ]
+    }
+  ],
+  "user_ore_assets": [
+    {
+      "ore_index": 0,
+      "amount": 9,
+      "max_allowed": 25
+    },
+    {
+      "ore_index": 1,
+      "amount": 3,
+      "max_allowed": 25
+    }
+  ],
+  "robot_total_mining_runs": 1,
+  "robot_lifetime_results": [
+    {
+      "ore_index": 0,
+      "amount": 10,
+      "tax": 2
+    },
+    {
+      "ore_index": 1,
+      "amount": 4,
+      "tax": 1
+    }
+  ],
+  "mining_area_lifetime_results": [
+    {
+      "ore_index": 0,
+      "total_amount": 10,
+      "total_container_size": 100
+    },
+    {
+      "ore_index": 1,
+      "total_amount": 4,
+      "total_container_size": 100
+    }
+  ],
+  "pending_robot_changes_remaining": 0
+}

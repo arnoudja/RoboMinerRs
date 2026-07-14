@@ -1,0 +1,18 @@
+---
+description: How to benchmark robot programs against mining-area layouts
+alwaysApply: true
+---
+
+# Robot program benchmarks
+
+When comparing robot programs, validating player advice, or checking balance impact, use the rally benchmark harness:
+
+```sh
+cargo test -p robominer-domain benchmark_recommended_programs -- --nocapture
+```
+
+Harness: `robominer-domain/tests/program_recommendations.rs`
+
+Edit the `programs`, `cases`, area helpers, and robot profile helpers in that file to try new source code, areas from `gameData.sql`, or part tiers. Scores are printed after tax; the default run averages 20 seeds (0..19) per program/area/robot combination.
+
+This test is diagnostic output only — it is not part of the golden fixture suite and does not require a database.

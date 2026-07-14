@@ -1,0 +1,48 @@
+---
+description: Always run the full test suite after code changes
+alwaysApply: true
+---
+
+# Run All Tests After Changes
+
+After making code changes, always run the full workspace test suite before finishing:
+
+```sh
+resources/scripts/run-tests-with-db.sh
+```
+
+That script reuses local MySQL or a persistent Docker test container when possible,
+so repeated runs avoid the ~30–40 s cold-start cost.
+
+## Sandbox: request full permissions for DB tests
+
+When running `run-tests-with-db.sh` (or any DB-backed `cargo test`) via the Shell
+tool, pass `required_permissions: ["all"]`. The default sandbox blocks:
+
+- `unix:///var/run/docker.sock` (test MySQL container startup)
+- connections to local MySQL at `127.0.0.1:3306`
+
+Without this, the script may report Docker/MySQL unavailable and DB integration
+tests fail with `Configuration(RelativeUrlWithoutBase)` even when MySQL is running
+on the host. Re-run with full permissions before concluding the database is down.
+
+## Manual fallback
+
+```sh
+ROBOMINER_DATABASE_URL=mysql://robominer:password@127.0.0.1:3306/RoboMiner cargo test --workspace
+```
+
+If the database is not initialized yet:
+
+```sh
+resources/scripts/init-ci-database.sh
+```
+
+## When tests cannot run
+
+If the database or another dependency is unavailable, tell the user explicitly:
+- which tests were not run
+- what blocked them (e.g. MySQL not reachable, port in use)
+- what was run instead, if anything
+
+Do not silently skip tests or assume CI will catch issues without reporting the gap.

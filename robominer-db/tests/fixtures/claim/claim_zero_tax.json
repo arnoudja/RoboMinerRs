@@ -1,0 +1,40 @@
+{
+  "scenario": "claim_zero_tax",
+  "claimed_queues": 1,
+  "queues": [
+    {
+      "queue_index": 0,
+      "claimed": true,
+      "ore_results": [
+        {
+          "ore_index": 0,
+          "amount": 15,
+          "tax": 0
+        }
+      ]
+    }
+  ],
+  "user_ore_assets": [
+    {
+      "ore_index": 0,
+      "amount": 15,
+      "max_allowed": 25
+    }
+  ],
+  "robot_total_mining_runs": 1,
+  "robot_lifetime_results": [
+    {
+      "ore_index": 0,
+      "amount": 15,
+      "tax": 0
+    }
+  ],
+  "mining_area_lifetime_results": [
+    {
+      "ore_index": 0,
+      "total_amount": 15,
+      "total_container_size": 100
+    }
+  ],
+  "pending_robot_changes_remaining": 0
+}

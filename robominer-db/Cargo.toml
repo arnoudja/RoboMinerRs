@@ -1,0 +1,16 @@
+[package]
+name = "robominer-db"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+argon2 = "0.5.3"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+
+[dev-dependencies]
+robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+serial_test = "3.2.0"
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }

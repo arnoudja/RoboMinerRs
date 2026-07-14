@@ -1,0 +1,1 @@
+pub use robominer_test_support::EnqueueMiningFixture as TestEnqueueMiningFixture;

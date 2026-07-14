@@ -1,0 +1,29 @@
+# Example Caddy reverse proxy for RoboMiner (hardened).
+#
+# Copy to /etc/caddy/Caddyfile or include it from there, then:
+#   sudo systemctl reload caddy
+#
+# Replace robominer.example.com with your public hostname.
+# Caddy obtains and renews Let's Encrypt certificates automatically.
+
+robominer.example.com {
+	# Security headers (HSTS applies once HTTPS is active).
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy 127.0.0.1:8080 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	# Optional: enable access logging for fail2ban (uncomment and set logpath in jail).
+	# log {
+	# 	output file /var/log/caddy/robominer-access.log
+	# 	format json
+	# }
+}

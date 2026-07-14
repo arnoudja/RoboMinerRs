@@ -1,0 +1,20 @@
+[Unit]
+Description=RoboMiner Rust web host
+Documentation=file:/opt/robominer/deploy/systemd/README.md
+After=network-online.target mariadb.service mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=robominer
+Group=robominer
+WorkingDirectory=/opt/robominer
+ExecStart=/opt/robominer/bin/robominer-web --config /etc/robominer/robominer.conf
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

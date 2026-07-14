@@ -1,0 +1,211 @@
+{
+  "scenario": "triple_queue_seed33",
+  "seed": 33,
+  "mining_area_id": 9009,
+  "final_time": 5,
+  "participants": [
+    {
+      "player_number": 0,
+      "queue_id": 90,
+      "robot_id": 91,
+      "is_ai": false,
+      "position": {
+        "x": 0.25,
+        "y": 0.25,
+        "orientation": 45
+      },
+      "ore": [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 90.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0
+      ]
+    },
+    {
+      "player_number": 1,
+      "queue_id": 91,
+      "robot_id": 92,
+      "is_ai": false,
+      "position": {
+        "x": 0.25,
+        "y": 2.75,
+        "orientation": 315
+      },
+      "ore": [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 90.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0
+      ]
+    },
+    {
+      "player_number": 2,
+      "queue_id": 92,
+      "robot_id": 93,
+      "is_ai": false,
+      "position": {
+        "x": 2.75,
+        "y": 0.25,
+        "orientation": 135
+      },
+      "ore": [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 90.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5,
+        0
+      ]
+    },
+    {
+      "player_number": 3,
+      "queue_id": null,
+      "robot_id": 1,
+      "is_ai": true,
+      "position": {
+        "x": 2.75,
+        "y": 2.75,
+        "orientation": 15
+      },
+      "ore": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 0.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "completed_participants": [
+    {
+      "mining_queue_id": 90,
+      "robot_id": 91,
+      "mining_area_id": 9009,
+      "player_number": 0,
+      "mining_end_seconds_from_now": 12,
+      "score": 90.0,
+      "ore_results": [
+        {
+          "ore_id": 1,
+          "amount": 3
+        }
+      ],
+      "action_results": [
+        {
+          "action_type": 6,
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "mining_queue_id": 91,
+      "robot_id": 92,
+      "mining_area_id": 9009,
+      "player_number": 1,
+      "mining_end_seconds_from_now": 15,
+      "score": 90.0,
+      "ore_results": [
+        {
+          "ore_id": 1,
+          "amount": 3
+        }
+      ],
+      "action_results": [
+        {
+          "action_type": 6,
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "mining_queue_id": 92,
+      "robot_id": 93,
+      "mining_area_id": 9009,
+      "player_number": 2,
+      "mining_end_seconds_from_now": 18,
+      "score": 90.0,
+      "ore_results": [
+        {
+          "ore_id": 1,
+          "amount": 3
+        }
+      ],
+      "action_results": [
+        {
+          "action_type": 6,
+          "amount": 5
+        }
+      ]
+    }
+  ],
+  "animation_contains": [
+    "var myRobots = {robot: [",
+    "var myGround = {sizeX:4,sizeY:4,positions:[",
+    "var myOreTypes = {"
+  ]
+}

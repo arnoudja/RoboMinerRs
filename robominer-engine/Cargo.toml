@@ -1,0 +1,27 @@
+[package]
+name = "robominer-engine"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "robominer_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "robominer-engine"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+clap = { version = "4.6.1", features = ["derive"] }
+robominer-db = { version = "0.1.0", path = "../robominer-db" }
+robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
+robominer-program = { version = "0.1.0", path = "../robominer-program" }
+robominer-sim = { version = "0.1.0", path = "../robominer-sim" }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread", "signal"] }
+
+[dev-dependencies]
+robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }
+serial_test = "3.2.0"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }

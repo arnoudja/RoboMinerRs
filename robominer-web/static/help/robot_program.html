@@ -1,0 +1,490 @@
+
+<h1>Robot programming help</h1>
+            <p class="helptext">A robot program tells a robot what to do when mining.
+                The program starts at the first line.
+                If the program ends before the mining session is finished or the battery is depleted, the program is restarted.
+                This process repeats until the end of the mining session.
+            </p>
+            <p class="helptext">A robot program can be changed at any time.
+                However, the changes made will only be activated for a robot when the program is applied to that robot.
+                That version of the program will then be active for the robot until a new version is applied to it.</p>
+            <p class="helptext">In other words: After changing a program, always go to the 'Robots' page, make sure the program is selected and click the apply button on the bottom.</p>
+            <h2>Statements</h2>
+            <p class="helptext">A robot program is a list of statements.
+                Statements are separated by semicolons.
+                Multiple statements can be grouped into one large statement by adding '{' and '}' around them.</p>
+            <h3>Example</h3>
+            <p class="helptext">move(2);<br>
+                while (mine());<br>
+            </p>
+            <p class="helptext">This program moves the robot forward two positions and then continues mining until there is nothing to mine at the current location.
+                Since the program is started again when the program completes, these steps are repeated until the mining session is over.</p>
+            <h2>Robot actions</h2>
+            <h3>move()</h3>
+            <p class="helptext">Moves the robot forward or backward at the maximum speed until either the desired distance is traveled or a collision occurs.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">move(&lt;value&gt;)</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameter:</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">The distance to travel, negative to travel backwards.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">The actual distance traveled, always positive or zero.</td>
+                </tr>
+            </table>
+            <h3>rotate()</h3>
+            <p class="helptext">Rotates the robot at the maximum rotation speed until either the desired rotation is reached or a collision occurs.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">rotate(&lt;value&gt;)</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameter:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The size of the rotation, in degrees (360 being a full turn). Use a positive value to turn right, negative to turn left.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The actual size of the rotation.</td>
+                </tr>
+            </table>
+            <h3>mine()</h3>
+            <p class="helptext">Try to mine minerals from the current robot location.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">mine()</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The amount of ore mined.</td>
+                </tr>
+            </table>
+            <p class="helptext">The amount of ore mined each turn is limited by two factors:</p>
+            <ul>
+                <li>The mining unit installed in the robot. The total amount of ore mined in one cycle can never exceed the mining speed of the mining unit.</li>
+                <li>The ore amount available on the robot location. For each type of ore, the amount of ore mined in one cycle can never exceed half the amount of ore available, rounded up.</li>
+            </ul>
+            <h3>ore()</h3>
+            <p class="helptext">Retrieve the amount of ore stored in the robot ore container.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">ore(&lt;value&gt;)</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameter:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The ore type to retrieve the amount for.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The amount of the specified type of ore stored inside the robot ore container.</td>
+                </tr>
+            </table>
+            <p class="helptext">The ore type can be one of the following values:</p>
+            <ul>
+                <li>0 for the total amount of ore.</li>
+                <li>1 for the high quality ore.</li>
+                <li>2 for the medium quality ore. Will always return 0 when only 1 type of ore is available in the mining area.</li>
+                <li>3 for the low quality ore. Will always return 0 when only 1 or 2 types of ore are available in the mining area.</li>
+            </ul>
+            <h3>dump()</h3>
+            <p class="helptext">Dumps the specified type of ore from the robot ore container.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">dump(&lt;value&gt;)</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameter:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The ore type to dump.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The actual amount of ore dumped.</td>
+                </tr>
+            </table>
+            <p class="helptext">The ore type can be one of the following values:</p>
+            <ul>
+                <li>0 for all the types of ore.</li>
+                <li>1 for the high quality ore.</li>
+                <li>2 for the medium quality ore. Will never dump anything when only 1 type of ore is available in the mining area.</li>
+                <li>3 for the low quality ore. Will never dump anything when only 1 or 2 types of ore are available in the mining area.</li>
+            </ul>
+            <h3>time()</h3>
+            <p class="helptext">Retrieves the number of mining cycles left until either the battery is depleted or the mining event is over.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">time()</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The number of cycles left.</td>
+                </tr>
+            </table>
+            <h3>Robot properties</h3>
+            <p class="helptext">Read-only values that describe the robot this program is running on. Part stats reflect the installed hardware and cannot be changed in code. Position and orientation are rally-relative: at the start of every mining run, robot.xPos and robot.yPos are 0 and robot.orientation is 135, regardless of which corner the robot spawns in.</p>
+            <p class="helptext">Orientation 0 points north (toward the west map edge). Angles increase clockwise, matching rotate(positive). robot.xPos is the signed east/west distance from your rally start position (positive = east). robot.yPos is the signed north/south distance from your rally start position (positive = north).</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">robot.forwardSpeed</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Forward movement speed.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.backwardSpeed</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Backward movement speed.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.rotateSpeed</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Rotation speed in degrees per mining cycle.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.scanTime</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">CPU cycles required for a scan to complete.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.scanDistance</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Maximum scan range of the installed ore scanner.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.oreCap</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Maximum ore the robot can carry.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.maxCycles</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Maximum mining cycles available per rally.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.miningSpeed</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Ore mined per mine action.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.cpuSpeed</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">CPU cycles available per mining cycle.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.orientation</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Current orientation in degrees. Starts at 135; 0 is north (west map edge).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.xPos</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Signed east/west distance from the rally start position (positive = east).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.yPos</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Signed north/south distance from the rally start position (positive = north).</td>
+                </tr>
+            </table>
+            <h3>scan()</h3>
+            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). Use oreDistance() or oreType() to read the result once the scan has finished.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">scan([value])</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameter:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Optional scan direction in degrees relative to the robot. 0 is in front of the robot, 90 is to the right. Defaults to 0.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The number of CPU cycles until the scan completes (the scanner's scan time). Costs 1 CPU cycle to initiate.</td>
+                </tr>
+            </table>
+            <h3>oreDistance()</h3>
+            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">oreDistance()</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The shortest distance to ore within scan distance, or -1 when no ore is found or scan() was never called.</td>
+                </tr>
+            </table>
+            <h3>oreType()</h3>
+            <p class="helptext">Returns the ore quality index from the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">oreType()</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return value:</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">The ore quality index used by ore() and dump(): 1 for the highest quality ore type, 2 for the next quality, and so on. Returns 0 when scan() was never called or no ore was found. When multiple ore types are visible at the same distance, the richer ore type is returned.</td>
+                </tr>
+            </table>
+            <h2>Flow control</h2>
+            <h3>if - else</h3>
+            <p class="helptext">Executes a statement only when a condition is met.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">if (&lt;condition&gt;) {&lt;statements&gt;} [ else {&lt;statements&gt;} ]</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;condition&gt;:</td>
+                    <td class="helptable">bool</td>
+                    <td class="helptable">When the condition is true, the first list of statements is executed. Otherwise, the list of statements from the else-part is executed.</td>
+                </tr>
+            </table>
+            <h3>while</h3>
+            <p class="helptext">Repeats execution of a statement for as long as a condition is met.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">while (&lt;condition&gt;) {&lt;statements&gt;}</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;condition&gt;:</td>
+                    <td class="helptable">bool</td>
+                    <td class="helptable">When the condition is met, the statements are executed and the condition is evaluated again. This process repeats until the condition is not met.</td>
+                </tr>
+            </table>
+            <p class="helptext">It is possible to replace the statements list by a semicolon.
+                In that case, only the expression itself is evaluated until it fails.
+                This can be useful when the expression contains a robot action.
+                Example: while (mine()); repeats mining until there is nothing to mine at the current location.</p>
+            <h3>do - while</h3>
+            <p class="helptext">Repeats execution of a statement for as long as a condition is met.</p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">do {&lt;statements&gt;} while (&lt;condition&gt;)</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;condition&gt;:</td>
+                    <td class="helptable">bool</td>
+                    <td class="helptable">After the statements are executed, the condition is evaluated. If the condition is met, the statements are executed again. This process repeats until the condition is not met.</td>
+                </tr>
+            </table>
+            <p class="helptext">The difference with 'while' is that the statements are executed at least once.</p>
+            <h2>Expressions</h2>
+            <h3>Numeric expressions</h3>
+            <table class="helptable">
+                <tr>
+                    <th class="helptable">Operator</th>
+                    <th class="helptable">Example</th>
+                    <th class="helptable">Description</th>
+                </tr>
+                <tr>
+                    <td class="helptable">+</td>
+                    <td class="helptable">&lt;value_1&gt; + &lt;value_2&gt;</td>
+                    <td class="helptable">Adds the two values.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">-</td>
+                    <td class="helptable">&lt;value_1&gt; - &lt;value_2&gt;</td>
+                    <td class="helptable">Subtract value_2 from value_1.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">*</td>
+                    <td class="helptable">&lt;value_1&gt; * &lt;value_2&gt;</td>
+                    <td class="helptable">Multiplies the two values.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">/</td>
+                    <td class="helptable">&lt;value_1&gt; / &lt;value_2&gt;</td>
+                    <td class="helptable">Divides value_1 by value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">%</td>
+                    <td class="helptable">&lt;value_1&gt; % &lt;value_2&gt;</td>
+                    <td class="helptable">Calculates the remainder when dividing value_1 by value_2.</td>
+                </tr>
+            </table>
+            <h3>Compare expressions</h3>
+            <table class="helptable">
+                <tr>
+                    <th class="helptable">Operator</th>
+                    <th class="helptable">Example</th>
+                    <th class="helptable">Description</th>
+                </tr>
+                <tr>
+                    <td class="helptable">&gt;</td>
+                    <td class="helptable">value_1 &gt; value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is larger then value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&gt;=</td>
+                    <td class="helptable">value_1 &gt;= value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is larger then or equal to value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;</td>
+                    <td class="helptable">value_1 &lt; value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is smaller then value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;=</td>
+                    <td class="helptable">value_1 &lt;= value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is smaller then or equal to value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">==</td>
+                    <td class="helptable">value_1 == value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is equal to value_2.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">!=</td>
+                    <td class="helptable">value_1 != value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 is not equal to value_2.</td>
+                </tr>
+            </table>
+            <h3>Binary expressions</h3>
+            <table class="helptable">
+                <tr>
+                    <th class="helptable">Operator</th>
+                    <th class="helptable">Example</th>
+                    <th class="helptable">Description</th>
+                </tr>
+                <tr>
+                    <td class="helptable">&amp;&amp;</td>
+                    <td class="helptable">value_1 &amp;&amp; value_2</td>
+                    <td class="helptable">The result is true if and only if both value_1 and value_2 are true.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">||</td>
+                    <td class="helptable">value_1 || value_2</td>
+                    <td class="helptable">The result is true if and only if value_1 and/or value_2 is true.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">!</td>
+                    <td class="helptable">!value</td>
+                    <td class="helptable">The result is true if and only if value is false.</td>
+                </tr>
+            </table>
+            <h3>Pre/post increment/decrement</h3>
+            <table class="helptable">
+                <tr>
+                    <th class="helptable">Operator</th>
+                    <th class="helptable">Example</th>
+                    <th class="helptable">Description</th>
+                </tr>
+                <tr>
+                    <td class="helptable">++&lt;variable&gt;</td>
+                    <td class="helptable">++moves</td>
+                    <td class="helptable">The value of the variable is incremented by one and the result value of the expression is the final value of the variable.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;variable&gt;++</td>
+                    <td class="helptable">moves++</td>
+                    <td class="helptable">The value of the variable is incremented by one. The result value of the expression is the value of the variable BEFORE the increment.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">--&lt;variable&gt;</td>
+                    <td class="helptable">--moves</td>
+                    <td class="helptable">The value of the variable is decremented by one and the result value of the expression is the final value of the variable.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;variable&gt;--</td>
+                    <td class="helptable">moves--</td>
+                    <td class="helptable">The value of the variable is decremented by one. The result value of the expression is the value of the variable BEFORE the decrement.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;variable&gt; += value</td>
+                    <td class="helptable">direction += 30</td>
+                    <td class="helptable">Adds value to the variable, equivalent to direction = direction + value.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">&lt;variable&gt; -= value</td>
+                    <td class="helptable">direction -= 30</td>
+                    <td class="helptable">Subtracts value from the variable, equivalent to direction = direction - value.</td>
+                </tr>
+            </table>
+            <h2>Variables</h2>
+            <p class="helptext">Variables can be used to store values. Later on in the program, the value can be changed or used in an expression.</p>
+            <p class="helptext">The first step in using a variable is to declare it. After that, its value can be changed and it can be used in expressions.</p>
+            <h3>Variable declaration</h3>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">&lt;type&gt; &lt;name&gt; = &lt;value&gt;</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Type:</td>
+                    <td class="helptable">int, double or bool.</td>
+                    <td class="helptable">int is used to store whole numbers. double is used to store real values such as 3.14. bool has two possible values: true and false.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Name:</td>
+                    <td class="helptable">A self chosen name for the variable.</td>
+                    <td class="helptable">The name can contain any number of upper and lower case characters and numbers, but is not allowed to start with a number. Also, the name may not be the same as existing commands such as 'while' and 'move'.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Value:</td>
+                    <td class="helptable">A fixed value of the right type or an expression.</td>
+                    <td class="helptable">When the value is not of the same type as the variable, the value is converted.</td>
+                </tr>
+            </table>
+            <p class="helptext">Example:</p>
+            <p class="helptext">int miningAmount = mine();</p>
+            <h3>Variable assignment</h3>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">&lt;name&gt; = &lt;value&gt;</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Name:</td>
+                    <td class="helptable">The name of an existing variable.</td>
+                    <td class="helptable"></td>
+                </tr>
+                <tr>
+                    <td class="helptable">Value:</td>
+                    <td class="helptable">A fixed value of the right type or an expression.</td>
+                    <td class="helptable">When the value is not of the same type as the variable, the value is converted.</td>
+                </tr>
+            </table>
+            <p class="helptext">Example:</p>
+            <p class="helptext">miningAmount = mine();</p>
+            <h3>Variable usage</h3>
+            <p class="helptext">Variables can be used instead of fixed values in expressions.</p>
+            <h3>Variable scope</h3>
+            <p class="helptext">The variable is available in the block in which it was declared and each sub-block.</p>

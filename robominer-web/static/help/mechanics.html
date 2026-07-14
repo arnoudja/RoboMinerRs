@@ -1,0 +1,297 @@
+
+<h1>RoboMiner Mechanics</h1>
+            <p class="helptext">
+                In this section the mechanics of the RoboMiner Robots are explained.
+            </p>
+            <h2>Ore Container</h2>
+            <p class="helptext">
+                The Ore Container is the part of the Robot that stores the ore mined.
+                The size of the container limits the maximum amount of ore stored,
+                but is also a big influence to the weight and size of the Robot.
+            </p>
+            <p class="helptext">
+                Every ore container is aware of the different types of ore stored inside it.
+                Also, it is able to dump the ore it contains, either one specific type of ore or all of it.
+            </p>
+            <p class="helptext">
+                The ore() command can be used to measure the amount of ore it contains, per type if needed.
+                The dump() command can be used to dump the ore it contains, also per type if requested to do so.
+            </p>
+            <h2>Mining Unit</h2>
+            <p class="helptext">
+                The Mining Unit is the part of the Robot that is put to work when executing the mine() command.
+                Unlike the Ore Container it is not aware of the different types of ore.
+            </p>
+            <p class="helptext">
+                Mostly, one cycle of mining won't be enough to mine all the ore from one square.
+                The amount of ore mined in one cycle is limited by two factors:
+            </p>
+            <ul>
+                <li class="helptext">
+                    The Mining Units Mining capacity.
+                    In one cycle, the mining unit can never mine more ore then its Mining Capacity.
+                </li>
+                <li class="helptext">
+                    The amount of ore at the current location.
+                    In one cycle, the mining unit can never mine more then half the ore available at the current location, rounded up.
+                </li>
+            </ul>
+            <p class="helptext">
+                Besides the Mining Capacity there also is a large variation in power consumption and weight between the different mining units.
+            </p>
+            <h2>Battery</h2>
+            <p class="helptext">
+                The Battery is what powers the Robot during the mining session.
+                Besides that, the Battery is also the part responsible for the recharge periods between mining sessions.
+            </p>
+            <p class="helptext">
+                Every part on the Robot, except the Battery itself, consumes power during a mining session.
+                The power consumption is constant, parts that aren't active at the moment consume the same amount of power as active ones.
+            </p>
+            <p class="helptext">
+                Add the power consumption of every part attached to the robot
+                and divide the Battery Capacity by the result
+                to calculate the maximum number of mining cycles the Robot can be active.
+                This result is also visible on the Robots page.
+            </p>
+            <p class="helptext">
+                The recharge time is even simpler, it is shown directly in the Shop.
+                Recharge times can vary widely between different batteries, especially for the more advanced once.
+            </p>
+            <h2>Memory Module</h2>
+            <p class="helptext">
+                The Memory Module stores the Robot program currently active for the Robot.
+                The Memory size determines the maximum number of low-level instructions it can contain.
+            </p>
+            <p class="helptext">
+                To calculate the number of low-level instructions of a program simply save it on the Edit code page.
+                Assuming your code is compilable, it will show you the Compiled size on the bottom of the page.
+                This Compiled size is the amount of low-level instructions.
+            </p>
+            <p class="helptext">
+                There are two ways to upload new code to the Memory Module.
+            </p>
+            <p class="helptext">
+                First, on the Robots page you can attach a Source code to the Robot.
+                When you click on the Apply button on the bottom of the page, the code is uploaded to the Memory Module.
+                If the Robot is mining at that point of time, this upload will be delayed until the end of the current mining session.
+            </p>
+            <p class="helptext">
+                Secondly, when you're on the Edit code page and click on the Save button,
+                the program will be uploaded to the Memory Module when the following conditions are met:
+            </p>
+            <ul>
+                <li class="helptext">
+                    The program is compilable.
+                </li>
+                <li class="helptext">
+                    The Source code is linked to the Robot.
+                </li>
+                <li class="helptext">
+                    The Compiled size is equal to or smaller then the Memory Modules capacity.
+                </li>
+                <li class="helptext">
+                    The Robot is not mining at the time the Save button is pressed.
+                </li>
+            </ul>
+            <p class="helptext">
+                When one or more of these conditions are not met, use the first method to upload the code, if desired.
+            </p>
+            <p class="helptext">
+                The Power consumption slightly increases with the Memory size of the Memory Module.
+                So it is advisable to use the smallest Memory Module that can contain your compiled code.
+            </p>
+            <h2>CPU</h2>
+            <p class="helptext">
+                The CPU is probably the most complicated part of the Robot.
+                Besides a slight variation in Power consumption, it has one important property: The CPU speed.
+            </p>
+            <p class="helptext">
+                In order to understand this property,
+                it is important to know the difference between CPU actions and Physical actions of your Robot.
+            </p>
+            <p class="helptext">
+                Physical actions are the actions that move your Robot or the ore in some kind of way.
+                So move() is a physical action, as is rotate(), mine() and dump().
+            </p>
+            <p class="helptext">
+                CPU actions are all other code actions, like flow control, calculations and variable assignment.
+                The ore(), time(), robot properties, scan(), oreDistance(), and oreType() instructions also are CPU actions as they don't take any physical action.
+            </p>
+            <p class="helptext">
+                The Physical actions are also called Cycles.
+                When a mining area has a maximum number of mining cycles of 150,
+                there are at most 150 physical actions possible in one mining session in that area.
+            </p>
+            <p class="helptext">
+                A portion of the timeline of a mining session with a 4 i/c can be represented as followed:
+            </p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                </tr>
+                <tr>
+                    <td class="helptable" colspan="4">Physical</td>
+                    <td class="helptable" colspan="4">Physical</td>
+                    <td class="helptable" colspan="4">Physical</td>
+                </tr>
+            </table>
+            <p class="helptext">
+                There are two important rules concerning this timeline:
+            </p>
+            <ol>
+                <li class="helptext">
+                    When the CPU starts a Physical action, no more CPU actions are processed during that cycle.
+                </li>
+                <li class="helptext">
+                    When the CPU doesn't start a Physical action itself before the end of the cycle,
+                    the default Physical action 'Wait' is started.
+                </li>
+            </ol>
+            <p class="helptext">
+                When the CPU starts a mine() operation as the second CPU action, the timeline will look like this:
+            </p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">mine</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                </tr>
+                <tr>
+                    <td class="helptable" colspan="4">Physical</td>
+                    <td class="helptable" colspan="4">mine()</td>
+                    <td class="helptable" colspan="4">Physical</td>
+                </tr>
+            </table>
+            <p class="helptext">
+                And when the CPU is busy with non-physical actions until the 7th CPU action, the timeline will look like this:
+            </p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">mine</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                </tr>
+                <tr>
+                    <td class="helptable" colspan="4">Physical</td>
+                    <td class="helptable" colspan="4">Wait</td>
+                    <td class="helptable" colspan="4">mine()</td>
+                </tr>
+            </table>
+            <p class="helptext">
+                In order to mine efficiently, it is important that the Robot program and CPU match each others capabilities.
+                It is useless to have a 72 i/c CPU for the default 'move(1); mine();' program.
+                And a highly advanced but complex program requiring on average 120 CPU actions between Physical actions
+                won't get a Robot very far with a 4 i/c CPU on a 150 Mining cycles mining area.
+            </p>
+            <p class="helptext">
+                To check your CPU performance, you can see the Mining results page.
+                When you click on the '+' of a mining session, you'll see a list of Actions.
+                These are the Physical actions performed by your Robot during that session.
+            </p>
+            <p class="helptext">
+                If the Wait actions are above 20%, you might consider buying a better CPU or creating a more efficient program.
+            </p>
+            <h2>Engine</h2>
+            <p class="helptext">
+                The Engine is responsible for moving the Robot around.
+                Stronger Engines can move and rotate faster.
+                The Strength of the engine is split into three parts: Forward power, backward power and rotate power.
+            </p>
+            <p class="helptext">
+                The other important factor for speed is weight.
+                Every Robot part has a weight value.
+                When you add up the weight values of all the Robot parts, you end up with the total weight of the Robot.
+            </p>
+            <p class="helptext">
+                The Robots page will tell you the current maximum speeds of the Robot, again split into the three parts.
+                The speed is the maximum distance the Robot can travel or rotate in one cycle.
+            </p>
+            <p class="helptext">
+                When a move() or rotate() command is given which exceeds the speed of the Robot,
+                the action is divided into two or more parts.
+                The first cycle(s), the Robot will move at the maximum speed for the full duration of those cycles.
+                In the last cycle, the Robot will still move at its maximum speed but only during the first part of the cycle.
+            </p>
+            <p class="helptext">
+                Assume the Robot has a forward speed of 1.2 and a move(1.8) is executed.
+                With a 4 i/c CPU, the timeline will look like this:
+            </p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">move(1.8)</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                </tr>
+                <tr>
+                    <td class="helptable" colspan="4">...</td>
+                    <td class="helptable" colspan="4">move(1.2)</td>
+                    <td class="helptable" colspan="2">move(0.6)</td>
+                    <td class="helptable" colspan="2">idle</td>
+                </tr>
+            </table>
+            <p class="helptext">
+                A collision cancels the move or rotate from the moment the collision occurs.
+                So, when a collision occurs at one half of the move(1.2) cycle,
+                the Robot has moved a distance of 0.6 and the second move(0.6) will not be executed.
+            </p>
+            <table class="helptable">
+                <tr>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">move(1.8)</td>
+                    <td class="helptable">X</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                    <td class="helptable">CPU</td>
+                </tr>
+                <tr>
+                    <td class="helptable" colspan="4">...</td>
+                    <td class="helptable" colspan="2">move(0.6)</td>
+                    <td class="helptable" colspan="2">collision</td>
+                    <td class="helptable" colspan="4">...</td>
+                </tr>
+            </table>

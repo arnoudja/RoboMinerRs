@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "robominer-db",
+    "robominer-domain",
+    "robominer-engine",
+    "robominer-program",
+    "robominer-sim",
+    "robominer-test-support",
+    "robominer-web",
+]
+resolver = "2"

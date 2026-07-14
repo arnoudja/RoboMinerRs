@@ -1,0 +1,21 @@
+[Unit]
+Description=RoboMiner Rust rally daemon
+Documentation=file:/opt/robominer/deploy/systemd/README.md
+After=network-online.target mariadb.service mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=robominer
+Group=robominer
+WorkingDirectory=/opt/robominer
+ExecStart=/opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf run-rallies --loop --sleep-seconds 5 --persist
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+TimeoutStopSec=120
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

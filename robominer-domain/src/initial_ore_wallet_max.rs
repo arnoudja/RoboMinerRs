@@ -1,0 +1,1 @@
+pub const INITIAL_ORE_WALLET_MAX: i32 = 5;

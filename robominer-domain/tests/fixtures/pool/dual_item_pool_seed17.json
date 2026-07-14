@@ -1,0 +1,45 @@
+{
+  "scenario": "dual_item_pool_seed17",
+  "seed": 17,
+  "pool_id": 2002,
+  "mining_area_id": 12002,
+  "final_time": 5,
+  "items": [
+    {
+      "player_number": 0,
+      "pool_item_id": 60,
+      "robot_id": 21,
+      "score": 90.0,
+      "ore_results": [
+        {
+          "ore_id": 1,
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "player_number": 1,
+      "pool_item_id": 61,
+      "robot_id": 22,
+      "score": 0.0,
+      "ore_results": []
+    }
+  ],
+  "completed_items": [
+    {
+      "pool_item_id": 60,
+      "score": 90.0,
+      "ore_results": [
+        {
+          "ore_id": 1,
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "pool_item_id": 61,
+      "score": 0.0,
+      "ore_results": []
+    }
+  ]
+}

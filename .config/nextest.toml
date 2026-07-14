@@ -1,0 +1,9 @@
+[profile.default]
+
+[profile.fast]
+# Library unit tests and simulation goldens that do not need MySQL.
+default-filter = 'kind(lib) | binary(rally_golden) | binary(pool_golden) | binary(verify_source_cli)'
+
+[profile.ci]
+# Full workspace run; DB integration binaries stay serialized via #[serial] in each test file.
+test-threads = 1
