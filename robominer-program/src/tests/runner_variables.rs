@@ -32,10 +32,9 @@ fn executable_variables_can_be_action_arguments() {
 
 #[test]
 fn executable_variables_are_scoped_to_blocks() {
-    let program = compile_executable_source(
-        "{ int value = 1; }; int value = 2; if (value == 2) { mine(); }",
-    )
-    .expect("source should compile with reusable block-scoped variables");
+    let program =
+        compile_executable_source("{ int value = 1; }; int value = 2; if (value == 2) { mine(); }")
+            .expect("source should compile with reusable block-scoped variables");
     let mut runner = program.runner();
     let mut context = test_context(1, None);
 
@@ -69,8 +68,7 @@ fn binary_comparison_costs_one_cpu_instruction_per_expression_node() {
 
 #[test]
 fn literal_initialization_costs_one_cpu_instruction() {
-    let program =
-        compile_executable_source("int x = 1; mine();").expect("program should compile");
+    let program = compile_executable_source("int x = 1; mine();").expect("program should compile");
     let mut runner = program.runner();
     let mut cpu_count = 0;
 
@@ -91,8 +89,8 @@ fn literal_initialization_costs_one_cpu_instruction() {
 
 #[test]
 fn robot_property_expression_evaluates_from_context() {
-    let program = compile_executable_source("move(robot.cpuSpeed);")
-        .expect("program should compile");
+    let program =
+        compile_executable_source("move(robot.cpuSpeed);").expect("program should compile");
     let mut runner = program.runner();
     let mut context = robot_context(72.0);
 
@@ -111,9 +109,7 @@ fn robot_property_expression_evaluates_from_context() {
 
 #[test]
 fn dynamic_move_in_expression_condition_compiles_and_runs() {
-    assert_valid_any_size(
-        "if (move(robot.forwardSpeed) < 1) { rotate(150); } else { rotate(0); }",
-    );
+    assert_valid_any_size("if (move(robot.forwardSpeed) < 1) { rotate(150); } else { rotate(0); }");
 
     let program = compile_executable_source(
         "if (move(robot.forwardSpeed) < 1) { rotate(150); } else { rotate(0); }",

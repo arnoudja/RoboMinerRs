@@ -1,5 +1,5 @@
-use super::schedule::Truthy;
 use super::super::ExecutableRunner;
+use super::schedule::Truthy;
 use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,8 +13,12 @@ pub(crate) enum ExpressionResume {
         condition: ExecutableExpression,
         body: Option<Box<ExecutableStatement>>,
     },
-    Declare { name: String },
-    Assign { name: String },
+    Declare {
+        name: String,
+    },
+    Assign {
+        name: String,
+    },
     ExpressionStatement,
     DynamicMove,
     DynamicRotate,

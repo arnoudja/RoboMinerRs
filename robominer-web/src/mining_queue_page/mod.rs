@@ -207,7 +207,9 @@ fn form_i64_values(request: &Request, name: &str) -> Vec<i64> {
         .collect()
 }
 
-pub(super) fn mining_queue_status_description(status: robominer_db::MiningQueueStatus) -> &'static str {
+pub(super) fn mining_queue_status_description(
+    status: robominer_db::MiningQueueStatus,
+) -> &'static str {
     match status {
         robominer_db::MiningQueueStatus::Mining => "Mining",
         robominer_db::MiningQueueStatus::Recharging => "Recharging",

@@ -428,9 +428,7 @@ pub(super) fn mining_result_wallet_deltas(
 ) -> Vec<(String, i32)> {
     let mut totals: HashMap<String, i32> = HashMap::new();
     for ore_result in ore_results {
-        *totals
-            .entry(ore_result.ore_name.clone())
-            .or_default() += ore_result.reward;
+        *totals.entry(ore_result.ore_name.clone()).or_default() += ore_result.reward;
     }
     let mut deltas: Vec<(String, i32)> = totals.into_iter().collect();
     deltas.sort_by(|left, right| left.0.cmp(&right.0));
@@ -707,4 +705,3 @@ fn action_name(action_type: i32) -> &'static str {
         _ => "",
     }
 }
-

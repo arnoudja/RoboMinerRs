@@ -89,7 +89,10 @@ impl WebSmokeDbFixture {
             Ok(Err(rejection)) => panic!("enqueue mining rejected: {rejection:?}"),
             Err(error) => panic!("enqueue mining failed: {error}"),
         };
-        assert_eq!(enqueued.inserted_queues, 1, "expected one queued mining run");
+        assert_eq!(
+            enqueued.inserted_queues, 1,
+            "expected one queued mining run"
+        );
 
         let mining_queue_id: i64 = sqlx::query_scalar(
             "SELECT id FROM MiningQueue WHERE robotId = ? AND miningAreaId = ? \

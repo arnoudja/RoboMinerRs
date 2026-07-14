@@ -176,9 +176,7 @@ fn resolve_selected_part_id(
 
     parts
         .iter()
-        .find(|part| {
-            part.type_id == selected_part_type_id && part.tier_id == selected_tier_id
-        })
+        .find(|part| part.type_id == selected_part_type_id && part.tier_id == selected_tier_id)
         .map(|part| part.robot_part_id)
         .or_else(|| parts.first().map(|part| part.robot_part_id))
         .unwrap_or(0)

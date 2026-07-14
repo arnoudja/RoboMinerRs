@@ -2,11 +2,14 @@ use crate::types::{
     CompileError, ExecutableAction, ExecutableExpression, Operator, RobotProperty, VariableOperator,
 };
 
+use super::super::input::{
+    CompileInput, expect_char, expect_empty_call, parse_operator_token,
+    robot_property_mutation_error,
+};
 use super::actions::{
     parse_dump_expression, parse_move_expression, parse_rotate_expression, parse_scan_call,
 };
 use super::expect_declared_variable;
-use super::super::input::{expect_char, expect_empty_call, parse_operator_token, robot_property_mutation_error, CompileInput};
 
 pub(super) fn parse_executable_expression(
     input: &mut CompileInput,

@@ -1,9 +1,9 @@
-use crate::html::{escape_html, layout};
-use crate::edit_code_page::{EditCodePageState, EditCodeProgramSource};
 use super::{
     default_edit_code_program_source, edit_code_apply_server_block_reason,
     edit_code_program_source_from_state, edit_code_save_block_reason,
 };
+use crate::edit_code_page::{EditCodePageState, EditCodeProgramSource};
+use crate::html::{escape_html, layout};
 
 pub(super) fn render_edit_code_page(
     username: String,
@@ -37,11 +37,13 @@ pub(super) fn render_edit_code_page(
     });
 
     body.push_str(r#"<div class="edit-code-deck">"#);
-    body.push_str(r#"<section class="edit-code-library" aria-labelledby="edit-code-library-title">"#);
-    body.push_str(r#"<h2 id="edit-code-library-title" class="edit-code-section-title">Programs</h2>"#);
     body.push_str(
-        r#"<p class="edit-code-library-hint">Select a program to edit source code.</p>"#,
+        r#"<section class="edit-code-library" aria-labelledby="edit-code-library-title">"#,
     );
+    body.push_str(
+        r#"<h2 id="edit-code-library-title" class="edit-code-section-title">Programs</h2>"#,
+    );
+    body.push_str(r#"<p class="edit-code-library-hint">Select a program to edit source code.</p>"#);
     body.push_str(r#"<div class="edit-code-program-cards">"#);
     for program_source in &program_sources {
         let program = edit_code_program_source_from_state(program_source);
@@ -677,7 +679,8 @@ fn render_edit_code_new_program_card(body: &mut String, active: bool) {
     } else {
         ""
     };
-    let compiled_size = edit_code_compiled_size_label(default_edit_code_program_source().compiled_size);
+    let compiled_size =
+        edit_code_compiled_size_label(default_edit_code_program_source().compiled_size);
 
     body.push_str(&format!(
         r#"<button type="button" class="edit-code-program-card{active_class}" data-source-id="-1" data-linked-robots="0">"#
@@ -846,7 +849,9 @@ fn render_edit_code_save_action(
     } else {
         html.push_str(r#"<p class="edit-code-action-hint edit-code-save-hint" hidden></p>"#);
     }
-    html.push_str(r#"<p class="edit-code-save-helper">Save compiles and stores your program source.</p>"#);
+    html.push_str(
+        r#"<p class="edit-code-save-helper">Save compiles and stores your program source.</p>"#,
+    );
     html
 }
 
@@ -920,4 +925,3 @@ fn render_edit_code_delete_action(
         r#"<div class="edit-code-delete"><form id="eraseProgramSourceForm{program_source_id}" action="editCode" method="post" class="edit-code-delete-form"><input type="hidden" name="requestType" value="erase"{disabled_attr}/><input type="hidden" name="programSourceId" value="{program_source_id}"{disabled_attr}/><button type="submit" class="edit-code-btn edit-code-btn-danger"{disabled_attr}>Delete program</button></form><p class="edit-code-delete-helper">Delete removes this program from your library.</p></div>"#
     )
 }
-

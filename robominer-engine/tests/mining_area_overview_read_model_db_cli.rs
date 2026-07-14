@@ -70,4 +70,3 @@ async fn mining_area_overview_states_report_lifetime_percentages() {
         .await;
     fixture.cleanup(&pool).await;
 }
-

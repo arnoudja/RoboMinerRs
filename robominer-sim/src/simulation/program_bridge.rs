@@ -4,10 +4,10 @@
 
 use robominer_program::{ExecutableAction, ExecutionContext, ProgramStep};
 
-use crate::ground::{ScanResult, ScanState};
 use crate::action_mapping::{map_awaiting_executable, robot_action_from_executable};
+use crate::ground::{ScanResult, ScanState};
 use crate::physics::ActionResult;
-use crate::robot::{ActionSource, RobotAction, ROBOT_ACTION_TYPE_SCAN};
+use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
 
 use super::Simulation;
 
@@ -121,8 +121,7 @@ impl Simulation {
 
         loop {
             let extend_budget = {
-                let ActionSource::Program { runner, .. } = &self.action_sources[robot_index]
-                else {
+                let ActionSource::Program { runner, .. } = &self.action_sources[robot_index] else {
                     self.action_result_expected[robot_index] = false;
                     return RobotAction::Wait;
                 };
@@ -187,10 +186,8 @@ impl Simulation {
                     self.action_result_expected[robot_index] = awaits;
 
                     if awaits {
-                        let (pending, robot_action) = map_awaiting_executable(
-                            action,
-                            self.robots[robot_index].spec(),
-                        );
+                        let (pending, robot_action) =
+                            map_awaiting_executable(action, self.robots[robot_index].spec());
                         self.pending_expression_actions[robot_index] = pending;
                         return robot_action;
                     }

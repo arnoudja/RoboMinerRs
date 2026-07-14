@@ -100,4 +100,3 @@ fn animation_data_uses_legacy_javascript_payload_shape() {
     assert!(data.contains("{x:0,y:0,c:[{A:8},{t:1,A:4}]"));
     assert!(data.contains("var myOreTypes = {A:{id:1,max:8}};"));
 }
-

@@ -169,17 +169,15 @@ pub async fn load_leaderboard_viewer_standing(
         achievement_rank,
         area_standings: area_rows
             .into_iter()
-            .map(
-                |(mining_area_id, area_name, robot_name, score, rank)| {
-                    LeaderboardViewerAreaStandingRecord {
-                        mining_area_id,
-                        area_name,
-                        robot_name,
-                        score,
-                        rank,
-                    }
-                },
-            )
+            .map(|(mining_area_id, area_name, robot_name, score, rank)| {
+                LeaderboardViewerAreaStandingRecord {
+                    mining_area_id,
+                    area_name,
+                    robot_name,
+                    score,
+                    rank,
+                }
+            })
             .collect(),
     })
 }

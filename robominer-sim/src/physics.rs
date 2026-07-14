@@ -1,5 +1,5 @@
-use crate::ground::Ground;
 use crate::MAX_ORE_TYPES;
+use crate::ground::Ground;
 use crate::position::Position;
 use crate::robot::Robot;
 
@@ -333,4 +333,3 @@ pub(crate) fn process_dump(
 
     (dumped, change)
 }
-

@@ -1,6 +1,7 @@
 use robominer_db::{
     CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
-    CompletedRallyRecord, cleanup_old_claimed_mining_queue_items_for_robot, persist_completed_rally,
+    CompletedRallyRecord, cleanup_old_claimed_mining_queue_items_for_robot,
+    persist_completed_rally,
 };
 use robominer_test_support::{RallyFixture, insert_claimed_mining_queue, insert_row_id};
 use serial_test::serial;
@@ -54,7 +55,10 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
     .await
     .expect("failed to load queue row");
 
-    assert_eq!(queue.get::<Option<i64>, _>("rallyResultId"), Some(rally_result_id));
+    assert_eq!(
+        queue.get::<Option<i64>, _>("rallyResultId"),
+        Some(rally_result_id)
+    );
     assert_eq!(queue.get::<Option<i32>, _>("playerNumber"), Some(0));
     assert!(queue.get::<Option<f64>, _>("score").unwrap_or_default() > 0.0);
     assert_eq!(queue.get::<i8, _>("ended"), 1);
@@ -124,19 +128,17 @@ async fn cleanup_old_claimed_mining_queue_items_trims_beyond_retention() {
         );
     }
 
-    let summary =
-        cleanup_old_claimed_mining_queue_items_for_robot(&pool, fixture.queued_robot_id)
-            .await
-            .expect("cleanup should succeed");
+    let summary = cleanup_old_claimed_mining_queue_items_for_robot(&pool, fixture.queued_robot_id)
+        .await
+        .expect("cleanup should succeed");
     assert_eq!(summary.queues_deleted, 1);
 
-    let remaining: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND claimed = true",
-    )
-    .bind(fixture.queued_robot_id)
-    .fetch_one(&pool)
-    .await
-    .expect("failed to count remaining claimed queues");
+    let remaining: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND claimed = true")
+            .bind(fixture.queued_robot_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to count remaining claimed queues");
     assert_eq!(remaining, 12);
 
     let oldest_id = queue_ids[0];

@@ -6,8 +6,10 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use robominer_db::MySqlPool;
-use robominer_test_support::{web_smoke_prefix, WebSmokeDbFixture};
-use robominer_web::test_support::{Request, Response, ServerConfig, configure_session_secret, route};
+use robominer_test_support::{WebSmokeDbFixture, web_smoke_prefix};
+use robominer_web::test_support::{
+    Request, Response, ServerConfig, configure_session_secret, route,
+};
 
 static SESSION_CONFIGURED: OnceLock<()> = OnceLock::new();
 
@@ -112,7 +114,8 @@ impl WebSmokeFixture {
         let prefix = web_smoke_prefix();
         let username = format!("{prefix}-user");
         let password = "test-password-1".to_string();
-        let user_id = create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+        let user_id =
+            create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
         let db = WebSmokeDbFixture::create(pool, user_id, &prefix).await;
 
         Self {
@@ -135,11 +138,7 @@ impl WebSmokeFixture {
     }
 }
 
-pub fn login_with_credentials(
-    config: &ServerConfig,
-    username: &str,
-    password: &str,
-) -> Response {
+pub fn login_with_credentials(config: &ServerConfig, username: &str, password: &str) -> Response {
     let mut form = HashMap::new();
     form.insert("loginName".to_string(), username.to_string());
     form.insert("password".to_string(), password.to_string());
@@ -150,9 +149,8 @@ pub fn create_user_via_engine(username: &str, email: &str, password: &str) -> i6
     let database_url = std::env::var("ROBOMINER_DATABASE_URL")
         .expect("ROBOMINER_DATABASE_URL must be set for web DB smoke tests");
     let engine_bin = std::env::var("CARGO_BIN_EXE_robominer-engine").unwrap_or_else(|_| {
-        let target_dir = std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| {
-            format!("{}/../target", env!("CARGO_MANIFEST_DIR"))
-        });
+        let target_dir = std::env::var("CARGO_TARGET_DIR")
+            .unwrap_or_else(|_| format!("{}/../target", env!("CARGO_MANIFEST_DIR")));
         format!("{target_dir}/debug/robominer-engine")
     });
     let output = std::process::Command::new(engine_bin)

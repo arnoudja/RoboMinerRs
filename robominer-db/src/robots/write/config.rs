@@ -1,20 +1,20 @@
 use sqlx::MySqlPool;
 
-use crate::mining_queue::robot_waiting_queue_count;
-use crate::users::touch_user_last_login_time;
-use crate::shop::add_user_robot_part_asset;
-use crate::{UpdateRobotConfigRejection, UpdateRobotConfigRequest, UpdatedRobotConfig};
 use super::super::parameters::{robot_is_recharging, robot_parameters_for_parts};
 use super::helpers::{
     default_program_source_code, find_or_create_default_program_source, generated_robot_name,
-    load_default_robot_parts, load_pending_robot_changes_for_update, load_program_source_for_update,
-    load_requested_robot_parts, load_robot_for_update, robot_part_baseline,
-    user_has_unassigned_parts_for_update, valid_robot_name,
+    load_default_robot_parts, load_pending_robot_changes_for_update,
+    load_program_source_for_update, load_requested_robot_parts, load_robot_for_update,
+    robot_part_baseline, user_has_unassigned_parts_for_update, valid_robot_name,
 };
 use super::pending::{
     delete_pending_robot_config, insert_pending_robot_config, update_pending_robot_config,
     update_robot_config_immediately, update_robot_header,
 };
+use crate::mining_queue::robot_waiting_queue_count;
+use crate::shop::add_user_robot_part_asset;
+use crate::users::touch_user_last_login_time;
+use crate::{UpdateRobotConfigRejection, UpdateRobotConfigRequest, UpdatedRobotConfig};
 
 pub async fn update_robot_config(
     pool: &MySqlPool,
@@ -29,8 +29,7 @@ pub async fn update_robot_config(
         return Ok(Err(UpdateRobotConfigRejection::UnknownRobot));
     };
 
-    let pending =
-        load_pending_robot_changes_for_update(&mut transaction, request.robot_id).await?;
+    let pending = load_pending_robot_changes_for_update(&mut transaction, request.robot_id).await?;
     let has_pending = pending.is_some();
 
     if !valid_robot_name(&request.robot_name) {
@@ -93,13 +92,8 @@ pub async fn update_robot_config(
 
     if has_pending {
         if still_queued {
-            update_pending_robot_config(
-                &mut transaction,
-                &request,
-                &source_code,
-                &parameters,
-            )
-            .await?;
+            update_pending_robot_config(&mut transaction, &request, &source_code, &parameters)
+                .await?;
             update_robot_header(&mut transaction, &request).await?;
         } else {
             delete_pending_robot_config(&mut transaction, request.robot_id).await?;

@@ -1,4 +1,6 @@
-use robominer_domain::{MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RobotLoadout, RobotLoadoutParts};
+use robominer_domain::{
+    MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RobotLoadout, RobotLoadoutParts,
+};
 use robominer_test_support::{
     golden_mining_area_record, golden_robot_record, ore_supply_record, pool_item_record,
     pool_record,

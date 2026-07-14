@@ -193,11 +193,12 @@ async fn update_robot_config_updates_existing_pending_changes_when_queued() {
         second_stdout.contains("Updated pending configuration"),
         "unexpected stdout:\n{second_stdout}"
     );
-    assert!(second_stderr.is_empty(), "unexpected stderr:\n{second_stderr}");
+    assert!(
+        second_stderr.is_empty(),
+        "unexpected stderr:\n{second_stderr}"
+    );
 
-    fixture
-        .assert_pending_parts(&pool, &third_part_ids)
-        .await;
+    fixture.assert_pending_parts(&pool, &third_part_ids).await;
 
     for robot_part_id in third_part_ids {
         let _ = sqlx::query("DELETE FROM RobotPart WHERE id = ?")
@@ -267,4 +268,3 @@ async fn update_robot_config_rejects_program_that_does_not_fit_memory() {
     fixture.assert_active_unchanged(&pool).await;
     fixture.cleanup(&pool).await;
 }
-

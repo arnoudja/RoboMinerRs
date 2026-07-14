@@ -1,5 +1,5 @@
-mod rejection_messages;
 mod initial_ore_wallet_max;
+mod rejection_messages;
 
 mod achievements;
 mod activity;
@@ -18,11 +18,11 @@ mod simulation;
 mod users;
 
 pub use achievements::*;
-pub use initial_ore_wallet_max::INITIAL_ORE_WALLET_MAX;
 pub use activity::*;
 pub use app_shell::*;
 pub use assets::*;
 pub use error::{DomainError, RobotPartSlot};
+pub use initial_ore_wallet_max::INITIAL_ORE_WALLET_MAX;
 pub use leaderboard::*;
 pub use loadout::*;
 pub use mining_area_overview::*;

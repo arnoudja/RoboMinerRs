@@ -215,9 +215,8 @@ mod tests {
 
     #[test]
     fn domain_error_display_includes_database_context() {
-        let error = DomainError::Database(sqlx::Error::Configuration(
-            "database url missing".into(),
-        ));
+        let error =
+            DomainError::Database(sqlx::Error::Configuration("database url missing".into()));
         assert!(error.to_string().contains("database error"));
     }
 

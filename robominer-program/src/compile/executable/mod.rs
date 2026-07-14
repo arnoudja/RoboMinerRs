@@ -8,7 +8,10 @@ use super::input::CompileInput;
 
 use statements::parse_executable_sequence;
 
-pub(super) fn expect_declared_variable(input: &CompileInput, name: &str) -> Result<(), CompileError> {
+pub(super) fn expect_declared_variable(
+    input: &CompileInput,
+    name: &str,
+) -> Result<(), CompileError> {
     if input.variables.contains(name) {
         Ok(())
     } else {

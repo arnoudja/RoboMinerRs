@@ -333,7 +333,10 @@ impl RobotConfigFixture {
         );
         assert_eq!(pending_row.get::<i64, _>("cpuId"), self.new_part_ids[4]);
         assert_eq!(pending_row.get::<i64, _>("engineId"), self.new_part_ids[5]);
-        assert_eq!(pending_row.get::<i64, _>("oreScannerId"), self.new_part_ids[6]);
+        assert_eq!(
+            pending_row.get::<i64, _>("oreScannerId"),
+            self.new_part_ids[6]
+        );
         assert_eq!(
             pending_row.get::<i64, _>("oldOreContainerId"),
             self.current_part_ids[0]
@@ -425,7 +428,8 @@ impl RobotConfigFixture {
     }
 }
 
-pub async fn insert_robot_config_part(pool: &MySqlPool,
+pub async fn insert_robot_config_part(
+    pool: &MySqlPool,
     robot_part_type_id: i64,
     ore_id: i64,
     ore_price_id: i64,
@@ -461,7 +465,8 @@ pub async fn insert_robot_config_part(pool: &MySqlPool,
     .await
 }
 
-pub async fn insert_user_robot_part_asset(pool: &MySqlPool,
+pub async fn insert_user_robot_part_asset(
+    pool: &MySqlPool,
     user_id: i64,
     robot_part_id: i64,
     total_owned: i32,
@@ -490,4 +495,3 @@ pub fn assert_robot_parameters(row: sqlx::mysql::MySqlRow) {
     assert!((row.get::<f64, _>("backwardSpeed") - 4.5).abs() < f64::EPSILON);
     assert_eq!(row.get::<i32, _>("rotateSpeed"), 20);
 }
-

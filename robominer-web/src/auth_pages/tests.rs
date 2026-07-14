@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 use crate::{Request, ServerConfig};
 
+use super::render::render_login_page;
 use super::{
     LoginPageState, auth_redirect_response, create_user_rejection_message, login_failure_message,
     login_page, logoff_page, remember_cookie, signup_password_mismatch_message,
 };
-use super::render::render_login_page;
 
 fn request(path: &str) -> Request {
     Request {
@@ -87,13 +87,15 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
     assert!(html.contains(r#"class="auth-page""#));
     assert!(html.contains(r#"id="loginmenuitem" class="auth-tab""#));
     assert!(html.contains(r#"id="signupmenuitem" class="auth-tab auth-tab-active""#));
-    assert!(html.contains(r#"id="loginForm" class="auth-form" action="Login" method="post" hidden="hidden""#));
+    assert!(html.contains(
+        r#"id="loginForm" class="auth-form" action="Login" method="post" hidden="hidden""#
+    ));
     assert!(html.contains(r#"name="loginName" value="user@example.com""#));
     assert!(html.contains(r#"name="remember" value="remember" checked"#));
     assert!(html.contains(r#"id="signupForm" class="auth-form" action="Login" method="post">"#));
-    assert!(html.contains(
-        r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#
-    ));
+    assert!(
+        html.contains(r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#)
+    );
     assert!(html.contains(r#"name="email" value="new&amp;user@example.com""#));
     assert!(html.contains(r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#));
     assert!(html.contains(r#"class="auth-password-toggle""#));
@@ -130,8 +132,12 @@ fn login_rendering_shows_login_form_by_default() {
     });
 
     assert!(html.contains(r#"id="loginmenuitem" class="auth-tab auth-tab-active""#));
-    assert!(html.contains(r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#));
-    assert!(html.contains(r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#));
+    assert!(html.contains(
+        r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#
+    ));
+    assert!(
+        html.contains(r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#)
+    );
 }
 
 #[test]
@@ -147,9 +153,7 @@ fn login_rendering_preserves_return_to_in_form_and_links() {
     });
 
     assert!(html.contains(r#"href="login?returnTo=shop%3FselectedRobotPartTypeId%3D3""#));
-    assert!(html.contains(
-        r#"href="login?signup=1&returnTo=shop%3FselectedRobotPartTypeId%3D3""#
-    ));
+    assert!(html.contains(r#"href="login?signup=1&returnTo=shop%3FselectedRobotPartTypeId%3D3""#));
     assert!(html.contains(
         r#"<input type="hidden" name="returnTo" value="shop?selectedRobotPartTypeId=3" />"#
     ));
@@ -170,7 +174,9 @@ fn login_rendering_hides_signup_when_disabled() {
     assert!(html.contains(r#"id="loginmenuitem" class="auth-tab auth-tab-active""#));
     assert!(!html.contains(r#"id="signupmenuitem""#));
     assert!(!html.contains("Sign up</a> for free"));
-    assert!(html.contains(r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#));
+    assert!(html.contains(
+        r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#
+    ));
 }
 
 #[test]
@@ -196,15 +202,11 @@ fn auth_redirect_sets_rust_auth_and_remember_cookies() {
             .iter()
             .any(|(name, value)| *name == "Location" && value == "miningQueue")
     );
-    assert!(
-        cookie_headers
-            .iter()
-            .any(|header| {
-                header.starts_with("robominer_session=")
-                    && header.contains('.')
-                    && header.contains("Max-Age=2592000")
-            })
-    );
+    assert!(cookie_headers.iter().any(|header| {
+        header.starts_with("robominer_session=")
+            && header.contains('.')
+            && header.contains("Max-Age=2592000")
+    }));
     assert!(
         cookie_headers
             .iter()

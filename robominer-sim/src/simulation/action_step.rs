@@ -1,6 +1,6 @@
 use crate::physics::{
-    check_wall_collision, process_dump, process_move, process_requested_move,
-    process_requested_rotation, ActionResult,
+    ActionResult, check_wall_collision, process_dump, process_move, process_requested_move,
+    process_requested_rotation,
 };
 use crate::robot::RobotAction;
 

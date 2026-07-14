@@ -26,16 +26,16 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
     let prefix = unique_prefix("rust-web-robot-apply");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = RobotApplyFixture::create(&pool, user_id, username, password).await;
     let config = server_config(pool.clone());
 
     let login_response = robot_apply_login(&fixture, &config);
-    assert_eq!(login_response.status, 302, "login should redirect after success");
+    assert_eq!(
+        login_response.status, 302,
+        "login should redirect after success"
+    );
     let cookie = cookie_header(&login_response);
 
     let mut query = HashMap::new();
@@ -60,13 +60,13 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
         .assert_ore_container_id(&pool, fixture.spare_ore_container_id)
         .await;
 
-    let refresh_response = route(
-        &get_request_query("/robot", query, Some(&cookie)),
-        &config,
-    );
+    let refresh_response = route(&get_request_query("/robot", query, Some(&cookie)), &config);
     let refresh_body = response_body(&refresh_response);
 
-    assert_eq!(refresh_response.status, 200, "robot page refresh should render");
+    assert_eq!(
+        refresh_response.status, 200,
+        "robot page refresh should render"
+    );
     assert!(
         refresh_body.contains(&format!(
             r#"value="{}" selected="selected""#,

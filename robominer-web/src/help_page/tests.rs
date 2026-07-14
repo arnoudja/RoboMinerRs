@@ -51,10 +51,18 @@ fn help_route_shows_signup_welcome_banner() {
 #[test]
 fn help_text_routes_render_reader_shell_with_sidebar() {
     let tutorial = help_text_page(&request("/helpTutorial"), &config(), "helpTutorial", None);
-    let program_tips =
-        help_text_page(&request("/helpProgramTips"), &config(), "helpProgramTips", None);
-    let robot_program =
-        help_text_page(&request("/helpRobotProgram"), &config(), "helpRobotProgram", None);
+    let program_tips = help_text_page(
+        &request("/helpProgramTips"),
+        &config(),
+        "helpProgramTips",
+        None,
+    );
+    let robot_program = help_text_page(
+        &request("/helpRobotProgram"),
+        &config(),
+        "helpRobotProgram",
+        None,
+    );
     let mechanics = help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None);
 
     assert_eq!(tutorial.status, 200);

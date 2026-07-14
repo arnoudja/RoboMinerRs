@@ -24,10 +24,7 @@ fn scan_returns_higher_quality_index_at_same_distance() {
 
     let ore_ids = vec![1_i64, 3_i64];
     let origin = Position::new(2.0, 5.0, 0);
-    assert_eq!(
-        ground.scan_ore(origin, 0.0, 10, &ore_ids).ore_type,
-        2.0
-    );
+    assert_eq!(ground.scan_ore(origin, 0.0, 10, &ore_ids).ore_type, 2.0);
 }
 
 #[test]
@@ -40,4 +37,3 @@ fn scan_respects_max_distance() {
     assert_eq!(ground.scan_ore(origin, 0.0, 5, &ore_ids).ore_type, 0.0);
     assert_eq!(ground.scan_ore(origin, 0.0, 12, &ore_ids).ore_type, 1.0);
 }
-

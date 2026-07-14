@@ -31,10 +31,8 @@ fn executable_ore_distance_waits_for_in_progress_scan() {
 
 #[test]
 fn executable_search_loop_starts_with_scan() {
-    let program = compile_executable_source(
-        "scan(); while (oreType() == 0) { move(1); scan(); }",
-    )
-    .expect("search loop should compile");
+    let program = compile_executable_source("scan(); while (oreType() == 0) { move(1); scan(); }")
+        .expect("search loop should compile");
     let mut runner = program.runner();
 
     let mut start = test_context(50, None);
@@ -66,8 +64,8 @@ fn scan_with_direction_does_not_restart_as_forward_scan() {
 
 #[test]
 fn executable_program_starts_scan_after_move() {
-    let program = compile_executable_source("move(10); scan();")
-        .expect("move then scan should compile");
+    let program =
+        compile_executable_source("move(10); scan();").expect("move then scan should compile");
     let mut runner = program.runner();
 
     let mut start = test_context(10, None);
@@ -84,10 +82,8 @@ fn executable_program_starts_scan_after_move() {
 
 #[test]
 fn executable_search_loop_does_not_confuse_move_distance_with_ore_type() {
-    let program = compile_executable_source(
-        "scan(); while (oreType() == 0) { move(10); scan(); }",
-    )
-    .expect("search loop should compile");
+    let program = compile_executable_source("scan(); while (oreType() == 0) { move(10); scan(); }")
+        .expect("search loop should compile");
     let mut runner = program.runner();
 
     let mut start = test_context(20, None);
@@ -105,10 +101,8 @@ fn executable_search_loop_does_not_confuse_move_distance_with_ore_type() {
 
 #[test]
 fn executable_program_else_if_scans_restart_scan_direction() {
-    let program = compile_executable_source(
-        "scan(); if (oreType() > 0) {} else { scan(30); }",
-    )
-    .expect("else-if scan chain should compile");
+    let program = compile_executable_source("scan(); if (oreType() > 0) {} else { scan(30); }")
+        .expect("else-if scan chain should compile");
     let mut runner = program.runner();
 
     let mut context = test_context(10, None);

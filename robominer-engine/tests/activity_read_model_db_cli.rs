@@ -90,4 +90,3 @@ async fn activity_states_report_recent_users_and_rallies() {
 
     fixture.cleanup(&pool).await;
 }
-

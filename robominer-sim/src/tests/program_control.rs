@@ -133,7 +133,10 @@ fn executable_while_mine_repeats_until_tile_is_depleted() {
 
 #[test]
 fn executable_while_true_semicolon_does_not_restart_program() {
-    for source in ["rotate(180);\nwhile (true);", "rotate(180);\nwhile (true) {}"] {
+    for source in [
+        "rotate(180);\nwhile (true);",
+        "rotate(180);\nwhile (true) {}",
+    ] {
         let program = robominer_program::compile_executable_source(source)
             .unwrap_or_else(|err| panic!("{source} should compile: {err}"));
         let mut spec = RobotSpec::test_robot();
@@ -148,21 +151,15 @@ fn executable_while_true_semicolon_does_not_restart_program() {
 
         simulation.run();
 
-        assert_eq!(
-            simulation.robot(0).position().orientation,
-            225,
-            "{source}"
-        );
+        assert_eq!(simulation.robot(0).position().orientation, 225, "{source}");
         assert_eq!(simulation.robot(0).actions_done()[4], 6, "{source}");
     }
 }
 
 #[test]
 fn slow_cpu_waits_when_program_needs_more_instructions_than_cycle_budget() {
-    let program = robominer_program::compile_executable_source(
-        "int x = 1; int y = 2; mine();",
-    )
-    .expect("program should compile");
+    let program = robominer_program::compile_executable_source("int x = 1; int y = 2; mine();")
+        .expect("program should compile");
     let mut ground = Ground::new(5, 5);
     ground.at_mut(0, 0).add_ore(0, 8);
 
@@ -189,12 +186,10 @@ fn slow_cpu_waits_when_program_needs_more_instructions_than_cycle_budget() {
 
 #[test]
 fn executable_do_while_mines_once_per_cycle_while_false_never_mines() {
-    let do_program =
-        robominer_program::compile_executable_source("do { mine(); } while (false);")
-            .expect("do-while should compile for simulation");
-    let while_program =
-        robominer_program::compile_executable_source("while (false) { mine(); }")
-            .expect("while-false should compile for simulation");
+    let do_program = robominer_program::compile_executable_source("do { mine(); } while (false);")
+        .expect("do-while should compile for simulation");
+    let while_program = robominer_program::compile_executable_source("while (false) { mine(); }")
+        .expect("while-false should compile for simulation");
     let mut ground = Ground::new(5, 5);
     ground.at_mut(0, 0).add_ore(0, 100);
 
@@ -205,7 +200,10 @@ fn executable_do_while_mines_once_per_cycle_while_false_never_mines() {
     let mut do_simulation = Simulation::new(
         ground.clone(),
         2,
-        vec![ScriptedRobot::from_executable_program(spec.clone(), &do_program)],
+        vec![ScriptedRobot::from_executable_program(
+            spec.clone(),
+            &do_program,
+        )],
     );
     do_simulation.run();
 

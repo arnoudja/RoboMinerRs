@@ -118,9 +118,11 @@ mod tests {
 
         assert!(html.contains(r#"app-shell-hud-alert""#));
         assert!(html.contains(r#"href="achievements""#));
-        assert!(html.contains(
-            r#"2</span><span class="app-shell-hud-label">achievements to claim</span>"#
-        ));
+        assert!(
+            html.contains(
+                r#"2</span><span class="app-shell-hud-label">achievements to claim</span>"#
+            )
+        );
     }
 
     #[test]

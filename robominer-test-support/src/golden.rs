@@ -20,16 +20,10 @@ pub fn load_fixture<T: serde::de::DeserializeOwned>(
 ) -> T {
     let path = fixture_path(manifest_dir, subdir, name);
     let contents = fs::read_to_string(&path).unwrap_or_else(|error| {
-        panic!(
-            "failed to read golden fixture {}: {error}",
-            path.display()
-        )
+        panic!("failed to read golden fixture {}: {error}", path.display())
     });
     serde_json::from_str(&contents).unwrap_or_else(|error| {
-        panic!(
-            "failed to parse golden fixture {}: {error}",
-            path.display()
-        )
+        panic!("failed to parse golden fixture {}: {error}", path.display())
     })
 }
 

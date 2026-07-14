@@ -1,5 +1,5 @@
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use hmac::{Hmac, Mac};
@@ -200,8 +200,7 @@ fn sign_payload(payload: &str) -> String {
 }
 
 fn session_secret() -> &'static [u8] {
-    SESSION_SECRET
-        .get_or_init(|| DEFAULT_DEV_SESSION_SECRET.as_bytes().to_vec())
+    SESSION_SECRET.get_or_init(|| DEFAULT_DEV_SESSION_SECRET.as_bytes().to_vec())
 }
 
 fn session_expiry_timestamp(ttl_secs: u64) -> u64 {

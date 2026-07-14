@@ -94,10 +94,7 @@ pub(crate) fn auth_page_href(signup: bool, return_to: Option<&str>) -> String {
         params.push("signup=1".to_string());
     }
     if let Some(return_to) = return_to {
-        params.push(format!(
-            "returnTo={}",
-            encode_query_component(return_to)
-        ));
+        params.push(format!("returnTo={}", encode_query_component(return_to)));
     }
     if !params.is_empty() {
         href.push('?');
@@ -161,12 +158,9 @@ mod tests {
     fn login_redirect_preserves_return_to_for_protected_routes() {
         let response = login_redirect(&request("/shop?selectedRobotPartTypeId=3"));
         assert_eq!(response.status, 302);
-        assert!(
-            response.headers.iter().any(|(name, value)| {
-                *name == "Location"
-                    && value == "login?returnTo=shop%3FselectedRobotPartTypeId%3D3"
-            })
-        );
+        assert!(response.headers.iter().any(|(name, value)| {
+            *name == "Location" && value == "login?returnTo=shop%3FselectedRobotPartTypeId%3D3"
+        }));
     }
 
     #[test]

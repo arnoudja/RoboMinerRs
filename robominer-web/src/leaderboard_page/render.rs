@@ -1,7 +1,7 @@
+use super::{LEADERBOARD_MAX_LIMIT, LEADERBOARD_SIDEBAR_AREA_STANDINGS};
 use crate::help_pages;
 use crate::html::{escape_html, layout};
 use crate::leaderboard_page::{LeaderboardPageState, LeaderboardQuery, LeaderboardTab};
-use super::{LEADERBOARD_MAX_LIMIT, LEADERBOARD_SIDEBAR_AREA_STANDINGS};
 
 pub(super) fn render_leaderboard_page(
     username: String,
@@ -60,7 +60,13 @@ pub(super) fn render_leaderboard_page(
     );
     body.push_str("</div></div>");
 
-    layout("RoboMiner - Leaderboard", "leaderboard", &username, hud, &body)
+    layout(
+        "RoboMiner - Leaderboard",
+        "leaderboard",
+        &username,
+        hud,
+        &body,
+    )
 }
 
 fn ranked_mining_areas<'a>(
@@ -187,11 +193,7 @@ fn render_leaderboard_area_section(
     }
 
     let Some(area_id) = query.area_id else {
-        render_leaderboard_empty_state(
-            body,
-            "Choose a mining area to view its leaderboard.",
-            &[],
-        );
+        render_leaderboard_empty_state(body, "Choose a mining area to view its leaderboard.", &[]);
         render_leaderboard_climb_hint(body, LeaderboardTab::Areas);
         body.push_str("</section>");
         return;
@@ -398,9 +400,7 @@ fn render_leaderboard_top_players_section(
 ) {
     body.push_str(r#"<section class="leaderboard-panel">"#);
     body.push_str(r#"<h2 class="leaderboard-section-title">Top players</h2>"#);
-    body.push_str(
-        r#"<p class="leaderboard-section-hint">Most achievement points earned.</p>"#,
-    );
+    body.push_str(r#"<p class="leaderboard-section-hint">Most achievement points earned.</p>"#);
     render_leaderboard_section_actions(body, &[("achievements", "View achievements")]);
     if top_users.is_empty() {
         render_leaderboard_empty_state(
@@ -495,7 +495,10 @@ fn render_leaderboard_climb_hint(body: &mut String, tab: LeaderboardTab) {
 
     body.push_str(r#"<aside class="leaderboard-climb-hint" aria-label="How to climb">"#);
     body.push_str(r#"<h3 class="leaderboard-climb-title">How to climb</h3>"#);
-    body.push_str(&format!(r#"<p class="leaderboard-climb-copy">{}</p>"#, escape_html(summary)));
+    body.push_str(&format!(
+        r#"<p class="leaderboard-climb-copy">{}</p>"#,
+        escape_html(summary)
+    ));
     body.push_str(r#"<p class="leaderboard-climb-links">"#);
     for (index, (href, label)) in links.iter().enumerate() {
         if index > 0 {
@@ -537,10 +540,7 @@ fn viewer_climb_insight(
         if gap <= 0.0 {
             continue;
         }
-        if best
-            .map(|(_, best_gap)| gap < best_gap)
-            .unwrap_or(true)
-        {
+        if best.map(|(_, best_gap)| gap < best_gap).unwrap_or(true) {
             best = Some((area, gap));
         }
     }
@@ -721,4 +721,3 @@ fn leaderboard_rank_cell_class(rank: usize) -> &'static str {
         _ => "leaderboard-rank",
     }
 }
-

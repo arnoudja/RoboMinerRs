@@ -19,17 +19,15 @@ async fn edit_code_create_post_inserts_program_source() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-code");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
 
     let login_response = login_with_credentials(&config, &username, &password);
@@ -84,17 +82,15 @@ async fn edit_code_apply_post_updates_linked_robots() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-apply");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
     let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
 
@@ -147,17 +143,15 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-delete");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
     let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
     let program_name = format!("{prefix}-delete-me");
@@ -168,26 +162,31 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     create_form.insert("sourceName".to_string(), program_name.clone());
     create_form.insert("sourceCode".to_string(), "move(1);".to_string());
 
-    let create_response = route(&post_request("/editCode", create_form, Some(&cookie)), &config);
+    let create_response = route(
+        &post_request("/editCode", create_form, Some(&cookie)),
+        &config,
+    );
     assert_eq!(
         create_response.status, 200,
         "edit code create should render before delete"
     );
 
-    let program_source_id: i64 = sqlx::query_scalar(
-        "SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?",
-    )
-    .bind(user_id)
-    .bind(&program_name)
-    .fetch_one(&pool)
-    .await
-    .expect("failed to load created program source id");
+    let program_source_id: i64 =
+        sqlx::query_scalar("SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?")
+            .bind(user_id)
+            .bind(&program_name)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load created program source id");
 
     let mut delete_form = HashMap::new();
     delete_form.insert("requestType".to_string(), "erase".to_string());
     delete_form.insert("programSourceId".to_string(), program_source_id.to_string());
 
-    let response = route(&post_request("/editCode", delete_form, Some(&cookie)), &config);
+    let response = route(
+        &post_request("/editCode", delete_form, Some(&cookie)),
+        &config,
+    );
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");

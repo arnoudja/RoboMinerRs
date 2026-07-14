@@ -1,11 +1,11 @@
 use robominer_program::{ExecutableProgram, ExecutableRunner};
 
-use crate::ground::{GroundUnit, ScanSnapshot, ScanState};
-use crate::action_mapping::expand_executable_actions;
-use crate::physics::position_at_time;
-use crate::score::calculate_score;
 use crate::MAX_ORE_TYPES;
+use crate::action_mapping::expand_executable_actions;
+use crate::ground::{GroundUnit, ScanSnapshot, ScanState};
+use crate::physics::position_at_time;
 use crate::position::Position;
+use crate::score::calculate_score;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RobotAction {
@@ -300,4 +300,3 @@ impl ScriptedRobot {
         }
     }
 }
-

@@ -100,4 +100,3 @@ fn multi_robot_collision_clips_converging_moves() {
     assert_eq!(simulation.robot(0).actions_done()[2], 1);
     assert_eq!(simulation.robot(1).actions_done()[2], 1);
 }
-

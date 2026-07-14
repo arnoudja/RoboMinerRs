@@ -1,9 +1,7 @@
 use robominer_db::MySqlPool;
 use sqlx::Row;
 
-use crate::{
-    insert_cli_robot, insert_row_id, unique_prefix,
-};
+use crate::{insert_cli_robot, insert_row_id, unique_prefix};
 
 pub struct PoolFixture {
     pub user_id: i64,
@@ -197,4 +195,3 @@ impl PoolFixture {
             .await;
     }
 }
-

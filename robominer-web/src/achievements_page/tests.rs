@@ -6,9 +6,7 @@ use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig, query_i64};
 
 use super::render::render_achievements_page;
-use super::{
-    AchievementsPageState, achievements_page, claim_achievement_step_rejection_message,
-};
+use super::{AchievementsPageState, achievements_page, claim_achievement_step_rejection_message};
 
 fn authenticated_request(path: &str) -> Request {
     Request {
@@ -184,8 +182,12 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
     assert!(!html.contains(r#">Claim step</button>"#));
     assert!(!html.contains("confirmAchievementClaim"));
     assert!(!html.contains("Claim next step for "));
-    assert!(html.contains(r#">Points earned</span><span class="achievements-summary-value">45/150</span>"#));
-    assert!(html.contains(r#">Ready to claim</span><span class="achievements-summary-value">1</span>"#));
+    assert!(html.contains(
+        r#">Points earned</span><span class="achievements-summary-value">45/150</span>"#
+    ));
+    assert!(
+        html.contains(r#">Ready to claim</span><span class="achievements-summary-value">1</span>"#)
+    );
 }
 
 #[test]

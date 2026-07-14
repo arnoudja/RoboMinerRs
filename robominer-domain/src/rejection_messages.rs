@@ -24,9 +24,7 @@ pub fn create_user_rejection_player_message(
     }
 }
 
-pub fn create_user_rejection_cli_message(
-    rejection: robominer_db::CreateUserRejection,
-) -> String {
+pub fn create_user_rejection_cli_message(rejection: robominer_db::CreateUserRejection) -> String {
     match rejection {
         robominer_db::CreateUserRejection::InvalidUsername => "invalid username".to_string(),
         robominer_db::CreateUserRejection::InvalidEmail => "invalid email".to_string(),

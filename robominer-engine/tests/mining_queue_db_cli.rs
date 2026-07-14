@@ -50,7 +50,10 @@ async fn enqueue_mining_fill_deducts_costs_and_inserts_until_queue_limit() {
     .fetch_one(&pool)
     .await
     .expect("failed to check last login time");
-    assert_eq!(login_updated, 1, "enqueue-mining should refresh last login time");
+    assert_eq!(
+        login_updated, 1,
+        "enqueue-mining should refresh last login time"
+    );
 
     fixture.cleanup(&pool).await;
 }
@@ -334,4 +337,3 @@ async fn cancel_mining_queue_rejects_active_and_rally_backed_items() {
         .await;
     fixture.cleanup(&pool).await;
 }
-

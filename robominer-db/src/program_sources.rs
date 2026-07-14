@@ -84,7 +84,8 @@ pub async fn create_program_source(
 ) -> Result<Result<CreatedProgramSource, ProgramSourceWriteRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    if let Some(rejection) = validate_program_source_write(&request.source_name, &request.source_code)
+    if let Some(rejection) =
+        validate_program_source_write(&request.source_name, &request.source_code)
     {
         transaction.rollback().await?;
         return Ok(Err(rejection));
@@ -156,18 +157,15 @@ pub async fn update_program_source(
 ) -> Result<Result<(), ProgramSourceWriteRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    if let Some(rejection) = validate_program_source_write(&request.source_name, &request.source_code)
+    if let Some(rejection) =
+        validate_program_source_write(&request.source_name, &request.source_code)
     {
         transaction.rollback().await?;
         return Ok(Err(rejection));
     }
 
-    if !program_source_belongs_to_user(
-        &mut transaction,
-        request.program_source_id,
-        request.user_id,
-    )
-    .await?
+    if !program_source_belongs_to_user(&mut transaction, request.program_source_id, request.user_id)
+        .await?
     {
         transaction.rollback().await?;
         return Ok(Err(ProgramSourceWriteRejection::UnknownProgramSource));
@@ -454,12 +452,14 @@ async fn list_program_source_robots(
 
     Ok(rows
         .into_iter()
-        .map(|(id, robot_name, memory_size, has_pending)| ProgramSourceRobotState {
-            id,
-            robot_name,
-            memory_size,
-            has_pending,
-        })
+        .map(
+            |(id, robot_name, memory_size, has_pending)| ProgramSourceRobotState {
+                id,
+                robot_name,
+                memory_size,
+                has_pending,
+            },
+        )
         .collect())
 }
 

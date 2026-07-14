@@ -316,4 +316,3 @@ async fn user_ore_asset_states_report_user_balances() {
 
     fixture.cleanup(&pool).await;
 }
-

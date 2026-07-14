@@ -16,9 +16,8 @@ fn expression_operator_precedence_multiplies_before_adding() {
 
 #[test]
 fn expression_logical_and_requires_both_operands() {
-    let program =
-        compile_executable_source("if (1 && 0) { mine(); } else { rotate(90); }")
-            .expect("program should compile");
+    let program = compile_executable_source("if (1 && 0) { mine(); } else { rotate(90); }")
+        .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 
@@ -30,9 +29,8 @@ fn expression_logical_and_requires_both_operands() {
 
 #[test]
 fn expression_logical_or_short_circuits_to_true() {
-    let program =
-        compile_executable_source("if (0 || 1) { mine(); } else { rotate(90); }")
-            .expect("program should compile");
+    let program = compile_executable_source("if (0 || 1) { mine(); } else { rotate(90); }")
+        .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 
@@ -44,10 +42,9 @@ fn expression_logical_or_short_circuits_to_true() {
 
 #[test]
 fn expression_nested_if_resumes_after_move_in_condition() {
-    let program = compile_executable_source(
-        "if (move(1) >= 1) { if (rotate(90) == 90) { mine(); } }",
-    )
-    .expect("program should compile");
+    let program =
+        compile_executable_source("if (move(1) >= 1) { if (rotate(90) == 90) { mine(); } }")
+            .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 
@@ -71,10 +68,9 @@ fn expression_nested_if_resumes_after_move_in_condition() {
 
 #[test]
 fn expression_while_condition_reevaluates_after_body() {
-    let program = compile_executable_source(
-        "int count = 0; while (count < 2) { count++; mine(); }",
-    )
-    .expect("program should compile");
+    let program =
+        compile_executable_source("int count = 0; while (count < 2) { count++; mine(); }")
+            .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(10, None);
 
@@ -92,7 +88,8 @@ fn expression_while_condition_reevaluates_after_body() {
 
 #[test]
 fn expression_ore_reads_amount_after_scan_context() {
-    let program = compile_executable_source("scan(); dump(ore(0));").expect("program should compile");
+    let program =
+        compile_executable_source("scan(); dump(ore(0));").expect("program should compile");
     let mut runner = program.runner();
     let mut context = scan_context(10, None, 6, true, true, 3.0, 1.0);
     context.ore[0] = 4;
@@ -111,10 +108,8 @@ fn expression_ore_reads_amount_after_scan_context() {
 
 #[test]
 fn expression_unary_not_in_while_condition() {
-    let program = compile_executable_source(
-        "int done = 0; while (!done) { done = 1; mine(); }",
-    )
-    .expect("program should compile");
+    let program = compile_executable_source("int done = 0; while (!done) { done = 1; mine(); }")
+        .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 

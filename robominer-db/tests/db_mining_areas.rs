@@ -25,8 +25,7 @@ async fn list_mining_area_ore_supplies_returns_seeded_rows() {
     let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(&pool, &prefix).await;
     let ai_robot_id = insert_robot(&pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
-    let mining_area_id =
-        insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 0).await;
+    let mining_area_id = insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 0).await;
     insert_area_supply(&pool, mining_area_id, primary_ore_id, 12, 2).await;
     insert_area_supply(&pool, mining_area_id, secondary_ore_id, 3, 1).await;
 
@@ -75,12 +74,22 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
     let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(&pool, &prefix).await;
     let ai_robot_id = insert_robot(&pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
-    let granted_area_id =
-        insert_mining_area(&pool, &format!("{prefix}-granted"), ore_price_id, ai_robot_id, 0)
-            .await;
-    let hidden_area_id =
-        insert_mining_area(&pool, &format!("{prefix}-hidden"), ore_price_id, ai_robot_id, 0)
-            .await;
+    let granted_area_id = insert_mining_area(
+        &pool,
+        &format!("{prefix}-granted"),
+        ore_price_id,
+        ai_robot_id,
+        0,
+    )
+    .await;
+    let hidden_area_id = insert_mining_area(
+        &pool,
+        &format!("{prefix}-hidden"),
+        ore_price_id,
+        ai_robot_id,
+        0,
+    )
+    .await;
 
     insert_area_supply(&pool, granted_area_id, granted_ore_id, 8, 1).await;
     insert_area_supply(&pool, hidden_area_id, hidden_ore_id, 5, 1).await;
@@ -126,9 +135,7 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
         .await
         .expect("overview ores should load");
     assert!(
-        overview_ores
-            .iter()
-            .any(|ore| ore.ore_id == granted_ore_id),
+        overview_ores.iter().any(|ore| ore.ore_id == granted_ore_id),
         "expected granted-area ore in user overview"
     );
     assert!(

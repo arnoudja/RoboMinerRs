@@ -184,7 +184,10 @@ fn rally_outcomes_match_golden_fixtures() {
         assert_eq!(expected.mining_area_id, actual.mining_area_id);
         assert_eq!(expected.final_time, actual.final_time);
         assert_eq!(expected.participants, actual.participants);
-        assert_eq!(expected.completed_participants, actual.completed_participants);
+        assert_eq!(
+            expected.completed_participants,
+            actual.completed_participants
+        );
 
         for marker in &expected.animation_contains {
             assert!(

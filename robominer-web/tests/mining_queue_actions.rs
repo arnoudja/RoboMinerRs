@@ -20,17 +20,15 @@ async fn mining_queue_remove_post_deletes_queued_item() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-queue-remove");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
     let config = server_config(pool.clone());
 
@@ -93,17 +91,15 @@ async fn mining_queue_add_post_inserts_queue_item() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-queue-add");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = IdleMiningAreaFixture::create(&pool, user_id, 25).await;
     let config = server_config(pool.clone());
 
@@ -131,13 +127,14 @@ async fn mining_queue_add_post_inserts_queue_item() {
         "expected mining run after add in page body:\n{body}"
     );
 
-    let queue_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND miningAreaId = ?")
-            .bind(fixture.inner.robot_id)
-            .bind(fixture.inner.mining_area_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to count mining queue rows");
+    let queue_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND miningAreaId = ?",
+    )
+    .bind(fixture.inner.robot_id)
+    .bind(fixture.inner.mining_area_id)
+    .fetch_one(&pool)
+    .await
+    .expect("failed to count mining queue rows");
     assert_eq!(queue_count, 1);
 
     fixture.inner.cleanup(&pool, true).await;
@@ -153,17 +150,15 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-queue-fill");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = IdleMiningAreaFixture::create(&pool, user_id, 100).await;
     sqlx::query("UPDATE User SET miningQueueSize = 3 WHERE id = ?")
         .bind(user_id)
@@ -196,14 +191,18 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
         "expected filled queue runs in page body:\n{body}"
     );
 
-    let queue_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND miningAreaId = ?")
-            .bind(fixture.inner.robot_id)
-            .bind(fixture.inner.mining_area_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to count mining queue rows");
-    assert!(queue_count >= 2, "expected fill to enqueue multiple runs, got {queue_count}");
+    let queue_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM MiningQueue WHERE robotId = ? AND miningAreaId = ?",
+    )
+    .bind(fixture.inner.robot_id)
+    .bind(fixture.inner.mining_area_id)
+    .fetch_one(&pool)
+    .await
+    .expect("failed to count mining queue rows");
+    assert!(
+        queue_count >= 2,
+        "expected fill to enqueue multiple runs, got {queue_count}"
+    );
 
     fixture.inner.cleanup(&pool, true).await;
 }

@@ -115,12 +115,10 @@ mod tests {
 
     #[test]
     fn shop_catalog_ore_records_maps_overview_rows() {
-        let records = shop_catalog_ore_records(vec![
-            robominer_db::MiningAreaOverviewOreRecord {
-                ore_id: 7,
-                ore_name: "Cerbonium".to_string(),
-            },
-        ]);
+        let records = shop_catalog_ore_records(vec![robominer_db::MiningAreaOverviewOreRecord {
+            ore_id: 7,
+            ore_name: "Cerbonium".to_string(),
+        }]);
 
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].id, 7);

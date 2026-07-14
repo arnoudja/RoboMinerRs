@@ -5,8 +5,10 @@ use crate::assets::{
     robot_part_ore_price_id,
 };
 use crate::users::{touch_user_last_login_time, user_exists};
-use crate::{RobotPartTransaction, RobotPartTransactionRejection, RobotPartTransactionRequest,
-    SellAllUnassignedRobotPartsResult};
+use crate::{
+    RobotPartTransaction, RobotPartTransactionRejection, RobotPartTransactionRequest,
+    SellAllUnassignedRobotPartsResult,
+};
 
 pub async fn buy_robot_part(
     pool: &MySqlPool,
@@ -83,8 +85,7 @@ pub async fn sell_robot_part(
 pub async fn sell_all_unassigned_robot_parts(
     pool: &MySqlPool,
     user_id: i64,
-) -> Result<Result<SellAllUnassignedRobotPartsResult, RobotPartTransactionRejection>, sqlx::Error>
-{
+) -> Result<Result<SellAllUnassignedRobotPartsResult, RobotPartTransactionRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     if !user_exists(&mut transaction, user_id).await? {

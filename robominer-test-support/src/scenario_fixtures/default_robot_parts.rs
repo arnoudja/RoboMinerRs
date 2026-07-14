@@ -15,10 +15,8 @@ pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
 
     let ore_id = insert_row_id(
         pool,
-        sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!(
-            "{}-ore",
-            unique_prefix("rust-default")
-        )),
+        sqlx::query("INSERT INTO Ore (oreName) VALUES (?)")
+            .bind(format!("{}-ore", unique_prefix("rust-default"))),
     )
     .await;
     let ore_price_id = insert_row_id(

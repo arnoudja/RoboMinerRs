@@ -1,6 +1,6 @@
-use super::helpers::{generated_robot_name, robot_part_baseline, valid_robot_name};
 use super::super::parameters::robot_parameters_for_parts;
 use super::super::{PendingRobotUpdateState, RequestedRobotParts, RobotUpdateState};
+use super::helpers::{generated_robot_name, robot_part_baseline, valid_robot_name};
 use crate::RobotPartRecord;
 
 fn scaled_robot_part(scale: i32) -> RobotPartRecord {
@@ -129,10 +129,7 @@ fn valid_robot_name_enforces_length_and_charset() {
 #[test]
 fn generated_robot_name_truncates_long_usernames() {
     assert_eq!(generated_robot_name("short", 3), "short_3");
-    assert_eq!(
-        generated_robot_name("verylongusername", 4),
-        "verylongus_4"
-    );
+    assert_eq!(generated_robot_name("verylongusername", 4), "verylongus_4");
 }
 
 #[test]

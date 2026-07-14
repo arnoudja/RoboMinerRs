@@ -84,8 +84,8 @@ fn expression_move_blocked_selects_false_branch() {
 
 #[test]
 fn while_move_statement_reemits_until_action_result_completes() {
-    let program =
-        compile_executable_source("while (move(1) >= 1) { mine(); }").expect("program should compile");
+    let program = compile_executable_source("while (move(1) >= 1) { mine(); }")
+        .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 

@@ -19,17 +19,15 @@ async fn account_update_post_persists_profile_changes() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-account");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
     let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
 
@@ -55,12 +53,11 @@ async fn account_update_post_persists_profile_changes() {
         "expected updated username in account page body:\n{body}"
     );
 
-    let stored: (String, String) =
-        sqlx::query_as("SELECT username, email FROM User WHERE id = ?")
-            .bind(user_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to load updated user");
+    let stored: (String, String) = sqlx::query_as("SELECT username, email FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load updated user");
     assert_eq!(stored.0, updated_username);
     assert_eq!(stored.1, updated_email);
 

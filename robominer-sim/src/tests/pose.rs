@@ -104,4 +104,3 @@ fn rally_pose_after_rotate_and_move() {
     assert!(y_pos > 0.0);
     assert_close(orientation, 180.0);
 }
-

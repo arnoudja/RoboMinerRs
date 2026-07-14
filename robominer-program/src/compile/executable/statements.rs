@@ -3,10 +3,10 @@ use crate::types::{
     VariableOperator,
 };
 
+use super::super::input::{CompileInput, expect_char, robot_property_mutation_error};
 use super::actions::parse_executable_action_statement;
 use super::expect_declared_variable;
 use super::expressions::parse_executable_expression;
-use super::super::input::{expect_char, robot_property_mutation_error, CompileInput};
 
 pub(super) fn parse_executable_sequence(
     input: &mut CompileInput,
@@ -358,10 +358,7 @@ fn parse_executable_variable_statement(
             )));
         }
         let property = RobotProperty::from_name(&property_name, input.current_line)?;
-        if input.eat_char('=', false)
-            || input.eat_sequence("++")
-            || input.eat_sequence("--")
-        {
+        if input.eat_char('=', false) || input.eat_sequence("++") || input.eat_sequence("--") {
             return Err(robot_property_mutation_error(input.current_line));
         }
         return Ok(Some(ExecutableStatement::Expression(

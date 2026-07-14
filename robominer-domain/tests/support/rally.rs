@@ -3,11 +3,11 @@ use robominer_db::MiningAreaOreSupplyRecord;
 use robominer_domain::{
     MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
 };
+use robominer_program::compatibility_fixture_source;
 use robominer_test_support::{
     golden_mining_area_record, golden_robot_record, mining_rally_queue_record,
     ore_seeker_robot_record, ore_supply_record,
 };
-use robominer_program::compatibility_fixture_source;
 
 pub struct RallyScenario {
     pub name: &'static str,

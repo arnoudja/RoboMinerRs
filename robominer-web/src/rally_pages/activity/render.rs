@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use super::super::{ACTIVITY_RALLY_MAX_LIMIT, ACTIVITY_SIDEBAR_QUEUE_PREVIEW};
 use crate::help_pages;
 use crate::html::{escape_html, format_relative_time_millis, format_utc_millis, layout};
 use crate::rally_pages::{ActivityFeedQuery, ActivityPageState, ActivityRallyFilter};
-use super::super::{ACTIVITY_RALLY_MAX_LIMIT, ACTIVITY_SIDEBAR_QUEUE_PREVIEW};
 
 pub fn render_activity_page(
     username: String,
@@ -169,19 +169,16 @@ fn render_activity_feed_stats(
 fn render_activity_rallies(
     body: &mut String,
     state: &ActivityPageState,
-    participant_map: &HashMap<
-        i64,
-        Vec<&robominer_db::ActivityRecentRallyParticipantRecord>,
-    >,
+    participant_map: &HashMap<i64, Vec<&robominer_db::ActivityRecentRallyParticipantRecord>>,
     now_millis: i64,
     viewer_username: &str,
     feed_query: ActivityFeedQuery,
 ) {
-    body.push_str(
-        r#"<section class="activity-rallies" aria-labelledby="activity-rallies-title">"#,
-    );
+    body.push_str(r#"<section class="activity-rallies" aria-labelledby="activity-rallies-title">"#);
     body.push_str(r#"<div class="activity-rallies-header">"#);
-    body.push_str(r#"<h2 id="activity-rallies-title" class="activity-section-title">Latest rallies</h2>"#);
+    body.push_str(
+        r#"<h2 id="activity-rallies-title" class="activity-section-title">Latest rallies</h2>"#,
+    );
     body.push_str(r#"<div class="activity-rallies-controls">"#);
     render_activity_rally_filter(body, feed_query);
     render_activity_area_filter(body, feed_query, &state.rally_areas);
@@ -238,16 +235,9 @@ fn activity_player_count_label(participant_count: usize) -> String {
 
 fn rally_participants_for_card(
     rally: &robominer_db::ActivityRecentRallyRecord,
-    participant_map: &HashMap<
-        i64,
-        Vec<&robominer_db::ActivityRecentRallyParticipantRecord>,
-    >,
+    participant_map: &HashMap<i64, Vec<&robominer_db::ActivityRecentRallyParticipantRecord>>,
 ) -> Vec<(i32, String, String)> {
-    let mut rally_participants = vec![(
-        0_i32,
-        rally.robot_name.clone(),
-        rally.username.clone(),
-    )];
+    let mut rally_participants = vec![(0_i32, rally.robot_name.clone(), rally.username.clone())];
     if let Some(other_participants) = participant_map.get(&rally.mining_queue_id) {
         for participant in other_participants {
             if participant.player_number > 0 {
@@ -275,10 +265,7 @@ fn viewer_participated_in_rally(
 fn render_activity_rally_card(
     body: &mut String,
     rally: &robominer_db::ActivityRecentRallyRecord,
-    participant_map: &HashMap<
-        i64,
-        Vec<&robominer_db::ActivityRecentRallyParticipantRecord>,
-    >,
+    participant_map: &HashMap<i64, Vec<&robominer_db::ActivityRecentRallyParticipantRecord>>,
     now_millis: i64,
     viewer_username: &str,
     feed_query: ActivityFeedQuery,
@@ -289,11 +276,7 @@ fn render_activity_rally_card(
     let ended_relative = format_relative_time_millis(rally.mining_end_time_millis, now_millis);
     let ended_absolute = format_utc_millis(rally.mining_end_time_millis);
     let replay_available = rally.rally_result_id.is_some();
-    let card_tag = if replay_available {
-        "a"
-    } else {
-        "article"
-    };
+    let card_tag = if replay_available { "a" } else { "article" };
     let card_class = if replay_available {
         "activity-rally-card activity-rally-card-replayable"
     } else {
@@ -352,7 +335,9 @@ fn render_activity_rally_card(
         };
         let is_viewer = username == viewer_username;
         let participant_class = if is_viewer {
-            format!("activity-rally-participant activity-rally-participant-{index} activity-rally-participant-self")
+            format!(
+                "activity-rally-participant activity-rally-participant-{index} activity-rally-participant-self"
+            )
         } else {
             format!("activity-rally-participant activity-rally-participant-{index}")
         };
@@ -395,9 +380,7 @@ fn render_activity_sidebar_queue(
     }
 
     body.push_str(r#"<section class="activity-sidebar-panel">"#);
-    body.push_str(
-        r#"<h2 class="activity-section-title">Your mining queue</h2>"#,
-    );
+    body.push_str(r#"<h2 class="activity-section-title">Your mining queue</h2>"#);
     if let Some(summary) = asset_summary {
         body.push_str(&format!(
             r#"<p class="activity-section-hint">{}</p>"#,
@@ -419,9 +402,7 @@ fn render_activity_sidebar_queue(
         ));
     }
     body.push_str("</ul>");
-    body.push_str(
-        r#"<a class="activity-queue-manage" href="miningQueue">Manage queue</a>"#,
-    );
+    body.push_str(r#"<a class="activity-queue-manage" href="miningQueue">Manage queue</a>"#);
     body.push_str("</section>");
 }
 
@@ -449,10 +430,10 @@ fn render_activity_sidebar_recent_players(
     body.push_str(
         r#"<section class="activity-sidebar-panel activity-sidebar-players" aria-labelledby="activity-players-title">"#,
     );
-    body.push_str(r#"<h2 id="activity-players-title" class="activity-section-title">Recent players</h2>"#);
     body.push_str(
-        r#"<p class="activity-section-hint">Players active most recently.</p>"#,
+        r#"<h2 id="activity-players-title" class="activity-section-title">Recent players</h2>"#,
     );
+    body.push_str(r#"<p class="activity-section-hint">Players active most recently.</p>"#);
     body.push_str(r#"<ul class="activity-player-list">"#);
     for user in recent_users {
         let login_relative = format_relative_time_millis(user.last_login_time_millis, now_millis);
@@ -466,4 +447,3 @@ fn render_activity_sidebar_recent_players(
     }
     body.push_str("</ul></section>");
 }
-

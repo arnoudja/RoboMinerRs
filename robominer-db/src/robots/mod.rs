@@ -60,10 +60,10 @@ pub(crate) struct RobotParameters {
     scan_distance: i32,
 }
 
+mod parameters;
 mod read;
 mod write;
-mod parameters;
 
+pub(crate) use parameters::robot_is_recharging;
 pub use read::*;
 pub use write::*;
-pub(crate) use parameters::robot_is_recharging;

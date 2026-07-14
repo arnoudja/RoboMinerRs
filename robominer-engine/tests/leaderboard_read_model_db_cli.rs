@@ -137,4 +137,3 @@ async fn leaderboard_states_report_ranked_rows() {
         .execute(&pool)
         .await;
 }
-

@@ -24,7 +24,10 @@ pub(crate) enum ExpressionWork {
     ApplyBinary(Operator),
 }
 
-pub(crate) fn schedule_expression(work: &mut Vec<ExpressionWork>, expression: &ExecutableExpression) {
+pub(crate) fn schedule_expression(
+    work: &mut Vec<ExpressionWork>,
+    expression: &ExecutableExpression,
+) {
     match expression {
         ExecutableExpression::Number(value) => {
             work.push(ExpressionWork::PushNumber(*value));

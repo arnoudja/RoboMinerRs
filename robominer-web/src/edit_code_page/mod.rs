@@ -164,14 +164,18 @@ pub(super) fn edit_code_save_block_reason(
     source_code: &str,
 ) -> Option<&'static str> {
     if source_name.trim().is_empty() {
-        return Some(robominer_domain::program_source_write_rejection_player_message(
-            robominer_db::ProgramSourceWriteRejection::EmptySourceName,
-        ));
+        return Some(
+            robominer_domain::program_source_write_rejection_player_message(
+                robominer_db::ProgramSourceWriteRejection::EmptySourceName,
+            ),
+        );
     }
     if source_code.trim().is_empty() {
-        return Some(robominer_domain::program_source_write_rejection_player_message(
-            robominer_db::ProgramSourceWriteRejection::EmptySourceCode,
-        ));
+        return Some(
+            robominer_domain::program_source_write_rejection_player_message(
+                robominer_db::ProgramSourceWriteRejection::EmptySourceCode,
+            ),
+        );
     }
     None
 }
@@ -221,7 +225,6 @@ pub(super) fn program_source_write_rejection_message(
 ) -> &'static str {
     robominer_domain::program_source_write_rejection_player_message(rejection)
 }
-
 
 mod render;
 

@@ -19,14 +19,11 @@ async fn delete_program_source_for_user_rejects_linked_robot() {
         .await;
     fixture.robot_ids.borrow_mut().push(robot_id);
 
-    let rejection = delete_program_source_for_user(
-        &pool,
-        fixture.user_id,
-        fixture.program_source_id,
-    )
-    .await
-    .expect("delete should not fail at sql layer")
-    .expect_err("linked robot should block delete");
+    let rejection =
+        delete_program_source_for_user(&pool, fixture.user_id, fixture.program_source_id)
+            .await
+            .expect("delete should not fail at sql layer")
+            .expect_err("linked robot should block delete");
 
     assert_eq!(rejection, ProgramSourceWriteRejection::SourceInUse);
 
@@ -91,19 +88,13 @@ async fn delete_program_source_for_user_rejects_foreign_source() {
         .expect("failed to connect to test database");
     let fixture = ProgramSourceFixture::create(&pool).await;
 
-    let rejection = delete_program_source_for_user(
-        &pool,
-        fixture.other_user_id,
-        fixture.program_source_id,
-    )
-    .await
-    .expect("delete should not fail at sql layer")
-    .expect_err("other user should not delete foreign source");
+    let rejection =
+        delete_program_source_for_user(&pool, fixture.other_user_id, fixture.program_source_id)
+            .await
+            .expect("delete should not fail at sql layer")
+            .expect_err("other user should not delete foreign source");
 
-    assert_eq!(
-        rejection,
-        ProgramSourceWriteRejection::UnknownProgramSource
-    );
+    assert_eq!(rejection, ProgramSourceWriteRejection::UnknownProgramSource);
 
     fixture.cleanup(&pool).await;
 }

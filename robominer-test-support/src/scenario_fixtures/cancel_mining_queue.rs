@@ -47,7 +47,8 @@ impl CancelMiningQueueFixture {
             "test-password",
         )
         .await;
-        let ai_robot_id = insert_cli_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);").await;
+        let ai_robot_id =
+            insert_cli_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);").await;
         let robot_id = insert_cli_robot(pool, user_id, &format!("{prefix}-robot"), "mine();").await;
         let mining_area_id = insert_row_id(
             pool,
@@ -166,4 +167,3 @@ impl CancelMiningQueueFixture {
             .await;
     }
 }
-

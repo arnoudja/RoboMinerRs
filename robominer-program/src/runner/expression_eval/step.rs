@@ -1,7 +1,9 @@
-use super::resume::ExpressionResume;
-use super::schedule::{evaluate_operator, schedule_expression, ExpressionWork, Truthy};
 use super::super::{ExecutableRunner, StepOutcome};
-use crate::pending_physical_action::{ContinuePhysicalAction, PendingPhysicalAction, PhysicalCompletion};
+use super::resume::ExpressionResume;
+use super::schedule::{ExpressionWork, Truthy, evaluate_operator, schedule_expression};
+use crate::pending_physical_action::{
+    ContinuePhysicalAction, PendingPhysicalAction, PhysicalCompletion,
+};
 use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -70,7 +72,10 @@ impl ExecutableRunner {
             }
         }
 
-        if matches!(work, ExpressionWork::PushDynamicMove | ExpressionWork::PushDynamicRotate) {
+        if matches!(
+            work,
+            ExpressionWork::PushDynamicMove | ExpressionWork::PushDynamicRotate
+        ) {
             return self.step_expression_move_or_rotate(action_result, None);
         }
 
@@ -96,9 +101,9 @@ impl ExecutableRunner {
                 eval.values.pop().unwrap_or(0.0)
             };
             *action_result = None;
-            return StepOutcome::Action(self.queue_pending_action(ExecutableAction::StartScan(
-                direction,
-            )));
+            return StepOutcome::Action(
+                self.queue_pending_action(ExecutableAction::StartScan(direction)),
+            );
         }
 
         if matches!(
@@ -191,8 +196,7 @@ impl ExecutableRunner {
             ExpressionWork::ApplyBinary(operator) => {
                 let right = eval.values.pop().unwrap_or(0.0);
                 let left = eval.values.pop().unwrap_or(0.0);
-                eval.values
-                    .push(evaluate_operator(operator, left, right));
+                eval.values.push(evaluate_operator(operator, left, right));
                 eval.index += 1;
             }
             ExpressionWork::PushStartScan => unreachable!("PushStartScan handled above"),
@@ -226,16 +230,10 @@ impl ExecutableRunner {
             }
         });
         *action_result = None;
-        StepOutcome::Action(self.start_pending_physical(
-            action,
-            PhysicalCompletion::Expression,
-        ))
+        StepOutcome::Action(self.start_pending_physical(action, PhysicalCompletion::Expression))
     }
 
-    fn step_expression_dump(
-        &mut self,
-        action_result: &mut Option<f64>,
-    ) -> StepOutcome {
+    fn step_expression_dump(&mut self, action_result: &mut Option<f64>) -> StepOutcome {
         if let Some(pending) = self.pending_action {
             if let Some(value) = action_result.take() {
                 self.pending_action = None;

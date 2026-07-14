@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
+use super::{
+    add_robot_stat_entry, push_robot_highlight, render_robot_part_select, robot_apply_block_reason,
+    robot_memory_percent,
+};
 use crate::html::{escape_html, format_period, layout, selected_attr};
 use crate::robot_page::RobotPageState;
-use super::{
-    add_robot_stat_entry, push_robot_highlight, render_robot_part_select,
-    robot_apply_block_reason, robot_memory_percent,
-};
 
 pub(super) fn render_robot_page(
     username: String,
@@ -18,7 +18,11 @@ pub(super) fn render_robot_page(
         part_asset_map.entry(asset.type_id).or_default().push(asset);
     }
 
-    let pending_count = state.robots.iter().filter(|robot| robot.change_pending).count();
+    let pending_count = state
+        .robots
+        .iter()
+        .filter(|robot| robot.change_pending)
+        .count();
 
     let mut robots = state.robots.clone();
     robots.sort_by(|left, right| {
@@ -55,7 +59,9 @@ pub(super) fn render_robot_page(
         }
         body.push_str("</div></section>");
         body.push_str(r#"<div class="robot-config-area">"#);
-        body.push_str(r#"<form id="robotForm" action="robot" method="post" class="robot-config-form">"#);
+        body.push_str(
+            r#"<form id="robotForm" action="robot" method="post" class="robot-config-form">"#,
+        );
         for robot in &robots {
             render_robot_config_panel(
                 &mut body,
@@ -576,10 +582,16 @@ fn render_robot_config_panel(
         escape_html(&robot.robot_name)
     ));
     if robot.change_pending {
-        body.push_str(r#"<span class="robot-status-badge robot-status-pending">Changes pending</span>"#);
+        body.push_str(
+            r#"<span class="robot-status-badge robot-status-pending">Changes pending</span>"#,
+        );
     } else {
-        body.push_str(r#"<span class="robot-status-badge robot-status-ready">Ready to apply</span>"#);
-        body.push_str(r#"<span class="robot-status-badge robot-status-dirty" hidden>Unsaved changes</span>"#);
+        body.push_str(
+            r#"<span class="robot-status-badge robot-status-ready">Ready to apply</span>"#,
+        );
+        body.push_str(
+            r#"<span class="robot-status-badge robot-status-dirty" hidden>Unsaved changes</span>"#,
+        );
     }
     body.push_str("</header>");
     body.push_str(&format!(
@@ -713,17 +725,33 @@ fn render_robot_config_panel(
     );
     body.push_str("</div></section>");
 
-    body.push_str(r#"<section class="robot-config-section"><h3 class="robot-section-title">Performance</h3>"#);
+    body.push_str(
+        r#"<section class="robot-config-section"><h3 class="robot-section-title">Performance</h3>"#,
+    );
     body.push_str(r#"<div class="robot-stat-highlights">"#);
     push_robot_highlight(body, "Ore cap", robot.max_ore, " units");
     push_robot_highlight(body, "Mining", robot.mining_speed, " u/c");
     push_robot_highlight(body, "CPU", robot.cpu_speed, " i/c");
     push_robot_highlight(body, "Cycles", robot.max_turns, "");
     body.push_str("</div>");
-    render_robot_memory_progress(body, program_size, robot.memory_size, memory_percent, memory_overflow);
+    render_robot_memory_progress(
+        body,
+        program_size,
+        robot.memory_size,
+        memory_percent,
+        memory_overflow,
+    );
     body.push_str(r#"<dl class="robot-stat-grid">"#);
-    add_robot_stat_entry(body, "Forward speed:", format!("{:.2} s/c", robot.forward_speed));
-    add_robot_stat_entry(body, "Backward speed:", format!("{:.2} s/c", robot.backward_speed));
+    add_robot_stat_entry(
+        body,
+        "Forward speed:",
+        format!("{:.2} s/c", robot.forward_speed),
+    );
+    add_robot_stat_entry(
+        body,
+        "Backward speed:",
+        format!("{:.2} s/c", robot.backward_speed),
+    );
     add_robot_stat_entry(body, "Rotate speed:", format!("{} d/c", robot.rotate_speed));
     add_robot_stat_entry(body, "Size:", format!("{:.2} s", robot.robot_size));
     add_robot_stat_entry(body, "Scan time:", format!("{} cycles", robot.scan_time));
@@ -732,7 +760,11 @@ fn render_robot_config_panel(
     body.push_str("</dl></section>");
 
     body.push_str(r#"<div class="robot-apply">"#);
-    body.push_str(&render_robot_apply_action(robot, program_sources, disabled_attr));
+    body.push_str(&render_robot_apply_action(
+        robot,
+        program_sources,
+        disabled_attr,
+    ));
     body.push_str("</div></div>");
 }
 
@@ -743,11 +775,7 @@ fn render_robot_memory_progress(
     percent: f64,
     overflow: bool,
 ) {
-    let overflow_class = if overflow {
-        " robot-progress-over"
-    } else {
-        ""
-    };
+    let overflow_class = if overflow { " robot-progress-over" } else { "" };
     body.push_str(&format!(r#"<div class="robot-progress{overflow_class}">"#));
     body.push_str(&format!(
         r#"<div class="robot-progress-heading"><span>Memory used</span><span class="robot-progress-value">{}/{}</span></div>"#,
@@ -783,10 +811,7 @@ fn render_robot_apply_action(
     html
 }
 
-fn robot_apply_button(
-    block_reason: Option<&str>,
-    disabled_attr: &str,
-) -> String {
+fn robot_apply_button(block_reason: Option<&str>, disabled_attr: &str) -> String {
     let title_attr = block_reason
         .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
         .unwrap_or_default();
@@ -795,7 +820,7 @@ fn robot_apply_button(
             r#"<button type="submit" class="robot-btn robot-btn-primary" disabled{title_attr}{disabled_attr}>Apply changes</button>"#
         )
     } else {
-        r#"<button type="submit" class="robot-btn robot-btn-primary">Apply changes</button>"#.to_string()
+        r#"<button type="submit" class="robot-btn robot-btn-primary">Apply changes</button>"#
+            .to_string()
     }
 }
-

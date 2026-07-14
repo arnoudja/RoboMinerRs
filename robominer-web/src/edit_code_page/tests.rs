@@ -4,15 +4,15 @@ use std::path::PathBuf;
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
+use super::render::{
+    edit_code_line_count, render_edit_code_line_numbers, render_edit_code_page,
+    render_edit_code_source_field,
+};
 use super::{
     EditCodePageState, EditCodeProgramSource, default_edit_code_program_source,
     edit_code_apply_server_block_reason, edit_code_page, edit_code_save_block_reason,
     format_program_source_apply_message, program_source_write_rejection_message,
     selected_edit_code_source,
-};
-use super::render::{
-    edit_code_line_count, render_edit_code_line_numbers, render_edit_code_page,
-    render_edit_code_source_field,
 };
 use robominer_domain::program_source_apply_warning_message;
 
@@ -100,7 +100,9 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(!html.contains(r#"id="changeProgramSourceForm""#));
     assert!(!html.contains(r#"<button type="submit">Open</button>"#));
     assert!(html.contains(r#"class="edit-code-deck""#));
-    assert!(html.contains(r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="11""#));
+    assert!(html.contains(
+        r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="11""#
+    ));
     assert!(html.contains(r#"class="edit-code-program-card" data-source-id="-1""#));
     assert!(html.contains(r#"id="editCodeSummarySelected""#));
     assert!(html.contains(r#"id="editCodeSummaryLinkedRobots""#));
@@ -117,12 +119,20 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(html.contains("// &lt;mine&gt;"));
     assert!(html.contains(r#">Delete program</button>"#));
     assert!(html.contains(r#">Save program</button>"#));
-    assert!(html.contains(r#"class="edit-code-banner edit-code-banner-compile">Compile &lt;error&gt;</p>"#));
+    assert!(html.contains(
+        r#"class="edit-code-banner edit-code-banner-compile">Compile &lt;error&gt;</p>"#
+    ));
     assert!(html.contains(r#"class="edit-code-banner edit-code-banner-error">Unable to save program: Save &lt;warning&gt;</p>"#));
-    assert!(html.contains(r#"class="edit-code-status-badge edit-code-status-dirty" hidden>Unsaved changes</span>"#));
+    assert!(html.contains(
+        r#"class="edit-code-status-badge edit-code-status-dirty" hidden>Unsaved changes</span>"#
+    ));
     assert!(html.contains(r#"class="edit-code-btn edit-code-btn-secondary edit-code-reset-btn" hidden>Reset changes</button>"#));
-    assert!(html.contains(r#"class="edit-code-save-helper">Save compiles and stores your program source.</p>"#));
-    assert!(html.contains(r#"class="edit-code-delete-helper">Delete removes this program from your library.</p>"#));
+    assert!(html.contains(
+        r#"class="edit-code-save-helper">Save compiles and stores your program source.</p>"#
+    ));
+    assert!(html.contains(
+        r#"class="edit-code-delete-helper">Delete removes this program from your library.</p>"#
+    ));
     assert!(html.contains("Compiled size"));
     assert!(html.contains(">12<"));
     assert!(html.contains("function syncLineNumbersForTextarea(textarea)"));
@@ -180,8 +190,12 @@ fn edit_code_shows_success_banner_and_claim_feedback() {
         },
     );
 
-    assert!(html.contains(r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#));
-    assert!(html.contains(r#"class="edit-code-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#));
+    assert!(
+        html.contains(r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#)
+    );
+    assert!(html.contains(
+        r#"class="edit-code-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#
+    ));
     assert!(html.contains(r#"class="claim-banner-reward-amount">+5</span>"#));
     assert!(html.contains(r#"href="miningResults">View results</a>"#));
 }
@@ -197,13 +211,15 @@ fn edit_code_default_program_is_rendered_when_no_source_is_selected() {
             program_sources: Vec::new(),
             message: Some("Unable to save program: Save <warning>".to_string()),
             claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
+                claimed_queues: 0,
+                ore_rewards: vec![],
+            },
         },
     );
 
-    assert!(html.contains(r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="-1""#));
+    assert!(html.contains(
+        r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="-1""#
+    ));
     assert!(html.contains(r#"id="editCodePanel-1""#));
     assert!(html.contains("move(1);"));
     assert!(html.contains("mine();"));
@@ -240,9 +256,9 @@ fn edit_code_rendering_keeps_compiled_size_line_for_invalid_program() {
             }],
             message: None,
             claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
+                claimed_queues: 0,
+                ore_rewards: vec![],
+            },
         },
     );
 
@@ -280,9 +296,9 @@ fn edit_code_shows_disabled_delete_when_program_is_linked() {
             }],
             message: None,
             claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
+                claimed_queues: 0,
+                ore_rewards: vec![],
+            },
         },
     );
 
@@ -367,12 +383,20 @@ fn linked_verified_edit_code_state() -> EditCodePageState {
 
 #[test]
 fn edit_code_shows_update_linked_robots_when_verified_and_linked() {
-    let html = render_edit_code_page("Player".to_string(), None, &linked_verified_edit_code_state());
+    let html = render_edit_code_page(
+        "Player".to_string(),
+        None,
+        &linked_verified_edit_code_state(),
+    );
 
     assert!(html.contains(r#"id="editCodeApplyForm11""#));
     assert!(html.contains(r#"class="edit-code-apply-form""#));
     assert!(html.contains(">Update linked robots</button>"));
-    assert!(!html.contains(r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#));
+    assert!(
+        !html.contains(
+            r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#
+        )
+    );
     assert!(html.contains("Idle robots with enough memory are updated immediately"));
     assert!(html.contains(r#"name="requestType" value="applyRobots""#));
 }
@@ -399,7 +423,11 @@ fn edit_code_disables_update_linked_robots_when_compile_error() {
 
     let html = render_edit_code_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#));
+    assert!(
+        html.contains(
+            r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#
+        )
+    );
     assert!(html.contains("Save and fix compile errors before updating linked robots."));
 }
 
@@ -478,10 +506,7 @@ fn edit_code_line_numbers_match_source_line_count() {
     assert_eq!(edit_code_line_count(""), 1);
     assert_eq!(edit_code_line_count("mine();"), 1);
     assert_eq!(edit_code_line_count("move(1);\nrotate(90);"), 2);
-    assert_eq!(
-        render_edit_code_line_numbers("a\nb\nc"),
-        "1<br>2<br>3"
-    );
+    assert_eq!(render_edit_code_line_numbers("a\nb\nc"), "1<br>2<br>3");
     assert!(render_edit_code_source_field(7, "mine();", "").contains(
         r#"<div class="edit-code-line-numbers" id="sourceCodeLines7" aria-hidden="true">1</div>"#
     ));

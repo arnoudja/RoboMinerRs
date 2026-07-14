@@ -346,8 +346,8 @@ pub fn compatibility_fixture_source(name: &str) -> &'static str {
 }
 
 #[cfg(test)]
-pub fn compatibility_fixtures_with_expected_size(
-) -> impl Iterator<Item = &'static CompatibilityFixture> {
+pub fn compatibility_fixtures_with_expected_size()
+-> impl Iterator<Item = &'static CompatibilityFixture> {
     compatibility_fixtures()
         .iter()
         .filter(|fixture| fixture.expected_size.is_some())

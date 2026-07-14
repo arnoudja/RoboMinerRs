@@ -4,11 +4,11 @@ use crate::loadout::{
     PoolRallyOutcome, RobotLoadout, RobotLoadoutParts,
 };
 use crate::simulation::{completed_pool_rally_record, run_pool_loadout_with_seed};
+use robominer_db::CompletedPoolItemOreRecord;
 use robominer_test_support::{
     ore_supply_record, pool_item_record, pool_record, robot_record, unit_test_mining_area_record,
     unit_test_robot_record,
 };
-use robominer_db::CompletedPoolItemOreRecord;
 
 #[test]
 fn pool_loadout_carries_pool_area_and_item_robot_data() {

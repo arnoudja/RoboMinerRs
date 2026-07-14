@@ -107,7 +107,12 @@ pub fn golden_robot_record(id: i64, source_code: &str) -> RobotRecord {
 }
 
 pub fn unit_test_robot_record(id: i64, source_code: &str) -> RobotRecord {
-    robot_record_with_stats(id, "Test robot", source_code, RobotStats::unit_test_default())
+    robot_record_with_stats(
+        id,
+        "Test robot",
+        source_code,
+        RobotStats::unit_test_default(),
+    )
 }
 
 pub fn ore_seeker_robot_record(id: i64, source_code: &str) -> RobotRecord {

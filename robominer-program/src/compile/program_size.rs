@@ -38,9 +38,7 @@ fn statement_size(statement: &ExecutableStatement) -> usize {
                     .unwrap_or(0)
         }
         ExecutableStatement::While {
-            condition,
-            body,
-            ..
+            condition, body, ..
         } => {
             1 + expression_size(condition)
                 + body.as_ref().map(|body| statement_size(body)).unwrap_or(0)
@@ -76,7 +74,10 @@ fn expression_size(expression: &ExecutableExpression) -> usize {
         | ExecutableExpression::OreType => 1,
         ExecutableExpression::Ore(expression) => 1 + expression_size(expression),
         ExecutableExpression::Scan(direction) => {
-            1 + direction.as_ref().map(|expression| expression_size(expression)).unwrap_or(0)
+            1 + direction
+                .as_ref()
+                .map(|expression| expression_size(expression))
+                .unwrap_or(0)
         }
         ExecutableExpression::RobotProperty(_) => 1,
         ExecutableExpression::Move(expression)
@@ -91,9 +92,7 @@ fn action_expression_size(action: &ExecutableAction) -> usize {
         ExecutableAction::Mine
         | ExecutableAction::StartScan(_)
         | ExecutableAction::AwaitScanResult => 1,
-        ExecutableAction::Move(_)
-        | ExecutableAction::Rotate(_)
-        | ExecutableAction::Dump(_) => 2,
+        ExecutableAction::Move(_) | ExecutableAction::Rotate(_) | ExecutableAction::Dump(_) => 2,
     }
 }
 

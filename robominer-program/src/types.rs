@@ -28,7 +28,7 @@ impl ExecutableProgram {
         &self.actions
     }
 
-pub fn requires_runtime(&self) -> bool {
+    pub fn requires_runtime(&self) -> bool {
         self.requires_runtime
     }
 }

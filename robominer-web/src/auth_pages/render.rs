@@ -1,18 +1,21 @@
+use crate::auth_pages::LoginPageState;
 use crate::html::{escape_html, page_footer};
 use crate::request_helpers::auth_page_href;
-use crate::auth_pages::LoginPageState;
 
 pub(super) fn render_login_page(state: &LoginPageState) -> String {
     let mut body = String::from(r#"<div class="auth-page">"#);
-    render_auth_header(&mut body, state.show_signup, state.allow_signup, state.return_to.as_deref());
+    render_auth_header(
+        &mut body,
+        state.show_signup,
+        state.allow_signup,
+        state.return_to.as_deref(),
+    );
     body.push_str(r#"<div class="auth-shell">"#);
     body.push_str(r#"<div class="auth-card">"#);
     render_login_form(&mut body, state);
     render_signup_form(&mut body, state);
     body.push_str("</div>");
-    body.push_str(
-        r#"<p class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#,
-    );
+    body.push_str(r#"<p class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#);
     body.push_str("</div></div>");
     render_auth_scripts(&mut body);
 
@@ -37,7 +40,12 @@ pub(super) fn render_login_page(state: &LoginPageState) -> String {
     )
 }
 
-fn render_auth_header(body: &mut String, show_signup: bool, allow_signup: bool, return_to: Option<&str>) {
+fn render_auth_header(
+    body: &mut String,
+    show_signup: bool,
+    allow_signup: bool,
+    return_to: Option<&str>,
+) {
     body.push_str(r#"<header class="auth-header">"#);
     body.push_str(r#"<p class="auth-brand">RoboMiner</p>"#);
     body.push_str(r#"<nav class="auth-tabs" aria-label="Authentication">"#);
@@ -123,7 +131,11 @@ fn render_auth_scripts(body: &mut String) {
 }
 
 fn render_login_form(body: &mut String, state: &LoginPageState) {
-    let hidden = if state.show_signup { r#" hidden="hidden""# } else { "" };
+    let hidden = if state.show_signup {
+        r#" hidden="hidden""#
+    } else {
+        ""
+    };
     let login_autofocus = if state.login_name.is_empty() {
         r#" autofocus="autofocus""#
     } else {
@@ -148,12 +160,13 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
         r#"<p class="auth-form-subtitle">Log in with your username or e-mail address.</p>"#,
     );
     if let Some(message) = &state.error_message
-        && !state.show_signup {
-            body.push_str(&format!(
-                r#"<p class="auth-banner-error">{}</p>"#,
-                escape_html(message)
-            ));
-        }
+        && !state.show_signup
+    {
+        body.push_str(&format!(
+            r#"<p class="auth-banner-error">{}</p>"#,
+            escape_html(message)
+        ));
+    }
     body.push_str(r#"<div class="auth-field">"#);
     body.push_str(r#"<label class="auth-label" for="loginName">Login name</label>"#);
     body.push_str(&format!(
@@ -194,7 +207,11 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
 }
 
 fn render_signup_form(body: &mut String, state: &LoginPageState) {
-    let hidden = if state.show_signup { "" } else { r#" hidden="hidden""# };
+    let hidden = if state.show_signup {
+        ""
+    } else {
+        r#" hidden="hidden""#
+    };
 
     body.push_str(&format!(
         r#"<form id="signupForm" class="auth-form" action="Login" method="post"{hidden}>"#,
@@ -251,4 +268,3 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
     ));
     body.push_str("</form>");
 }
-

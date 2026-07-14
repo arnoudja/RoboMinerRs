@@ -1,6 +1,8 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_mining_queue, insert_robot, insert_row_id, insert_user_ore_asset, unique_prefix};
+use crate::{
+    insert_mining_queue, insert_robot, insert_row_id, insert_user_ore_asset, unique_prefix,
+};
 
 pub struct RobotMiningAreaFixture {
     pub user_id: i64,

@@ -1,12 +1,12 @@
 #[path = "support/pool.rs"]
 mod pool;
 
+use pool::{PoolScenario, scenario as pool_scenario};
 use robominer_domain::{completed_pool_rally_record, run_pool_loadout_with_seed};
 use robominer_test_support::{
     load_fixture, round_golden_score, update_golden_enabled, write_fixture,
 };
 use serde::{Deserialize, Serialize};
-use pool::{PoolScenario, scenario as pool_scenario};
 
 const MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const FIXTURE_SUBDIR: &str = "pool";
@@ -101,7 +101,12 @@ fn pool_outcomes_match_golden_fixtures() {
     if update_golden_enabled(UPDATE_ENV_VAR) {
         for name in SCENARIOS {
             let scenario = pool_scenario(name);
-            write_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, name, &build_fixture(&scenario));
+            write_fixture(
+                MANIFEST_DIR,
+                FIXTURE_SUBDIR,
+                name,
+                &build_fixture(&scenario),
+            );
         }
         return;
     }

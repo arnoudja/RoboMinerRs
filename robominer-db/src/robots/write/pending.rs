@@ -1,5 +1,5 @@
-use crate::UpdateRobotConfigRequest;
 use super::super::{RobotParameters, RobotUpdateState};
+use crate::UpdateRobotConfigRequest;
 
 pub(super) async fn update_pending_robot_config(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,

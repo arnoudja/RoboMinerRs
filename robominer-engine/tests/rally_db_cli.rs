@@ -168,10 +168,9 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
         );
     }
 
-    let summary =
-        robominer_db::cleanup_old_claimed_mining_queue_items_for_robot(&pool, robot_id)
-            .await
-            .expect("cleanup should succeed");
+    let summary = robominer_db::cleanup_old_claimed_mining_queue_items_for_robot(&pool, robot_id)
+        .await
+        .expect("cleanup should succeed");
 
     assert_eq!(summary.queues_deleted, 2);
     assert_eq!(summary.rally_results_deleted, 2);
@@ -188,13 +187,12 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
     assert_eq!(remaining_ids, queue_ids[2..]);
 
     for deleted_queue_id in &queue_ids[..2] {
-        let ore_rows: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM MiningOreResult WHERE miningQueueId = ?",
-        )
-        .bind(deleted_queue_id)
-        .fetch_one(&pool)
-        .await
-        .expect("failed to count ore rows");
+        let ore_rows: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM MiningOreResult WHERE miningQueueId = ?")
+                .bind(deleted_queue_id)
+                .fetch_one(&pool)
+                .await
+                .expect("failed to count ore rows");
         assert_eq!(ore_rows, 0);
     }
 
@@ -263,13 +261,10 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
         insert_claimed_mining_queue(&pool, mining_area_id, robot_b_id, shared_rally_result_id)
             .await;
 
-    let mut queue_ids = vec![insert_claimed_mining_queue(
-        &pool,
-        mining_area_id,
-        robot_a_id,
-        shared_rally_result_id,
-    )
-    .await];
+    let mut queue_ids = vec![
+        insert_claimed_mining_queue(&pool, mining_area_id, robot_a_id, shared_rally_result_id)
+            .await,
+    ];
     for _ in 0..13 {
         let rally_result_id = insert_row_id(
             &pool,
@@ -281,10 +276,9 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
         );
     }
 
-    let summary =
-        robominer_db::cleanup_old_claimed_mining_queue_items_for_robot(&pool, robot_a_id)
-            .await
-            .expect("cleanup should succeed");
+    let summary = robominer_db::cleanup_old_claimed_mining_queue_items_for_robot(&pool, robot_a_id)
+        .await
+        .expect("cleanup should succeed");
 
     assert_eq!(summary.queues_deleted, 2);
     assert_eq!(summary.rally_results_deleted, 1);
@@ -329,4 +323,3 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
         .execute(&pool)
         .await;
 }
-

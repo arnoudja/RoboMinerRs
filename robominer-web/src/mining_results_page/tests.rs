@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use crate::{Request, ServerConfig};
 
-use super::render::{mining_result_unique_areas, mining_result_wallet_deltas, render_mining_results_page};
+use super::render::{
+    mining_result_unique_areas, mining_result_wallet_deltas, render_mining_results_page,
+};
 use super::{MiningResultsPageState, mining_results_page, selected_mining_queue_id};
 
 use std::path::PathBuf;
@@ -109,7 +111,8 @@ fn mining_results_requires_database_configuration() {
 
 #[test]
 fn mining_results_rendering_groups_results_and_escapes_fields() {
-    let html = render_mining_results_page("Player".to_string(), None, &sample_mining_results_state());
+    let html =
+        render_mining_results_page("Player".to_string(), None, &sample_mining_results_state());
 
     assert!(!html.contains(r#"<script src="js/miningresults.js"></script>"#));
     assert!(html.contains(r#"class="mining-results-page""#));
@@ -122,19 +125,23 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
     assert!(html.contains(r#"class="mining-results-wallet-delta""#));
     assert!(html.contains(r#"class="mining-results-wallet-delta-amount">+9</span>"#));
     assert!(html.contains(r#"class="mining-results-wallet-delta-amount">+18</span>"#));
-    assert!(html.contains(
-        r#"class="mining-results-robot-empty">No recent runs for Bot &amp; Two.</p>"#
-    ));
+    assert!(
+        html.contains(
+            r#"class="mining-results-robot-empty">No recent runs for Bot &amp; Two.</p>"#
+        )
+    );
     assert!(html.contains(r#"data-sort-reward="27""#));
     assert!(html.contains(r#"data-rally-result-id="99""#));
     assert!(html.contains("function applyMiningResultsSort()"));
     assert!(html.contains("function syncReplayReturnLinks()"));
     assert!(html.contains(r#"data-robot-id="1" data-area-name="Area &amp; One""#));
     assert!(html.contains(r#"class="mining-results-atlas-helper""#));
-    assert!(html.contains(r#"class="mining-results-ore-values">20 mined · 2 tax · +18 net</span></li>"#));
-    assert!(html.contains(
-        r#"title="Tax is deducted before ore is added to your wallet.""#
-    ));
+    assert!(
+        html.contains(
+            r#"class="mining-results-ore-values">20 mined · 2 tax · +18 net</span></li>"#
+        )
+    );
+    assert!(html.contains(r#"title="Tax is deducted before ore is added to your wallet.""#));
     assert!(html.contains(
         r#"class="mining-results-run-card mining-results-run-card-active" data-run-id="10""#
     ));

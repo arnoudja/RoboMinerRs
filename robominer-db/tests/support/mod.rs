@@ -1,8 +1,9 @@
 use robominer_db::MySqlPool;
 use robominer_test_support::{
-    insert_area_supply, insert_committed_pending_changes, insert_finished_queue, insert_mining_area,
-    insert_ore, insert_ore_price, insert_ore_result, insert_robot, insert_unfinished_queue,
-    insert_user, insert_user_ore_asset, unique_prefix as shared_unique_prefix,
+    insert_area_supply, insert_committed_pending_changes, insert_finished_queue,
+    insert_mining_area, insert_ore, insert_ore_price, insert_ore_result, insert_robot,
+    insert_unfinished_queue, insert_user, insert_user_ore_asset,
+    unique_prefix as shared_unique_prefix,
 };
 
 pub struct ClaimScenario {
@@ -53,8 +54,7 @@ async fn single_queue_tax25(pool: &MySqlPool) -> ClaimScenario {
     insert_area_supply(pool, mining_area_id, primary_ore_id, 10, 2).await;
     insert_area_supply(pool, mining_area_id, secondary_ore_id, 3, 1).await;
 
-    let mining_queue_id =
-        insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
+    let mining_queue_id = insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
     insert_ore_result(pool, mining_queue_id, primary_ore_id, 10).await;
     insert_user_ore_asset(pool, user_id, primary_ore_id, 2, 8).await;
     insert_committed_pending_changes(pool, robot_id).await;
@@ -139,8 +139,7 @@ async fn claim_cap_limited(pool: &MySqlPool) -> ClaimScenario {
 
     insert_area_supply(pool, mining_area_id, primary_ore_id, 10, 2).await;
 
-    let mining_queue_id =
-        insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
+    let mining_queue_id = insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
     insert_ore_result(pool, mining_queue_id, primary_ore_id, 12).await;
     insert_user_ore_asset(pool, user_id, primary_ore_id, 22, 25).await;
 
@@ -167,8 +166,7 @@ async fn claim_zero_tax(pool: &MySqlPool) -> ClaimScenario {
 
     insert_area_supply(pool, mining_area_id, primary_ore_id, 10, 2).await;
 
-    let mining_queue_id =
-        insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
+    let mining_queue_id = insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
     insert_ore_result(pool, mining_queue_id, primary_ore_id, 15).await;
     insert_user_ore_asset(pool, user_id, primary_ore_id, 0, 25).await;
 
@@ -197,8 +195,7 @@ async fn claim_multiple_ore_types(pool: &MySqlPool) -> ClaimScenario {
     insert_area_supply(pool, mining_area_id, primary_ore_id, 10, 2).await;
     insert_area_supply(pool, mining_area_id, secondary_ore_id, 5, 1).await;
 
-    let mining_queue_id =
-        insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
+    let mining_queue_id = insert_finished_queue(pool, mining_area_id, robot_id, -20, -10).await;
     insert_ore_result(pool, mining_queue_id, primary_ore_id, 10).await;
     insert_ore_result(pool, mining_queue_id, secondary_ore_id, 4).await;
     insert_user_ore_asset(pool, user_id, primary_ore_id, 1, 25).await;

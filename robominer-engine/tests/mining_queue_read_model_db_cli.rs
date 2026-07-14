@@ -172,4 +172,3 @@ async fn mining_queue_page_states_report_page_read_model() {
 
     fixture.cleanup(&pool).await;
 }
-

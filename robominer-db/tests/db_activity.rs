@@ -75,10 +75,9 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
         "expected seeded rally in unfiltered feed"
     );
 
-    let (user_rallies, _) =
-        list_activity_recent_rally_feed(&pool, Some(fixture.user_id), None, 10)
-            .await
-            .expect("user-filtered rally feed should load");
+    let (user_rallies, _) = list_activity_recent_rally_feed(&pool, Some(fixture.user_id), None, 10)
+        .await
+        .expect("user-filtered rally feed should load");
     assert!(
         user_rallies
             .iter()
@@ -86,14 +85,10 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
         "expected seeded rally for participating user"
     );
 
-    let (area_rallies, _) = list_activity_recent_rally_feed(
-        &pool,
-        None,
-        Some(fixture.mining_area_id),
-        10,
-    )
-    .await
-    .expect("area-filtered rally feed should load");
+    let (area_rallies, _) =
+        list_activity_recent_rally_feed(&pool, None, Some(fixture.mining_area_id), 10)
+            .await
+            .expect("area-filtered rally feed should load");
     assert_eq!(area_rallies.len(), 1);
     assert_eq!(area_rallies[0].mining_queue_id, player_zero_queue_id);
 

@@ -16,15 +16,7 @@ pub(crate) fn render_mining_area_atlas(
     costs: &[robominer_db::MiningQueuePageAreaCostRecord],
     ore_assets: &[robominer_db::UserOreAssetStateRecord],
 ) {
-    render_mining_area_atlas_markup(
-        body,
-        mode,
-        ores,
-        areas,
-        percentages,
-        costs,
-        ore_assets,
-    );
+    render_mining_area_atlas_markup(body, mode, ores, areas, percentages, costs, ore_assets);
     render_mining_area_atlas_script(body, mode);
 }
 
@@ -360,13 +352,9 @@ pub(super) fn area_costs_affordable(
     costs: &[&robominer_db::MiningQueuePageAreaCostRecord],
     ore_amount_map: &HashMap<i64, i32>,
 ) -> bool {
-    costs.iter().all(|cost| {
-        ore_amount_map
-            .get(&cost.ore_id)
-            .copied()
-            .unwrap_or(0)
-            >= cost.amount
-    })
+    costs
+        .iter()
+        .all(|cost| ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0) >= cost.amount)
 }
 
 pub(super) fn render_area_entry_costs(
@@ -491,9 +479,10 @@ mod tests {
         let affordable = HashMap::from([(2, 40)]);
 
         assert!(area_costs_affordable(&costs, &affordable));
-        assert!(render_area_entry_costs(&costs, &affordable).contains(
-            r#"<span class="mining-area-atlas-cost-affordable">30 Iron ✓</span>"#
-        ));
+        assert!(
+            render_area_entry_costs(&costs, &affordable)
+                .contains(r#"<span class="mining-area-atlas-cost-affordable">30 Iron ✓</span>"#)
+        );
 
         let unaffordable = HashMap::from([(2, 10)]);
         assert!(!area_costs_affordable(&costs, &unaffordable));

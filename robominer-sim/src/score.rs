@@ -32,7 +32,6 @@ pub fn calculate_score(ore: [i32; MAX_ORE_TYPES]) -> f64 {
     score
 }
 
-
 pub fn ore_amounts(amounts: &[(usize, i32)]) -> [i32; MAX_ORE_TYPES] {
     let mut ore = array::from_fn(|_| 0);
 

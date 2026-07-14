@@ -1,5 +1,5 @@
 use robominer_db::{CompletedRallyActionRecord, CompletedRallyOreRecord};
-use robominer_sim::{Position, MAX_ORE_TYPES};
+use robominer_sim::{MAX_ORE_TYPES, Position};
 
 use crate::error::DomainError;
 use crate::loadout::{

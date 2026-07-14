@@ -116,4 +116,3 @@ async fn run_pool_until_complete_persists_until_required_runs() {
     fixture.assert_cli_persisted(&pool).await;
     fixture.cleanup(&pool).await;
 }
-

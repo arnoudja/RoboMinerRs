@@ -379,9 +379,9 @@ async fn achievement_page_states_report_display_model() {
     )
     .bind(fixture.achievement_id)
     .bind(fixture.achievement_step)
-        .execute(&pool)
-        .await
-        .expect("failed to delete achievement score requirement");
+    .execute(&pool)
+    .await
+    .expect("failed to delete achievement score requirement");
     sqlx::query("DELETE FROM RobotMiningAreaScore WHERE robotId = ?")
         .bind(robot_id)
         .execute(&pool)
@@ -399,4 +399,3 @@ async fn achievement_page_states_report_display_model() {
         .expect("failed to delete ore price");
     fixture.cleanup(&pool).await;
 }
-

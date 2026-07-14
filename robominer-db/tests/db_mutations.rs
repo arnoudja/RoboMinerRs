@@ -1,6 +1,6 @@
 use robominer_db::{
-    CreateProgramSourceRequest, RobotPartTransactionRequest, buy_robot_part,
-    create_program_source, sell_robot_part, CancelMiningQueueRequest,
+    CancelMiningQueueRequest, CreateProgramSourceRequest, RobotPartTransactionRequest,
+    buy_robot_part, create_program_source, sell_robot_part,
 };
 use robominer_test_support::{
     QueuedMiningAreaFixture, ShopFixture, insert_user_with_credentials, unique_prefix,
@@ -222,13 +222,12 @@ async fn create_program_source_inserts_verifiable_row() {
     .expect("create should not fail at sql layer")
     .expect("create should succeed");
 
-    let (source_name, verified): (String, bool) = sqlx::query_as(
-        "SELECT sourceName, verified FROM ProgramSource WHERE id = ?",
-    )
-    .bind(created.program_source_id)
-    .fetch_one(&pool)
-    .await
-    .expect("failed to load created program source");
+    let (source_name, verified): (String, bool) =
+        sqlx::query_as("SELECT sourceName, verified FROM ProgramSource WHERE id = ?")
+            .bind(created.program_source_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load created program source");
     assert_eq!(source_name, format!("{prefix}-source"));
     assert!(!verified);
 

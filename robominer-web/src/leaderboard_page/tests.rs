@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use crate::{Request, ServerConfig};
 
 use super::render::render_leaderboard_page;
-use super::{LeaderboardPageState, LeaderboardQuery, LeaderboardTab, leaderboard_page, LEADERBOARD_PAGE_SIZE};
+use super::{
+    LEADERBOARD_PAGE_SIZE, LeaderboardPageState, LeaderboardQuery, LeaderboardTab, leaderboard_page,
+};
 
 use std::path::PathBuf;
 
@@ -343,9 +345,7 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
 
     assert!(html.contains(r#"href="activity?areaId=1">View area rallies</a>"#));
     assert!(html.contains(r#"href="leaderboard?areaId=1&amp;limit=20">Load more entries</a>"#));
-    assert!(html.contains(
-        r#"title="Best single-run score recorded in this mining area.""#
-    ));
+    assert!(html.contains(r#"title="Best single-run score recorded in this mining area.""#));
 
     let robots_html = render_leaderboard_page(
         "Player".to_string(),
@@ -371,10 +371,10 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
     );
 
     assert!(robots_html.contains(r#"href="miningResults">View mining results</a>"#));
-    assert!(robots_html.contains(r#"href="leaderboard?tab=robots&amp;limit=20">Load more entries</a>"#));
-    assert!(robots_html.contains(
-        r#"title="Lifetime ore gathered divided by total mining runs.""#
-    ));
+    assert!(
+        robots_html.contains(r#"href="leaderboard?tab=robots&amp;limit=20">Load more entries</a>"#)
+    );
+    assert!(robots_html.contains(r#"title="Lifetime ore gathered divided by total mining runs.""#));
 
     let players_html = render_leaderboard_page(
         "Player".to_string(),
@@ -400,9 +400,9 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
 
     assert!(players_html.contains(r#"href="achievements">Champion</a>"#));
     assert!(players_html.contains(r#"href="achievements">View achievements</a>"#));
-    assert!(players_html.contains(
-        r#"title="Total achievement points claimed across all tracks.""#
-    ));
+    assert!(
+        players_html.contains(r#"title="Total achievement points claimed across all tracks.""#)
+    );
 }
 
 #[test]

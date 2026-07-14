@@ -1,11 +1,11 @@
 use sqlx::Row;
 
-use crate::mappers::{ProgramSourceRow, program_source_record, robot_part_record};
-use crate::shop::user_robot_part_total_owned;
-use crate::{ProgramSourceRecord, RobotPartRecord, UpdateRobotConfigRequest};
 use super::super::{
     PendingRobotUpdateState, ProgramSourceUpdateState, RequestedRobotParts, RobotUpdateState,
 };
+use crate::mappers::{ProgramSourceRow, program_source_record, robot_part_record};
+use crate::shop::user_robot_part_total_owned;
+use crate::{ProgramSourceRecord, RobotPartRecord, UpdateRobotConfigRequest};
 
 pub(super) fn generated_robot_name(username: &str, robot_number: i64) -> String {
     let prefix: String = username.chars().take(10).collect();
@@ -227,8 +227,7 @@ pub(super) async fn load_requested_robot_parts(
     let Some(engine) = load_robot_part_for_update(transaction, request.engine_id).await? else {
         return Ok(None);
     };
-    let Some(ore_scanner) =
-        load_robot_part_for_update(transaction, request.ore_scanner_id).await?
+    let Some(ore_scanner) = load_robot_part_for_update(transaction, request.ore_scanner_id).await?
     else {
         return Ok(None);
     };

@@ -68,10 +68,7 @@ fn executable_do_while_compiles_and_runs_body_before_condition() {
     let mut runner = program.runner();
 
     let mut start = test_context(10, None);
-    assert_eq!(
-        runner.next_action(&mut start),
-        Some(ExecutableAction::Mine)
-    );
+    assert_eq!(runner.next_action(&mut start), Some(ExecutableAction::Mine));
 
     let mut after_mine = test_context(10, Some(5.0));
     assert_eq!(runner.next_action(&mut after_mine), None);
@@ -79,10 +76,8 @@ fn executable_do_while_compiles_and_runs_body_before_condition() {
 
 #[test]
 fn executable_do_while_repeats_while_condition_is_true() {
-    let program = compile_executable_source(
-        "int count = 0; do { count++; } while (count < 3);",
-    )
-    .expect("counting do-while should compile");
+    let program = compile_executable_source("int count = 0; do { count++; } while (count < 3);")
+        .expect("counting do-while should compile");
     let mut runner = program.runner();
 
     for _ in 0..20 {

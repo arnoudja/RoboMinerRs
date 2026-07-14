@@ -144,9 +144,8 @@ fn app_dialog_script() -> &'static str {
 }
 
 fn app_shell_header(current_form: &str, username: &str, hud_markup: Option<&str>) -> String {
-    let menu_link = |form: &str, href: &str, label: &str| {
-        nav_link(current_form == form, href, label)
-    };
+    let menu_link =
+        |form: &str, href: &str, label: &str| nav_link(current_form == form, href, label);
 
     format!(
         r#"<header class="app-shell-header">
@@ -424,9 +423,18 @@ mod tests {
         let now = 3_600_000;
         assert_eq!(format_relative_time_millis(now, now), "just now");
         assert_eq!(format_relative_time_millis(now - 30_000, now), "just now");
-        assert_eq!(format_relative_time_millis(now - 120_000, now), "2 minutes ago");
-        assert_eq!(format_relative_time_millis(now - 3_600_000, now), "1 hour ago");
-        assert_eq!(format_relative_time_millis(now - 86_400_000, now), "1 day ago");
+        assert_eq!(
+            format_relative_time_millis(now - 120_000, now),
+            "2 minutes ago"
+        );
+        assert_eq!(
+            format_relative_time_millis(now - 3_600_000, now),
+            "1 hour ago"
+        );
+        assert_eq!(
+            format_relative_time_millis(now - 86_400_000, now),
+            "1 day ago"
+        );
     }
 
     #[test]

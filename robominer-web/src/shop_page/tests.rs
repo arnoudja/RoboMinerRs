@@ -104,9 +104,11 @@ fn shop_requires_database_configuration() {
 
 #[test]
 fn shop_rendering_filters_selection_state_and_escapes_fields() {
-    let html = render_shop_page("Player".to_string(), None, &sample_shop_state(Some(
-        "Unable to buy <part>".to_string(),
-    )));
+    let html = render_shop_page(
+        "Player".to_string(),
+        None,
+        &sample_shop_state(Some("Unable to buy <part>".to_string())),
+    );
 
     assert!(!html.contains(r#"<script src="js/shop.js"></script>"#));
     assert!(html.contains(r#"class="shop-page" data-filter-storage-key="#));
@@ -125,16 +127,28 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
     assert!(html.contains("Ore &amp; Two quality"));
     assert!(html.contains("Part &lt;X&gt; &#39;Q&#39;"));
     assert!(html.contains(r#"id="robotPartTypeRow10_2_1""#));
-    assert!(html.contains(
-        r#"class="shop-part-card shop shop-part-card-compact shop-part-card-active""#
-    ));
+    assert!(
+        html.contains(
+            r#"class="shop-part-card shop shop-part-card-compact shop-part-card-active""#
+        )
+    );
     assert!(html.contains(r#"<input type="hidden" name="buyRobotPartId" value="100"/>"#));
     assert!(html.contains(r#"<input type="hidden" name="sellRobotPartId" value="100"/>"#));
     assert!(html.contains(r#"<input type="hidden" name="selectedRobotPartId" value="100"/>"#));
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-primary">Buy part</button>"#));
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-danger">Sell unassigned</button>"#));
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-danger">Sell all unassigned</button>"#));
-    assert!(html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="1""#));
+    assert!(
+        html.contains(
+            r#"<button type="submit" class="shop-btn shop-btn-primary">Buy part</button>"#
+        )
+    );
+    assert!(html.contains(
+        r#"<button type="submit" class="shop-btn shop-btn-danger">Sell unassigned</button>"#
+    ));
+    assert!(html.contains(
+        r#"<button type="submit" class="shop-btn shop-btn-danger">Sell all unassigned</button>"#
+    ));
+    assert!(
+        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="1""#)
+    );
     assert!(html.contains("function confirmShopSell(event)"));
     assert!(html.contains("robominerConfirm('Sell 1 unassigned '"));
     assert!(html.contains("robominerConfirm(sellAllMessage"));
@@ -155,8 +169,12 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
         r#"name="selectedRobotPartTypeId" class="tableitem shop-filter-select"><option value="10" selected>"#
     ));
     assert!(html.contains(r#"<option value="2" selected>Ore &amp; Two quality</option>"#));
-    assert!(html.contains(r#">Ore &amp; Two</span><span class="shop-wallet-amount">40/100</span>"#));
-    assert!(html.contains(r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#));
+    assert!(
+        html.contains(r#">Ore &amp; Two</span><span class="shop-wallet-amount">40/100</span>"#)
+    );
+    assert!(html.contains(
+        r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#
+    ));
     assert!(html.contains(r#"Compare all areas</a>.</p>"#));
     assert!(html.contains(r#"class="shop-atlas-helper""#));
     assert!(html.contains(r#"class="page-help-hint""#));
@@ -300,7 +318,9 @@ fn shop_inventory_sorts_sellable_parts_first() {
         part_a_pos < part_z_pos,
         "sellable inventory rows should appear before assigned-only rows (A at {part_a_pos}, Z at {part_z_pos})"
     );
-    assert!(html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="2""#));
+    assert!(
+        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="2""#)
+    );
 }
 
 #[test]
@@ -318,7 +338,9 @@ fn shop_sell_all_unassigned_is_disabled_without_stock() {
     let html = render_shop_page("Player".to_string(), None, &state);
 
     assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-danger" disabled title="No unassigned robot parts to sell.">Sell all unassigned</button>"#));
-    assert!(html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="0""#));
+    assert!(
+        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="0""#)
+    );
 }
 
 #[test]
@@ -375,9 +397,13 @@ fn shop_part_costs_are_sorted_by_ore_id_descending() {
             .expect("part cost list should close");
     let list = &html[list_start..list_end];
 
-    let lithabine = list.find("Lithabine").expect("Lithabine cost should render");
+    let lithabine = list
+        .find("Lithabine")
+        .expect("Lithabine cost should render");
     let iron = list.find("Iron").expect("Iron cost should render");
-    let cerbonium = list.find("Cerbonium").expect("Cerbonium cost should render");
+    let cerbonium = list
+        .find("Cerbonium")
+        .expect("Cerbonium cost should render");
     assert!(lithabine < iron);
     assert!(iron < cerbonium);
 }
@@ -542,9 +568,7 @@ fn shop_scanner_catalog_cards_show_scan_distance() {
         r#"<span class="shop-part-highlight-label">Scan</span><span class="shop-part-highlight-value">50</span>"#
     ));
     assert!(html.contains("Scan time:</dt><dd>6 cycles"));
-    assert!(!html.contains(
-        r#"<span class="shop-part-highlight-value">6 cyc</span>"#
-    ));
+    assert!(!html.contains(r#"<span class="shop-part-highlight-value">6 cyc</span>"#));
 }
 
 #[test]
@@ -562,4 +586,3 @@ fn shop_transaction_rejection_messages_match_engine_output() {
         "no unassigned robot part is available"
     );
 }
-

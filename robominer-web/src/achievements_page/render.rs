@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, layout};
 use crate::achievements_page::AchievementsPageState;
+use crate::html::{escape_html, layout};
 
 pub(super) fn render_achievements_page(
     username: String,
@@ -32,19 +32,19 @@ pub(super) fn render_achievements_page(
 
     let mut achievements = state.achievements.clone();
     achievements.sort_by(|left, right| {
-        right
-            .claimable
-            .cmp(&left.claimable)
-            .then_with(|| {
-                if left.claimable {
-                    left.title.cmp(&right.title)
-                } else {
-                    right.achievement_id.cmp(&left.achievement_id)
-                }
-            })
+        right.claimable.cmp(&left.claimable).then_with(|| {
+            if left.claimable {
+                left.title.cmp(&right.title)
+            } else {
+                right.achievement_id.cmp(&left.achievement_id)
+            }
+        })
     });
 
-    let claimable_count = achievements.iter().filter(|achievement| achievement.claimable).count();
+    let claimable_count = achievements
+        .iter()
+        .filter(|achievement| achievement.claimable)
+        .count();
 
     let mut body = String::from(r#"<div class="achievements-page">"#);
     render_achievements_summary(
@@ -78,7 +78,13 @@ pub(super) fn render_achievements_page(
     }
     body.push_str("</div></div>");
 
-    layout("RoboMiner - Achievements", "achievements", &username, hud, &body)
+    layout(
+        "RoboMiner - Achievements",
+        "achievements",
+        &username,
+        hud,
+        &body,
+    )
 }
 
 fn render_achievements_summary(
@@ -283,4 +289,3 @@ fn achievement_progress_percent(current: i64, total: i64) -> f64 {
     }
     ((current as f64 / total as f64) * 100.0).clamp(0.0, 100.0)
 }
-

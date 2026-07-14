@@ -265,13 +265,11 @@ impl AchievementCliFixture {
         .bind(self.achievement_step)
         .execute(pool)
         .await;
-        let _ = sqlx::query(
-            "DELETE FROM AchievementStep WHERE achievementId = ? AND step = ?",
-        )
-        .bind(self.achievement_id)
-        .bind(self.achievement_step)
-        .execute(pool)
-        .await;
+        let _ = sqlx::query("DELETE FROM AchievementStep WHERE achievementId = ? AND step = ?")
+            .bind(self.achievement_id)
+            .bind(self.achievement_step)
+            .execute(pool)
+            .await;
         let _ = sqlx::query("DELETE FROM Achievement WHERE id = ?")
             .bind(self.achievement_id)
             .execute(pool)
@@ -286,5 +284,3 @@ impl AchievementCliFixture {
             .await;
     }
 }
-
-

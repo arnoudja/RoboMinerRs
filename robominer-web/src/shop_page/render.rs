@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
+use super::{
+    ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID, ShopPageState,
+};
 use crate::help_pages;
 use crate::html::{escape_html, format_period, layout, selected_attr};
 use crate::mining_area_atlas::{
     MiningAreaAtlasLinkTarget, mining_area_atlas_url, render_mining_area_atlas_ore_link,
-};
-use super::{
-    ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID, ShopPageState,
 };
 
 pub(super) fn render_shop_page(
@@ -817,10 +817,14 @@ fn render_shop_buy_action(
         block_reason.as_deref(),
     );
     if let Some(reason) = block_reason {
-        html.push_str(&format!(r#"<p class="shop-action-hint">{}</p>"#, escape_html(&reason)));
-        if let Some(shortfall) = costs.iter().find(|cost| {
-            ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0) < cost.amount
-        }) {
+        html.push_str(&format!(
+            r#"<p class="shop-action-hint">{}</p>"#,
+            escape_html(&reason)
+        ));
+        if let Some(shortfall) = costs
+            .iter()
+            .find(|cost| ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0) < cost.amount)
+        {
             html.push_str(&render_mining_area_atlas_ore_link(
                 shortfall.ore_id,
                 &shortfall.ore_name,

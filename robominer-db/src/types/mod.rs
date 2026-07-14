@@ -1,5 +1,5 @@
-mod records;
 mod contracts;
+mod records;
 
-pub use records::*;
 pub use contracts::*;
+pub use records::*;

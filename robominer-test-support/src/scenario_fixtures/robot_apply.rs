@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use robominer_db::MySqlPool;
 
-use crate::{insert_row_id, unique_prefix};
 use super::default_robot_parts::ensure_default_robot_parts;
+use crate::{insert_row_id, unique_prefix};
 
 pub struct RobotApplyFixture {
     pub user_id: i64,

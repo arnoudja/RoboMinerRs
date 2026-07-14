@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use crate::ground::Ground;
 use crate::MAX_ORE_TYPES;
+use crate::ground::Ground;
 use crate::position::Position;
 use crate::robot::Robot;
 
@@ -48,7 +48,13 @@ impl AnimationRecorder {
         }
     }
 
-    pub(crate) fn record_ground_change(&mut self, x: usize, y: usize, time: i32, ore: [i32; MAX_ORE_TYPES]) {
+    pub(crate) fn record_ground_change(
+        &mut self,
+        x: usize,
+        y: usize,
+        time: i32,
+        ore: [i32; MAX_ORE_TYPES],
+    ) {
         self.ground_changes
             .entry((x, y))
             .or_default()
@@ -251,4 +257,3 @@ fn write_ore_animation(output: &mut String, ore_data: &[OreAnimationData]) {
 fn format_legacy_float(value: f64) -> String {
     format!("{value:.1}")
 }
-

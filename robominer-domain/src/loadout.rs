@@ -522,7 +522,7 @@ impl LegacyHeapPlacement {
 
 #[cfg(test)]
 mod tests {
-    use super::{legacy_heap_center, mining_area_to_ground, LegacyHeapPlacement};
+    use super::{LegacyHeapPlacement, legacy_heap_center, mining_area_to_ground};
     use crate::validate_ore_supply;
     use robominer_db::{MiningAreaOreSupplyRecord, MiningAreaRecord};
 
@@ -534,7 +534,10 @@ mod tests {
                 for _ in 0..20 {
                     let center = legacy_heap_center(size, radius, &mut rng);
                     if radius * 2 < size {
-                        assert!(center >= radius, "size={size} radius={radius} center={center}");
+                        assert!(
+                            center >= radius,
+                            "size={size} radius={radius} center={center}"
+                        );
                         assert!(
                             center + radius < size,
                             "size={size} radius={radius} center={center}"

@@ -170,4 +170,3 @@ async fn list_robot_config_applies_orphaned_pending_changes_when_idle() {
     fixture.assert_no_pending_changes(&pool).await;
     fixture.cleanup(&pool).await;
 }
-

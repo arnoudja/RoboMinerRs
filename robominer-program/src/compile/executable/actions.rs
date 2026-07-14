@@ -3,8 +3,8 @@ use crate::types::{
     ExecutableStatement,
 };
 
+use super::super::input::{CompileInput, expect_char, expect_empty_call};
 use super::expressions::parse_executable_expression;
-use super::super::input::{expect_char, expect_empty_call, CompileInput};
 
 pub(super) fn parse_executable_action_statement(
     input: &mut CompileInput,
@@ -59,16 +59,22 @@ pub(super) fn parse_executable_call_expression(
     Ok(expression)
 }
 
-pub(super) fn parse_move_expression(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {
+pub(super) fn parse_move_expression(
+    input: &mut CompileInput,
+) -> Result<ExecutableExpression, CompileError> {
     let expression = parse_executable_call_expression(input)?;
     if let Some(distance) = expression.literal_number() {
-        Ok(ExecutableExpression::Action(ExecutableAction::Move(distance)))
+        Ok(ExecutableExpression::Action(ExecutableAction::Move(
+            distance,
+        )))
     } else {
         Ok(ExecutableExpression::Move(Box::new(expression)))
     }
 }
 
-pub(super) fn parse_rotate_expression(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {
+pub(super) fn parse_rotate_expression(
+    input: &mut CompileInput,
+) -> Result<ExecutableExpression, CompileError> {
     let expression = parse_executable_call_expression(input)?;
     if let Some(rotation) = expression.literal_number() {
         Ok(ExecutableExpression::Action(ExecutableAction::Rotate(
@@ -79,7 +85,9 @@ pub(super) fn parse_rotate_expression(input: &mut CompileInput) -> Result<Execut
     }
 }
 
-pub(super) fn parse_dump_expression(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {
+pub(super) fn parse_dump_expression(
+    input: &mut CompileInput,
+) -> Result<ExecutableExpression, CompileError> {
     let expression = parse_executable_call_expression(input)?;
     if let Some(ore_type) = expression.literal_number() {
         Ok(ExecutableExpression::Action(ExecutableAction::Dump(
@@ -90,7 +98,9 @@ pub(super) fn parse_dump_expression(input: &mut CompileInput) -> Result<Executab
     }
 }
 
-pub(super) fn parse_scan_call(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {
+pub(super) fn parse_scan_call(
+    input: &mut CompileInput,
+) -> Result<ExecutableExpression, CompileError> {
     expect_char(input, '(', "'(' expected")?;
     if input.eat_char(')', false) {
         return Ok(ExecutableExpression::Scan(None));

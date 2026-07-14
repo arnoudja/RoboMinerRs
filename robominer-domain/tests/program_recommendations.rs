@@ -11,13 +11,15 @@
 //! profile helpers in `benchmark_recommended_programs` below. Scores are printed
 //! after tax; each case averages 20 seeds (0..19).
 
-use robominer_db::{MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord, RobotRecord};
-use robominer_test_support::{mining_area_record, ore_supply_record};
+use robominer_db::{
+    MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord, RobotRecord,
+};
 use robominer_domain::{
     MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
     run_rally_loadout_with_seed,
 };
 use robominer_program::compatibility_fixture_source;
+use robominer_test_support::{mining_area_record, ore_supply_record};
 
 struct RobotProfile {
     robot: RobotRecord,
@@ -35,21 +37,7 @@ struct ProgramCase {
 }
 
 fn starter_robot() -> RobotRecord {
-    robot_with_stats(
-        "starter",
-        11,
-        2,
-        1,
-        12,
-        4,
-        1,
-        1.571,
-        0.714,
-        7,
-        1.38,
-        6,
-        1,
-    )
+    robot_with_stats("starter", 11, 2, 1, 12, 4, 1, 1.571, 0.714, 7, 1.38, 6, 1)
 }
 
 fn enhanced_cerbonium_robot() -> RobotRecord {
@@ -270,7 +258,12 @@ fn ai_robot(id: i64, source: &str) -> RobotRecord {
     robot
 }
 
-fn rally_loadout(area: &AreaProfile, robot: &RobotRecord, program: &str, ai_source: &str) -> RallyLoadout {
+fn rally_loadout(
+    area: &AreaProfile,
+    robot: &RobotRecord,
+    program: &str,
+    ai_source: &str,
+) -> RallyLoadout {
     let ai_id = area.area.ai_robot_id;
     let mining_area = MiningAreaLoadout::new(
         area.area.clone(),

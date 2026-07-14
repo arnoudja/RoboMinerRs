@@ -194,35 +194,35 @@ pub async fn list_achievement_page_states_for_user(
     );
 
     sqlx::query(&query)
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|row| {
-                Ok(AchievementPageStateRecord {
-                    achievement_id: row.try_get("achievementId")?,
-                    title: row.try_get("title")?,
-                    description: row.try_get("description")?,
-                    steps_claimed: row.try_get("stepsClaimed")?,
-                    number_of_steps: row.try_get("numberOfSteps")?,
-                    achievement_points_earned: row.try_get("achievementPointsEarned")?,
-                    total_achievement_points: row.try_get("totalAchievementPoints")?,
-                    step: row.try_get("step")?,
-                    next_achievement_points: row.try_get("nextAchievementPoints")?,
-                    mining_queue_reward: row.try_get("miningQueueReward")?,
-                    robot_reward: row.try_get("robotReward")?,
-                    ore_id: row.try_get("oreId")?,
-                    ore_name: row.try_get("oreName")?,
-                    current_ore_maximum: row.try_get("currentOreMaximum")?,
-                    max_ore_reward: row.try_get("maxOreReward")?,
-                    mining_area_id: row.try_get("miningAreaId")?,
-                    mining_area_name: row.try_get("miningAreaName")?,
-                    claimable: row.try_get::<i8, _>("claimable")? != 0,
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+        .map(|rows| {
+            rows.into_iter()
+                .map(|row| {
+                    Ok(AchievementPageStateRecord {
+                        achievement_id: row.try_get("achievementId")?,
+                        title: row.try_get("title")?,
+                        description: row.try_get("description")?,
+                        steps_claimed: row.try_get("stepsClaimed")?,
+                        number_of_steps: row.try_get("numberOfSteps")?,
+                        achievement_points_earned: row.try_get("achievementPointsEarned")?,
+                        total_achievement_points: row.try_get("totalAchievementPoints")?,
+                        step: row.try_get("step")?,
+                        next_achievement_points: row.try_get("nextAchievementPoints")?,
+                        mining_queue_reward: row.try_get("miningQueueReward")?,
+                        robot_reward: row.try_get("robotReward")?,
+                        ore_id: row.try_get("oreId")?,
+                        ore_name: row.try_get("oreName")?,
+                        current_ore_maximum: row.try_get("currentOreMaximum")?,
+                        max_ore_reward: row.try_get("maxOreReward")?,
+                        mining_area_id: row.try_get("miningAreaId")?,
+                        mining_area_name: row.try_get("miningAreaName")?,
+                        claimable: row.try_get::<i8, _>("claimable")? != 0,
+                    })
                 })
-            })
-            .collect::<Result<Vec<_>, sqlx::Error>>()
-    })?
+                .collect::<Result<Vec<_>, sqlx::Error>>()
+        })?
 }
 
 pub async fn load_achievement_page_points_summary_for_user(

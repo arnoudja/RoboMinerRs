@@ -1,4 +1,3 @@
-
 use crate::{
     Request, Response, ServerConfig, block_on_database, login_redirect, query_i64, rally_pages,
     session_username,
@@ -106,12 +105,11 @@ pub(super) fn selected_mining_queue_id(
         && results
             .iter()
             .any(|result| result.mining_queue_id == run_id)
-        {
-            return Some(run_id);
-        }
+    {
+        return Some(run_id);
+    }
     results.first().map(|result| result.mining_queue_id)
 }
-
 
 mod render;
 

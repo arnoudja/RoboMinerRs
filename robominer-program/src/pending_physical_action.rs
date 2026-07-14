@@ -93,10 +93,7 @@ mod tests {
             ContinuePhysicalAction::Reemit
         );
         assert!(pending.is_some());
-        assert_eq!(
-            pending.unwrap().action,
-            ExecutableAction::Move(2.0)
-        );
+        assert_eq!(pending.unwrap().action, ExecutableAction::Move(2.0));
     }
 
     #[test]
@@ -133,9 +130,15 @@ mod tests {
 
     #[test]
     fn is_chunked_only_for_non_zero_move_and_rotate() {
-        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Move(1.0)));
-        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Rotate(-90.0)));
-        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(0.0)));
+        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+            1.0
+        )));
+        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Rotate(
+            -90.0
+        )));
+        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+            0.0
+        )));
         assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Mine));
     }
 }

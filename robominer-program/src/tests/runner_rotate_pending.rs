@@ -4,7 +4,8 @@ use super::helpers::*;
 
 #[test]
 fn statement_rotate_reemits_until_action_result_is_provided() {
-    let program = compile_executable_source("rotate(180); mine();").expect("program should compile");
+    let program =
+        compile_executable_source("rotate(180); mine();").expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 
@@ -58,10 +59,9 @@ fn dynamic_rotate_in_expression_reemits_until_action_result_is_provided() {
 
 #[test]
 fn expression_rotate_condition_receives_traveled_angle() {
-    let program = compile_executable_source(
-        "if (rotate(180) == 180) { mine(); } else { move(1); }",
-    )
-    .expect("program should compile");
+    let program =
+        compile_executable_source("if (rotate(180) == 180) { mine(); } else { move(1); }")
+            .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 
@@ -80,10 +80,9 @@ fn expression_rotate_condition_receives_traveled_angle() {
 
 #[test]
 fn expression_rotate_blocked_selects_false_branch() {
-    let program = compile_executable_source(
-        "if (rotate(180) == 180) { mine(); } else { move(1); }",
-    )
-    .expect("program should compile");
+    let program =
+        compile_executable_source("if (rotate(180) == 180) { mine(); } else { move(1); }")
+            .expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 

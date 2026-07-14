@@ -4,9 +4,9 @@ use std::path::PathBuf;
 use crate::{Request, ServerConfig};
 
 use super::{
-    ActivityFeedQuery, ActivityPageState, ActivityRallyFilter, RallyViewBackLink,
-    RallyViewPageState, activity_page, render_activity_page_at, render_rally_view_page,
-    valid_mining_results_return_to, ACTIVITY_RALLY_PAGE_SIZE,
+    ACTIVITY_RALLY_PAGE_SIZE, ActivityFeedQuery, ActivityPageState, ActivityRallyFilter,
+    RallyViewBackLink, RallyViewPageState, activity_page, render_activity_page_at,
+    render_rally_view_page, valid_mining_results_return_to,
 };
 
 fn sample_activity_state(
@@ -16,7 +16,15 @@ fn sample_activity_state(
     rally_areas: Vec<robominer_db::ActivityRallyAreaOption>,
     has_more_rallies: bool,
 ) -> ActivityPageState {
-    sample_activity_state_with_queue(recent_users, recent_rallies, participants, rally_areas, has_more_rallies, vec![], None)
+    sample_activity_state_with_queue(
+        recent_users,
+        recent_rallies,
+        participants,
+        rally_areas,
+        has_more_rallies,
+        vec![],
+        None,
+    )
 }
 
 fn sample_activity_state_with_queue(
@@ -144,8 +152,14 @@ fn activity_rendering_groups_participants_and_formats_utc_dates() {
     assert!(html.contains(r#"href="activity?filter=mine">Your rallies</a>"#));
     assert!(html.contains("activity-rally-filter-link-active"));
     assert!(html.contains(r#"href="activity?rallyResultId=20""#));
-    assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-replay">Replay ready</span>"#));
-    assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-players">2 players</span>"#));
+    assert!(html.contains(
+        r#"class="activity-rally-badge activity-rally-badge-replay">Replay ready</span>"#
+    ));
+    assert!(
+        html.contains(
+            r#"class="activity-rally-badge activity-rally-badge-players">2 players</span>"#
+        )
+    );
     assert!(html.contains(r#"class="activity-rally-replay-cta">Watch replay"#));
     assert!(html.contains("activity-rally-participant-1"));
     assert!(html.contains("Other &amp; Bot"));
@@ -197,7 +211,9 @@ fn activity_rendering_shows_empty_states_and_unavailable_replay() {
     assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-unavailable""#));
     assert!(html.contains("No replay stored</span>"));
     assert!(!html.contains("Watch replay"));
-    assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-players">Solo</span>"#));
+    assert!(
+        html.contains(r#"class="activity-rally-badge activity-rally-badge-players">Solo</span>"#)
+    );
 }
 
 #[test]
@@ -244,7 +260,11 @@ fn activity_rendering_highlights_viewer_participation() {
         default_activity_feed_query(),
     );
 
-    assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-self">You played</span>"#));
+    assert!(
+        html.contains(
+            r#"class="activity-rally-badge activity-rally-badge-self">You played</span>"#
+        )
+    );
     assert!(html.contains(r#"class="activity-rally-participant activity-rally-participant-0 activity-rally-participant-self""#));
     assert!(html.contains(r#"class="activity-rally-participant-you">You</span>"#));
 }
@@ -427,7 +447,11 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(!html.contains(r#"<script src="js/animation.js"></script>"#));
     assert!(html.contains(r#"class="rally-view-page""#));
     assert!(html.contains(r#"class="rally-view-title">Rally replay</h1>"#));
-    assert!(html.contains(r#"class="rally-view-context-item"><dt>Area</dt><dd>Area &amp; One</dd></div>"#));
+    assert!(
+        html.contains(
+            r#"class="rally-view-context-item"><dt>Area</dt><dd>Area &amp; One</dd></div>"#
+        )
+    );
     assert!(html.contains(r#"class="rally-view-player-user">User &lt;0&gt;</p>"#));
     assert!(html.contains(r#"class="rally-view-player-robot">Bot &lt;0&gt;</p>"#));
     assert!(html.contains(r#"id="oreCanvas0""#));
@@ -439,7 +463,9 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("function rallyPlay()"));
     assert!(html.contains("function rallySeekToRatio(ratio)"));
     assert!(html.contains("function robotDrawRadiusPixels(robot, scale)"));
-    assert!(html.contains("myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY)"));
+    assert!(
+        html.contains("myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY)")
+    );
     assert!(html.contains("var myRallyViewerSlot = null;"));
     assert!(html.contains("var myRallyContext = myRallyCanvas.getContext('2d');"));
     assert!(html.contains("function runanimation()"));
@@ -472,7 +498,9 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         Some("runId=10&robotId=7").map(RallyViewBackLink::MiningResults),
     );
 
-    assert!(html.contains(r#"class="rally-view-player rally-view-player-0 rally-view-player-self""#));
+    assert!(
+        html.contains(r#"class="rally-view-player rally-view-player-0 rally-view-player-self""#)
+    );
     assert!(html.contains(r#"<span class="rally-view-player-you">You</span>"#));
     assert!(html.contains(r#"<dt>Your robot</dt><dd>Lead Bot · green slot</dd>"#));
     assert!(html.contains(r#"<dt>Score</dt><dd>42.5</dd>"#));
@@ -542,10 +570,7 @@ fn rally_view_back_link_preserves_your_rallies_filter() {
 
 #[test]
 fn valid_mining_results_return_to_rejects_external_urls() {
-    assert_eq!(
-        valid_mining_results_return_to("runId=10"),
-        Some("runId=10")
-    );
+    assert_eq!(valid_mining_results_return_to("runId=10"), Some("runId=10"));
     assert_eq!(valid_mining_results_return_to("https://evil.test"), None);
     assert_eq!(valid_mining_results_return_to("/login"), None);
 }

@@ -75,7 +75,8 @@ fn mining_area_overview_requires_database_configuration() {
         allow_signup: true,
     };
 
-    let response = mining_area_overview_page(&authenticated_request("/miningAreaOverview"), &config);
+    let response =
+        mining_area_overview_page(&authenticated_request("/miningAreaOverview"), &config);
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
@@ -103,14 +104,9 @@ fn mining_area_overview_requires_login() {
     );
 
     assert_eq!(response.status, 302);
-    assert!(
-        response
-            .headers
-            .iter()
-            .any(|(name, value)| {
-                *name == "Location" && value == "login?returnTo=miningAreaOverview"
-            })
-    );
+    assert!(response.headers.iter().any(|(name, value)| {
+        *name == "Location" && value == "login?returnTo=miningAreaOverview"
+    }));
 }
 
 #[test]
@@ -124,7 +120,9 @@ fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_percentage
     assert!(html.contains(r#"class="mining-area-atlas-title">Mining area atlas</h1>"#));
     assert!(html.contains(r#"href="miningQueue">Back to queue</a>"#));
     assert!(html.contains(r#"href="miningQueue?infoMiningAreaId=10">Area &lt;A&gt;</a>"#));
-    assert!(html.contains(r#"class="mining-area-atlas-cost-affordable">30 Ore &amp; Two ✓</span>"#));
+    assert!(
+        html.contains(r#"class="mining-area-atlas-cost-affordable">30 Ore &amp; Two ✓</span>"#)
+    );
     assert!(html.contains(
         r#"class="mining-area-atlas-cost-unaffordable">Need 10 more Ore &amp; Two.</span>"#
     ));

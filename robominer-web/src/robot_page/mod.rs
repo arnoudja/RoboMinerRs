@@ -71,8 +71,7 @@ async fn load_robot_page_state(
                     .unwrap_or(0),
                 cpu_id: query_i64(request, &format!("cpuId{robot_id}")).unwrap_or(0),
                 engine_id: query_i64(request, &format!("engineId{robot_id}")).unwrap_or(0),
-                ore_scanner_id: query_i64(request, &format!("oreScannerId{robot_id}"))
-                    .unwrap_or(0),
+                ore_scanner_id: query_i64(request, &format!("oreScannerId{robot_id}")).unwrap_or(0),
             },
         )
         .await?;
@@ -102,7 +101,6 @@ async fn load_robot_page_state(
         claimed_results: claim_result,
     })
 }
-
 
 mod render;
 
@@ -194,4 +192,3 @@ pub(super) fn update_robot_config_rejection_message(
 ) -> &'static str {
     robominer_domain::update_robot_config_rejection_player_message(rejection)
 }
-

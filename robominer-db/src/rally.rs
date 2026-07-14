@@ -4,9 +4,8 @@ use sqlx::MySqlPool;
 
 use crate::{
     ClaimedMiningQueueCleanupSummary, ClaimedOreRewardRecord, ClaimedUserResults,
-    CompletedRallyActionRecord,
-    CompletedRallyOreRecord, CompletedRallyParticipantRecord, CompletedRallyRecord,
-    INITIAL_ORE_WALLET_MAX, SCORE_HISTORY_FACTOR, SCORE_START_FACTOR,
+    CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
+    CompletedRallyRecord, INITIAL_ORE_WALLET_MAX, SCORE_HISTORY_FACTOR, SCORE_START_FACTOR,
 };
 
 const CLAIMED_MINING_QUEUE_RETENTION: i64 = 12;
@@ -414,8 +413,7 @@ pub async fn cleanup_old_claimed_mining_queue_items_for_robot(
     robot_id: i64,
 ) -> Result<ClaimedMiningQueueCleanupSummary, sqlx::Error> {
     let mut transaction = pool.begin().await?;
-    let summary =
-        cleanup_old_claimed_mining_queue_items(&mut transaction, robot_id).await?;
+    let summary = cleanup_old_claimed_mining_queue_items(&mut transaction, robot_id).await?;
     transaction.commit().await?;
 
     Ok(summary)
@@ -465,12 +463,11 @@ async fn rally_result_still_referenced(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     rally_result_id: i64,
 ) -> Result<bool, sqlx::Error> {
-    let referenced: Option<i64> = sqlx::query_scalar(
-        "SELECT id FROM MiningQueue WHERE rallyResultId = ? LIMIT 1",
-    )
-    .bind(rally_result_id)
-    .fetch_optional(&mut **transaction)
-    .await?;
+    let referenced: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM MiningQueue WHERE rallyResultId = ? LIMIT 1")
+            .bind(rally_result_id)
+            .fetch_optional(&mut **transaction)
+            .await?;
 
     Ok(referenced.is_some())
 }

@@ -1,15 +1,13 @@
-use super::{protocol_simulation, runtime_move_program};
 use super::super::helpers::*;
+use super::{protocol_simulation, runtime_move_program};
 use crate::action_mapping::PendingExpressionAction;
 use crate::physics::ActionResult;
 use crate::*;
 
 #[test]
 fn partial_move_chunk_clears_action_result_and_keeps_sim_pending() {
-    let mut simulation = protocol_simulation(
-        "if (move(2.0) > 1.9) { rotate(90); } else { mine(); }",
-        5,
-    );
+    let mut simulation =
+        protocol_simulation("if (move(2.0) > 1.9) { rotate(90); } else { mine(); }", 5);
     simulation.prepare_test_run();
     simulation.advance_test_turn();
 
@@ -34,10 +32,8 @@ fn partial_move_chunk_clears_action_result_and_keeps_sim_pending() {
 
 #[test]
 fn sim_pending_chunks_skip_runner_until_move_finishes() {
-    let mut simulation = protocol_simulation(
-        "if (move(2.0) > 1.9) { rotate(0); } else { mine(); }",
-        5,
-    );
+    let mut simulation =
+        protocol_simulation("if (move(2.0) > 1.9) { rotate(0); } else { mine(); }", 5);
     simulation.prepare_test_run();
     simulation.advance_test_turn();
 
@@ -59,10 +55,7 @@ fn sim_pending_chunks_skip_runner_until_move_finishes() {
     simulation.advance_test_turn();
 
     assert!(
-        !simulation
-            .program_runner(0)
-            .unwrap()
-            .has_pending_physical(),
+        !simulation.program_runner(0).unwrap().has_pending_physical(),
         "runner should finish the logical move once the accumulated result is consumed"
     );
 }
@@ -134,9 +127,7 @@ fn multi_chunk_rotate_expression_uses_sim_pending_without_runner_resume() {
         "first rotate chunk should leave sim pending state"
     );
     assert_eq!(simulation.test_action_result(0), None);
-    assert!(
-        simulation.program_runner(0).unwrap().has_pending_physical()
-    );
+    assert!(simulation.program_runner(0).unwrap().has_pending_physical());
 
     simulation.advance_test_turn();
 

@@ -20,8 +20,7 @@ fn compatibility_fixtures_match_verification_expectations() {
             assert!(
                 result.verified,
                 "{}: {}",
-                fixture.name,
-                result.error_description
+                fixture.name, result.error_description
             );
             if let Some(expected_size) = fixture.expected_size {
                 assert_eq!(result.compiled_size, expected_size, "{}", fixture.name);

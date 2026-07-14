@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, layout};
 use super::content::{PROGRAM_TIPS_BODY, TUTORIAL_INTRO, TUTORIAL_STEPS};
-use super::{guide_by_href, HelpGuide, HELP_GUIDES};
+use super::{HELP_GUIDES, HelpGuide, guide_by_href};
+use crate::html::{escape_html, layout};
 
-pub(crate) fn render_help_index(
-    username: &str,
-    hud: Option<&str>,
-    welcome_banner: &str,
-) -> String {
+pub(crate) fn render_help_index(username: &str, hud: Option<&str>, welcome_banner: &str) -> String {
     let mut body = String::from(r#"<div class="help-page">"#);
     body.push_str(r#"<div class="help-shell">"#);
     body.push_str(r#"<header class="help-header">"#);
@@ -199,9 +195,18 @@ fn help_heading_slug(title: &str) -> String {
 
 fn tutorial_action_links(step_index: usize) -> Vec<String> {
     match step_index {
-        0 => vec![render_help_action_link("miningQueue", "Go to mining queue →")],
-        1 => vec![render_help_action_link("achievements", "Go to achievements →")],
-        2 => vec![render_help_action_link("miningResults", "Go to mining results →")],
+        0 => vec![render_help_action_link(
+            "miningQueue",
+            "Go to mining queue →",
+        )],
+        1 => vec![render_help_action_link(
+            "achievements",
+            "Go to achievements →",
+        )],
+        2 => vec![render_help_action_link(
+            "miningResults",
+            "Go to mining results →",
+        )],
         3 => vec![
             render_help_action_link("shop", "Go to shop →"),
             render_help_action_link("robot", "Go to robots →"),

@@ -28,4 +28,15 @@ if [[ -n "${ROBOMINER_COVERAGE_FAIL_UNDER_LINES:-}" ]]; then
 fi
 
 cd "${ROOT}"
-cargo llvm-cov --workspace "${THRESHOLD_ARGS[@]}" "$@"
+
+# llvm-cov uses its own target directory, so integration tests that shell out to
+# robominer-engine need a stable binary path on fresh CI runners.
+(
+    cd "${ROOT}"
+    unset CARGO_TARGET_DIR
+    cargo build -p robominer-engine --quiet
+)
+ENGINE_BIN="${ROOT}/target/debug/robominer-engine"
+
+env "CARGO_BIN_EXE_robominer-engine=${ENGINE_BIN}" \
+    cargo llvm-cov --workspace "${THRESHOLD_ARGS[@]}" "$@"

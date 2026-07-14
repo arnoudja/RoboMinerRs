@@ -102,7 +102,11 @@ pub(crate) fn derive_mining_queue_state(
         if timing.is_recharging {
             let time_left = timing.recharge_seconds_left.unwrap_or(0).max(1);
             let updated_robot_time_left = time_left + i64::from(timing.mining_time);
-            (MiningQueueStatus::Recharging, time_left, updated_robot_time_left)
+            (
+                MiningQueueStatus::Recharging,
+                time_left,
+                updated_robot_time_left,
+            )
         } else if let Some(time_left) = timing
             .mining_seconds_left
             .filter(|time_left| *time_left > 0)
@@ -133,9 +137,7 @@ pub(crate) fn mining_queue_item_cancelable(
     mining_end_time_is_null: bool,
     earlier_unfinished_queue_count: i64,
 ) -> bool {
-    rally_result_id.is_none()
-        && mining_end_time_is_null
-        && earlier_unfinished_queue_count > 0
+    rally_result_id.is_none() && mining_end_time_is_null && earlier_unfinished_queue_count > 0
 }
 pub async fn list_mining_queue_page_robots(
     pool: &MySqlPool,
@@ -152,11 +154,13 @@ pub async fn list_mining_queue_page_robots(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(|(robot_id, robot_name, recharge_time)| MiningQueuePageRobotRecord {
-                robot_id,
-                robot_name,
-                recharge_time,
-            })
+            .map(
+                |(robot_id, robot_name, recharge_time)| MiningQueuePageRobotRecord {
+                    robot_id,
+                    robot_name,
+                    recharge_time,
+                },
+            )
             .collect()
     })
 }
@@ -525,9 +529,7 @@ async fn insert_mining_queue(
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        MiningQueueTimingInput, derive_mining_queue_state, mining_queue_item_cancelable,
-    };
+    use super::{MiningQueueTimingInput, derive_mining_queue_state, mining_queue_item_cancelable};
     use crate::MiningQueueStatus;
 
     #[test]
@@ -541,8 +543,7 @@ mod tests {
             start_seconds_left: 0,
         };
 
-        let (status, time_left, robot_time_left) =
-            derive_mining_queue_state(false, 10, &timing);
+        let (status, time_left, robot_time_left) = derive_mining_queue_state(false, 10, &timing);
 
         assert_eq!(status, MiningQueueStatus::Queued);
         assert_eq!(time_left, 17);
@@ -560,8 +561,7 @@ mod tests {
             start_seconds_left: 0,
         };
 
-        let (status, time_left, robot_time_left) =
-            derive_mining_queue_state(true, 0, &timing);
+        let (status, time_left, robot_time_left) = derive_mining_queue_state(true, 0, &timing);
 
         assert_eq!(status, MiningQueueStatus::Recharging);
         assert_eq!(time_left, 4);

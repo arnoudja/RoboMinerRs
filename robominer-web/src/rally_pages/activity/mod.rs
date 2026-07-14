@@ -1,10 +1,10 @@
+use super::{
+    ACTIVITY_RALLY_MAX_AREAS, ActivityFeedQuery, ActivityPageState, ActivityRallyFilter,
+    RallyViewBackLink,
+};
 use crate::{
     Request, Response, ServerConfig, block_on_database, query_i64, request_user_id,
     session_username,
-};
-use super::{
-    ActivityFeedQuery, ActivityPageState, ActivityRallyFilter, RallyViewBackLink,
-    ACTIVITY_RALLY_MAX_AREAS,
 };
 
 pub(super) mod render;
@@ -61,19 +61,18 @@ async fn load_activity_state(
         ActivityRallyFilter::Mine => None,
         ActivityRallyFilter::All => None,
     };
-    let (recent_rallies, has_more_rallies) = if feed_query.filter == ActivityRallyFilter::Mine
-        && user_id <= 0
-    {
-        (Vec::new(), false)
-    } else {
-        robominer_domain::list_activity_recent_rally_feed(
-            pool,
-            feed_user_id,
-            feed_query.area_id,
-            feed_query.limit,
-        )
-        .await?
-    };
+    let (recent_rallies, has_more_rallies) =
+        if feed_query.filter == ActivityRallyFilter::Mine && user_id <= 0 {
+            (Vec::new(), false)
+        } else {
+            robominer_domain::list_activity_recent_rally_feed(
+                pool,
+                feed_user_id,
+                feed_query.area_id,
+                feed_query.limit,
+            )
+            .await?
+        };
     let mining_queue_ids: Vec<i64> = recent_rallies
         .iter()
         .map(|rally| rally.mining_queue_id)

@@ -106,4 +106,3 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
 
     fixture.cleanup(&pool).await;
 }
-

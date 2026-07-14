@@ -57,12 +57,8 @@ fn run_rally_simulation(
         loadout.mining_area.area.id,
         &loadout.mining_area.ore_supplies,
     )?;
-    let mut simulation = Simulation::new_with_ore_ids(
-        ground,
-        loadout.mining_area.area.max_moves,
-        robots,
-        ore_ids,
-    );
+    let mut simulation =
+        Simulation::new_with_ore_ids(ground, loadout.mining_area.area.max_moves, robots, ore_ids);
     let result_data = if record_animation {
         let ore_data = legacy_ore_animation_data(
             loadout.mining_area.area.id,

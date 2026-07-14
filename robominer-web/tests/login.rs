@@ -17,22 +17,23 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-login");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
 
     let login_response = login_with_credentials(&config, &username, &password);
 
-    assert_eq!(login_response.status, 302, "login should redirect after success");
+    assert_eq!(
+        login_response.status, 302,
+        "login should redirect after success"
+    );
     assert!(
         login_response
             .headers
@@ -46,8 +47,14 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
         "login should mint a session cookie"
     );
 
-    let queue_response = route(&support::get_request("/miningQueue", Some(&cookie)), &config);
-    assert_eq!(queue_response.status, 200, "authenticated queue page should render");
+    let queue_response = route(
+        &support::get_request("/miningQueue", Some(&cookie)),
+        &config,
+    );
+    assert_eq!(
+        queue_response.status, 200,
+        "authenticated queue page should render"
+    );
 
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)
@@ -69,9 +76,10 @@ async fn signup_post_redirects_to_welcome_with_session_cookie() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-signup");
     let username = format!("{prefix}user");
     let email = format!("{prefix}@example.invalid");

@@ -1,7 +1,6 @@
 use crate::MAX_ORE_TYPES;
 use crate::position::Position;
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GroundUnit {
     ore: [i32; MAX_ORE_TYPES],
@@ -146,11 +145,7 @@ impl Ground {
             let x = origin.x + distance * world_angle.cos();
             let y = origin.y + distance * world_angle.sin();
 
-            if x < 0.0
-                || y < 0.0
-                || x >= self.size_x as f64
-                || y >= self.size_y as f64
-            {
+            if x < 0.0 || y < 0.0 || x >= self.size_x as f64 || y >= self.size_y as f64 {
                 break;
             }
 
@@ -223,4 +218,3 @@ pub(crate) enum ScanState {
     },
     Complete(ScanResult),
 }
-

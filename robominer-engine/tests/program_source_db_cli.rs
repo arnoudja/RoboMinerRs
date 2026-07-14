@@ -173,20 +173,17 @@ async fn apply_program_source_to_linked_robots_updates_idle_robots_and_warns() {
 
     assert_eq!(applied.applied_robots, 2);
     assert_eq!(applied.warnings.len(), 1);
-    assert!(
-        applied.warnings.iter().any(|warning| {
-            warning.reason == robominer_db::ProgramSourceApplyWarningReason::NotEnoughMemory
-        })
-    );
+    assert!(applied.warnings.iter().any(|warning| {
+        warning.reason == robominer_db::ProgramSourceApplyWarningReason::NotEnoughMemory
+    }));
 
     let robot_ids = fixture.robot_ids.borrow().clone();
-    let busy_pending_source: String = sqlx::query_scalar(
-        "SELECT sourceCode FROM PendingRobotChanges WHERE robotId = ?",
-    )
-    .bind(robot_ids[1])
-    .fetch_one(&pool)
-    .await
-    .expect("busy robot should have pending source update");
+    let busy_pending_source: String =
+        sqlx::query_scalar("SELECT sourceCode FROM PendingRobotChanges WHERE robotId = ?")
+            .bind(robot_ids[1])
+            .fetch_one(&pool)
+            .await
+            .expect("busy robot should have pending source update");
 
     assert_eq!(busy_pending_source, "move(1);");
 
@@ -377,4 +374,3 @@ async fn update_program_source_rejects_wrong_owner() {
     fixture.assert_source_unchanged(&pool).await;
     fixture.cleanup(&pool).await;
 }
-

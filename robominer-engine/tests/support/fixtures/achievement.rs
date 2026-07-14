@@ -1,3 +1,3 @@
 pub use robominer_test_support::{
-    ensure_default_robot_parts, AchievementCliFixture as TestAchievementFixture,
+    AchievementCliFixture as TestAchievementFixture, ensure_default_robot_parts,
 };

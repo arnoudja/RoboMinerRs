@@ -21,17 +21,14 @@ fn rally_map_position_is_zero_at_initial_center() {
 #[test]
 fn rally_robot_pose_spawn_is_origin_with_orientation_135() {
     for spawn_orientation in [45, 315, 135, 225] {
-        let (x_pos, y_pos, orientation) = rally_robot_pose(
-            2.5,
-            3.5,
-            spawn_orientation,
-            2.5,
-            3.5,
-            spawn_orientation,
-        );
+        let (x_pos, y_pos, orientation) =
+            rally_robot_pose(2.5, 3.5, spawn_orientation, 2.5, 3.5, spawn_orientation);
         assert!((x_pos).abs() < f64::EPSILON);
         assert!((y_pos).abs() < f64::EPSILON);
-        assert!((orientation - 135.0).abs() < f64::EPSILON, "spawn ori {spawn_orientation}");
+        assert!(
+            (orientation - 135.0).abs() < f64::EPSILON,
+            "spawn ori {spawn_orientation}"
+        );
     }
 }
 
@@ -45,8 +42,8 @@ fn rally_robot_pose_tracks_orientation_and_position_delta() {
 
 #[test]
 fn rally_pose_properties_evaluate_from_context() {
-    let program = compile_executable_source("move(robot.orientation);")
-        .expect("program should compile");
+    let program =
+        compile_executable_source("move(robot.orientation);").expect("program should compile");
     let mut runner = program.runner();
     let mut context = robot_context(1.0);
     context.robot.orientation = 180.0;
@@ -82,4 +79,3 @@ fn rally_pose_properties_evaluate_from_context() {
         }
     }
 }
-

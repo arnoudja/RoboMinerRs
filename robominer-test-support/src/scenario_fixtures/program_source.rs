@@ -1,7 +1,7 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_row_id, unique_prefix};
 use super::robot_config::insert_robot_config_part;
+use crate::{insert_row_id, unique_prefix};
 
 pub struct ProgramSourceFixture {
     pub user_id: i64,
@@ -200,13 +200,12 @@ impl ProgramSourceFixture {
         assert_eq!(busy_source, "move(1);");
         assert_eq!(low_memory_source, "move(1);");
 
-        let busy_pending_source: String = sqlx::query_scalar(
-            "SELECT sourceCode FROM PendingRobotChanges WHERE robotId = ?",
-        )
-        .bind(robot_ids[1])
-        .fetch_one(pool)
-        .await
-        .expect("busy robot should have pending source update");
+        let busy_pending_source: String =
+            sqlx::query_scalar("SELECT sourceCode FROM PendingRobotChanges WHERE robotId = ?")
+                .bind(robot_ids[1])
+                .fetch_one(pool)
+                .await
+                .expect("busy robot should have pending source update");
         assert_eq!(busy_pending_source, "move(2);");
     }
 
@@ -306,4 +305,3 @@ pub fn parse_created_program_source_id(stdout: &str) -> i64 {
         .parse()
         .expect("created program source id should parse")
 }
-

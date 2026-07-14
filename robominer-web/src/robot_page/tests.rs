@@ -6,8 +6,7 @@ use crate::{Request, ServerConfig};
 
 use super::render::render_robot_page;
 use super::{
-    RobotPageState, robot_apply_block_reason, robot_page,
-    update_robot_config_rejection_message,
+    RobotPageState, robot_apply_block_reason, robot_page, update_robot_config_rejection_message,
 };
 
 fn sample_robot_state(message: Option<String>) -> RobotPageState {
@@ -141,8 +140,12 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
     assert!(html.contains(r#"href="editCode?nextProgramSourceId=11""#));
     assert!(html.contains(r#"href="helpProgramTips">Programming tips</a>"#));
     assert!(html.contains(r#"href="helpMechanics">Mechanics guide</a>"#));
-    assert!(html.contains(r#"class="robot-status-badge robot-status-dirty" hidden>Unsaved changes</span>"#));
-    assert!(html.contains(r#"class="robot-btn robot-btn-secondary robot-reset-btn" hidden>Reset changes</button>"#));
+    assert!(html.contains(
+        r#"class="robot-status-badge robot-status-dirty" hidden>Unsaved changes</span>"#
+    ));
+    assert!(html.contains(
+        r#"class="robot-btn robot-btn-secondary robot-reset-btn" hidden>Reset changes</button>"#
+    ));
     assert!(html.contains("Apply queues part and program changes for this robot."));
     assert!(html.contains("function isPanelDirty(panel)"));
     assert!(html.contains("Discard unsaved changes to "));
@@ -152,7 +155,9 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
     assert!(html.contains("Memory &amp; Spare"));
     assert!(html.contains("function updateRobotApplyState(panel)"));
     assert!(html.contains("function updateRobotMemoryPreview(panel)"));
-    assert!(html.contains(r#"<form id="robotForm" action="robot" method="post" class="robot-config-form">"#));
+    assert!(html.contains(
+        r#"<form id="robotForm" action="robot" method="post" class="robot-config-form">"#
+    ));
     assert!(!html.contains(r#"id="robotId""#));
     assert!(!html.contains(r#"<button type="submit">Select</button>"#));
     assert!(html.contains(r#"<input type="hidden" name="robotId" value="7"/>"#));
@@ -204,7 +209,9 @@ fn robot_shows_claim_banner_when_results_claimed() {
 
     let html = render_robot_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"class="robot-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#));
+    assert!(html.contains(
+        r#"class="robot-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#
+    ));
     assert!(html.contains(r#"class="claim-banner-reward-amount">+12</span>"#));
 }
 
@@ -237,7 +244,9 @@ fn robot_shows_program_compile_hint_without_blocking_apply() {
 fn robot_hides_program_compile_hint_when_program_is_valid() {
     let html = render_robot_page("Player".to_string(), None, &sample_robot_state(None));
 
-    assert!(html.contains(r#"class="robot-program-hint" hidden>Selected program has a compile error."#));
+    assert!(
+        html.contains(r#"class="robot-program-hint" hidden>Selected program has a compile error."#)
+    );
 }
 
 #[test]
@@ -245,10 +254,7 @@ fn robot_apply_block_reason_matches_server_rejections() {
     let robot = sample_robot_state(None).robots[0].clone();
     let program_sources = sample_robot_state(None).program_sources;
 
-    assert_eq!(
-        robot_apply_block_reason(&robot, &program_sources),
-        None
-    );
+    assert_eq!(robot_apply_block_reason(&robot, &program_sources), None);
 
     let mut pending_robot = robot.clone();
     pending_robot.change_pending = true;
@@ -274,7 +280,9 @@ fn robot_allows_apply_when_change_pending() {
 
     assert!(!html.contains(r#"class="robot-btn robot-btn-primary" disabled"#));
     assert!(!html.contains("Changes are already pending for this robot."));
-    assert!(html.contains(r#"class="robot-status-badge robot-status-pending">Changes pending</span>"#));
+    assert!(
+        html.contains(r#"class="robot-status-badge robot-status-pending">Changes pending</span>"#)
+    );
 }
 
 #[test]

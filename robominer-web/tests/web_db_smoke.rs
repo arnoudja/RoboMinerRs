@@ -43,7 +43,10 @@ async fn web_db_smoke_suite() {
     let queue_response = fixture.mining_queue_page(&config, &cookie);
     let body = response_body(&queue_response);
 
-    assert_eq!(queue_response.status, 200, "mining queue page should render");
+    assert_eq!(
+        queue_response.status, 200,
+        "mining queue page should render"
+    );
     assert!(
         body.contains(&fixture.robot_name),
         "expected robot name in queue page body:\n{body}"

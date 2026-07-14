@@ -495,7 +495,13 @@ pub(super) fn render_mining_queue_page(
     );
     body.push_str("</div>");
 
-    layout("RoboMiner - Mining queue", "miningQueue", &username, hud, &body)
+    layout(
+        "RoboMiner - Mining queue",
+        "miningQueue",
+        &username,
+        hud,
+        &body,
+    )
 }
 
 fn render_wallet_strip(body: &mut String, state: &MiningQueuePageState) {
@@ -589,8 +595,7 @@ fn render_robot_card(
         body.push_str(r#"<div class="mining-queue-active">"#);
         body.push_str(r#"<p class="mining-queue-section-label">Current run</p>"#);
         body.push_str(r#"<div class="mining-queue-run mining-queue-run-active">"#);
-        let progress_total =
-            active_run_progress_total(active_item, robot, area_map);
+        let progress_total = active_run_progress_total(active_item, robot, area_map);
         render_queue_run_row(body, active_item, false, true, progress_total);
         if let Some(total_seconds) = progress_total {
             render_run_progress(body, active_item.time_left_seconds, total_seconds);
@@ -765,11 +770,7 @@ fn enqueue_block_reason(
     {
         return Some("Mining area not available.".to_string());
     }
-    for cost in cost_map
-        .get(&selected_area_id)
-        .into_iter()
-        .flatten()
-    {
+    for cost in cost_map.get(&selected_area_id).into_iter().flatten() {
         let have = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
         if have < cost.amount {
             let need = cost.amount - have;
@@ -913,4 +914,3 @@ fn render_mining_area_details(
         r#"<tr><td></td><td>Total:</td><td colspan="2">{total_percentage:.1}%</td></tr></tbody>"#
     ));
 }
-

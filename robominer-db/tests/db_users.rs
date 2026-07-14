@@ -3,7 +3,9 @@ use robominer_db::{
     VerifyLoginRejection, VerifyLoginRequest, create_user, get_user_by_id, update_user_account,
     verify_login,
 };
-use robominer_test_support::{ensure_default_robot_parts, insert_user_with_credentials, unique_prefix};
+use robominer_test_support::{
+    ensure_default_robot_parts, insert_user_with_credentials, unique_prefix,
+};
 use serial_test::serial;
 
 #[tokio::test]

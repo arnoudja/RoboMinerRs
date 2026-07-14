@@ -20,7 +20,10 @@ fn program_bridge_scan_and_mine_in_same_cpu_loop() {
     simulation.prepare_test_run();
     simulation.advance_test_turn();
 
-    assert_eq!(simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN], 1);
+    assert_eq!(
+        simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN],
+        1
+    );
     assert_eq!(simulation.robot(0).actions_done()[6], 1);
 }
 
@@ -119,7 +122,10 @@ fn scan_bridge_reads_ore_type_after_scan_completes() {
     simulation.prepare_test_run();
     simulation.advance_test_turn();
 
-    assert_eq!(simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN], 1);
+    assert_eq!(
+        simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN],
+        1
+    );
     assert_eq!(simulation.robot(0).actions_done()[6], 0);
 
     while simulation.robot(0).actions_done()[6] == 0 && simulation.time() < max_turns {
@@ -199,7 +205,10 @@ fn scan_bridge_directional_scan_finds_ore_off_axis() {
     simulation.prepare_test_run();
     simulation.advance_test_turn();
 
-    assert_eq!(simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN], 1);
+    assert_eq!(
+        simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN],
+        1
+    );
     assert!(
         simulation.robot(0).actions_done()[6] > 0,
         "directional scan should detect off-axis ore and mine"

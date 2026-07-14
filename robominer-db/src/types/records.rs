@@ -473,4 +473,3 @@ pub struct ClaimedMiningQueueCleanupSummary {
     pub queues_deleted: u64,
     pub rally_results_deleted: u64,
 }
-

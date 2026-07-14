@@ -1,7 +1,7 @@
+use crate::animation_script;
 use crate::html::{escape_html, escape_js_string, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
-use crate::animation_script;
 
 pub fn render_rally_view_page(
     username: String,
@@ -29,7 +29,13 @@ pub fn render_rally_view_page(
     render_rally_view_bootstrap_script(&mut body, &ore_cases, &state.result_data, state);
     body.push_str("</div>");
 
-    layout("RoboMiner - Rally replay", "miningResults", &username, hud, &body)
+    layout(
+        "RoboMiner - Rally replay",
+        "miningResults",
+        &username,
+        hud,
+        &body,
+    )
 }
 
 fn render_rally_view_header(body: &mut String, back_link: Option<RallyViewBackLink<'_>>) {
@@ -308,4 +314,3 @@ fn render_rally_view_bootstrap_script(
             </script>"#,
     ));
 }
-

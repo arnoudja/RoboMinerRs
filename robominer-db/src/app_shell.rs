@@ -1,8 +1,8 @@
 use sqlx::MySqlPool;
 
 use crate::{
-    list_achievement_claim_states_for_user, load_user_asset_summary, list_user_ore_asset_states,
-    AppShellHudRecord,
+    AppShellHudRecord, list_achievement_claim_states_for_user, list_user_ore_asset_states,
+    load_user_asset_summary,
 };
 
 pub async fn load_app_shell_hud(

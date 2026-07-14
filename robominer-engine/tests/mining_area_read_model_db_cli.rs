@@ -160,4 +160,3 @@ async fn mining_result_states_report_result_details() {
         .await;
     fixture.cleanup(&pool).await;
 }
-

@@ -61,9 +61,7 @@ pub(crate) fn robot_action_from_executable(
     spec: &RobotSpec,
 ) -> RobotAction {
     match action {
-        ExecutableAction::Move(distance) => {
-            motion_chunk_robot_action(distance, spec, false)
-        }
+        ExecutableAction::Move(distance) => motion_chunk_robot_action(distance, spec, false),
         ExecutableAction::Rotate(rotation) => motion_chunk_robot_action(rotation, spec, true),
         other => non_motion_robot_action(other).unwrap_or(RobotAction::Wait),
     }
@@ -147,23 +145,14 @@ impl PendingExpressionAction {
             PendingExpressionAction::Move {
                 remaining,
                 accumulated,
-            } => record_motion_step(
-                remaining,
-                accumulated,
-                value,
-                move_speed(spec, *remaining),
-            )
-            .is_finished(),
+            } => record_motion_step(remaining, accumulated, value, move_speed(spec, *remaining))
+                .is_finished(),
             PendingExpressionAction::Rotate {
                 remaining,
                 accumulated,
-            } => record_motion_step(
-                remaining,
-                accumulated,
-                value,
-                rotate_speed(spec),
-            )
-            .is_finished(),
+            } => {
+                record_motion_step(remaining, accumulated, value, rotate_speed(spec)).is_finished()
+            }
         }
     }
 
@@ -232,8 +221,7 @@ mod tests {
     #[test]
     fn map_awaiting_executable_starts_pending_move() {
         let spec = test_spec();
-        let (pending, robot_action) =
-            map_awaiting_executable(ExecutableAction::Move(2.0), &spec);
+        let (pending, robot_action) = map_awaiting_executable(ExecutableAction::Move(2.0), &spec);
 
         assert!(pending.is_some());
         assert_eq!(robot_action, RobotAction::Move(1.0));
@@ -242,8 +230,7 @@ mod tests {
     #[test]
     fn map_awaiting_executable_passes_through_immediate_actions() {
         let spec = test_spec();
-        let (pending, robot_action) =
-            map_awaiting_executable(ExecutableAction::Mine, &spec);
+        let (pending, robot_action) = map_awaiting_executable(ExecutableAction::Mine, &spec);
 
         assert!(pending.is_none());
         assert_eq!(robot_action, RobotAction::Mine);

@@ -2,13 +2,13 @@
 
 use std::process::{Command, Output};
 
-pub use sqlx::Row;
 pub use robominer_test_support::{
     cleanup_claimed_queue_fixture, cleanup_created_user, insert_claimed_mining_queue,
     insert_cli_robot as insert_robot, insert_mining_queue, insert_row_id,
     insert_user_with_credentials, unique_prefix,
 };
 use sqlx::MySqlPool;
+pub use sqlx::Row;
 
 pub fn run_engine(args: &[String]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_robominer-engine"))

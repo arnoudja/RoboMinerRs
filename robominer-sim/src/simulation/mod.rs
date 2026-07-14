@@ -6,11 +6,11 @@ mod test_support;
 
 use robominer_program::ExecutableRunner;
 
+use crate::OreAnimationData;
+use crate::action_mapping::PendingExpressionAction;
 use crate::animation::AnimationRecorder;
 use crate::ground::Ground;
-use crate::action_mapping::PendingExpressionAction;
-use crate::physics::{apply_mining, ActionResult};
-use crate::OreAnimationData;
+use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
 use crate::robot::{ActionSource, Robot, RobotAction, ScriptedRobot};
 

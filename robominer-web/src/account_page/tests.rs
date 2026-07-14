@@ -41,20 +41,23 @@ fn account_requires_database_configuration() {
 
 #[test]
 fn account_rendering_preserves_form_contract_and_escapes_fields() {
-    let html = render_account_page(None, &AccountPageState {
-        username: "User <Edit>".to_string(),
-        email: "user&edit@example.com".to_string(),
-        current_username: "User <Current>".to_string(),
-        message: Some("Updated <ok>".to_string()),
-        error_message: Some("Error <bad>".to_string()),
-    });
+    let html = render_account_page(
+        None,
+        &AccountPageState {
+            username: "User <Edit>".to_string(),
+            email: "user&edit@example.com".to_string(),
+            current_username: "User <Current>".to_string(),
+            message: Some("Updated <ok>".to_string()),
+            error_message: Some("Error <bad>".to_string()),
+        },
+    );
 
     assert!(html.contains(r#"class="account-page""#));
     assert!(html.contains(r#"action="account" method="post""#));
     assert!(html.contains("Signed in as User &lt;Current&gt;"));
-    assert!(html.contains(
-        r#"name="username" pattern="[A-Za-z0-9]{3,30}" value="User &lt;Edit&gt;""#
-    ));
+    assert!(
+        html.contains(r#"name="username" pattern="[A-Za-z0-9]{3,30}" value="User &lt;Edit&gt;""#)
+    );
     assert!(html.contains(r#"name="email" value="user&amp;edit@example.com""#));
     assert!(html.contains(r#"name="currentpassword""#));
     assert!(html.contains(r#"name="newpassword""#));

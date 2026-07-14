@@ -192,21 +192,18 @@ pub async fn list_activity_rally_participants_for_queues(
         query = query.bind(mining_queue_id);
     }
 
-    query
-        .fetch_all(pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|(mining_queue_id, player_number, robot_name, username)| {
-                    ActivityRecentRallyParticipantRecord {
-                        mining_queue_id,
-                        player_number,
-                        robot_name,
-                        username,
-                    }
-                })
-                .collect()
-        })
+    query.fetch_all(pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|(mining_queue_id, player_number, robot_name, username)| {
+                ActivityRecentRallyParticipantRecord {
+                    mining_queue_id,
+                    player_number,
+                    robot_name,
+                    username,
+                }
+            })
+            .collect()
+    })
 }
 
 pub async fn rally_view_state(

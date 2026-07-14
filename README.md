@@ -1,23 +1,20 @@
 # RoboMiner
 
-RoboMiner is a Rust workspace containing the simulation, robot-program compiler,
-database access layer, command-line engine, and web host.
+RoboMiner is an online programming game. Improve the program for your robot to mine more efficiently.
 
 ## Prerequisites
 
 - Rust toolchain with Cargo.
-- MySQL or MariaDB for commands that read or write game state.
-- An initialized RoboMiner database when running database-backed engine commands.
+- MySQL or MariaDB.
 
 The database scripts are kept under `resources/database/`:
 
-- `createDatabase.sql` — current schema
+- `createDatabase.sql` — database schema
 - `gameData.sql` — seed data (ores, parts, areas, achievements)
 - `balanceTestData.sql` — optional test fixtures
 
 Further docs: [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
-[gameflow.md](gameflow.md) (early-game balance notes),
-[RUST_MIGRATION_PHASE1.md](RUST_MIGRATION_PHASE1.md) (legacy system map).
+[gameflow.md](gameflow.md) (early-game balance notes).
 
 ## Build
 
@@ -47,6 +44,8 @@ The main binaries are:
 - `target/release/robominer-engine`
 - `target/release/robominer-web`
 
+
+
 ## Test And Check
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the route-to-test matrix, test layout conventions,
@@ -68,7 +67,7 @@ resources/scripts/run-fast-tests.sh
 Docker) and runs `cargo test --workspace`. Without a usable database, DB integration tests skip
 themselves; golden and unit tests still run.
 
-Generate an LLVM coverage report (requires [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov)):
+Generate an LLVM coverage report (requires `[cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov)`):
 
 ```sh
 resources/scripts/run-coverage-with-db.sh
@@ -113,7 +112,7 @@ That helper:
 1. Uses `ROBOMINER_DATABASE_URL` when it already points at an initialized database.
 2. Otherwise reuses MySQL on `127.0.0.1:3306` when the RoboMiner schema is present.
 3. Otherwise starts or reuses a persistent Docker container named
-   `robominer-test-mysql` on port `3307` with volume `robominer-test-mysql-data`.
+  `robominer-test-mysql` on port `3307` with volume `robominer-test-mysql-data`.
 
 After the first Docker setup (~30–40 s), later runs typically add only about
 0.1 s of database setup before the ~6 s integration test suite runs.
@@ -132,6 +131,8 @@ resources/scripts/init-ci-database.sh
 ROBOMINER_FORCE_DB_REINIT=1 resources/scripts/init-ci-database.sh
 ```
 
+
+
 ## Run The Engine
 
 `robominer-engine` is the Rust command-line replacement for the legacy native
@@ -140,7 +141,7 @@ engine. It accepts the database connection in three ways, in this order:
 1. Pass `--database-url`.
 2. Set `ROBOMINER_DATABASE_URL`.
 3. Pass `--config`, or read `/etc/robominer/robominer.conf`, then
-   `/etc/robominer/robominer-engine.conf`, then `robominer-engine.conf` beside
+  `/etc/robominer/robominer-engine.conf`, then `robominer-engine.conf` beside
    the binary.
 
 Example with an explicit database URL:
@@ -171,6 +172,8 @@ Show all available engine commands:
 cargo run -p robominer-engine -- --help
 ```
 
+
+
 ## Run The Rust Web Host
 
 `robominer-web` is the Rust web host for RoboMiner. It owns the application
@@ -199,7 +202,7 @@ The web host accepts the database connection in this order:
 1. Pass `--database-url`.
 2. Set `ROBOMINER_DATABASE_URL`.
 3. Pass `--config` or read `/etc/robominer/robominer.conf`, then
-   `robominer-web.conf` beside the binary.
+  `robominer-web.conf` beside the binary.
 
 Override host, port, or static asset root:
 
@@ -253,37 +256,17 @@ format used by both `robominer-web` and `robominer-engine`.
 Then open:
 
 ```text
-http://127.0.0.1:8080/help
-http://127.0.0.1:8080/helpTutorial
-http://127.0.0.1:8080/helpProgramTips
-http://127.0.0.1:8080/helpRobotProgram
-http://127.0.0.1:8080/helpMechanics
-http://127.0.0.1:8080/leaderboard
-http://127.0.0.1:8080/miningAreaOverview
-http://127.0.0.1:8080/activity
-http://127.0.0.1:8080/miningQueue
-http://127.0.0.1:8080/miningResults
-http://127.0.0.1:8080/account
-http://127.0.0.1:8080/achievements
-http://127.0.0.1:8080/editCode
 http://127.0.0.1:8080/login
-http://127.0.0.1:8080/robot
-http://127.0.0.1:8080/shop
 ```
 
-## Current Migration Notes
 
-The Java servlet/JSP web application and native C++ project have been removed.
-The Rust workspace is the canonical application code. Runtime JavaScript files
-have been removed from `robominer-web/static`; the remaining static web asset is
-`css/robominer.css`. Database and maintenance scripts live under `resources/`.
 
 ## License
 
 RoboMiner is licensed under either of
 
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-  <http://www.apache.org/licenses/LICENSE-2.0>)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
 
 at your option.

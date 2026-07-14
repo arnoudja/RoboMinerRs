@@ -21,12 +21,12 @@ pub use default_robot_parts::ensure_default_robot_parts;
 pub use enqueue_mining::EnqueueMiningFixture;
 pub use mining_queue::{IdleMiningAreaFixture, QueuedMiningAreaFixture, RobotMiningAreaFixture};
 pub use pool::PoolFixture;
-pub use program_source::{parse_created_program_source_id, ProgramSourceFixture};
+pub use program_source::{ProgramSourceFixture, parse_created_program_source_id};
 pub use rally::RallyFixture;
 pub use robot_apply::RobotApplyFixture;
 pub use robot_config::{
-    assert_robot_parameters, insert_robot_config_part, insert_user_robot_part_asset,
-    RobotConfigFixture,
+    RobotConfigFixture, assert_robot_parameters, insert_robot_config_part,
+    insert_user_robot_part_asset,
 };
 pub use shop::{ShopCatalog, ShopFixture};
-pub use web_smoke::{web_smoke_prefix, WebSmokeDbFixture};
+pub use web_smoke::{WebSmokeDbFixture, web_smoke_prefix};

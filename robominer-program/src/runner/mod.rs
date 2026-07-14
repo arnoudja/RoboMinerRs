@@ -99,15 +99,14 @@ impl ExecutableRunner {
                 StepOutcome::Continue => continue,
                 StepOutcome::Cpu => break ProgramStep::Cpu,
                 StepOutcome::Action(action) => {
-                    let action =
-                        if PendingPhysicalAction::is_chunked(action)
-                            && self.pending_physical.is_none()
-                            && self.expression_eval.is_none()
-                        {
-                            self.start_pending_physical(action, PhysicalCompletion::Statement)
-                        } else {
-                            action
-                        };
+                    let action = if PendingPhysicalAction::is_chunked(action)
+                        && self.pending_physical.is_none()
+                        && self.expression_eval.is_none()
+                    {
+                        self.start_pending_physical(action, PhysicalCompletion::Statement)
+                    } else {
+                        action
+                    };
                     break ProgramStep::Action(action);
                 }
                 StepOutcome::Done => break ProgramStep::Done,
@@ -198,10 +197,7 @@ impl ExecutableRunner {
                 StepOutcome::Continue
             }
             ExecutableStatement::Expression(expression) => {
-                self.start_expression_evaluation(
-                    expression,
-                    ExpressionResume::ExpressionStatement,
-                );
+                self.start_expression_evaluation(expression, ExpressionResume::ExpressionStatement);
                 StepOutcome::Continue
             }
             ExecutableStatement::If {
@@ -230,10 +226,9 @@ impl ExecutableRunner {
                         StepOutcome::Cpu
                     } else if let Some(action) = condition.first_action() {
                         if PendingPhysicalAction::is_chunked(action) {
-                            StepOutcome::Action(self.start_pending_physical(
-                                action,
-                                PhysicalCompletion::Statement,
-                            ))
+                            StepOutcome::Action(
+                                self.start_pending_physical(action, PhysicalCompletion::Statement),
+                            )
                         } else {
                             StepOutcome::Action(self.queue_pending_action(action))
                         }

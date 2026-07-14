@@ -303,13 +303,12 @@ pub async fn cleanup_claimed_queue_fixture(
             .execute(pool)
             .await;
         if let Some(rally_result_id) = rally_result_id {
-            let still_referenced: Option<i64> = sqlx::query_scalar(
-                "SELECT id FROM MiningQueue WHERE rallyResultId = ? LIMIT 1",
-            )
-            .bind(rally_result_id)
-            .fetch_optional(pool)
-            .await
-            .expect("failed to check rally references");
+            let still_referenced: Option<i64> =
+                sqlx::query_scalar("SELECT id FROM MiningQueue WHERE rallyResultId = ? LIMIT 1")
+                    .bind(rally_result_id)
+                    .fetch_optional(pool)
+                    .await
+                    .expect("failed to check rally references");
             if still_referenced.is_none() {
                 let _ = sqlx::query("DELETE FROM RallyResult WHERE id = ?")
                     .bind(rally_result_id)

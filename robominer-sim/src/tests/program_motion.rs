@@ -102,11 +102,7 @@ fn executable_rotate_statement_matches_expression_behavior() {
 
         simulation.run();
 
-        assert_eq!(
-            simulation.robot(0).position().orientation,
-            225,
-            "{source}"
-        );
+        assert_eq!(simulation.robot(0).position().orientation, 225, "{source}");
         assert_eq!(simulation.robot(0).ore_at(0), 4, "{source}");
         assert_eq!(simulation.robot(0).actions_done()[4], 2, "{source}");
         assert_eq!(simulation.robot(0).actions_done()[6], 1, "{source}");

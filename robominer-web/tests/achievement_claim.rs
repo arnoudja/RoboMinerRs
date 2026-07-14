@@ -20,17 +20,15 @@ async fn achievements_claim_post_applies_rewards() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-achievement");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = AchievementScenario::attach_to_user(&pool, &prefix, user_id).await;
     let config = server_config(pool.clone());
 

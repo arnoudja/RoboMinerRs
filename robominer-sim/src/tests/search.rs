@@ -144,13 +144,11 @@ else {
     );
 }
 
-
-
 #[test]
 fn search_loop_keeps_found_false_and_repeats_move() {
     let source = "bool found = false; while (!found) { move(2); scan(); if (oreType() > 0) { found = true; } }";
-    let program = robominer_program::compile_executable_source(source)
-        .expect("search loop should compile");
+    let program =
+        robominer_program::compile_executable_source(source).expect("search loop should compile");
     assert!(
         program.requires_runtime(),
         "search program must use the runtime interpreter, not static expansion"
@@ -174,7 +172,11 @@ fn search_loop_keeps_found_false_and_repeats_move() {
     let runner = simulation
         .program_runner(0)
         .expect("search loop robot should run an executable program");
-    assert_eq!(runner.runtime_variable("found"), 0.0, "scan must not set found from move distance");
+    assert_eq!(
+        runner.runtime_variable("found"),
+        0.0,
+        "scan must not set found from move distance"
+    );
     assert!(
         simulation.robot(0).actions_done()[2] > 5,
         "robot should keep attempting move(2), got {} move actions",

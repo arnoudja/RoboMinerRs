@@ -20,17 +20,15 @@ async fn shop_buy_post_deducts_ore_and_adds_owned_part() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = ShopFixture::attach_to_user(&pool, &prefix, user_id, 25, 10, 0).await;
     let config = server_config(pool.clone());
 
@@ -39,7 +37,10 @@ async fn shop_buy_post_deducts_ore_and_adds_owned_part() {
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
-    form.insert("buyRobotPartId".to_string(), fixture.robot_part_id.to_string());
+    form.insert(
+        "buyRobotPartId".to_string(),
+        fixture.robot_part_id.to_string(),
+    );
     form.insert(
         "selectedRobotPartTypeId".to_string(),
         fixture.robot_part_type_id.to_string(),
@@ -74,17 +75,15 @@ async fn shop_sell_post_refunds_ore_and_clears_owned_part() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = ShopFixture::attach_to_user(&pool, &prefix, user_id, 0, 10, 1).await;
     let config = server_config(pool.clone());
 
@@ -130,17 +129,15 @@ async fn shop_buy_post_shows_insufficient_funds_message() {
 
     ensure_session_configured();
 
-    let pool = robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-        .await
-        .expect("failed to connect to test database");
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop-funds");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
-    let user_id = create_user_via_engine(
-        &username,
-        &format!("{prefix}@example.invalid"),
-        &password,
-    );
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let fixture = ShopFixture::attach_to_user(&pool, &prefix, user_id, 5, 10, 0).await;
     let config = server_config(pool.clone());
 
@@ -148,7 +145,10 @@ async fn shop_buy_post_shows_insufficient_funds_message() {
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
-    form.insert("buyRobotPartId".to_string(), fixture.robot_part_id.to_string());
+    form.insert(
+        "buyRobotPartId".to_string(),
+        fixture.robot_part_id.to_string(),
+    );
     form.insert(
         "selectedRobotPartTypeId".to_string(),
         fixture.robot_part_type_id.to_string(),

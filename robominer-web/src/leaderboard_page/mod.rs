@@ -1,4 +1,7 @@
-use crate::{Request, Response, ServerConfig, block_on_database, query_i64, request_user_id, session_username};
+use crate::{
+    Request, Response, ServerConfig, block_on_database, query_i64, request_user_id,
+    session_username,
+};
 
 const LEADERBOARD_PAGE_SIZE: i64 = 10;
 const LEADERBOARD_MAX_LIMIT: i64 = 50;
@@ -58,9 +61,10 @@ impl LeaderboardQuery {
             });
         }
         if tab == LeaderboardTab::Areas
-            && let Some(area_id) = area_id {
-                parts.push(format!("areaId={area_id}"));
-            }
+            && let Some(area_id) = area_id
+        {
+            parts.push(format!("areaId={area_id}"));
+        }
         if limit != LEADERBOARD_PAGE_SIZE {
             parts.push(format!("limit={limit}"));
         }
@@ -97,12 +101,10 @@ impl LeaderboardQuery {
             return None;
         }
         if let Some(area_id) = self.area_id
-            && ranked_areas
-                .iter()
-                .any(|area| area.id == area_id)
-            {
-                return Some(area_id);
-            }
+            && ranked_areas.iter().any(|area| area.id == area_id)
+        {
+            return Some(area_id);
+        }
         ranked_areas.first().map(|area| area.id)
     }
 }
@@ -147,15 +149,12 @@ async fn load_leaderboard_state(
 ) -> Result<LeaderboardPageState, robominer_domain::DomainError> {
     let fetch_limit = query.limit + 1;
     let viewer_standing = if user_id > 0 {
-        Some(
-            robominer_domain::load_leaderboard_viewer_standing(pool, user_id).await?,
-        )
+        Some(robominer_domain::load_leaderboard_viewer_standing(pool, user_id).await?)
     } else {
         None
     };
 
-    let mut top_robots =
-        robominer_domain::list_leaderboard_top_robots(pool, fetch_limit).await?;
+    let mut top_robots = robominer_domain::list_leaderboard_top_robots(pool, fetch_limit).await?;
     let has_more_robots = top_robots.len() as i64 > query.limit;
     top_robots.truncate(query.limit as usize);
 
@@ -177,7 +176,6 @@ async fn load_leaderboard_state(
         has_more_players,
     })
 }
-
 
 mod render;
 

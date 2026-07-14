@@ -54,11 +54,7 @@ pub(super) fn login_page(request: &Request, config: &ServerConfig) -> Response {
         );
     };
 
-    let result = block_on_database(process_login_request(
-        pool,
-        request,
-        config.allow_signup,
-    ));
+    let result = block_on_database(process_login_request(pool, request, config.allow_signup));
 
     match result {
         Ok(response) => response,
@@ -262,7 +258,6 @@ pub(super) fn create_user_rejection_message(
 ) -> &'static str {
     robominer_domain::create_user_rejection_player_message(rejection)
 }
-
 
 mod render;
 

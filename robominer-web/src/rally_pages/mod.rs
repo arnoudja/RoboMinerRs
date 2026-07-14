@@ -144,8 +144,8 @@ mod view;
 pub(super) use activity::activity_page;
 #[allow(unused_imports)]
 pub(super) use activity::render::{render_activity_page, render_activity_page_at};
-pub(super) use view::{load_user_rally_view_state, valid_mining_results_return_to};
 pub(super) use view::render::render_rally_view_page;
+pub(super) use view::{load_user_rally_view_state, valid_mining_results_return_to};
 
 #[cfg(test)]
 mod tests;

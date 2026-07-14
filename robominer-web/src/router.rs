@@ -1,9 +1,8 @@
 use crate::Request;
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, help_page,
-    http, leaderboard_page, login_redirect, mining_area_overview_page,
-    mining_queue_page, mining_results_page, query_i64, rally_pages, request_user_id, robot_page,
-    shop_page,
+    http, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
+    mining_results_page, query_i64, rally_pages, request_user_id, robot_page, shop_page,
 };
 
 pub fn route(request: &Request, config: &ServerConfig) -> Response {
@@ -23,17 +22,12 @@ pub fn route(request: &Request, config: &ServerConfig) -> Response {
         "/account" | "/Account" => account_page::account_page(request, config),
         "/activity" | "/Activity" => rally_pages::activity_page(request, config),
         "/editCode" | "/EditCode" => edit_code_page::edit_code_page(request, config),
-        "/help" | "/Help" => help_page::help_page(
-            request,
-            config,
-            request.query.contains_key("welcome"),
-        ),
-        "/helpTutorial" | "/help_tutorial.html" => help_page::help_text_page(
-            request,
-            config,
-            "helpTutorial",
-            query_i64(request, "step"),
-        ),
+        "/help" | "/Help" => {
+            help_page::help_page(request, config, request.query.contains_key("welcome"))
+        }
+        "/helpTutorial" | "/help_tutorial.html" => {
+            help_page::help_text_page(request, config, "helpTutorial", query_i64(request, "step"))
+        }
         "/helpProgramTips" | "/help_programtips.html" => {
             help_page::help_text_page(request, config, "helpProgramTips", None)
         }
@@ -154,10 +148,7 @@ mod tests {
             "/shop",
         ] {
             let response = route(&request(path), &config);
-            let expected = format!(
-                "login?returnTo={}",
-                path.trim_start_matches('/')
-            );
+            let expected = format!("login?returnTo={}", path.trim_start_matches('/'));
             assert_login_redirect(&response, &expected);
         }
     }

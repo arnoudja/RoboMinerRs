@@ -1,6 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, block_on_database, login_redirect, session_username,
-};
+use crate::{Request, Response, ServerConfig, block_on_database, login_redirect, session_username};
 
 mod render;
 
@@ -47,8 +45,10 @@ async fn load_mining_area_overview_state(
     Ok(MiningAreaOverviewPageState {
         ores: robominer_domain::list_mining_area_overview_ores_for_user(pool, user_id).await?,
         areas: robominer_domain::list_mining_area_overview_areas_for_user(pool, user_id).await?,
-        percentages: robominer_domain::list_mining_area_overview_percentages_for_user(pool, user_id)
-            .await?,
+        percentages: robominer_domain::list_mining_area_overview_percentages_for_user(
+            pool, user_id,
+        )
+        .await?,
         costs: robominer_domain::list_mining_queue_page_area_costs(pool, user_id).await?,
         ore_assets: robominer_domain::list_user_ore_asset_states(pool, user_id).await?,
     })

@@ -1,5 +1,5 @@
-use crate::html::{escape_html, layout};
 use crate::account_page::AccountPageState;
+use crate::html::{escape_html, layout};
 
 pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -> String {
     let mut body = String::from(r#"<div class="account-page">"#);
@@ -139,4 +139,3 @@ fn render_account_scripts(body: &mut String) {
 </script>"#,
     );
 }
-
