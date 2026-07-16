@@ -138,6 +138,7 @@ async fn achievements_requires_database_configuration() {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
+        trust_proxy: false,
     };
 
     let response = achievements_page(&authenticated_request("/achievements"), &config).await;

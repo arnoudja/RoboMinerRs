@@ -48,6 +48,7 @@ webroot /opt/robominer/static
 sessionsecret <random secret>
 securecookies 1
 allowsignup 0
+trustproxy 1
 ```
 
 `allowsignup 0` disables public sign-up (invite-only). See
@@ -57,7 +58,7 @@ checklist.
 Environment variables still override config values for local development:
 
 - `ROBOMINER_DATABASE_URL` or `--database-url`
-- `HOST`, `PORT`, `ROBOMINER_WEB_ROOT`, `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES`, `ROBOMINER_ALLOW_SIGNUP`
+- `HOST`, `PORT`, `ROBOMINER_WEB_ROOT`, `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES`, `ROBOMINER_ALLOW_SIGNUP`, `ROBOMINER_TRUST_PROXY`
 
 ## Install the engine
 

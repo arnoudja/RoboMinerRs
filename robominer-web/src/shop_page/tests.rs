@@ -93,6 +93,7 @@ async fn shop_requires_database_configuration() {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
+        trust_proxy: false,
     };
 
     let response = shop_page(&authenticated_request("/shop"), &config).await;

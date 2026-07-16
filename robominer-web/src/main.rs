@@ -53,6 +53,7 @@ fn main() -> io::Result<()> {
             static_root: settings.static_root,
             database_pool,
             allow_signup: settings.allow_signup,
+            trust_proxy: settings.trust_proxy,
         },
     )
 }
@@ -66,6 +67,7 @@ struct WebSettings {
     session_ttl_hours: Option<String>,
     secure_cookies: bool,
     allow_signup: bool,
+    trust_proxy: bool,
 }
 
 fn load_legacy_config(cli: &Cli) -> (PathBuf, HashMap<String, String>) {
@@ -108,6 +110,10 @@ fn web_settings(config: &HashMap<String, String>, default_static_root: &Path) ->
         allow_signup: parse_bool_default_true(
             env::var("ROBOMINER_ALLOW_SIGNUP").ok().as_deref(),
             robominer_db::config_value(config, "allowsignup"),
+        ),
+        trust_proxy: parse_bool_setting(
+            env::var("ROBOMINER_TRUST_PROXY").ok().as_deref(),
+            robominer_db::config_value(config, "trustproxy"),
         ),
     }
 }

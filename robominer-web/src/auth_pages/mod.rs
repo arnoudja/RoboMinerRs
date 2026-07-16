@@ -57,7 +57,8 @@ pub(super) async fn login_page(request: &Request, config: &ServerConfig) -> Resp
         );
     };
 
-    let result = process_login_request(pool, request, config.allow_signup).await;
+    let result =
+        process_login_request(pool, request, config.allow_signup, config.trust_proxy).await;
 
     match result {
         Ok(response) => response,
@@ -69,6 +70,7 @@ async fn process_login_request(
     pool: &robominer_db::MySqlPool,
     request: &Request,
     allow_signup: bool,
+    trust_proxy: bool,
 ) -> Result<Response, robominer_domain::DomainError> {
     let return_to = return_to_from_request(request);
     let is_login_post = is_post(request)
@@ -88,7 +90,7 @@ async fn process_login_request(
     if is_login_post {
         let login_name = request.form.get("loginName").cloned().unwrap_or_default();
         let password = request.form.get("password").cloned().unwrap_or_default();
-        let ip = client_ip(request);
+        let ip = client_ip(request, trust_proxy);
 
         if auth_attempt_is_rate_limited(&ip, &login_name) {
             log_auth_failure(&ip, &login_name, "rate_limited");
@@ -152,7 +154,7 @@ async fn process_login_request(
             .get("confirmpassword")
             .cloned()
             .unwrap_or_default();
-        let ip = client_ip(request);
+        let ip = client_ip(request, trust_proxy);
 
         if auth_attempt_is_rate_limited(&ip, &new_username) {
             log_auth_failure(&ip, &new_username, "rate_limited");

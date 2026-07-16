@@ -66,6 +66,9 @@ pub struct ServerConfig {
     pub database_pool: Option<robominer_db::MySqlPool>,
     /// When false, the sign-up form is hidden and create-user POSTs are rejected.
     pub allow_signup: bool,
+    /// When true, trust `X-Forwarded-For` / `X-Real-Ip` for client IP (rate limits,
+    /// auth logs). Enable only behind a reverse proxy that overwrites those headers.
+    pub trust_proxy: bool,
 }
 
 /// Sync bridge for process startup (e.g. DB pool connect in `main`).

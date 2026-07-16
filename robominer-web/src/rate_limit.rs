@@ -14,6 +14,7 @@ static AUTH_RATE_LIMITER: OnceLock<Mutex<AuthRateLimiter>> = OnceLock::new();
 struct AuthRateLimiter {
     by_ip: HashMap<String, VecDeque<Instant>>,
     by_login: HashMap<String, VecDeque<Instant>>,
+    last_sweep: Option<Instant>,
 }
 
 fn auth_rate_limiter() -> &'static Mutex<AuthRateLimiter> {
@@ -30,22 +31,51 @@ impl AuthRateLimiter {
         }
     }
 
+    fn sweep_expired(&mut self, now: Instant) {
+        let should_sweep = self
+            .last_sweep
+            .is_none_or(|last| now.duration_since(last) >= AUTH_WINDOW);
+        if !should_sweep {
+            return;
+        }
+        self.by_ip.retain(|_, window| {
+            Self::prune(window, now);
+            !window.is_empty()
+        });
+        self.by_login.retain(|_, window| {
+            Self::prune(window, now);
+            !window.is_empty()
+        });
+        self.last_sweep = Some(now);
+    }
+
+    fn window_len(map: &mut HashMap<String, VecDeque<Instant>>, key: &str, now: Instant) -> usize {
+        let Some(window) = map.get_mut(key) else {
+            return 0;
+        };
+        Self::prune(window, now);
+        let len = window.len();
+        if len == 0 {
+            map.remove(key);
+            return 0;
+        }
+        len
+    }
+
     fn is_limited(&mut self, ip: &str, login_key: &str, now: Instant) -> bool {
-        let ip_window = self.by_ip.entry(ip.to_string()).or_default();
-        Self::prune(ip_window, now);
-        if ip_window.len() >= MAX_ATTEMPTS_PER_IP {
+        self.sweep_expired(now);
+        if Self::window_len(&mut self.by_ip, ip, now) >= MAX_ATTEMPTS_PER_IP {
             return true;
         }
 
         if login_key.is_empty() {
             return false;
         }
-        let login_window = self.by_login.entry(login_key.to_string()).or_default();
-        Self::prune(login_window, now);
-        login_window.len() >= MAX_ATTEMPTS_PER_LOGIN
+        Self::window_len(&mut self.by_login, login_key, now) >= MAX_ATTEMPTS_PER_LOGIN
     }
 
     fn record(&mut self, ip: &str, login_key: &str, now: Instant) {
+        self.sweep_expired(now);
         let ip_window = self.by_ip.entry(ip.to_string()).or_default();
         Self::prune(ip_window, now);
         ip_window.push_back(now);
@@ -60,20 +90,25 @@ impl AuthRateLimiter {
 }
 
 /// Client IP for rate limiting / auth logs.
-/// Prefers proxy headers, then peer address injected by the Axum acceptor.
-pub(crate) fn client_ip(request: &Request) -> String {
-    if let Some(forwarded) = request.headers.get("x-forwarded-for")
-        && let Some(first) = forwarded.split(',').next()
-    {
-        let trimmed = first.trim();
-        if !trimmed.is_empty() {
-            return trimmed.to_string();
+///
+/// When `trust_proxy` is true (behind a reverse proxy that sets client headers),
+/// prefers `X-Forwarded-For` then `X-Real-Ip`. Otherwise uses the peer address
+/// injected by the Axum acceptor (`x-robominer-peer`).
+pub(crate) fn client_ip(request: &Request, trust_proxy: bool) -> String {
+    if trust_proxy {
+        if let Some(forwarded) = request.headers.get("x-forwarded-for")
+            && let Some(first) = forwarded.split(',').next()
+        {
+            let trimmed = first.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
         }
-    }
-    if let Some(real_ip) = request.headers.get("x-real-ip") {
-        let trimmed = real_ip.trim();
-        if !trimmed.is_empty() {
-            return trimmed.to_string();
+        if let Some(real_ip) = request.headers.get("x-real-ip") {
+            let trimmed = real_ip.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
         }
     }
     if let Some(peer) = request.headers.get("x-robominer-peer") {
@@ -138,6 +173,7 @@ pub(crate) fn reset_auth_rate_limiter_for_tests() {
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     limiter.by_ip.clear();
     limiter.by_login.clear();
+    limiter.last_sweep = None;
 }
 
 #[cfg(test)]
@@ -146,30 +182,48 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn client_ip_prefers_forwarded_for() {
-        let mut request = Request {
+    fn request_with_headers(headers: HashMap<String, String>) -> Request {
+        Request {
             method: "POST".to_string(),
             path: "/login".to_string(),
             query: HashMap::new(),
             form: HashMap::new(),
             form_values: HashMap::new(),
-            headers: HashMap::from([
-                (
-                    "x-forwarded-for".to_string(),
-                    "203.0.113.9, 10.0.0.1".to_string(),
-                ),
-                ("x-real-ip".to_string(), "10.0.0.2".to_string()),
-                ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
-            ]),
-        };
-        assert_eq!(client_ip(&request), "203.0.113.9");
+            headers,
+        }
+    }
+
+    #[test]
+    fn client_ip_ignores_proxy_headers_unless_trusted() {
+        let request = request_with_headers(HashMap::from([
+            (
+                "x-forwarded-for".to_string(),
+                "203.0.113.9, 10.0.0.1".to_string(),
+            ),
+            ("x-real-ip".to_string(), "10.0.0.2".to_string()),
+            ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
+        ]));
+        assert_eq!(client_ip(&request, false), "127.0.0.1");
+        assert_eq!(client_ip(&request, true), "203.0.113.9");
+    }
+
+    #[test]
+    fn client_ip_falls_back_through_trusted_proxy_headers() {
+        let mut request = request_with_headers(HashMap::from([
+            (
+                "x-forwarded-for".to_string(),
+                "203.0.113.9, 10.0.0.1".to_string(),
+            ),
+            ("x-real-ip".to_string(), "10.0.0.2".to_string()),
+            ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
+        ]));
+        assert_eq!(client_ip(&request, true), "203.0.113.9");
         request.headers.remove("x-forwarded-for");
-        assert_eq!(client_ip(&request), "10.0.0.2");
+        assert_eq!(client_ip(&request, true), "10.0.0.2");
         request.headers.remove("x-real-ip");
-        assert_eq!(client_ip(&request), "127.0.0.1");
+        assert_eq!(client_ip(&request, true), "127.0.0.1");
         request.headers.clear();
-        assert_eq!(client_ip(&request), "unknown");
+        assert_eq!(client_ip(&request, true), "unknown");
     }
 
     #[test]
@@ -191,5 +245,27 @@ mod tests {
             record_auth_attempt(&ip, "bob");
         }
         assert!(auth_attempt_is_rate_limited("203.0.113.1", "bob"));
+    }
+
+    #[test]
+    fn auth_rate_limiter_drops_empty_keys_after_prune() {
+        reset_auth_rate_limiter_for_tests();
+        let now = Instant::now();
+        let expired = now - AUTH_WINDOW - Duration::from_secs(1);
+        {
+            let mut limiter = auth_rate_limiter()
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            limiter
+                .by_ip
+                .insert("198.51.100.50".to_string(), VecDeque::from([expired]));
+            limiter
+                .by_login
+                .insert("stale".to_string(), VecDeque::from([expired]));
+            limiter.last_sweep = None;
+            limiter.sweep_expired(now);
+            assert!(limiter.by_ip.is_empty());
+            assert!(limiter.by_login.is_empty());
+        }
     }
 }

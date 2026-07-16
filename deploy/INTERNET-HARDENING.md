@@ -32,6 +32,7 @@ webroot /opt/robominer/static
 sessionsecret <run: openssl rand -hex 32>
 securecookies 1
 allowsignup 0
+trustproxy 1
 ```
 
 | Key | Purpose |
@@ -40,9 +41,10 @@ allowsignup 0
 | `sessionsecret` | Signs session cookies; required if not on localhost |
 | `securecookies 1` | `Secure` flag on cookies (use with HTTPS) |
 | `allowsignup 0` | Disable public self-registration (invite-only) |
+| `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs |
 
 Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
-`ROBOMINER_ALLOW_SIGNUP=0`.
+`ROBOMINER_ALLOW_SIGNUP=0`, `ROBOMINER_TRUST_PROXY=1`.
 
 Create accounts while signup is disabled:
 
@@ -165,7 +167,8 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Body size limit | 1 MiB → HTTP 413 |
 | Request timeouts | 30s |
 | POST-only form mutations | GET cannot drive shop/queue/account writes |
-| App login rate limit | Sliding window by IP and login name → 429 |
+| App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
+| Client IP | Peer address by default; `trustproxy 1` enables proxy headers |
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |

@@ -22,6 +22,7 @@ fn config() -> ServerConfig {
         static_root: PathBuf::from("static"),
         database_pool: None,
         allow_signup: true,
+        trust_proxy: false,
     }
 }
 

@@ -99,6 +99,7 @@ Optional web keys:
   sessionttlhours <login cookie lifetime in hours; default 24>
   sessionttlsecs <login cookie lifetime in seconds>
   securecookies <1 when served over HTTPS behind a reverse proxy>
+  trustproxy <1 when a reverse proxy sets X-Forwarded-For / X-Real-Ip>
 
 Or rerun an install script with ROBOMINER_DB_* variables set.
 EOF

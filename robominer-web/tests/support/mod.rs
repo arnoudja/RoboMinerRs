@@ -25,6 +25,7 @@ pub fn server_config(pool: MySqlPool) -> ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: Some(pool),
         allow_signup: true,
+        trust_proxy: false,
     }
 }
 

@@ -23,6 +23,7 @@ fn spawn_server() -> (String, thread::JoinHandle<()>) {
                 static_root: static_root(),
                 database_pool: None,
                 allow_signup: false,
+                trust_proxy: false,
             },
         )
         .expect("serve");

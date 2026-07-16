@@ -20,10 +20,16 @@ webroot /opt/robominer/static
 sessionsecret <long random secret>
 securecookies 1
 allowsignup 0
+trustproxy 1
 ```
 
 `allowsignup 0` disables public self-registration (invite-only). Omit the key or
 set `allowsignup 1` to keep sign-up open. Override with `ROBOMINER_ALLOW_SIGNUP=0`.
+
+`trustproxy 1` trusts `X-Forwarded-For` / `X-Real-Ip` for login rate limits and
+auth failure logs. Enable only when a reverse proxy overwrites those headers;
+leave unset (default off) if the app is reachable directly. Override with
+`ROBOMINER_TRUST_PROXY=1`.
 
 `sessionsecret` is required whenever the web host binds outside localhost.
 Behind a reverse proxy, keep `host` on loopback so the application is not

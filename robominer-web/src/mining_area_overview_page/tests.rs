@@ -73,6 +73,7 @@ async fn mining_area_overview_requires_database_configuration() {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
+        trust_proxy: false,
     };
 
     let response =
@@ -89,6 +90,7 @@ async fn mining_area_overview_requires_login() {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
+        trust_proxy: false,
     };
 
     let response = mining_area_overview_page(

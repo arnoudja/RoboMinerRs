@@ -111,6 +111,7 @@ mod tests {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
+            trust_proxy: false,
         };
 
         let response = route(&request("/"), &config).await;
@@ -124,6 +125,7 @@ mod tests {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
+            trust_proxy: false,
         };
 
         let response = route(&authenticated_request("/"), &config).await;
@@ -143,6 +145,7 @@ mod tests {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
+            trust_proxy: false,
         };
 
         for path in [
@@ -174,6 +177,7 @@ mod tests {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
+            trust_proxy: false,
         };
 
         let response = route(&request("/logoff"), &config).await;
