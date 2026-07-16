@@ -174,6 +174,11 @@ async fn load_leaderboard_state(
 }
 
 mod render;
+mod render_areas;
+mod render_players;
+mod render_robots;
+mod render_shared;
+mod render_sidebar;
 
 #[cfg(test)]
 mod tests;
