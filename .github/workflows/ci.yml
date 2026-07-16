@@ -87,7 +87,7 @@ jobs:
 
     env:
       ROBOMINER_DATABASE_URL: mysql://robominer:password@127.0.0.1:3306/RoboMiner
-      ROBOMINER_COVERAGE_FAIL_UNDER_LINES: "52"
+      ROBOMINER_COVERAGE_FAIL_UNDER_LINES: "87"
 
     steps:
       - uses: actions/checkout@v4

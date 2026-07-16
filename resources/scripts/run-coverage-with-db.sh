@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Workspace LLVM coverage against MySQL. Set ROBOMINER_COVERAGE_FAIL_UNDER_LINES to enforce a
-# minimum line-coverage percentage (CI uses 52).
+# minimum line-coverage percentage (CI uses 87).
 
 set -euo pipefail
 
