@@ -96,7 +96,7 @@ where
 pub mod test_support {
     use std::collections::HashMap;
 
-    pub use crate::csrf::csrf_token_for_user;
+    pub use crate::csrf::csrf_token_from_cookie;
     pub use crate::{Request, Response, ServerConfig, configure_session_secret, route};
 
     pub fn user_id_from_cookie_header(cookies: &str) -> Option<i64> {

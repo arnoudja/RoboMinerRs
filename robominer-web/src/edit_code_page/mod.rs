@@ -39,6 +39,7 @@ pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> 
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
+            request,
             user_id,
             render::render_edit_code_page(
                 session_username(request),

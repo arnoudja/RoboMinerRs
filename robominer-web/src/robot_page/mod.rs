@@ -30,6 +30,7 @@ pub(super) async fn robot_page(request: &Request, config: &ServerConfig) -> Resp
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
+            request,
             user_id,
             render::render_robot_page(
                 session_username(request),

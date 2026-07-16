@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use robominer_web::test_support::route;
 use serial_test::serial;
 use support::{
-    cookie_header, create_user_via_engine, ensure_session_configured, login_with_credentials,
-    post_request, response_body, server_config, unique_prefix,
+    apply_set_cookies, cookie_header, create_user_via_engine, ensure_session_configured,
+    login_with_credentials, post_request, response_body, server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -171,6 +171,7 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
         create_response.status, 200,
         "edit code create should render before delete"
     );
+    let cookie = apply_set_cookies(&cookie, &create_response);
 
     let program_source_id: i64 =
         sqlx::query_scalar("SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?")

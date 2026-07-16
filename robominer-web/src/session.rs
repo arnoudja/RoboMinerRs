@@ -18,6 +18,14 @@ pub const DEFAULT_DEV_SESSION_SECRET: &str = "robominer-dev-session-secret-chang
 static SESSION_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
 static SECURE_COOKIES: AtomicBool = AtomicBool::new(false);
 static SESSION_TTL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_SESSION_TTL_SECS);
+static SESSION_NONCE: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct SessionClaims {
+    pub user_id: i64,
+    pub expires_at: u64,
+    pub nonce: u64,
+}
 
 pub fn is_local_bind_host(host: &str) -> bool {
     matches!(host.trim(), "127.0.0.1" | "localhost" | "::1")
@@ -119,6 +127,10 @@ pub(crate) fn secure_cookie_suffix() -> &'static str {
 }
 
 pub(crate) fn user_id_from_request(request: &Request) -> Option<i64> {
+    session_from_request(request).map(|session| session.user_id)
+}
+
+pub(crate) fn session_from_request(request: &Request) -> Option<SessionClaims> {
     request
         .headers
         .get("cookie")
@@ -126,13 +138,35 @@ pub(crate) fn user_id_from_request(request: &Request) -> Option<i64> {
         .and_then(|value| verify_session_token(&value))
 }
 
+pub(crate) fn session_from_cookie_header(cookies: &str) -> Option<SessionClaims> {
+    cookie_value(cookies, SESSION_COOKIE_NAME).and_then(|value| verify_session_token(&value))
+}
+
 pub(crate) fn session_set_cookie_header(user_id: i64, persistent: bool) -> String {
     let ttl_secs = session_ttl_secs(persistent);
-    let token = create_session_token(user_id, session_expiry_timestamp(ttl_secs));
+    let expires_at = session_expiry_timestamp(ttl_secs);
+    let token = create_session_token(user_id, expires_at, new_session_nonce());
     format!(
         "{SESSION_COOKIE_NAME}={token}; Max-Age={ttl_secs}; Path=/; HttpOnly; SameSite=Lax{}",
         secure_cookie_suffix()
     )
+}
+
+/// Re-issue the session cookie for the given claims (used when rotating the CSRF nonce).
+pub(crate) fn session_cookie_header_for_claims(session: SessionClaims) -> String {
+    let max_age = session
+        .expires_at
+        .saturating_sub(current_unix_timestamp())
+        .max(1);
+    let token = create_session_token(session.user_id, session.expires_at, session.nonce);
+    format!(
+        "{SESSION_COOKIE_NAME}={token}; Max-Age={max_age}; Path=/; HttpOnly; SameSite=Lax{}",
+        secure_cookie_suffix()
+    )
+}
+
+pub(crate) fn new_session_nonce() -> u64 {
+    SESSION_NONCE.fetch_add(1, Ordering::Relaxed)
 }
 
 fn session_ttl_secs(persistent: bool) -> u64 {
@@ -166,22 +200,26 @@ pub(crate) fn cookie_value(cookies: &str, name: &str) -> Option<String> {
     })
 }
 
-fn create_session_token(user_id: i64, expires_at: u64) -> String {
-    let payload = format!("{user_id}.{expires_at}");
+fn create_session_token(user_id: i64, expires_at: u64, nonce: u64) -> String {
+    let payload = format!("{user_id}.{expires_at}.{nonce}");
     let signature = sign_payload(&payload);
     format!("{payload}.{signature}")
 }
 
-fn verify_session_token(token: &str) -> Option<i64> {
+fn verify_session_token(token: &str) -> Option<SessionClaims> {
     let (payload, signature) = token.rsplit_once('.')?;
     let expected_signature = sign_payload(payload);
     if !constant_time_eq(signature, &expected_signature) {
         return None;
     }
 
-    let (user_id_str, expires_at_str) = payload.split_once('.')?;
-    let user_id = user_id_str.parse::<i64>().ok()?;
-    let expires_at = expires_at_str.parse::<u64>().ok()?;
+    let mut parts = payload.split('.');
+    let user_id = parts.next()?.parse::<i64>().ok()?;
+    let expires_at = parts.next()?.parse::<u64>().ok()?;
+    let nonce = parts.next()?.parse::<u64>().ok()?;
+    if parts.next().is_some() {
+        return None;
+    }
     if user_id <= 0 {
         return None;
     }
@@ -189,7 +227,11 @@ fn verify_session_token(token: &str) -> Option<i64> {
         return None;
     }
 
-    Some(user_id)
+    Some(SessionClaims {
+        user_id,
+        expires_at,
+        nonce,
+    })
 }
 
 fn sign_payload(payload: &str) -> String {
@@ -199,8 +241,8 @@ fn sign_payload(payload: &str) -> String {
     encode_hex(&mac.finalize().into_bytes())
 }
 
-pub(crate) fn sign_csrf_payload(user_id: i64) -> String {
-    sign_payload(&format!("csrf.v1.{user_id}"))
+pub(crate) fn sign_csrf_session_payload(user_id: i64, nonce: u64) -> String {
+    sign_payload(&format!("csrf.v2.{user_id}.{nonce}"))
 }
 
 pub(crate) fn sign_csrf_anon_payload(nonce: u64) -> String {
@@ -258,7 +300,7 @@ fn cookie_encode(value: &str) -> String {
 
 #[cfg(test)]
 fn create_session_token_for_tests(user_id: i64) -> String {
-    create_session_token(user_id, u64::MAX / 2)
+    create_session_token(user_id, u64::MAX / 2, new_session_nonce())
 }
 
 #[cfg(test)]
@@ -317,7 +359,9 @@ mod tests {
     fn valid_session_token_returns_user_id() {
         ensure_test_session_secret();
         let token = create_session_token_for_tests(42);
-        assert_eq!(verify_session_token(&token), Some(42));
+        let session = verify_session_token(&token).expect("valid session");
+        assert_eq!(session.user_id, 42);
+        assert!(session.nonce > 0);
     }
 
     #[test]
@@ -331,7 +375,7 @@ mod tests {
     #[test]
     fn expired_session_token_is_rejected() {
         ensure_test_session_secret();
-        let token = super::create_session_token(42, 1);
+        let token = super::create_session_token(42, 1, 1);
         assert_eq!(verify_session_token(&token), None);
     }
 

@@ -54,6 +54,7 @@ pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Respo
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
+            request,
             user_id,
             render::render_shop_page(
                 session_username(request),

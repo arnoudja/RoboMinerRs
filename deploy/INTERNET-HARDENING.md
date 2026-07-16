@@ -156,13 +156,12 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Open signup (default) | Set `allowsignup 0` for invite-only |
 | Weak email validation | Manual account creation via engine CLI |
 | No security headers in app | Proxy adds HSTS, `X-Frame-Options`, etc. |
-| Auth CSRF token stable per user | Session-bound cookie + form for login; authenticated tokens HMAC’d to user id — rotate session secret on compromise |
 
 ### Already covered in-app
 
 | Control | Notes |
 | --- | --- |
-| CSRF on authenticated mutations | Hidden `csrfToken` + HMAC, rejected with 403 |
+| CSRF on authenticated mutations | Hidden `csrfToken` bound to session nonce; nonce rotates after each successful POST |
 | CSRF on login/signup | Double-submit cookie `robominer_csrf` |
 | Body size limit | 1 MiB → HTTP 413 |
 | Request timeouts | 30s |

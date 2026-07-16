@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 use robominer_db::MySqlPool;
 use robominer_test_support::{WebSmokeDbFixture, web_smoke_prefix};
 use robominer_web::test_support::{
-    Request, Response, ServerConfig, configure_session_secret, csrf_token_for_user, route,
+    Request, Response, ServerConfig, configure_session_secret, csrf_token_from_cookie, route,
     user_id_from_cookie_header,
 };
 
@@ -75,9 +75,10 @@ fn with_csrf_token(
     cookie: Option<&str>,
 ) -> HashMap<String, String> {
     if let Some(cookie) = cookie {
-        if let Some(user_id) = user_id_from_cookie_header(cookie) {
-            form.entry("csrfToken".to_string())
-                .or_insert_with(|| csrf_token_for_user(user_id));
+        if user_id_from_cookie_header(cookie).is_some() {
+            if let Some(token) = csrf_token_from_cookie(cookie) {
+                form.entry("csrfToken".to_string()).or_insert(token);
+            }
         } else if let Some(token) = cookie_value(cookie, "robominer_csrf") {
             form.entry("csrfToken".to_string()).or_insert(token);
         }
@@ -141,6 +142,66 @@ pub fn cookie_header(response: &Response) -> String {
         .map(|(_, value)| value.as_str())
         .collect::<Vec<_>>()
         .join("; ")
+}
+
+/// Merge `Set-Cookie` headers from a response into an existing Cookie header.
+/// Used after authenticated POSTs that rotate the session CSRF nonce.
+pub fn apply_set_cookies(existing: &str, response: &Response) -> String {
+    let mut cookies = parse_cookie_pairs(existing);
+    for (_, set_cookie) in response
+        .headers
+        .iter()
+        .filter(|(name, _)| *name == "Set-Cookie")
+    {
+        let Some((name, value)) = set_cookie
+            .split(';')
+            .next()
+            .and_then(|part| part.split_once('='))
+        else {
+            continue;
+        };
+        let name = name.trim();
+        let value = value.trim();
+        if name.is_empty() {
+            continue;
+        }
+        let expired = set_cookie
+            .to_ascii_lowercase()
+            .split(';')
+            .any(|part| matches!(part.trim(), "max-age=0" | "max-age=\"0\""));
+        if expired {
+            cookies.retain(|(existing_name, _)| existing_name != name);
+        } else {
+            if let Some((_, existing_value)) = cookies.iter_mut().find(|(n, _)| n == name) {
+                *existing_value = value.to_string();
+            } else {
+                cookies.push((name.to_string(), value.to_string()));
+            }
+        }
+    }
+    cookies
+        .into_iter()
+        .map(|(name, value)| format!("{name}={value}"))
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+fn parse_cookie_pairs(cookies: &str) -> Vec<(String, String)> {
+    cookies
+        .split(';')
+        .filter_map(|part| {
+            let (name, value) = part.trim().split_once('=')?;
+            let name = name.trim();
+            // Skip cookie-attribute leftovers from joined Set-Cookie headers.
+            if matches!(
+                name.to_ascii_lowercase().as_str(),
+                "max-age" | "path" | "httponly" | "samesite" | "secure" | "expires"
+            ) {
+                return None;
+            }
+            Some((name.to_string(), value.trim().to_string()))
+        })
+        .collect()
 }
 
 pub struct WebSmokeFixture {

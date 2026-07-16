@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::http::{Request, Response};
 use crate::request_helpers::is_post;
-use crate::session::{self, cookie_value};
+use crate::session::{self, SessionClaims, cookie_value};
 
 pub(crate) const CSRF_FIELD_NAME: &str = "csrfToken";
 pub(crate) const ANON_CSRF_COOKIE_NAME: &str = "robominer_csrf";
@@ -10,15 +10,31 @@ const ANON_CSRF_COOKIE_MAX_AGE_SECS: u64 = 60 * 60;
 
 static ANON_CSRF_COUNTER: AtomicU64 = AtomicU64::new(1);
 
-pub fn csrf_token_for_user(user_id: i64) -> String {
-    session::sign_csrf_payload(user_id)
+/// CSRF token bound to a session nonce (rotates when the session nonce changes).
+pub fn csrf_token_for_session(user_id: i64, nonce: u64) -> String {
+    session::sign_csrf_session_payload(user_id, nonce)
+}
+
+/// Derive the authenticated CSRF token from a Cookie header value.
+pub fn csrf_token_from_cookie(cookies: &str) -> Option<String> {
+    session::session_from_cookie_header(cookies)
+        .map(|session| csrf_token_for_session(session.user_id, session.nonce))
 }
 
 pub(crate) fn valid_csrf_token(request: &Request, user_id: i64) -> bool {
     let Some(provided) = request.form.get(CSRF_FIELD_NAME) else {
         return false;
     };
-    session::constant_time_eq_str(provided, &csrf_token_for_user(user_id))
+    let Some(session) = session::session_from_request(request) else {
+        return false;
+    };
+    if session.user_id != user_id {
+        return false;
+    }
+    session::constant_time_eq_str(
+        provided,
+        &csrf_token_for_session(session.user_id, session.nonce),
+    )
 }
 
 /// Reject authenticated POST requests that omit or forge the CSRF token.
@@ -33,11 +49,35 @@ pub(crate) fn reject_invalid_csrf(request: &Request, user_id: i64) -> Option<Res
     }
 }
 
-pub(crate) fn html_with_csrf(user_id: i64, html: String) -> Response {
-    Response::html(crate::html::inject_csrf_tokens(
+/// Inject CSRF tokens into HTML. After a successful authenticated POST, rotate the
+/// session nonce and Set-Cookie so the next form uses a fresh token.
+pub(crate) fn html_with_csrf(request: &Request, user_id: i64, html: String) -> Response {
+    let Some(session) = session::session_from_request(request).filter(|s| s.user_id == user_id)
+    else {
+        return Response::html(html);
+    };
+
+    let (session, rotate_cookie) = if is_post(request) {
+        let rotated = SessionClaims {
+            nonce: session::new_session_nonce(),
+            ..session
+        };
+        (rotated, true)
+    } else {
+        (session, false)
+    };
+
+    let mut response = Response::html(crate::html::inject_csrf_tokens(
         &html,
-        &csrf_token_for_user(user_id),
-    ))
+        &csrf_token_for_session(session.user_id, session.nonce),
+    ));
+    if rotate_cookie {
+        response = response.with_header(
+            "Set-Cookie",
+            session::session_cookie_header_for_claims(session),
+        );
+    }
+    response
 }
 
 /// Mint or reuse a double-submit CSRF cookie for anonymous login/signup pages.
@@ -110,17 +150,23 @@ mod tests {
     use std::sync::Once;
 
     use super::{
-        ANON_CSRF_COOKIE_NAME, CSRF_FIELD_NAME, csrf_token_for_user, html_with_anonymous_csrf,
-        new_anonymous_csrf_token, reject_invalid_anonymous_csrf, reject_invalid_csrf,
-        valid_anonymous_csrf, valid_csrf_token,
+        ANON_CSRF_COOKIE_NAME, CSRF_FIELD_NAME, csrf_token_for_session, csrf_token_from_cookie,
+        html_with_anonymous_csrf, html_with_csrf, new_anonymous_csrf_token,
+        reject_invalid_anonymous_csrf, reject_invalid_csrf, valid_anonymous_csrf, valid_csrf_token,
     };
     use crate::Request;
+    use crate::session::{self, session_from_cookie_header};
 
     fn ensure_secret() {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             crate::session::configure_session_secret("csrf-unit-test-secret");
         });
+    }
+
+    fn authenticated_cookie(user_id: i64) -> String {
+        ensure_secret();
+        session::session_set_cookie_header(user_id, false)
     }
 
     fn request(method: &str, form: HashMap<String, String>, cookie: Option<&str>) -> Request {
@@ -134,7 +180,7 @@ mod tests {
         }
         Request {
             method: method.to_string(),
-            path: "/login".to_string(),
+            path: "/shop".to_string(),
             query: HashMap::new(),
             form,
             form_values,
@@ -143,42 +189,110 @@ mod tests {
     }
 
     #[test]
-    fn csrf_token_is_stable_per_user_and_differs_across_users() {
+    fn csrf_token_is_bound_to_session_nonce() {
         ensure_secret();
-        let token_a = csrf_token_for_user(7);
-        let token_b = csrf_token_for_user(7);
-        let token_c = csrf_token_for_user(8);
-        assert_eq!(token_a, token_b);
-        assert_ne!(token_a, token_c);
+        let cookie_a = authenticated_cookie(7);
+        let cookie_b = authenticated_cookie(7);
+        let token_a = csrf_token_from_cookie(&cookie_a).expect("token");
+        let token_b = csrf_token_from_cookie(&cookie_b).expect("token");
+        assert_ne!(
+            token_a, token_b,
+            "new sessions should mint distinct CSRF tokens"
+        );
         assert_eq!(token_a.len(), 64);
+
+        let session = session_from_cookie_header(&cookie_a).expect("session");
+        assert_eq!(
+            csrf_token_for_session(session.user_id, session.nonce),
+            token_a
+        );
+        assert_ne!(
+            csrf_token_for_session(session.user_id, session.nonce.wrapping_add(1)),
+            token_a
+        );
     }
 
     #[test]
     fn valid_csrf_token_accepts_matching_post_form_value() {
-        ensure_secret();
+        let cookie = authenticated_cookie(42);
+        let token = csrf_token_from_cookie(&cookie).expect("token");
         let mut form = HashMap::new();
-        form.insert(CSRF_FIELD_NAME.to_string(), csrf_token_for_user(42));
-        assert!(valid_csrf_token(&request("POST", form, None), 42));
+        form.insert(CSRF_FIELD_NAME.to_string(), token);
+        assert!(valid_csrf_token(&request("POST", form, Some(&cookie)), 42));
     }
 
     #[test]
-    fn valid_csrf_token_rejects_missing_wrong_or_get() {
-        ensure_secret();
+    fn valid_csrf_token_rejects_missing_wrong_or_mismatched_session() {
+        let cookie = authenticated_cookie(42);
         assert!(!valid_csrf_token(
-            &request("POST", HashMap::new(), None),
+            &request("POST", HashMap::new(), Some(&cookie)),
             42
         ));
 
         let mut wrong = HashMap::new();
         wrong.insert(CSRF_FIELD_NAME.to_string(), "deadbeef".to_string());
-        assert!(!valid_csrf_token(&request("POST", wrong, None), 42));
+        assert!(!valid_csrf_token(
+            &request("POST", wrong, Some(&cookie)),
+            42
+        ));
 
+        let token = csrf_token_from_cookie(&cookie).expect("token");
         let mut form = HashMap::new();
-        form.insert(CSRF_FIELD_NAME.to_string(), csrf_token_for_user(42));
-        assert!(valid_csrf_token(&request("GET", form.clone(), None), 42));
-        assert!(reject_invalid_csrf(&request("GET", form.clone(), None), 42).is_none());
-        assert!(reject_invalid_csrf(&request("POST", HashMap::new(), None), 42).is_some());
-        assert!(reject_invalid_csrf(&request("POST", form, None), 42).is_none());
+        form.insert(CSRF_FIELD_NAME.to_string(), token);
+        assert!(valid_csrf_token(
+            &request("GET", form.clone(), Some(&cookie)),
+            42
+        ));
+        assert!(reject_invalid_csrf(&request("GET", form.clone(), Some(&cookie)), 42).is_none());
+        assert!(reject_invalid_csrf(&request("POST", HashMap::new(), Some(&cookie)), 42).is_some());
+        assert!(reject_invalid_csrf(&request("POST", form, Some(&cookie)), 42).is_none());
+    }
+
+    #[test]
+    fn html_with_csrf_rotates_session_nonce_after_post() {
+        let cookie = authenticated_cookie(9);
+        let before = session_from_cookie_header(&cookie).expect("session");
+        let html =
+            r#"<!DOCTYPE html><html><head></head><body><form method="post"></form></body></html>"#;
+        let response = html_with_csrf(
+            &request("POST", HashMap::new(), Some(&cookie)),
+            9,
+            html.into(),
+        );
+        let set_cookie = response
+            .headers
+            .iter()
+            .find(|(name, _)| *name == "Set-Cookie")
+            .map(|(_, value)| value.clone())
+            .expect("POST HTML should rotate session cookie");
+        let after = session_from_cookie_header(&set_cookie).expect("rotated session");
+        assert_eq!(after.user_id, before.user_id);
+        assert_eq!(after.expires_at, before.expires_at);
+        assert_ne!(after.nonce, before.nonce);
+
+        let body = String::from_utf8(response.body).expect("utf8");
+        assert!(body.contains(&csrf_token_for_session(after.user_id, after.nonce)));
+    }
+
+    #[test]
+    fn html_with_csrf_keeps_nonce_on_get() {
+        let cookie = authenticated_cookie(9);
+        let before = session_from_cookie_header(&cookie).expect("session");
+        let html =
+            r#"<!DOCTYPE html><html><head></head><body><form method="post"></form></body></html>"#;
+        let response = html_with_csrf(
+            &request("GET", HashMap::new(), Some(&cookie)),
+            9,
+            html.into(),
+        );
+        assert!(
+            response
+                .headers
+                .iter()
+                .all(|(name, _)| *name != "Set-Cookie")
+        );
+        let body = String::from_utf8(response.body).expect("utf8");
+        assert!(body.contains(&csrf_token_for_session(before.user_id, before.nonce)));
     }
 
     #[test]
