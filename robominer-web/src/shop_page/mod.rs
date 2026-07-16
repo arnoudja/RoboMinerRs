@@ -1,5 +1,6 @@
 use crate::{
-    Request, Response, ServerConfig, block_on_database, login_redirect, query_i64, session_username,
+    Request, Response, ServerConfig, login_redirect, mutation_form_has,
+    mutation_i64, query_i64, session_username,
 };
 
 pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = 7;
@@ -20,39 +21,45 @@ pub(super) struct ShopPageState {
     pub(super) message: Option<String>,
 }
 
-pub(super) fn shop_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(user_id) = crate::request_user_id(request) else {
         return login_redirect(request);
     };
+    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
+        return response;
+    }
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Shop requires ROBOMINER_DATABASE_URL to be configured",
         );
     };
 
-    let buy_part_id = query_i64(request, "buyRobotPartId");
-    let sell_part_id = query_i64(request, "sellRobotPartId");
+    let buy_part_id = mutation_i64(request, "buyRobotPartId");
+    let sell_part_id = mutation_i64(request, "sellRobotPartId");
     let selected_part_type_id = query_i64(request, "selectedRobotPartTypeId");
     let selected_tier_id = query_i64(request, "selectedTierId");
     let selected_part_id = query_i64(request, "selectedRobotPartId");
 
-    let result = block_on_database(load_shop_state(
+    let result = load_shop_state(
         pool,
         user_id,
         buy_part_id,
         sell_part_id,
-        request.form.contains_key("sellAllUnassigned"),
+        mutation_form_has(request, "sellAllUnassigned"),
         selected_part_type_id,
         selected_tier_id,
         selected_part_id,
-    ));
+    ).await;
 
     match result {
-        Ok(state) => Response::html(render::render_shop_page(
-            session_username(request),
-            crate::app_shell::hud_markup(request, config).as_deref(),
-            &state,
-        )),
+        Ok(state) => crate::csrf::html_with_csrf(
+            user_id,
+            render::render_shop_page(
+                session_username(request),
+                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                &state,
+            ),
+        ),
         Err(error) => Response::service_unavailable(format!("Unable to load shop: {error}")),
     }
 }
@@ -68,12 +75,12 @@ async fn load_shop_state(
     selected_tier_id: Option<i64>,
     selected_part_id: Option<i64>,
 ) -> Result<ShopPageState, robominer_domain::DomainError> {
-    robominer_domain::claim_user_results(pool, user_id).await?;
+    robominer_db::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
     if let Some(robot_part_id) = buy_part_id {
         message = Some(
-            match robominer_domain::buy_robot_part(
+            match robominer_db::buy_robot_part(
                 pool,
                 robominer_db::RobotPartTransactionRequest {
                     user_id,
@@ -91,7 +98,7 @@ async fn load_shop_state(
         );
     } else if sell_all_unassigned {
         message = Some(
-            match robominer_domain::sell_all_unassigned_robot_parts(pool, user_id).await? {
+            match robominer_db::sell_all_unassigned_robot_parts(pool, user_id).await? {
                 Ok(result) => {
                     if result.sold_count == 1 {
                         "Sold 1 unassigned robot part".to_string()
@@ -107,7 +114,7 @@ async fn load_shop_state(
         );
     } else if let Some(robot_part_id) = sell_part_id {
         message = Some(
-            match robominer_domain::sell_robot_part(
+            match robominer_db::sell_robot_part(
                 pool,
                 robominer_db::RobotPartTransactionRequest {
                     user_id,
@@ -125,9 +132,17 @@ async fn load_shop_state(
         );
     }
 
-    let ores = robominer_domain::list_shop_catalog_ores_for_user(pool, user_id).await?;
-    let part_types = robominer_domain::list_shop_catalog_robot_part_types(pool).await?;
-    let parts = robominer_domain::list_shop_catalog_robot_parts(pool).await?;
+    let ores: Vec<robominer_db::OreRecord> =
+        robominer_db::list_mining_area_overview_ores_for_user(pool, user_id)
+            .await?
+            .into_iter()
+            .map(|ore| robominer_db::OreRecord {
+                id: ore.ore_id,
+                ore_name: ore.ore_name,
+            })
+            .collect();
+    let part_types = robominer_db::list_robot_part_types(pool).await?;
+    let parts = robominer_db::list_shop_robot_part_catalog(pool).await?;
     let selected_part_type_id = selected_part_type_id
         .or_else(|| part_types.first().map(|part_type| part_type.id))
         .unwrap_or(0);
@@ -146,9 +161,9 @@ async fn load_shop_state(
         ores,
         part_types,
         parts,
-        costs: robominer_domain::list_shop_catalog_robot_part_costs(pool).await?,
-        part_states: robominer_domain::list_shop_robot_part_states(pool, user_id).await?,
-        ore_assets: robominer_domain::list_user_ore_asset_states(pool, user_id).await?,
+        costs: robominer_db::list_shop_robot_part_costs(pool).await?,
+        part_states: robominer_db::list_shop_robot_part_states(pool, user_id).await?,
+        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id).await?,
         selected_part_type_id,
         selected_tier_id,
         selected_part_id,
@@ -188,7 +203,11 @@ pub(super) fn robot_part_transaction_rejection_message(
     robominer_domain::robot_part_transaction_rejection_message(rejection)
 }
 
+mod catalog;
+mod helpers;
+mod inventory;
 mod render;
+mod scripts;
 
 #[cfg(test)]
 mod tests;

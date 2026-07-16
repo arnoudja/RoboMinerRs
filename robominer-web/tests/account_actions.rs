@@ -29,7 +29,7 @@ async fn account_update_post_persists_profile_changes() {
     let user_id =
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
-    let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
+    let cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
 
     let updated_username = format!("{prefix}-renamed");
     let updated_email = format!("{prefix}-renamed@example.invalid");
@@ -40,7 +40,7 @@ async fn account_update_post_persists_profile_changes() {
     form.insert("newpassword".to_string(), String::new());
     form.insert("confirmpassword".to_string(), String::new());
 
-    let response = route(&post_request("/account", form, Some(&cookie)), &config);
+    let response = route(&post_request("/account", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "account page should render");

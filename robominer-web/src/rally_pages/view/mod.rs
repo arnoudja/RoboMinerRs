@@ -32,13 +32,13 @@ async fn rally_view_state(
     require_claimed_viewer_result: bool,
 ) -> Result<Option<RallyViewPageState>, robominer_domain::DomainError> {
     let Some(state) =
-        robominer_domain::rally_view_state(pool, user_id, rally_result_id, require_user_result)
+        robominer_db::rally_view_state(pool, user_id, rally_result_id, require_user_result)
             .await?
     else {
         return Ok(None);
     };
-    let ores = robominer_domain::list_ores(pool).await?;
-    let metadata = robominer_domain::rally_view_metadata(
+    let ores = robominer_db::list_ores(pool).await?;
+    let metadata = robominer_db::rally_view_metadata(
         pool,
         user_id,
         rally_result_id,
@@ -49,7 +49,7 @@ async fn rally_view_state(
         return Ok(None);
     };
     let participants =
-        robominer_domain::list_rally_view_participants(pool, rally_result_id).await?;
+        robominer_db::list_rally_view_participants(pool, rally_result_id).await?;
     let mut slots = [
         (state.ai_robot_name.clone(), state.ai_username.clone()),
         (state.ai_robot_name.clone(), state.ai_username.clone()),

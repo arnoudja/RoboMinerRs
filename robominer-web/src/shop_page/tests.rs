@@ -87,15 +87,15 @@ fn sample_shop_state(message: Option<String>) -> ShopPageState {
     }
 }
 
-#[test]
-fn shop_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn shop_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
     };
 
-    let response = shop_page(&authenticated_request("/shop"), &config);
+    let response = shop_page(&authenticated_request("/shop"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);

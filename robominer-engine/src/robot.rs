@@ -5,13 +5,13 @@ pub(crate) async fn robot_config_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let program_sources = robominer_domain::list_robot_config_program_sources(pool, user_id)
+    let program_sources = robominer_db::list_program_sources_for_user(pool, user_id)
         .await
         .context("failed to load robot configuration program sources")?;
-    let robots = robominer_domain::list_robot_config_states(pool, user_id)
+    let robots = robominer_db::list_robot_config_states(pool, user_id)
         .await
         .context("failed to load robot configuration states")?;
-    let part_assets = robominer_domain::list_robot_config_part_asset_states(pool, user_id)
+    let part_assets = robominer_db::list_robot_config_part_asset_states(pool, user_id)
         .await
         .context("failed to load robot configuration part assets")?;
 
@@ -78,7 +78,7 @@ pub(crate) async fn update_robot_config(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::UpdateRobotConfigRequest,
 ) -> Result<()> {
-    match robominer_domain::update_robot_config(pool, request.clone())
+    match robominer_db::update_robot_config(pool, request.clone())
         .await
         .context("failed to update robot configuration")?
     {

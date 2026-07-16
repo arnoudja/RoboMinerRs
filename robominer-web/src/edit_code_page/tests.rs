@@ -58,15 +58,15 @@ fn sample_edit_code_state(
     }
 }
 
-#[test]
-fn edit_code_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn edit_code_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
     };
 
-    let response = edit_code_page(&authenticated_request("/editCode"), &config);
+    let response = edit_code_page(&authenticated_request("/editCode"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);

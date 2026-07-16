@@ -326,4 +326,8 @@ pub(crate) enum Command {
         #[arg(long)]
         persist: bool,
     },
+    /// Apply pending schema migrations (or baseline a current schema).
+    Migrate,
+    /// Show applied/pending schema migrations.
+    MigrateStatus,
 }

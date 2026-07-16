@@ -5,10 +5,10 @@ pub(crate) async fn user_ore_asset_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let summary = robominer_domain::load_user_asset_summary(pool, user_id)
+    let summary = robominer_db::load_user_asset_summary(pool, user_id)
         .await
         .context("failed to load user asset summary")?;
-    let states = robominer_domain::list_user_ore_asset_states(pool, user_id)
+    let states = robominer_db::list_user_ore_asset_states(pool, user_id)
         .await
         .context("failed to load user ore asset states")?;
 

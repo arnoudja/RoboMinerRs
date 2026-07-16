@@ -64,7 +64,7 @@ pub(crate) async fn delete_program_source(
     user_id: i64,
     program_source_id: i64,
 ) -> Result<()> {
-    match robominer_domain::delete_program_source(pool, user_id, program_source_id)
+    match robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
         .await
         .context("failed to delete program source")?
     {
@@ -93,7 +93,7 @@ pub(crate) async fn program_source_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let states = robominer_domain::list_program_source_states(pool, user_id)
+    let states = robominer_db::list_program_source_states_for_user(pool, user_id)
         .await
         .context("failed to load program source states")?;
 

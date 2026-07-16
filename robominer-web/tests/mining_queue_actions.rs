@@ -32,7 +32,7 @@ async fn mining_queue_remove_post_deletes_queued_item() {
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
     let config = server_config(pool.clone());
 
-    let login_response = login_with_credentials(&config, &username, &password);
+    let login_response = login_with_credentials(&config, &username, &password).await;
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
@@ -51,7 +51,7 @@ async fn mining_queue_remove_post_deletes_queued_item() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config);
+    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "mining queue page should render");
@@ -103,7 +103,7 @@ async fn mining_queue_add_post_inserts_queue_item() {
     let fixture = IdleMiningAreaFixture::create(&pool, user_id, 25).await;
     let config = server_config(pool.clone());
 
-    let login_response = login_with_credentials(&config, &username, &password);
+    let login_response = login_with_credentials(&config, &username, &password).await;
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
@@ -118,7 +118,7 @@ async fn mining_queue_add_post_inserts_queue_item() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config);
+    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "mining queue page should render");
@@ -167,7 +167,7 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
         .expect("failed to expand mining queue size for fill test");
     let config = server_config(pool.clone());
 
-    let login_response = login_with_credentials(&config, &username, &password);
+    let login_response = login_with_credentials(&config, &username, &password).await;
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
@@ -182,7 +182,7 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config);
+    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "mining queue fill should render");

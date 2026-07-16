@@ -4,6 +4,7 @@ mod assets;
 mod cli;
 mod database;
 mod leaderboard;
+mod migrate;
 mod mining;
 mod output;
 mod program;
@@ -22,6 +23,7 @@ use assets::user_ore_asset_states;
 use cli::{Cli, Command};
 use database::connect_database;
 use leaderboard::leaderboard_states;
+use migrate::{migrate, migrate_status};
 use mining::{
     cancel_mining_queue, claim_results, enqueue_mining, mining_area_overview_states,
     mining_area_scores, mining_queue_page_states, mining_queue_states, mining_result_states,
@@ -511,6 +513,14 @@ pub async fn run() -> Result<()> {
 
             let pool = connect_database(cli.database_url, cli.config).await?;
             run_rallies(&pool, options).await
+        }
+        Command::Migrate => {
+            let pool = connect_database(cli.database_url, cli.config).await?;
+            migrate(&pool).await
+        }
+        Command::MigrateStatus => {
+            let pool = connect_database(cli.database_url, cli.config).await?;
+            migrate_status(&pool).await
         }
     }
 }

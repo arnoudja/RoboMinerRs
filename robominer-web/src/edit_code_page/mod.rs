@@ -1,5 +1,5 @@
 use crate::{
-    Request, Response, ServerConfig, block_on_database, login_redirect, query_i64,
+    Request, Response, ServerConfig, is_post, login_redirect, query_i64,
     query_signed_i64, session_username,
 };
 
@@ -22,24 +22,30 @@ pub(super) struct EditCodeProgramSource {
     pub(super) verified: bool,
 }
 
-pub(super) fn edit_code_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(user_id) = crate::request_user_id(request) else {
         return login_redirect(request);
     };
+    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
+        return response;
+    }
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Edit code requires ROBOMINER_DATABASE_URL to be configured",
         );
     };
 
-    let result = block_on_database(load_edit_code_page_state(pool, user_id, request));
+    let result = load_edit_code_page_state(pool, user_id, request).await;
 
     match result {
-        Ok(state) => Response::html(render::render_edit_code_page(
-            session_username(request),
-            crate::app_shell::hud_markup(request, config).as_deref(),
-            &state,
-        )),
+        Ok(state) => crate::csrf::html_with_csrf(
+            user_id,
+            render::render_edit_code_page(
+                session_username(request),
+                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                &state,
+            ),
+        ),
         Err(error) => Response::service_unavailable(format!("Unable to load edit code: {error}")),
     }
 }
@@ -49,87 +55,90 @@ async fn load_edit_code_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<EditCodePageState, robominer_domain::DomainError> {
-    let claim_result = robominer_domain::claim_user_results(pool, user_id).await?;
+    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
     let program_source_id = query_i64(request, "programSourceId").unwrap_or(0);
 
-    match request.form.get("requestType").map(String::as_str) {
-        Some("erase") if program_source_id > 0 => {
-            if let Err(rejection) =
-                robominer_domain::delete_program_source(pool, user_id, program_source_id).await?
-            {
-                message = Some(format!(
-                    "Unable to delete program: {}",
-                    program_source_write_rejection_message(rejection)
-                ));
-            } else {
-                next_program_source_id = None;
-                message = Some("Program deleted.".to_string());
-            }
-        }
-        Some("applyRobots") if program_source_id > 0 => {
-            let applied = robominer_domain::apply_program_source_to_linked_robots(
-                pool,
-                user_id,
-                program_source_id,
-            )
-            .await?;
-            message = Some(format_program_source_apply_message(&applied));
-        }
-        Some("update") => {
-            let source_name = request.form.get("sourceName").cloned().unwrap_or_default();
-            let source_code = request.form.get("sourceCode").cloned().unwrap_or_default();
-            if program_source_id > 0 {
-                if let Err(rejection) = robominer_domain::update_program_source(
-                    pool,
-                    robominer_db::ProgramSourceWriteRequest {
-                        user_id,
-                        program_source_id,
-                        source_name,
-                        source_code,
-                    },
-                )
-                .await?
+    if is_post(request) {
+        match request.form.get("requestType").map(String::as_str) {
+            Some("erase") if program_source_id > 0 => {
+                if let Err(rejection) =
+                    robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
+                        .await?
                 {
                     message = Some(format!(
-                        "Unable to save program: {}",
+                        "Unable to delete program: {}",
                         program_source_write_rejection_message(rejection)
                     ));
                 } else {
-                    message = Some("Program saved.".to_string());
+                    next_program_source_id = None;
+                    message = Some("Program deleted.".to_string());
                 }
-            } else if !source_name.is_empty() || !source_code.is_empty() {
-                match robominer_domain::create_program_source(
+            }
+            Some("applyRobots") if program_source_id > 0 => {
+                let applied = robominer_db::apply_verified_program_source_to_idle_robots(
                     pool,
-                    robominer_db::CreateProgramSourceRequest {
-                        user_id,
-                        source_name,
-                        source_code,
-                    },
+                    user_id,
+                    program_source_id,
                 )
-                .await?
-                {
-                    Ok(created) => {
-                        if next_program_source_id.is_none_or(|source_id| source_id <= 0) {
-                            next_program_source_id = Some(created.program_source_id);
-                        }
-                        message = Some("Program created.".to_string());
-                    }
-                    Err(rejection) => {
+                .await?;
+                message = Some(format_program_source_apply_message(&applied));
+            }
+            Some("update") => {
+                let source_name = request.form.get("sourceName").cloned().unwrap_or_default();
+                let source_code = request.form.get("sourceCode").cloned().unwrap_or_default();
+                if program_source_id > 0 {
+                    if let Err(rejection) = robominer_domain::update_program_source(
+                        pool,
+                        robominer_db::ProgramSourceWriteRequest {
+                            user_id,
+                            program_source_id,
+                            source_name,
+                            source_code,
+                        },
+                    )
+                    .await?
+                    {
                         message = Some(format!(
                             "Unable to save program: {}",
                             program_source_write_rejection_message(rejection)
                         ));
+                    } else {
+                        message = Some("Program saved.".to_string());
+                    }
+                } else if !source_name.is_empty() || !source_code.is_empty() {
+                    match robominer_domain::create_program_source(
+                        pool,
+                        robominer_db::CreateProgramSourceRequest {
+                            user_id,
+                            source_name,
+                            source_code,
+                        },
+                    )
+                    .await?
+                    {
+                        Ok(created) => {
+                            if next_program_source_id.is_none_or(|source_id| source_id <= 0) {
+                                next_program_source_id = Some(created.program_source_id);
+                            }
+                            message = Some("Program created.".to_string());
+                        }
+                        Err(rejection) => {
+                            message = Some(format!(
+                                "Unable to save program: {}",
+                                program_source_write_rejection_message(rejection)
+                            ));
+                        }
                     }
                 }
             }
+            _ => {}
         }
-        _ => {}
     }
 
-    let program_sources = robominer_domain::list_program_source_states(pool, user_id).await?;
+    let program_sources = robominer_db::list_program_source_states_for_user(pool, user_id).await?;
     let selected_source = selected_edit_code_source(&program_sources, next_program_source_id);
 
     let selected_program_source = selected_source
@@ -226,7 +235,10 @@ pub(super) fn program_source_write_rejection_message(
     robominer_domain::program_source_write_rejection_player_message(rejection)
 }
 
+mod editor;
+mod library;
 mod render;
+mod scripts;
 
 #[cfg(test)]
 mod tests;

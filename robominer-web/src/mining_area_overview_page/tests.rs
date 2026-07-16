@@ -67,8 +67,8 @@ fn sample_state() -> MiningAreaOverviewPageState {
     }
 }
 
-#[test]
-fn mining_area_overview_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn mining_area_overview_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
@@ -76,15 +76,15 @@ fn mining_area_overview_requires_database_configuration() {
     };
 
     let response =
-        mining_area_overview_page(&authenticated_request("/miningAreaOverview"), &config);
+        mining_area_overview_page(&authenticated_request("/miningAreaOverview"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
     assert!(body.contains("ROBOMINER_DATABASE_URL"));
 }
 
-#[test]
-fn mining_area_overview_requires_login() {
+#[tokio::test(flavor = "current_thread")]
+async fn mining_area_overview_requires_login() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
@@ -101,7 +101,7 @@ fn mining_area_overview_requires_login() {
             headers: HashMap::new(),
         },
         &config,
-    );
+    ).await;
 
     assert_eq!(response.status, 302);
     assert!(response.headers.iter().any(|(name, value)| {

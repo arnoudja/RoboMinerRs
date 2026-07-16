@@ -2,6 +2,7 @@ SET storage_engine=InnoDB;
 
 drop view if exists TopRobotsView;
 
+drop table if exists SchemaMigration;
 drop table if exists PoolItemMiningTotals;
 drop table if exists PoolItem;
 drop table if exists Pool;
@@ -413,4 +414,11 @@ PRIMARY KEY (poolItemId, oreId)
 );
 
 
-grant SELECT,INSERT,UPDATE,DELETE,LOCK TABLES on RoboMiner.* to robominer@localhost;
+create table SchemaMigration
+(
+version VARCHAR(64) PRIMARY KEY,
+appliedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+grant SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX,LOCK TABLES on RoboMiner.* to robominer@localhost;

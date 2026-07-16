@@ -5,16 +5,18 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+axum = "0.8.9"
 clap = { version = "4.6.1", features = ["derive"] }
 hmac = "0.12.1"
 robominer-db = { version = "0.1.0", path = "../robominer-db" }
 robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
 sha2 = "0.10.9"
-tokio = { version = "1.52.1", features = ["rt", "rt-multi-thread"] }
+tokio = { version = "1.52.1", features = ["macros", "net", "rt", "rt-multi-thread", "sync"] }
+tower-http = { version = "0.6.8", features = ["timeout"] }
 
 [dev-dependencies]
 robominer-engine = { path = "../robominer-engine" }
 robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }
 serial_test = "3.2.0"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.1", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }

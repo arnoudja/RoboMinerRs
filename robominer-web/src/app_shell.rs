@@ -1,12 +1,12 @@
 use robominer_db::AppShellHudRecord;
 
 use crate::html::escape_html;
-use crate::{Request, ServerConfig, block_on_database, request_user_id};
+use crate::{Request, ServerConfig, request_user_id};
 
-pub(crate) fn hud_markup(request: &Request, config: &ServerConfig) -> Option<String> {
+pub(crate) async fn hud_markup(request: &Request, config: &ServerConfig) -> Option<String> {
     let user_id = request_user_id(request)?;
     let pool = config.database_pool.as_ref()?;
-    let hud = block_on_database(robominer_domain::load_app_shell_hud(pool, user_id)).ok()?;
+    let hud = robominer_db::load_app_shell_hud(pool, user_id).await.ok()?;
     Some(render_app_shell_hud(&hud))
 }
 

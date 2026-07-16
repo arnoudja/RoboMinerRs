@@ -5,7 +5,7 @@ pub(crate) async fn buy_robot_part(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
-    match robominer_domain::buy_robot_part(pool, request)
+    match robominer_db::buy_robot_part(pool, request)
         .await
         .context("failed to buy robot part")?
     {
@@ -27,7 +27,7 @@ pub(crate) async fn sell_robot_part(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
-    match robominer_domain::sell_robot_part(pool, request)
+    match robominer_db::sell_robot_part(pool, request)
         .await
         .context("failed to sell robot part")?
     {
@@ -49,7 +49,7 @@ pub(crate) async fn shop_robot_part_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let states = robominer_domain::list_shop_robot_part_states(pool, user_id)
+    let states = robominer_db::list_shop_robot_part_states(pool, user_id)
         .await
         .context("failed to load shop robot part states")?;
 
@@ -69,16 +69,16 @@ pub(crate) async fn shop_robot_part_states(
 }
 
 pub(crate) async fn shop_catalog_states(pool: &robominer_db::MySqlPool) -> Result<()> {
-    let ores = robominer_domain::list_shop_catalog_ores(pool)
+    let ores = robominer_db::list_ores(pool)
         .await
         .context("failed to load shop ores")?;
-    let robot_part_types = robominer_domain::list_shop_catalog_robot_part_types(pool)
+    let robot_part_types = robominer_db::list_robot_part_types(pool)
         .await
         .context("failed to load shop robot part types")?;
-    let robot_parts = robominer_domain::list_shop_catalog_robot_parts(pool)
+    let robot_parts = robominer_db::list_shop_robot_part_catalog(pool)
         .await
         .context("failed to load shop robot parts")?;
-    let costs = robominer_domain::list_shop_catalog_robot_part_costs(pool)
+    let costs = robominer_db::list_shop_robot_part_costs(pool)
         .await
         .context("failed to load shop robot part costs")?;
 

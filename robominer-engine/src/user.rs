@@ -5,7 +5,7 @@ pub(crate) async fn create_user(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::CreateUserRequest,
 ) -> Result<()> {
-    match robominer_domain::create_user(pool, request)
+    match robominer_db::create_user(pool, request)
         .await
         .context("failed to create user")?
     {
@@ -24,7 +24,7 @@ pub(crate) async fn update_user_account(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::UpdateUserAccountRequest,
 ) -> Result<()> {
-    match robominer_domain::update_user_account(pool, request)
+    match robominer_db::update_user_account(pool, request)
         .await
         .context("failed to update user account")?
     {
@@ -58,7 +58,7 @@ pub(crate) async fn verify_login(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::VerifyLoginRequest,
 ) -> Result<()> {
-    match robominer_domain::verify_login(pool, request)
+    match robominer_db::verify_login(pool, request)
         .await
         .context("failed to verify login")?
     {
@@ -77,7 +77,7 @@ pub(crate) async fn verify_user_password(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::VerifyUserPasswordRequest,
 ) -> Result<()> {
-    match robominer_domain::verify_user_password(pool, request)
+    match robominer_db::verify_user_password(pool, request)
         .await
         .context("failed to verify user password")?
     {

@@ -8,7 +8,8 @@ use std::sync::OnceLock;
 use robominer_db::MySqlPool;
 use robominer_test_support::{WebSmokeDbFixture, web_smoke_prefix};
 use robominer_web::test_support::{
-    Request, Response, ServerConfig, configure_session_secret, route,
+    Request, Response, ServerConfig, configure_session_secret, csrf_token_for_user, route,
+    user_id_from_cookie_header,
 };
 
 static SESSION_CONFIGURED: OnceLock<()> = OnceLock::new();
@@ -34,6 +35,20 @@ pub fn get_request(path: &str, cookie: Option<&str>) -> Request {
 }
 
 pub fn post_request(path: &str, form: HashMap<String, String>, cookie: Option<&str>) -> Request {
+    request_with_form(
+        "POST",
+        path,
+        HashMap::new(),
+        with_csrf_token(form, cookie),
+        cookie,
+    )
+}
+
+pub fn post_request_without_csrf(
+    path: &str,
+    form: HashMap<String, String>,
+    cookie: Option<&str>,
+) -> Request {
     request_with_form("POST", path, HashMap::new(), form, cookie)
 }
 
@@ -51,7 +66,47 @@ pub fn post_request_query(
     form: HashMap<String, String>,
     cookie: Option<&str>,
 ) -> Request {
-    request_with_form("POST", path, query, form, cookie)
+    request_with_form("POST", path, query, with_csrf_token(form, cookie), cookie)
+}
+
+fn with_csrf_token(
+    mut form: HashMap<String, String>,
+    cookie: Option<&str>,
+) -> HashMap<String, String> {
+    if let Some(cookie) = cookie {
+        if let Some(user_id) = user_id_from_cookie_header(cookie) {
+            form.entry("csrfToken".to_string())
+                .or_insert_with(|| csrf_token_for_user(user_id));
+        } else if let Some(token) = cookie_value(cookie, "robominer_csrf") {
+            form.entry("csrfToken".to_string())
+                .or_insert(token);
+        }
+    }
+    form
+}
+
+fn cookie_value(cookies: &str, name: &str) -> Option<String> {
+    cookies.split(';').find_map(|cookie| {
+        let (cookie_name, value) = cookie.trim().split_once('=')?;
+        (cookie_name == name).then(|| {
+            value
+                .split(';')
+                .next()
+                .unwrap_or(value)
+                .trim()
+                .to_string()
+        })
+    })
+}
+
+/// Fetch /login, return the double-submit CSRF cookie pair for anonymous POSTs.
+pub async fn anonymous_login_csrf(config: &ServerConfig) -> (String, String) {
+    let response = route(&get_request("/login", None), config).await;
+    let set_cookie = cookie_header(&response);
+    let token = cookie_value(&set_cookie, "robominer_csrf")
+        .expect("login page should mint robominer_csrf cookie");
+    let cookie = format!("robominer_csrf={token}");
+    (cookie, token)
 }
 
 fn request_with_form(
@@ -125,12 +180,12 @@ impl WebSmokeFixture {
         }
     }
 
-    pub fn login(&self, config: &ServerConfig) -> Response {
-        login_with_credentials(config, &self.username, &self.password)
+    pub async fn login(&self, config: &ServerConfig) -> Response {
+        login_with_credentials(config, &self.username, &self.password).await
     }
 
-    pub fn mining_queue_page(&self, config: &ServerConfig, cookie: &str) -> Response {
-        route(&get_request("/miningQueue", Some(cookie)), config)
+    pub async fn mining_queue_page(&self, config: &ServerConfig, cookie: &str) -> Response {
+        route(&get_request("/miningQueue", Some(cookie)), config).await
     }
 
     pub async fn cleanup(&self, pool: &MySqlPool) {
@@ -138,11 +193,13 @@ impl WebSmokeFixture {
     }
 }
 
-pub fn login_with_credentials(config: &ServerConfig, username: &str, password: &str) -> Response {
+pub async fn login_with_credentials(config: &ServerConfig, username: &str, password: &str) -> Response {
+    let (csrf_cookie, token) = anonymous_login_csrf(config).await;
     let mut form = HashMap::new();
     form.insert("loginName".to_string(), username.to_string());
     form.insert("password".to_string(), password.to_string());
-    route(&post_request("/login", form, None), config)
+    form.insert("csrfToken".to_string(), token);
+    route(&post_request("/login", form, Some(&csrf_cookie)), config).await
 }
 
 pub fn create_user_via_engine(username: &str, email: &str, password: &str) -> i64 {

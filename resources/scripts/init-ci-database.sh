@@ -61,16 +61,14 @@ schema_ready() {
     mysql_app -N -e "SELECT 1 FROM User LIMIT 1" "${MYSQL_DATABASE}" >/dev/null 2>&1
 }
 
-needs_scan_time_migration() {
-    mysql_app -N -e "SHOW COLUMNS FROM Robot LIKE 'scanSpeed'" "${MYSQL_DATABASE}" 2>/dev/null \
-        | grep -q scanSpeed
-}
-
-apply_pending_migrations() {
-    if needs_scan_time_migration; then
-        echo "Applying scanSpeed -> scanTime migration..."
-        load_sql "${ROOT}/resources/database/migrations/rename_scan_speed_to_scan_time.sql"
-    fi
+apply_schema_migrations() {
+    echo "Applying schema migrations..."
+    MYSQL_HOST="${MYSQL_HOST}" \
+        MYSQL_PORT="${MYSQL_PORT}" \
+        MYSQL_USER="${MYSQL_USER}" \
+        MYSQL_PASSWORD="${MYSQL_PASSWORD}" \
+        MYSQL_DATABASE="${MYSQL_DATABASE}" \
+        "${ROOT}/resources/scripts/migrate-database.sh"
 }
 
 load_sql() {
@@ -98,12 +96,13 @@ EOF
 if [[ "${FORCE_REINIT}" == "1" ]]; then
     echo "Force reinit requested; reloading schema and seed data."
 elif schema_ready; then
-    apply_pending_migrations
+    apply_schema_migrations
     echo "RoboMiner schema already present in ${MYSQL_DATABASE}; skipping reinit."
     exit 0
 fi
 
 load_sql "${ROOT}/resources/database/createDatabase.sql"
 load_sql "${ROOT}/resources/database/gameData.sql"
+apply_schema_migrations
 
 echo "RoboMiner database initialized in ${MYSQL_DATABASE}."

@@ -30,7 +30,7 @@ async fn edit_code_create_post_inserts_program_source() {
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
 
-    let login_response = login_with_credentials(&config, &username, &password);
+    let login_response = login_with_credentials(&config, &username, &password).await;
     let cookie = cookie_header(&login_response);
 
     let mut form = HashMap::new();
@@ -39,7 +39,7 @@ async fn edit_code_create_post_inserts_program_source() {
     form.insert("sourceName".to_string(), format!("{prefix}-program"));
     form.insert("sourceCode".to_string(), "move(1);".to_string());
 
-    let response = route(&post_request("/editCode", form, Some(&cookie)), &config);
+    let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");
@@ -92,7 +92,7 @@ async fn edit_code_apply_post_updates_linked_robots() {
     let user_id =
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
-    let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
+    let cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
 
     let program_source_id: i64 = sqlx::query_scalar(
         "SELECT programSourceId FROM Robot WHERE userId = ? ORDER BY id LIMIT 1",
@@ -110,7 +110,7 @@ async fn edit_code_apply_post_updates_linked_robots() {
         program_source_id.to_string(),
     );
 
-    let response = route(&post_request("/editCode", form, Some(&cookie)), &config);
+    let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");
@@ -153,7 +153,7 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     let user_id =
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
-    let cookie = cookie_header(&login_with_credentials(&config, &username, &password));
+    let cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
     let program_name = format!("{prefix}-delete-me");
 
     let mut create_form = HashMap::new();
@@ -165,7 +165,7 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     let create_response = route(
         &post_request("/editCode", create_form, Some(&cookie)),
         &config,
-    );
+    ).await;
     assert_eq!(
         create_response.status, 200,
         "edit code create should render before delete"
@@ -186,7 +186,7 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     let response = route(
         &post_request("/editCode", delete_form, Some(&cookie)),
         &config,
-    );
+    ).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");

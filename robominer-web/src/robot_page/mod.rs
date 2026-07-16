@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use crate::html::escape_html;
 use crate::{
-    Request, Response, ServerConfig, block_on_database, login_redirect, query_i64, session_username,
+    Request, Response, ServerConfig, is_post, login_redirect, query_i64,
+    session_username,
 };
 
 #[derive(Debug)]
@@ -15,10 +13,13 @@ pub(super) struct RobotPageState {
     pub(super) claimed_results: robominer_db::ClaimedUserResults,
 }
 
-pub(super) fn robot_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn robot_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(user_id) = crate::request_user_id(request) else {
         return login_redirect(request);
     };
+    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
+        return response;
+    }
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Robot page requires ROBOMINER_DATABASE_URL to be configured",
@@ -26,14 +27,17 @@ pub(super) fn robot_page(request: &Request, config: &ServerConfig) -> Response {
     };
     let robot_id = query_i64(request, "robotId");
 
-    let result = block_on_database(load_robot_page_state(pool, user_id, request, robot_id));
+    let result = load_robot_page_state(pool, user_id, request, robot_id).await;
 
     match result {
-        Ok(state) => Response::html(render::render_robot_page(
-            session_username(request),
-            crate::app_shell::hud_markup(request, config).as_deref(),
-            &state,
-        )),
+        Ok(state) => crate::csrf::html_with_csrf(
+            user_id,
+            render::render_robot_page(
+                session_username(request),
+                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                &state,
+            ),
+        ),
         Err(error) => Response::service_unavailable(format!("Unable to load robot page: {error}")),
     }
 }
@@ -44,10 +48,11 @@ async fn load_robot_page_state(
     request: &Request,
     requested_robot_id: Option<i64>,
 ) -> Result<RobotPageState, robominer_domain::DomainError> {
-    let claim_result = robominer_domain::claim_user_results(pool, user_id).await?;
+    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
-    if let Some(robot_id) = requested_robot_id
+    if is_post(request)
+        && let Some(robot_id) = requested_robot_id
         && request.form.contains_key(&format!("robotName{robot_id}"))
     {
         let robot_name = request
@@ -55,7 +60,7 @@ async fn load_robot_page_state(
             .get(&format!("robotName{robot_id}"))
             .cloned()
             .unwrap_or_default();
-        let result = robominer_domain::update_robot_config(
+        let result = robominer_db::update_robot_config(
             pool,
             robominer_db::UpdateRobotConfigRequest {
                 user_id,
@@ -86,7 +91,7 @@ async fn load_robot_page_state(
         });
     }
 
-    let robots = robominer_domain::list_robot_config_states(pool, user_id).await?;
+    let robots = robominer_db::list_robot_config_states(pool, user_id).await?;
     let selected_robot_id = requested_robot_id
         .filter(|robot_id| robots.iter().any(|robot| robot.robot_id == *robot_id))
         .or_else(|| robots.first().map(|robot| robot.robot_id))
@@ -94,15 +99,18 @@ async fn load_robot_page_state(
 
     Ok(RobotPageState {
         selected_robot_id,
-        program_sources: robominer_domain::list_robot_config_program_sources(pool, user_id).await?,
+        program_sources: robominer_db::list_program_sources_for_user(pool, user_id).await?,
         robots,
-        part_assets: robominer_domain::list_robot_config_part_asset_states(pool, user_id).await?,
+        part_assets: robominer_db::list_robot_config_part_asset_states(pool, user_id).await?,
         message,
         claimed_results: claim_result,
     })
 }
 
+mod config;
+mod fleet;
 mod render;
+mod scripts;
 
 #[cfg(test)]
 mod tests;
@@ -120,73 +128,6 @@ pub(super) fn robot_apply_block_reason(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn render_robot_part_select(
-    body: &mut String,
-    label: &str,
-    field_prefix: &str,
-    robot_id: i64,
-    type_id: i64,
-    current_part_id: i64,
-    current_part_name: &str,
-    part_asset_map: &HashMap<i64, Vec<&robominer_db::RobotConfigPartAssetStateRecord>>,
-    memory_control: bool,
-    disabled_attr: &str,
-    current_memory_capacity: Option<i32>,
-) {
-    let id_attr = if memory_control {
-        format!(r#" id="{field_prefix}{robot_id}""#)
-    } else {
-        String::new()
-    };
-    let current_capacity_attr = current_memory_capacity
-        .map(|capacity| format!(r#" data-memory-capacity="{capacity}""#))
-        .unwrap_or_default();
-    body.push_str(&format!(
-        r#"<label class="robot-field"><span class="robot-field-label">{}</span><select{id_attr} name="{}{}" class="tableitem robot-select"{disabled_attr}><option value="{}"{current_capacity_attr} selected="selected">{}</option>"#,
-        label,
-        field_prefix,
-        robot_id,
-        current_part_id,
-        escape_html(current_part_name)
-    ));
-    for asset in part_asset_map.get(&type_id).into_iter().flatten() {
-        if asset.unassigned > 0 && asset.robot_part_id != current_part_id {
-            let capacity_attr = if asset.memory_capacity > 0 {
-                format!(r#" data-memory-capacity="{}""#, asset.memory_capacity)
-            } else {
-                String::new()
-            };
-            body.push_str(&format!(
-                r#"<option value="{}"{capacity_attr}>{}</option>"#,
-                asset.robot_part_id,
-                escape_html(&asset.part_name)
-            ));
-        }
-    }
-    body.push_str("</select></label>");
-}
-
-fn push_robot_highlight(body: &mut String, label: &str, value: i32, suffix: &str) {
-    if value > 0 {
-        body.push_str(&format!(
-            r#"<span class="robot-stat-highlight"><span class="robot-stat-highlight-label">{label}</span><span class="robot-stat-highlight-value">{value}{suffix}</span></span>"#,
-        ));
-    }
-}
-
-fn add_robot_stat_entry(body: &mut String, label: &str, value: String) {
-    body.push_str(&format!(
-        r#"<div class="robot-stat"><dt>{label}</dt><dd>{value}</dd></div>"#,
-    ));
-}
-
-fn robot_memory_percent(program_size: i32, memory_size: i32) -> f64 {
-    if memory_size <= 0 {
-        return 100.0;
-    }
-    ((program_size as f64 / memory_size as f64) * 100.0).clamp(0.0, 100.0)
-}
-
 pub(super) fn update_robot_config_rejection_message(
     rejection: robominer_db::UpdateRobotConfigRejection,
 ) -> &'static str {

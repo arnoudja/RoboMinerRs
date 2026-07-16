@@ -7,24 +7,27 @@ mod achievements_page;
 mod animation_script;
 mod app_shell;
 mod auth_pages;
+mod csrf;
 mod edit_code_page;
 mod help_page;
 mod help_pages;
 mod html;
 mod http;
 mod leaderboard_page;
+mod server;
 mod mining_area_atlas;
 mod mining_area_overview_page;
 mod mining_queue_page;
 mod mining_results_page;
 mod rally_pages;
+mod rate_limit;
 mod request_helpers;
 mod robot_page;
 mod router;
 mod session;
 mod shop_page;
 
-pub use http::serve;
+pub use server::serve;
 pub fn configure_session_secret(secret: &str) {
     session::configure_session_secret(secret);
 }
@@ -50,7 +53,8 @@ pub fn resolve_session_secret(
 }
 pub use http::{Request, Response};
 pub(crate) use request_helpers::{
-    login_redirect, query_i64, query_signed_i64, request_user_id, session_username,
+    is_post, login_redirect, mutation_form_has, mutation_i64, query_i64, query_signed_i64,
+    request_user_id, session_username,
 };
 pub use router::route;
 
@@ -64,6 +68,8 @@ pub struct ServerConfig {
     pub allow_signup: bool,
 }
 
+/// Sync bridge for process startup (e.g. DB pool connect in `main`).
+/// Request handlers should `await` futures on the Axum Tokio runtime instead.
 pub fn block_on_database<F>(future: F) -> F::Output
 where
     F: Future,
@@ -85,5 +91,20 @@ where
 /// Integration-test helpers for routing against a real database pool.
 #[doc(hidden)]
 pub mod test_support {
+    use std::collections::HashMap;
+
+    pub use crate::csrf::csrf_token_for_user;
     pub use crate::{Request, Response, ServerConfig, configure_session_secret, route};
+
+    pub fn user_id_from_cookie_header(cookies: &str) -> Option<i64> {
+        let request = Request {
+            method: "GET".to_string(),
+            path: "/".to_string(),
+            query: HashMap::new(),
+            form: HashMap::new(),
+            form_values: HashMap::new(),
+            headers: HashMap::from([("cookie".to_string(), cookies.to_string())]),
+        };
+        crate::request_user_id(&request)
+    }
 }

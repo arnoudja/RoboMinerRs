@@ -38,7 +38,7 @@ These are separate limits:
 
 - **Wallet** (`UserOreAsset.maxAllowed`): how much ore you can hold for shop costs
   and queue fees. New players start at **5** per ore type
-  (`robominer_domain::INITIAL_ORE_WALLET_MAX`) when the first wallet row is
+  (`robominer_db::INITIAL_ORE_WALLET_MAX`) when the first wallet row is
   created on claim or shop interaction.
 - **Robot container** (`RobotPart.oreCapacity` on the ore container part): how
   much ore a robot carries during a rally.
@@ -194,11 +194,11 @@ Unlocked after Cerbonium Mastery step 10.
 
 | Layer | Location |
 | --- | --- |
-| Initial wallet cap | `robominer-domain/src/initial_ore_wallet_max.rs` |
+| Initial wallet cap | `robominer-db/src/initial_ore_wallet_max.rs` |
 | Schema | `resources/database/createDatabase.sql` |
 | Seed data | `resources/database/gameData.sql` |
 | Claim + queries | `robominer-db/src/achievements.rs` |
-| Domain wrapper | `robominer-domain/src/achievements.rs` |
+| Rejection copy | `robominer-domain/src/rejection_messages.rs` |
 | Web page | `robominer-web/src/achievements_page.rs` |
 | Signup auto-claim | `robominer-db/src/users.rs` (`create_user`) |
 | Engine CLI | `robominer-engine` achievement commands |

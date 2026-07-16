@@ -5,17 +5,17 @@ pub(crate) async fn leaderboard_states(
     pool: &robominer_db::MySqlPool,
     max_entries: i64,
 ) -> Result<()> {
-    let mining_areas = robominer_domain::list_leaderboard_mining_areas(pool)
+    let mining_areas = robominer_db::list_leaderboard_mining_areas(pool)
         .await
         .context("failed to load leaderboard mining areas")?;
     let mining_area_scores =
-        robominer_domain::list_leaderboard_mining_area_scores(pool, max_entries)
+        robominer_db::list_leaderboard_mining_area_scores(pool, max_entries)
             .await
             .context("failed to load leaderboard mining area scores")?;
-    let top_robots = robominer_domain::list_leaderboard_top_robots(pool, max_entries)
+    let top_robots = robominer_db::list_leaderboard_top_robots(pool, max_entries)
         .await
         .context("failed to load leaderboard top robots")?;
-    let top_users = robominer_domain::list_leaderboard_top_users(pool, max_entries)
+    let top_users = robominer_db::list_leaderboard_top_users(pool, max_entries)
         .await
         .context("failed to load leaderboard top users")?;
 

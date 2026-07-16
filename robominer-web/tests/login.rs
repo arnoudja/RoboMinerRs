@@ -28,7 +28,7 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
 
-    let login_response = login_with_credentials(&config, &username, &password);
+    let login_response = login_with_credentials(&config, &username, &password).await;
 
     assert_eq!(
         login_response.status, 302,
@@ -50,7 +50,7 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
     let queue_response = route(
         &support::get_request("/miningQueue", Some(&cookie)),
         &config,
-    );
+    ).await;
     assert_eq!(
         queue_response.status, 200,
         "authenticated queue page should render"
@@ -86,13 +86,15 @@ async fn signup_post_redirects_to_welcome_with_session_cookie() {
     let password = "test-password-1".to_string();
     let config = server_config(pool.clone());
 
+    let (csrf_cookie, token) = support::anonymous_login_csrf(&config).await;
     let mut form = std::collections::HashMap::new();
     form.insert("newusername".to_string(), username.clone());
     form.insert("email".to_string(), email.clone());
     form.insert("newpassword".to_string(), password.clone());
     form.insert("confirmpassword".to_string(), password.clone());
+    form.insert("csrfToken".to_string(), token);
 
-    let response = route(&post_request("/login", form, None), &config);
+    let response = route(&post_request("/login", form, Some(&csrf_cookie)), &config).await;
 
     assert_eq!(response.status, 302, "signup should redirect after success");
     assert!(

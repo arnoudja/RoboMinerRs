@@ -22,7 +22,7 @@ async fn read_model_pages_render_with_seeded_data() {
         .expect("failed to connect to test database");
     let fixture = WebSmokeFixture::create(&pool).await;
     let config = server_config(pool.clone());
-    let cookie = cookie_header(&fixture.login(&config));
+    let cookie = cookie_header(&fixture.login(&config).await);
 
     for (path, marker) in [
         ("/miningResults", "mining-results-page"),
@@ -30,7 +30,7 @@ async fn read_model_pages_render_with_seeded_data() {
         ("/miningAreaOverview", "mining-area-atlas-title"),
         ("/activity", "activity-page"),
     ] {
-        let response = route(&support::get_request(path, Some(&cookie)), &config);
+        let response = route(&support::get_request(path, Some(&cookie)), &config).await;
         let body = response_body(&response);
 
         assert_eq!(response.status, 200, "{path} should render");

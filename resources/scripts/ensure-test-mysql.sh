@@ -46,48 +46,14 @@ schema_ready() {
     mysql_app -N -e "SELECT 1 FROM User LIMIT 1" "${MYSQL_DATABASE}" >/dev/null 2>&1
 }
 
-apply_migrations_for_url() {
-    local database_url="$1"
-    if ! mysql "${database_url}" -N -e "SHOW COLUMNS FROM Robot LIKE 'scanSpeed'" 2>/dev/null \
-        | grep -q scanSpeed
-    then
-        return 0
-    fi
-
-    log "Applying scanSpeed -> scanTime migration..."
-    if sed '/^SET storage_engine=/d' \
-        "${ROOT}/resources/database/migrations/rename_scan_speed_to_scan_time.sql" \
-        | mysql "${database_url}" 2>/dev/null
-    then
-        return 0
-    fi
-
-    log "WARNING: scanSpeed -> scanTime migration requires database admin privileges."
-    log "Run: sudo mysql ${MYSQL_DATABASE} < ${ROOT}/resources/database/migrations/rename_scan_speed_to_scan_time.sql"
-    return 1
+schema_migration_ready() {
+    mysql_app -N -e "SELECT 1 FROM SchemaMigration LIMIT 1" "${MYSQL_DATABASE}" >/dev/null 2>&1
 }
 
-apply_local_migrations() {
-    if ! mysql_app -N -e "SHOW COLUMNS FROM Robot LIKE 'scanSpeed'" "${MYSQL_DATABASE}" 2>/dev/null \
-        | grep -q scanSpeed
-    then
-        return 0
-    fi
-
-    log "Applying scanSpeed -> scanTime migration..."
-    if sed '/^SET storage_engine=/d' \
-        "${ROOT}/resources/database/migrations/rename_scan_speed_to_scan_time.sql" \
-        | mysql \
-            -h "${MYSQL_HOST}" \
-            -P "${MYSQL_PORT}" \
-            -uroot \
-            -p"${MYSQL_ROOT_PASSWORD}" \
-            "${MYSQL_DATABASE}" 2>/dev/null
-    then
-        return 0
-    fi
-
-    apply_migrations_for_url "$(database_url)" || return 1
+apply_migrations_for_url() {
+    local database_url="$1"
+    ROBOMINER_DATABASE_URL="${database_url}" \
+        "${ROOT}/resources/scripts/migrate-database.sh" >&2
 }
 
 try_existing_database_url() {
@@ -96,10 +62,14 @@ try_existing_database_url() {
     fi
 
     if mysql "${ROBOMINER_DATABASE_URL}" -N -e "SELECT 1 FROM User LIMIT 1" >/dev/null 2>&1; then
-        apply_migrations_for_url "${ROBOMINER_DATABASE_URL}"
-        log "Using existing ROBOMINER_DATABASE_URL."
-        echo "${ROBOMINER_DATABASE_URL}"
-        return 0
+        if apply_migrations_for_url "${ROBOMINER_DATABASE_URL}" \
+            && mysql "${ROBOMINER_DATABASE_URL}" -N -e "SELECT 1 FROM SchemaMigration LIMIT 1" >/dev/null 2>&1
+        then
+            log "Using existing ROBOMINER_DATABASE_URL."
+            echo "${ROBOMINER_DATABASE_URL}"
+            return 0
+        fi
+        log "ROBOMINER_DATABASE_URL schema is present but migrations cannot be applied; trying another MySQL."
     fi
 
     return 1
@@ -116,16 +86,23 @@ try_local_mysql() {
     fi
 
     if schema_ready; then
-        apply_local_migrations || true
+        apply_migrations_for_url "$(database_url)" || true
         init_database || true
-        log "Using MySQL already running at ${MYSQL_HOST}:${MYSQL_PORT}."
-        database_url
-        return 0
+        if schema_migration_ready; then
+            log "Using MySQL already running at ${MYSQL_HOST}:${MYSQL_PORT}."
+            database_url
+            return 0
+        fi
+        log "Local MySQL at ${MYSQL_HOST}:${MYSQL_PORT} lacks SchemaMigration privileges; trying Docker."
+        return 1
     fi
 
     log "MySQL is running at ${MYSQL_HOST}:${MYSQL_PORT}, but RoboMiner schema is missing."
-    init_database
-    database_url
+    if init_database && schema_migration_ready; then
+        database_url
+        return 0
+    fi
+    return 1
 }
 
 start_docker_mysql() {

@@ -163,7 +163,7 @@ async fn apply_program_source_to_linked_robots_updates_idle_robots_and_warns() {
     let fixture = TestProgramSourceFixture::create(&pool).await;
     fixture.create_linked_robots(&pool).await;
 
-    let applied = robominer_domain::apply_program_source_to_linked_robots(
+    let applied = robominer_db::apply_verified_program_source_to_idle_robots(
         &pool,
         fixture.user_id,
         fixture.program_source_id,
@@ -226,7 +226,7 @@ async fn apply_program_source_to_busy_robot_with_pending_updates_source_only() {
     .await
     .expect("failed to seed pending robot changes");
 
-    let applied = robominer_domain::apply_program_source_to_linked_robots(
+    let applied = robominer_db::apply_verified_program_source_to_idle_robots(
         &pool,
         fixture.user_id,
         fixture.program_source_id,

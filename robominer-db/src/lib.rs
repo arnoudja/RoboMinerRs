@@ -1,14 +1,13 @@
 pub use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;
 
-mod initial_ore_wallet_max {
-    include!("../../robominer-domain/src/initial_ore_wallet_max.rs");
-}
+mod initial_ore_wallet_max;
 
 pub use initial_ore_wallet_max::INITIAL_ORE_WALLET_MAX;
 
 pub const SCORE_HISTORY_FACTOR: f64 = 5.0;
 pub const SCORE_START_FACTOR: f64 = 1.4;
+pub const DEFAULT_MAX_CONNECTIONS: u32 = 5;
 
 mod achievements;
 mod activity;
@@ -18,6 +17,7 @@ mod catalog;
 mod config;
 mod leaderboard;
 mod mappers;
+mod migrate;
 mod mining_areas;
 mod mining_queue;
 mod password;
@@ -37,6 +37,7 @@ pub use assets::*;
 pub use catalog::*;
 pub use config::*;
 pub use leaderboard::*;
+pub use migrate::*;
 pub use mining_areas::*;
 pub use mining_queue::*;
 pub use pool::*;
@@ -49,10 +50,43 @@ pub use types::*;
 pub use users::*;
 
 pub async fn connect(database_url: &str) -> Result<MySqlPool, sqlx::Error> {
+    connect_with_max_connections(database_url, DEFAULT_MAX_CONNECTIONS).await
+}
+
+pub async fn connect_with_max_connections(
+    database_url: &str,
+    max_connections: u32,
+) -> Result<MySqlPool, sqlx::Error> {
     MySqlPoolOptions::new()
-        .max_connections(5)
+        .max_connections(max_connections)
         .connect(database_url)
         .await
+}
+
+/// Resolve pool size from env (`ROBOMINER_DB_MAX_CONNECTIONS`) or config (`dbmaxconnections`).
+pub fn resolve_max_connections(
+    env_value: Option<&str>,
+    config_value: Option<&str>,
+) -> Result<u32, String> {
+    let raw = env_value
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .or_else(|| {
+            config_value
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+        });
+    let Some(raw) = raw else {
+        return Ok(DEFAULT_MAX_CONNECTIONS);
+    };
+
+    let max_connections = raw
+        .parse::<u32>()
+        .map_err(|_| format!("db max connections must be a positive integer, got {raw:?}"))?;
+    if max_connections == 0 {
+        return Err("db max connections must be greater than 0".to_string());
+    }
+    Ok(max_connections)
 }
 
 #[cfg(test)]
@@ -60,6 +94,33 @@ mod tests {
     use crate::mappers::{
         MiningRallyQueueRow, PoolItemRow, mining_rally_queue_rows, next_pool_rally_item_rows,
     };
+    use crate::{DEFAULT_MAX_CONNECTIONS, resolve_max_connections};
+
+    #[test]
+    fn resolve_max_connections_defaults_and_prefers_env() {
+        assert_eq!(
+            resolve_max_connections(None, None).expect("default"),
+            DEFAULT_MAX_CONNECTIONS
+        );
+        assert_eq!(
+            resolve_max_connections(None, Some("12")).expect("config"),
+            12
+        );
+        assert_eq!(
+            resolve_max_connections(Some("20"), Some("12")).expect("env wins"),
+            20
+        );
+    }
+
+    #[test]
+    fn resolve_max_connections_rejects_invalid_values() {
+        assert!(resolve_max_connections(Some("0"), None).is_err());
+        assert!(resolve_max_connections(Some("abc"), None).is_err());
+        assert_eq!(
+            resolve_max_connections(Some(""), Some("8")).expect("empty env falls back"),
+            8
+        );
+    }
 
     #[test]
     fn next_pool_rally_items_keep_only_lowest_runs_done_cohort() {

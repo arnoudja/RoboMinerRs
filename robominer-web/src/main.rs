@@ -38,7 +38,7 @@ fn main() -> io::Result<()> {
     robominer_web::configure_secure_cookies(settings.secure_cookies);
     robominer_web::configure_session_ttl_secs(session_ttl_secs);
 
-    let database_pool = connect_database(&cli)?;
+    let database_pool = connect_database(&cli, &legacy_config)?;
     let listener = TcpListener::bind(format!("{}:{}", settings.host, settings.port))?;
     eprintln!(
         "robominer-web listening on http://{} with static root {} (config {})",
@@ -139,7 +139,10 @@ fn parse_bool_setting(env_value: Option<&str>, config_value: Option<&str>) -> bo
     })
 }
 
-fn connect_database(cli: &Cli) -> io::Result<Option<robominer_db::MySqlPool>> {
+fn connect_database(
+    cli: &Cli,
+    legacy_config: &HashMap<String, String>,
+) -> io::Result<Option<robominer_db::MySqlPool>> {
     let database_url = match robominer_db::resolve_database_url(
         cli.database_url.clone(),
         cli.config.clone(),
@@ -150,8 +153,17 @@ fn connect_database(cli: &Cli) -> io::Result<Option<robominer_db::MySqlPool>> {
         Err(error) => return Err(io::Error::other(error.to_string())),
     };
 
-    let pool = block_on_database(robominer_db::connect(&database_url))
-        .map_err(|error| io::Error::other(format!("failed to connect to database: {error}")))?;
+    let max_connections = robominer_db::resolve_max_connections(
+        env::var("ROBOMINER_DB_MAX_CONNECTIONS").ok().as_deref(),
+        robominer_db::config_value(legacy_config, "dbmaxconnections"),
+    )
+    .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+
+    let pool = block_on_database(robominer_db::connect_with_max_connections(
+        &database_url,
+        max_connections,
+    ))
+    .map_err(|error| io::Error::other(format!("failed to connect to database: {error}")))?;
 
     Ok(Some(pool))
 }

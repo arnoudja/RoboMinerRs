@@ -1,5 +1,5 @@
 use crate::{
-    Request, Response, ServerConfig, block_on_database, query_i64, request_user_id,
+    Request, Response, ServerConfig, query_i64, request_user_id,
     session_username,
 };
 
@@ -120,7 +120,7 @@ pub(super) struct LeaderboardPageState {
     has_more_players: bool,
 }
 
-pub(super) fn leaderboard_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn leaderboard_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Leaderboard requires ROBOMINER_DATABASE_URL to be configured",
@@ -129,12 +129,12 @@ pub(super) fn leaderboard_page(request: &Request, config: &ServerConfig) -> Resp
 
     let user_id = request_user_id(request).unwrap_or(0);
     let query = LeaderboardQuery::from_request(request);
-    let result = block_on_database(load_leaderboard_state(pool, user_id, query));
+    let result = load_leaderboard_state(pool, user_id, query).await;
 
     match result {
         Ok(state) => Response::html(render::render_leaderboard_page(
             session_username(request),
-            crate::app_shell::hud_markup(request, config).as_deref(),
+            crate::app_shell::hud_markup(request, config).await.as_deref(),
             query,
             &state,
         )),
@@ -149,22 +149,22 @@ async fn load_leaderboard_state(
 ) -> Result<LeaderboardPageState, robominer_domain::DomainError> {
     let fetch_limit = query.limit + 1;
     let viewer_standing = if user_id > 0 {
-        Some(robominer_domain::load_leaderboard_viewer_standing(pool, user_id).await?)
+        Some(robominer_db::load_leaderboard_viewer_standing(pool, user_id).await?)
     } else {
         None
     };
 
-    let mut top_robots = robominer_domain::list_leaderboard_top_robots(pool, fetch_limit).await?;
+    let mut top_robots = robominer_db::list_leaderboard_top_robots(pool, fetch_limit).await?;
     let has_more_robots = top_robots.len() as i64 > query.limit;
     top_robots.truncate(query.limit as usize);
 
-    let mut top_users = robominer_domain::list_leaderboard_top_users(pool, fetch_limit).await?;
+    let mut top_users = robominer_db::list_leaderboard_top_users(pool, fetch_limit).await?;
     let has_more_players = top_users.len() as i64 > query.limit;
     top_users.truncate(query.limit as usize);
 
     Ok(LeaderboardPageState {
-        mining_areas: robominer_domain::list_leaderboard_mining_areas(pool).await?,
-        mining_area_scores: robominer_domain::list_leaderboard_mining_area_scores(
+        mining_areas: robominer_db::list_leaderboard_mining_areas(pool).await?,
+        mining_area_scores: robominer_db::list_leaderboard_mining_area_scores(
             pool,
             fetch_limit,
         )

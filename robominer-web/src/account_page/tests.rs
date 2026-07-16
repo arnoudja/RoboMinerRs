@@ -24,15 +24,15 @@ fn authenticated_request(path: &str) -> Request {
     }
 }
 
-#[test]
-fn account_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn account_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
     };
 
-    let response = account_page(&authenticated_request("/account"), &config);
+    let response = account_page(&authenticated_request("/account"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);

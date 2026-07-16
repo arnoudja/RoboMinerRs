@@ -6,13 +6,13 @@ pub(crate) async fn activity_states(
     max_users: i64,
     max_rallies: i64,
 ) -> Result<()> {
-    let recent_users = robominer_domain::list_activity_recent_users(pool, max_users)
+    let recent_users = robominer_db::list_activity_recent_users(pool, max_users)
         .await
         .context("failed to load activity recent users")?;
-    let recent_rallies = robominer_domain::list_activity_recent_rallies(pool, max_rallies)
+    let recent_rallies = robominer_db::list_activity_recent_rallies(pool, max_rallies)
         .await
         .context("failed to load activity recent rallies")?;
-    let participants = robominer_domain::list_activity_recent_rally_participants(pool, max_rallies)
+    let participants = robominer_db::list_activity_recent_rally_participants(pool, max_rallies)
         .await
         .context("failed to load activity rally participants")?;
 
@@ -56,16 +56,16 @@ pub(crate) async fn rally_view_state(
     require_user_result: bool,
 ) -> Result<()> {
     let Some(state) =
-        robominer_domain::rally_view_state(pool, user_id, rally_result_id, require_user_result)
+        robominer_db::rally_view_state(pool, user_id, rally_result_id, require_user_result)
             .await
             .context("failed to load rally view state")?
     else {
         anyhow::bail!("unknown or inaccessible rally result");
     };
-    let ores = robominer_domain::list_ores(pool)
+    let ores = robominer_db::list_ores(pool)
         .await
         .context("failed to load rally view ores")?;
-    let participants = robominer_domain::list_rally_view_participants(pool, rally_result_id)
+    let participants = robominer_db::list_rally_view_participants(pool, rally_result_id)
         .await
         .context("failed to load rally view participants")?;
     let mut slots = [

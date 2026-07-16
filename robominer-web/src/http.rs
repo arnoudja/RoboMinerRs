@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::fs;
-use std::io::{BufRead, BufReader, Read, Write};
-use std::net::{TcpListener, TcpStream};
 use std::path::{Component, Path, PathBuf};
-use std::thread;
 
-use crate::ServerConfig;
+use sha2::{Digest, Sha256};
+
+/// Upper bound for HTTP request bodies (program saves are the largest forms).
+pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
+const STATIC_CACHE_CONTROL: &str = "public, max-age=604800";
 
 #[derive(Debug)]
 pub struct Request {
@@ -67,6 +68,36 @@ impl Response {
         }
     }
 
+    pub(crate) fn payload_too_large() -> Self {
+        Self {
+            status: 413,
+            reason: "Payload Too Large",
+            content_type: "text/plain; charset=utf-8",
+            headers: Vec::new(),
+            body: b"Request body too large".to_vec(),
+        }
+    }
+
+    pub(crate) fn forbidden(message: impl Into<String>) -> Self {
+        Self {
+            status: 403,
+            reason: "Forbidden",
+            content_type: "text/plain; charset=utf-8",
+            headers: Vec::new(),
+            body: message.into().into_bytes(),
+        }
+    }
+
+    pub(crate) fn too_many_requests(message: impl Into<String>) -> Self {
+        Self {
+            status: 429,
+            reason: "Too Many Requests",
+            content_type: "text/plain; charset=utf-8",
+            headers: Vec::new(),
+            body: message.into().into_bytes(),
+        }
+    }
+
     pub(crate) fn internal_error() -> Self {
         Self {
             status: 500,
@@ -91,57 +122,6 @@ impl Response {
         self.headers.push((name, value.into()));
         self
     }
-}
-
-pub fn serve(listener: TcpListener, config: ServerConfig) -> std::io::Result<()> {
-    for stream in listener.incoming() {
-        let config = config.clone();
-        let stream = stream?;
-        thread::spawn(move || {
-            if let Err(error) = handle_connection(stream, &config) {
-                eprintln!("request failed: {error}");
-            }
-        });
-    }
-
-    Ok(())
-}
-
-fn handle_connection(mut stream: TcpStream, config: &ServerConfig) -> std::io::Result<()> {
-    let mut reader = BufReader::new(stream.try_clone()?);
-    let mut request_line = String::new();
-    reader.read_line(&mut request_line)?;
-
-    let Some((method, target)) = parse_request_line(&request_line) else {
-        write_response(&mut stream, &Response::not_found(), false)?;
-        return Ok(());
-    };
-    let (path, query) = split_target(target);
-
-    let headers = read_headers(&mut reader)?;
-    let body = read_body(&mut reader, &headers)?;
-    let form_values = parse_form_body_values(&headers, &body);
-    let form = first_form_values(&form_values);
-
-    let request = Request {
-        method: method.to_string(),
-        path,
-        query,
-        form,
-        form_values,
-        headers,
-    };
-    let head_only = request.method == "HEAD";
-    let response = crate::route(&request, config);
-
-    write_response(&mut stream, &response, head_only)
-}
-
-pub(crate) fn parse_request_line(request_line: &str) -> Option<(&str, &str)> {
-    let mut parts = request_line.split_whitespace();
-    let method = parts.next()?;
-    let target = parts.next()?;
-    Some((method, target))
 }
 
 pub(crate) fn split_target(target: &str) -> (String, HashMap<String, String>) {
@@ -186,43 +166,7 @@ fn percent_decode(value: &str) -> String {
     String::from_utf8_lossy(&result).into_owned()
 }
 
-fn read_headers(reader: &mut BufReader<TcpStream>) -> std::io::Result<HashMap<String, String>> {
-    let mut headers = HashMap::new();
-
-    loop {
-        let mut line = String::new();
-        reader.read_line(&mut line)?;
-        let trimmed = line.trim_end_matches(['\r', '\n']);
-        if trimmed.is_empty() {
-            break;
-        }
-        if let Some((name, value)) = trimmed.split_once(':') {
-            headers.insert(name.trim().to_ascii_lowercase(), value.trim().to_string());
-        }
-    }
-
-    Ok(headers)
-}
-
-fn read_body(
-    reader: &mut BufReader<TcpStream>,
-    headers: &HashMap<String, String>,
-) -> std::io::Result<Vec<u8>> {
-    let content_length = headers
-        .get("content-length")
-        .and_then(|value| value.parse::<usize>().ok())
-        .unwrap_or(0);
-
-    if content_length == 0 {
-        return Ok(Vec::new());
-    }
-
-    let mut body = vec![0; content_length];
-    reader.read_exact(&mut body)?;
-    Ok(body)
-}
-
-fn parse_form_body_values(
+pub(crate) fn parse_form_body_values(
     headers: &HashMap<String, String>,
     body: &[u8],
 ) -> HashMap<String, Vec<String>> {
@@ -260,22 +204,61 @@ pub(crate) fn first_form_values(values: &HashMap<String, Vec<String>>) -> HashMa
         .collect()
 }
 
-pub(crate) fn static_response(path: &str, static_root: &Path) -> Response {
+pub(crate) fn static_response(path: &str, static_root: &Path, request: &Request) -> Response {
     let Some(file_path) = static_file_path(path, static_root) else {
         return Response::not_found();
     };
 
     match fs::read(&file_path) {
-        Ok(body) => Response {
-            status: 200,
-            reason: "OK",
-            content_type: content_type(&file_path),
-            headers: Vec::new(),
-            body,
-        },
+        Ok(body) => {
+            let etag = static_etag(&body);
+            if request
+                .headers
+                .get("if-none-match")
+                .is_some_and(|value| etag_matches(value, &etag))
+            {
+                return Response {
+                    status: 304,
+                    reason: "Not Modified",
+                    content_type: content_type(&file_path),
+                    headers: vec![
+                        ("ETag", etag),
+                        ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
+                    ],
+                    body: Vec::new(),
+                };
+            }
+
+            Response {
+                status: 200,
+                reason: "OK",
+                content_type: content_type(&file_path),
+                headers: vec![
+                    ("ETag", etag),
+                    ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
+                ],
+                body,
+            }
+        }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Response::not_found(),
         Err(_) => Response::internal_error(),
     }
+}
+
+fn static_etag(body: &[u8]) -> String {
+    let digest = Sha256::digest(body);
+    let mut hex = String::with_capacity(32);
+    for byte in digest.iter().take(16) {
+        hex.push_str(&format!("{byte:02x}"));
+    }
+    format!("\"{hex}\"")
+}
+
+fn etag_matches(if_none_match: &str, etag: &str) -> bool {
+    if_none_match
+        .split(',')
+        .map(str::trim)
+        .any(|candidate| candidate == "*" || candidate == etag)
 }
 
 pub(crate) fn static_file_path(path: &str, static_root: &Path) -> Option<PathBuf> {
@@ -305,29 +288,67 @@ pub(crate) fn content_type(path: &Path) -> &'static str {
     }
 }
 
-fn write_response(
-    stream: &mut TcpStream,
-    response: &Response,
-    head_only: bool,
-) -> std::io::Result<()> {
-    write!(
-        stream,
-        "HTTP/1.1 {} {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n",
-        response.status,
-        response.reason,
-        response.content_type,
-        response.body.len()
-    )?;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    for (name, value) in &response.headers {
-        write!(stream, "{name}: {value}\r\n")?;
+    #[test]
+    fn payload_too_large_response_uses_413() {
+        let response = Response::payload_too_large();
+        assert_eq!(response.status, 413);
+        assert_eq!(response.reason, "Payload Too Large");
     }
 
-    write!(stream, "\r\n")?;
+    #[test]
+    fn parse_form_body_values_only_accepts_urlencoded_content_type() {
+        let mut headers = HashMap::new();
+        headers.insert(
+            "content-type".to_string(),
+            "application/x-www-form-urlencoded".to_string(),
+        );
+        let values = parse_form_body_values(&headers, b"a=1&a=2&b=hello+world");
+        assert_eq!(
+            values.get("a"),
+            Some(&vec!["1".to_string(), "2".to_string()])
+        );
+        assert_eq!(values.get("b"), Some(&vec!["hello world".to_string()]));
 
-    if !head_only {
-        stream.write_all(&response.body)?;
+        headers.insert("content-type".to_string(), "text/plain".to_string());
+        assert!(parse_form_body_values(&headers, b"a=1").is_empty());
     }
 
-    stream.flush()
+    #[test]
+    fn static_response_sets_cache_headers_and_honors_if_none_match() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
+        let request = Request {
+            method: "GET".to_string(),
+            path: "/css/robominer.css".to_string(),
+            query: HashMap::new(),
+            form: HashMap::new(),
+            form_values: HashMap::new(),
+            headers: HashMap::new(),
+        };
+        let response = static_response("/css/robominer.css", &root, &request);
+        assert_eq!(response.status, 200);
+        assert!(
+            response
+                .headers
+                .iter()
+                .any(|(name, value)| *name == "Cache-Control" && value == STATIC_CACHE_CONTROL)
+        );
+        let etag = response
+            .headers
+            .iter()
+            .find(|(name, _)| *name == "ETag")
+            .map(|(_, value)| value.clone())
+            .expect("etag");
+
+        let mut cached = request;
+        cached
+            .headers
+            .insert("if-none-match".to_string(), etag);
+        let not_modified = static_response("/css/robominer.css", &root, &cached);
+        assert_eq!(not_modified.status, 304);
+        assert!(not_modified.body.is_empty());
+    }
 }

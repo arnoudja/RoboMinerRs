@@ -1,7 +1,10 @@
 use crate::html::page_footer;
+use crate::rate_limit::{
+    auth_attempt_is_rate_limited, client_ip, log_auth_failure, record_auth_attempt,
+};
 use crate::request_helpers::valid_login_return_to;
 use crate::session::{self, cookie_value};
-use crate::{Request, Response, ServerConfig, block_on_database};
+use crate::{Request, Response, ServerConfig, is_post};
 
 #[derive(Debug)]
 pub(super) struct LoginPageState {
@@ -47,14 +50,14 @@ pub(super) fn logoff_page() -> Response {
     .with_header("Set-Cookie", "JSESSIONID=; Max-Age=0; Path=/; HttpOnly")
 }
 
-pub(super) fn login_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn login_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Login requires ROBOMINER_DATABASE_URL to be configured",
         );
     };
 
-    let result = block_on_database(process_login_request(pool, request, config.allow_signup));
+    let result = process_login_request(pool, request, config.allow_signup).await;
 
     match result {
         Ok(response) => response,
@@ -68,11 +71,34 @@ async fn process_login_request(
     allow_signup: bool,
 ) -> Result<Response, robominer_domain::DomainError> {
     let return_to = return_to_from_request(request);
+    let is_login_post = is_post(request)
+        && (request.form.contains_key("loginName") || request.form.contains_key("password"));
+    let is_signup_post = is_post(request)
+        && (request.form.contains_key("newusername")
+            || request.form.contains_key("email")
+            || request.form.contains_key("newpassword")
+            || request.form.contains_key("confirmpassword"));
 
-    if request.form.contains_key("loginName") || request.form.contains_key("password") {
+    if (is_login_post || is_signup_post)
+        && let Some(response) = crate::csrf::reject_invalid_anonymous_csrf(request)
+    {
+        return Ok(response);
+    }
+
+    if is_login_post {
         let login_name = request.form.get("loginName").cloned().unwrap_or_default();
         let password = request.form.get("password").cloned().unwrap_or_default();
-        match robominer_domain::verify_login(
+        let ip = client_ip(request);
+
+        if auth_attempt_is_rate_limited(&ip, &login_name) {
+            log_auth_failure(&ip, &login_name, "rate_limited");
+            return Ok(Response::too_many_requests(
+                "Too many login attempts. Please try again later.",
+            ));
+        }
+        record_auth_attempt(&ip, &login_name);
+
+        match robominer_db::verify_login(
             pool,
             robominer_db::VerifyLoginRequest {
                 login_name: login_name.clone(),
@@ -82,7 +108,7 @@ async fn process_login_request(
         .await?
         {
             Ok(verified) => {
-                let username = robominer_domain::get_user_by_id(pool, verified.user_id)
+                let username = robominer_db::get_user_by_id(pool, verified.user_id)
                     .await?
                     .map(|user| user.username)
                     .unwrap_or_else(|| login_name.clone());
@@ -100,24 +126,24 @@ async fn process_login_request(
                 ));
             }
             Err(_) => {
-                return Ok(Response::html(render::render_login_page(&LoginPageState {
-                    login_name,
-                    new_username: String::new(),
-                    email: String::new(),
-                    error_message: Some(login_failure_message().to_string()),
-                    show_signup: false,
-                    allow_signup,
-                    return_to,
-                })));
+                log_auth_failure(&ip, &login_name, "invalid_credentials");
+                return Ok(login_html(
+                    request,
+                    &LoginPageState {
+                        login_name,
+                        new_username: String::new(),
+                        email: String::new(),
+                        error_message: Some(login_failure_message().to_string()),
+                        show_signup: false,
+                        allow_signup,
+                        return_to,
+                    },
+                ));
             }
         }
     }
 
-    if request.form.contains_key("newusername")
-        || request.form.contains_key("email")
-        || request.form.contains_key("newpassword")
-        || request.form.contains_key("confirmpassword")
-    {
+    if is_signup_post {
         let new_username = request.form.get("newusername").cloned().unwrap_or_default();
         let email = request.form.get("email").cloned().unwrap_or_default();
         let new_password = request.form.get("newpassword").cloned().unwrap_or_default();
@@ -126,12 +152,22 @@ async fn process_login_request(
             .get("confirmpassword")
             .cloned()
             .unwrap_or_default();
+        let ip = client_ip(request);
+
+        if auth_attempt_is_rate_limited(&ip, &new_username) {
+            log_auth_failure(&ip, &new_username, "rate_limited");
+            return Ok(Response::too_many_requests(
+                "Too many sign-up attempts. Please try again later.",
+            ));
+        }
+        record_auth_attempt(&ip, &new_username);
+
         let error_message = if !allow_signup {
             Some(signup_disabled_message().to_string())
         } else if new_password != confirm_password {
             Some(signup_password_mismatch_message().to_string())
         } else {
-            match robominer_domain::create_user(
+            match robominer_db::create_user(
                 pool,
                 robominer_db::CreateUserRequest {
                     username: new_username.clone(),
@@ -150,34 +186,47 @@ async fn process_login_request(
                         None,
                     ));
                 }
-                Err(rejection) => Some(create_user_rejection_message(rejection).to_string()),
+                Err(rejection) => {
+                    log_auth_failure(&ip, &new_username, "signup_rejected");
+                    Some(create_user_rejection_message(rejection).to_string())
+                }
             }
         };
 
-        return Ok(Response::html(render::render_login_page(&LoginPageState {
-            login_name: String::new(),
-            new_username,
-            email,
-            error_message,
-            show_signup: allow_signup,
-            allow_signup,
-            return_to,
-        })));
+        return Ok(login_html(
+            request,
+            &LoginPageState {
+                login_name: String::new(),
+                new_username,
+                email,
+                error_message,
+                show_signup: allow_signup,
+                allow_signup,
+                return_to,
+            },
+        ));
     }
 
-    Ok(Response::html(render::render_login_page(&LoginPageState {
-        login_name: request
-            .headers
-            .get("cookie")
-            .and_then(|cookies| cookie_value(cookies, "remember"))
-            .unwrap_or_default(),
-        new_username: String::new(),
-        email: String::new(),
-        error_message: None,
-        show_signup: allow_signup && request.query.contains_key("signup"),
-        allow_signup,
-        return_to,
-    })))
+    Ok(login_html(
+        request,
+        &LoginPageState {
+            login_name: request
+                .headers
+                .get("cookie")
+                .and_then(|cookies| cookie_value(cookies, "remember"))
+                .unwrap_or_default(),
+            new_username: String::new(),
+            email: String::new(),
+            error_message: None,
+            show_signup: allow_signup && request.query.contains_key("signup"),
+            allow_signup,
+            return_to,
+        },
+    ))
+}
+
+fn login_html(request: &Request, state: &LoginPageState) -> Response {
+    crate::csrf::html_with_anonymous_csrf(request, render::render_login_page(state))
 }
 
 fn return_to_from_request(request: &Request) -> Option<String> {

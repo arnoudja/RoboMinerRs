@@ -74,7 +74,7 @@ impl WebSmokeDbFixture {
             .await
             .expect("failed to grant mining area");
 
-        let enqueued = match robominer_domain::enqueue_mining(
+        let enqueued = match robominer_db::enqueue_mining(
             pool,
             robominer_db::EnqueueMiningRequest {
                 user_id,

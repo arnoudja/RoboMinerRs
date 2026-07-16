@@ -124,12 +124,24 @@ ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner cargo test
 ```
 
 To initialize or refresh schema manually (`createDatabase.sql` then
-`gameData.sql`):
+`gameData.sql`, then schema migrations):
 
 ```sh
 resources/scripts/init-ci-database.sh
 ROBOMINER_FORCE_DB_REINIT=1 resources/scripts/init-ci-database.sh
 ```
+
+Apply pending schema migrations to an existing database (also auto-baselines a
+schema that already matches `createDatabase.sql`):
+
+```sh
+resources/scripts/migrate-database.sh
+# or:
+cargo run -p robominer-engine -- migrate
+cargo run -p robominer-engine -- migrate-status
+```
+
+Versioned SQL lives under `resources/database/migrations/` (`NNN_description.sql`).
 
 
 

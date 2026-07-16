@@ -1,4 +1,6 @@
-use crate::{Request, Response, ServerConfig, block_on_database, login_redirect, session_username};
+use crate::{
+    Request, Response, ServerConfig, is_post, login_redirect, session_username,
+};
 
 #[derive(Debug)]
 pub(super) struct AccountPageState {
@@ -9,23 +11,29 @@ pub(super) struct AccountPageState {
     pub(super) error_message: Option<String>,
 }
 
-pub(super) fn account_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(user_id) = crate::request_user_id(request) else {
         return login_redirect(request);
     };
+    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
+        return response;
+    }
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Account requires ROBOMINER_DATABASE_URL to be configured",
         );
     };
 
-    let result = block_on_database(load_account_page_state(pool, user_id, request));
+    let result = load_account_page_state(pool, user_id, request).await;
 
     match result {
-        Ok(state) => Response::html(render::render_account_page(
-            crate::app_shell::hud_markup(request, config).as_deref(),
-            &state,
-        )),
+        Ok(state) => crate::csrf::html_with_csrf(
+            user_id,
+            render::render_account_page(
+                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                &state,
+            ),
+        ),
         Err(error) => Response::service_unavailable(format!("Unable to load account: {error}")),
     }
 }
@@ -35,9 +43,9 @@ async fn load_account_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<AccountPageState, robominer_domain::DomainError> {
-    robominer_domain::claim_user_results(pool, user_id).await?;
+    robominer_db::claim_user_results(pool, user_id).await?;
 
-    let Some(current_user) = robominer_domain::get_user_by_id(pool, user_id).await? else {
+    let Some(current_user) = robominer_db::get_user_by_id(pool, user_id).await? else {
         return Ok(AccountPageState {
             username: String::new(),
             email: String::new(),
@@ -53,7 +61,7 @@ async fn load_account_page_state(
     let mut message = None;
     let mut error_message = None;
 
-    if request.form.contains_key("username") {
+    if is_post(request) && request.form.contains_key("username") {
         let submitted_username = request.form.get("username").cloned().unwrap_or_default();
         let submitted_email = request.form.get("email").cloned().unwrap_or_default();
         let current_password = request
@@ -68,7 +76,7 @@ async fn load_account_page_state(
             .cloned()
             .unwrap_or_default();
 
-        let password_verified = robominer_domain::verify_user_password(
+        let password_verified = robominer_db::verify_user_password(
             pool,
             robominer_db::VerifyUserPasswordRequest {
                 user_id,
@@ -92,7 +100,7 @@ async fn load_account_page_state(
             } else {
                 None
             };
-            let update_result = robominer_domain::update_user_account(
+            let update_result = robominer_db::update_user_account(
                 pool,
                 robominer_db::UpdateUserAccountRequest {
                     user_id,
@@ -107,7 +115,7 @@ async fn load_account_page_state(
                 Ok(_) => {
                     message = Some("Account information updated".to_string());
                     if let Some(updated_user) =
-                        robominer_domain::get_user_by_id(pool, user_id).await?
+                        robominer_db::get_user_by_id(pool, user_id).await?
                     {
                         username = updated_user.username;
                         email = updated_user.email;

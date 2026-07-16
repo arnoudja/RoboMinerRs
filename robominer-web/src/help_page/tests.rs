@@ -25,9 +25,9 @@ fn config() -> ServerConfig {
     }
 }
 
-#[test]
-fn help_route_renders_themed_help_center() {
-    let response = help_page(&request("/help"), &config(), false);
+#[tokio::test(flavor = "current_thread")]
+async fn help_route_renders_themed_help_center() {
+    let response = help_page(&request("/help"), &config(), false).await;
     let body = String::from_utf8(response.body).expect("html should be utf-8");
 
     assert_eq!(response.status, 200);
@@ -39,31 +39,31 @@ fn help_route_renders_themed_help_center() {
     assert!(!body.contains("target=\"tutorialWindow\""));
 }
 
-#[test]
-fn help_route_shows_signup_welcome_banner() {
-    let response = help_page(&request("/help?welcome=1"), &config(), true);
+#[tokio::test(flavor = "current_thread")]
+async fn help_route_shows_signup_welcome_banner() {
+    let response = help_page(&request("/help?welcome=1"), &config(), true).await;
     let body = String::from_utf8(response.body).expect("html should be utf-8");
 
     assert!(body.contains(r#"class="help-welcome-banner""#));
     assert!(body.contains(r#"href="helpTutorial?step=1""#));
 }
 
-#[test]
-fn help_text_routes_render_reader_shell_with_sidebar() {
-    let tutorial = help_text_page(&request("/helpTutorial"), &config(), "helpTutorial", None);
+#[tokio::test(flavor = "current_thread")]
+async fn help_text_routes_render_reader_shell_with_sidebar() {
+    let tutorial = help_text_page(&request("/helpTutorial"), &config(), "helpTutorial", None).await;
     let program_tips = help_text_page(
         &request("/helpProgramTips"),
         &config(),
         "helpProgramTips",
         None,
-    );
+    ).await;
     let robot_program = help_text_page(
         &request("/helpRobotProgram"),
         &config(),
         "helpRobotProgram",
         None,
-    );
-    let mechanics = help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None);
+    ).await;
+    let mechanics = help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None).await;
 
     assert_eq!(tutorial.status, 200);
     let tutorial_body = String::from_utf8(tutorial.body).expect("html should be utf-8");
@@ -101,14 +101,14 @@ fn help_text_routes_render_reader_shell_with_sidebar() {
     assert!(mechanics_body.contains("<h1>RoboMiner Mechanics</h1>"));
 }
 
-#[test]
-fn tutorial_step_navigation_links_previous_and_next() {
+#[tokio::test(flavor = "current_thread")]
+async fn tutorial_step_navigation_links_previous_and_next() {
     let step_three = help_text_page(
         &request("/helpTutorial?step=3"),
         &config(),
         "helpTutorial",
         Some(3),
-    );
+    ).await;
     let body = String::from_utf8(step_three.body).expect("html should be utf-8");
 
     assert!(body.contains("Step 3 of 5"));
@@ -119,14 +119,14 @@ fn tutorial_step_navigation_links_previous_and_next() {
     assert!(body.contains("Replay rally"));
 }
 
-#[test]
-fn tutorial_final_step_links_to_programming_tips() {
+#[tokio::test(flavor = "current_thread")]
+async fn tutorial_final_step_links_to_programming_tips() {
     let step_five = help_text_page(
         &request("/helpTutorial?step=5"),
         &config(),
         "helpTutorial",
         Some(5),
-    );
+    ).await;
     let body = String::from_utf8(step_five.body).expect("html should be utf-8");
 
     assert!(body.contains("Step 5 of 5"));
@@ -137,9 +137,9 @@ fn tutorial_final_step_links_to_programming_tips() {
     assert!(body.contains(r#"href="editCode""#));
 }
 
-#[test]
-fn help_text_route_returns_not_found_for_unknown_guide() {
-    let response = help_text_page(&request("/helpUnknown"), &config(), "helpUnknown", None);
+#[tokio::test(flavor = "current_thread")]
+async fn help_text_route_returns_not_found_for_unknown_guide() {
+    let response = help_text_page(&request("/helpUnknown"), &config(), "helpUnknown", None).await;
     assert_eq!(response.status, 404);
 }
 

@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, block_on_database, login_redirect, session_username};
+use crate::{Request, Response, ServerConfig, login_redirect, session_username};
 
 mod render;
 
@@ -14,7 +14,7 @@ pub(super) struct MiningAreaOverviewPageState {
     pub(super) ore_assets: Vec<robominer_db::UserOreAssetStateRecord>,
 }
 
-pub(super) fn mining_area_overview_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn mining_area_overview_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(user_id) = crate::request_user_id(request) else {
         return login_redirect(request);
     };
@@ -24,12 +24,12 @@ pub(super) fn mining_area_overview_page(request: &Request, config: &ServerConfig
         );
     };
 
-    let result = block_on_database(load_mining_area_overview_state(pool, user_id));
+    let result = load_mining_area_overview_state(pool, user_id).await;
 
     match result {
         Ok(state) => Response::html(render::render_mining_area_overview_page(
             session_username(request),
-            crate::app_shell::hud_markup(request, config).as_deref(),
+            crate::app_shell::hud_markup(request, config).await.as_deref(),
             &state,
         )),
         Err(error) => {
@@ -43,13 +43,13 @@ async fn load_mining_area_overview_state(
     user_id: i64,
 ) -> Result<MiningAreaOverviewPageState, robominer_domain::DomainError> {
     Ok(MiningAreaOverviewPageState {
-        ores: robominer_domain::list_mining_area_overview_ores_for_user(pool, user_id).await?,
-        areas: robominer_domain::list_mining_area_overview_areas_for_user(pool, user_id).await?,
-        percentages: robominer_domain::list_mining_area_overview_percentages_for_user(
+        ores: robominer_db::list_mining_area_overview_ores_for_user(pool, user_id).await?,
+        areas: robominer_db::list_mining_area_overview_areas_for_user(pool, user_id).await?,
+        percentages: robominer_db::list_mining_area_overview_percentages_for_user(
             pool, user_id,
         )
         .await?,
-        costs: robominer_domain::list_mining_queue_page_area_costs(pool, user_id).await?,
-        ore_assets: robominer_domain::list_user_ore_asset_states(pool, user_id).await?,
+        costs: robominer_db::list_mining_queue_page_area_costs(pool, user_id).await?,
+        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id).await?,
     })
 }

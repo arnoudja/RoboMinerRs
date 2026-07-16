@@ -3,10 +3,10 @@ mod support;
 use std::collections::HashMap;
 
 use robominer_test_support::RobotApplyFixture;
-use robominer_web::test_support::{Response, ServerConfig, route};
+use robominer_web::test_support::route;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, get_request_query,
-    post_request_query, response_body, server_config, unique_prefix,
+    login_with_credentials, post_request_query, response_body, server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -31,7 +31,8 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
     let fixture = RobotApplyFixture::create(&pool, user_id, username, password).await;
     let config = server_config(pool.clone());
 
-    let login_response = robot_apply_login(&fixture, &config);
+    let login_response =
+        login_with_credentials(&config, &fixture.username, &fixture.password).await;
     assert_eq!(
         login_response.status, 302,
         "login should redirect after success"
@@ -43,7 +44,7 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
     let apply_response = route(
         &post_request_query("/robot", query.clone(), fixture.apply_form(), Some(&cookie)),
         &config,
-    );
+    ).await;
     let apply_body = response_body(&apply_response);
 
     assert_eq!(apply_response.status, 200, "robot apply should render");
@@ -60,7 +61,7 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
         .assert_ore_container_id(&pool, fixture.spare_ore_container_id)
         .await;
 
-    let refresh_response = route(&get_request_query("/robot", query, Some(&cookie)), &config);
+    let refresh_response = route(&get_request_query("/robot", query, Some(&cookie)), &config).await;
     let refresh_body = response_body(&refresh_response);
 
     assert_eq!(
@@ -80,11 +81,4 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
     );
 
     fixture.cleanup(&pool).await;
-}
-
-fn robot_apply_login(fixture: &RobotApplyFixture, config: &ServerConfig) -> Response {
-    let mut form = HashMap::new();
-    form.insert("loginName".to_string(), fixture.username.clone());
-    form.insert("password".to_string(), fixture.password.clone());
-    route(&support::post_request("/login", form, None), config)
 }

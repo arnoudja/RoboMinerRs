@@ -21,7 +21,7 @@ async fn web_db_smoke_suite() {
     let fixture = WebSmokeFixture::create(&pool).await;
     let config = server_config(pool.clone());
 
-    let login_response = fixture.login(&config);
+    let login_response = fixture.login(&config).await;
     assert_eq!(
         login_response.status, 302,
         "login should redirect after success"
@@ -40,7 +40,7 @@ async fn web_db_smoke_suite() {
         "login should mint a session cookie"
     );
 
-    let queue_response = fixture.mining_queue_page(&config, &cookie);
+    let queue_response = fixture.mining_queue_page(&config, &cookie).await;
     let body = response_body(&queue_response);
 
     assert_eq!(
@@ -60,7 +60,7 @@ async fn web_db_smoke_suite() {
         "expected a current mining run in queue page body:\n{body}"
     );
 
-    let root_response = route(&support::get_request("/", Some(&cookie)), &config);
+    let root_response = route(&support::get_request("/", Some(&cookie)), &config).await;
     assert_eq!(root_response.status, 302);
     assert!(
         root_response

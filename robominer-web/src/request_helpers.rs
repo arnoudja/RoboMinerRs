@@ -2,6 +2,10 @@ use crate::Response;
 use crate::http::Request;
 use crate::session;
 
+pub(crate) fn is_post(request: &Request) -> bool {
+    request.method.eq_ignore_ascii_case("POST")
+}
+
 pub(crate) fn query_i64(request: &Request, name: &str) -> Option<i64> {
     request
         .query
@@ -17,6 +21,28 @@ pub(crate) fn query_signed_i64(request: &Request, name: &str) -> Option<i64> {
         .get(name)
         .or_else(|| request.form.get(name))
         .and_then(|value| value.parse::<i64>().ok())
+}
+
+/// Positive integer from the POST form body only (ignores query string).
+pub(crate) fn form_i64(request: &Request, name: &str) -> Option<i64> {
+    request
+        .form
+        .get(name)
+        .and_then(|value| value.parse::<i64>().ok())
+        .filter(|value| *value > 0)
+}
+
+/// State-changing id parameters: POST form only.
+pub(crate) fn mutation_i64(request: &Request, name: &str) -> Option<i64> {
+    if is_post(request) {
+        form_i64(request, name)
+    } else {
+        None
+    }
+}
+
+pub(crate) fn mutation_form_has(request: &Request, name: &str) -> bool {
+    is_post(request) && request.form.contains_key(name)
 }
 
 pub(crate) fn request_user_id(request: &Request) -> Option<i64> {
@@ -120,8 +146,9 @@ mod tests {
     use crate::session::format_authenticated_cookie;
 
     use super::{
-        auth_page_href, encode_query_component, login_redirect, login_return_to_from_request,
-        query_i64, request_user_id, valid_login_return_to,
+        auth_page_href, encode_query_component, form_i64, is_post, login_redirect,
+        login_return_to_from_request, mutation_form_has, mutation_i64, query_i64, request_user_id,
+        valid_login_return_to,
     };
     use crate::Request;
 
@@ -135,6 +162,17 @@ mod tests {
             form_values: HashMap::new(),
             headers: HashMap::new(),
         }
+    }
+
+    fn post_form(path: &str, form: HashMap<String, String>) -> Request {
+        let mut request = request(path);
+        request.method = "POST".to_string();
+        request.form_values = form
+            .iter()
+            .map(|(name, value)| (name.clone(), vec![value.clone()]))
+            .collect();
+        request.form = form;
+        request
     }
 
     fn request_with_cookie(path: &str, cookie: &str) -> Request {
@@ -225,5 +263,36 @@ mod tests {
             )),
             Some(77)
         );
+    }
+
+    #[test]
+    fn mutation_helpers_require_post_form_not_query() {
+        let get_query = request("/shop?buyRobotPartId=9");
+        assert!(!is_post(&get_query));
+        assert_eq!(query_i64(&get_query, "buyRobotPartId"), Some(9));
+        assert_eq!(mutation_i64(&get_query, "buyRobotPartId"), None);
+        assert!(!mutation_form_has(&get_query, "sellAllUnassigned"));
+
+        let get_with_form = {
+            let mut request = request("/shop");
+            request
+                .form
+                .insert("buyRobotPartId".to_string(), "9".to_string());
+            request
+                .form
+                .insert("sellAllUnassigned".to_string(), "1".to_string());
+            request
+        };
+        assert_eq!(form_i64(&get_with_form, "buyRobotPartId"), Some(9));
+        assert_eq!(mutation_i64(&get_with_form, "buyRobotPartId"), None);
+        assert!(!mutation_form_has(&get_with_form, "sellAllUnassigned"));
+
+        let mut form = HashMap::new();
+        form.insert("buyRobotPartId".to_string(), "9".to_string());
+        form.insert("sellAllUnassigned".to_string(), "1".to_string());
+        let post = post_form("/shop", form);
+        assert!(is_post(&post));
+        assert_eq!(mutation_i64(&post, "buyRobotPartId"), Some(9));
+        assert!(mutation_form_has(&post, "sellAllUnassigned"));
     }
 }

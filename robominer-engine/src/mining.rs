@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::output::escape_state_field;
 
 pub(crate) async fn claim_results(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {
-    let result = robominer_domain::claim_user_results(pool, user_id)
+    let result = robominer_db::claim_user_results(pool, user_id)
         .await
         .with_context(|| format!("failed to claim mining results for user {user_id}"))?;
 
@@ -27,7 +27,7 @@ pub(crate) async fn enqueue_mining(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::EnqueueMiningRequest,
 ) -> Result<()> {
-    match robominer_domain::enqueue_mining(pool, request)
+    match robominer_db::enqueue_mining(pool, request)
         .await
         .context("failed to enqueue mining run")?
     {
@@ -49,7 +49,7 @@ pub(crate) async fn cancel_mining_queue(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::CancelMiningQueueRequest,
 ) -> Result<()> {
-    match robominer_domain::cancel_mining_queue(pool, request)
+    match robominer_db::cancel_mining_queue(pool, request)
         .await
         .context("failed to cancel mining queue item")?
     {
@@ -68,7 +68,7 @@ pub(crate) async fn mining_queue_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let states = robominer_domain::list_mining_queue_states(pool, user_id)
+    let states = robominer_db::list_mining_queue_states_for_user(pool, user_id)
         .await
         .context("failed to load mining queue states")?;
 
@@ -89,28 +89,28 @@ pub(crate) async fn mining_queue_page_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
 ) -> Result<()> {
-    let robots = robominer_domain::list_mining_queue_page_robots(pool, user_id)
+    let robots = robominer_db::list_mining_queue_page_robots(pool, user_id)
         .await
         .context("failed to load mining queue page robots")?;
-    let areas = robominer_domain::list_mining_queue_page_areas(pool, user_id)
+    let areas = robominer_db::list_mining_queue_page_areas(pool, user_id)
         .await
         .context("failed to load mining queue page areas")?;
-    let area_costs = robominer_domain::list_mining_queue_page_area_costs(pool, user_id)
+    let area_costs = robominer_db::list_mining_queue_page_area_costs(pool, user_id)
         .await
         .context("failed to load mining queue page area costs")?;
-    let area_supplies = robominer_domain::list_mining_queue_page_area_supplies(pool, user_id)
+    let area_supplies = robominer_db::list_mining_queue_page_area_supplies(pool, user_id)
         .await
         .context("failed to load mining queue page area supplies")?;
-    let area_yields = robominer_domain::list_mining_queue_page_area_yields(pool, user_id)
+    let area_yields = robominer_db::list_mining_queue_page_area_yields(pool, user_id)
         .await
         .context("failed to load mining queue page area yields")?;
-    let queue_items = robominer_domain::list_mining_queue_page_items(pool, user_id)
+    let queue_items = robominer_db::list_mining_queue_page_items(pool, user_id)
         .await
         .context("failed to load mining queue page items")?;
-    let queue_states = robominer_domain::list_mining_queue_states(pool, user_id)
+    let queue_states = robominer_db::list_mining_queue_states_for_user(pool, user_id)
         .await
         .context("failed to load mining queue states")?;
-    let scores = robominer_domain::list_robot_mining_area_scores(pool, user_id)
+    let scores = robominer_db::list_robot_mining_area_scores_for_user(pool, user_id)
         .await
         .context("failed to load mining area scores")?;
 
@@ -196,7 +196,7 @@ pub(crate) async fn mining_queue_page_states(
 }
 
 pub(crate) async fn mining_area_scores(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {
-    let scores = robominer_domain::list_robot_mining_area_scores(pool, user_id)
+    let scores = robominer_db::list_robot_mining_area_scores_for_user(pool, user_id)
         .await
         .context("failed to load robot mining area scores")?;
 
@@ -215,17 +215,17 @@ pub(crate) async fn mining_result_states(
     user_id: i64,
     max_results: i64,
 ) -> Result<()> {
-    let robots = robominer_domain::list_mining_queue_page_robots(pool, user_id)
+    let robots = robominer_db::list_mining_queue_page_robots(pool, user_id)
         .await
         .context("failed to load mining result robots")?;
-    let results = robominer_domain::list_mining_result_states(pool, user_id, max_results)
+    let results = robominer_db::list_mining_result_states_for_user(pool, user_id, max_results)
         .await
         .context("failed to load mining result states")?;
-    let ore_results = robominer_domain::list_mining_result_ore_states(pool, user_id, max_results)
+    let ore_results = robominer_db::list_mining_result_ore_states_for_user(pool, user_id, max_results)
         .await
         .context("failed to load mining result ore states")?;
     let action_results =
-        robominer_domain::list_mining_result_action_states(pool, user_id, max_results)
+        robominer_db::list_mining_result_action_states_for_user(pool, user_id, max_results)
             .await
             .context("failed to load mining result action states")?;
 
@@ -279,13 +279,13 @@ pub(crate) async fn mining_result_states(
 }
 
 pub(crate) async fn mining_area_overview_states(pool: &robominer_db::MySqlPool) -> Result<()> {
-    let ores = robominer_domain::list_mining_area_overview_ores(pool)
+    let ores = robominer_db::list_mining_area_overview_ores(pool)
         .await
         .context("failed to load mining area overview ores")?;
-    let areas = robominer_domain::list_mining_area_overview_areas(pool)
+    let areas = robominer_db::list_mining_area_overview_areas(pool)
         .await
         .context("failed to load mining area overview areas")?;
-    let percentages = robominer_domain::list_mining_area_overview_percentages(pool)
+    let percentages = robominer_db::list_mining_area_overview_percentages(pool)
         .await
         .context("failed to load mining area overview percentages")?;
 

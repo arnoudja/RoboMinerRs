@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use crate::http::{first_form_values, split_form_field_values};
 use crate::session::format_authenticated_cookie;
-use crate::{Request, ServerConfig, query_i64};
+use crate::{Request, ServerConfig, mutation_i64};
 
 use super::render::render_achievements_page;
 use super::{AchievementsPageState, achievements_page, claim_achievement_step_rejection_message};
@@ -24,6 +24,7 @@ fn authenticated_request(path: &str) -> Request {
 
 fn form_request(path: &str, body: &str) -> Request {
     let mut request = authenticated_request(path);
+    request.method = "POST".to_string();
     request.headers.insert(
         "content-type".to_string(),
         "application/x-www-form-urlencoded".to_string(),
@@ -131,15 +132,15 @@ fn achievements_sort_non_claimable_by_descending_id() {
     assert!(middle_id < low_id);
 }
 
-#[test]
-fn achievements_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn achievements_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
     };
 
-    let response = achievements_page(&authenticated_request("/achievements"), &config);
+    let response = achievements_page(&authenticated_request("/achievements"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
@@ -147,11 +148,15 @@ fn achievements_requires_database_configuration() {
 }
 
 #[test]
-fn form_fields_are_available_to_item_id_parser() {
+fn form_fields_are_available_to_mutation_parser() {
     let request = form_request("/achievements", "achievementId=42&name=Robo+Miner");
 
-    assert_eq!(query_i64(&request, "achievementId"), Some(42));
+    assert_eq!(mutation_i64(&request, "achievementId"), Some(42));
     assert_eq!(request.form.get("name"), Some(&"Robo Miner".to_string()));
+
+    let mut get_request = request;
+    get_request.method = "GET".to_string();
+    assert_eq!(mutation_i64(&get_request, "achievementId"), None);
 }
 
 #[test]

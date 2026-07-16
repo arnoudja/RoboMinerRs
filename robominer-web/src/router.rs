@@ -5,7 +5,7 @@ use crate::{
     mining_results_page, query_i64, rally_pages, request_user_id, robot_page, shop_page,
 };
 
-pub fn route(request: &Request, config: &ServerConfig) -> Response {
+pub async fn route(request: &Request, config: &ServerConfig) -> Response {
     if !matches!(request.method.as_str(), "GET" | "HEAD" | "POST") {
         return Response::method_not_allowed();
     }
@@ -18,38 +18,45 @@ pub fn route(request: &Request, config: &ServerConfig) -> Response {
                 login_redirect(request)
             }
         }
-        "/achievements" | "/Achievements" => achievements_page::achievements_page(request, config),
-        "/account" | "/Account" => account_page::account_page(request, config),
-        "/activity" | "/Activity" => rally_pages::activity_page(request, config),
-        "/editCode" | "/EditCode" => edit_code_page::edit_code_page(request, config),
+        "/achievements" | "/Achievements" => {
+            achievements_page::achievements_page(request, config).await
+        }
+        "/account" | "/Account" => account_page::account_page(request, config).await,
+        "/activity" | "/Activity" => rally_pages::activity_page(request, config).await,
+        "/editCode" | "/EditCode" => edit_code_page::edit_code_page(request, config).await,
         "/help" | "/Help" => {
-            help_page::help_page(request, config, request.query.contains_key("welcome"))
+            help_page::help_page(request, config, request.query.contains_key("welcome")).await
         }
         "/helpTutorial" | "/help_tutorial.html" => {
             help_page::help_text_page(request, config, "helpTutorial", query_i64(request, "step"))
+                .await
         }
         "/helpProgramTips" | "/help_programtips.html" => {
-            help_page::help_text_page(request, config, "helpProgramTips", None)
+            help_page::help_text_page(request, config, "helpProgramTips", None).await
         }
         "/helpRobotProgram" | "/help_robotprogram.html" => {
-            help_page::help_text_page(request, config, "helpRobotProgram", None)
+            help_page::help_text_page(request, config, "helpRobotProgram", None).await
         }
         "/helpMechanics" | "/help_mechanics.html" => {
-            help_page::help_text_page(request, config, "helpMechanics", None)
+            help_page::help_text_page(request, config, "helpMechanics", None).await
         }
-        "/leaderboard" | "/Leaderboard" => leaderboard_page::leaderboard_page(request, config),
-        "/login" | "/Login" => auth_pages::login_page(request, config),
+        "/leaderboard" | "/Leaderboard" => {
+            leaderboard_page::leaderboard_page(request, config).await
+        }
+        "/login" | "/Login" => auth_pages::login_page(request, config).await,
         "/logoff" | "/Logoff" => auth_pages::logoff_page(),
-        "/miningQueue" | "/MiningQueue" => mining_queue_page::mining_queue_page(request, config),
+        "/miningQueue" | "/MiningQueue" => {
+            mining_queue_page::mining_queue_page(request, config).await
+        }
         "/miningResults" | "/MiningResults" => {
-            mining_results_page::mining_results_page(request, config)
+            mining_results_page::mining_results_page(request, config).await
         }
         "/miningAreaOverview" | "/MiningAreaOverview" => {
-            mining_area_overview_page::mining_area_overview_page(request, config)
+            mining_area_overview_page::mining_area_overview_page(request, config).await
         }
-        "/robot" | "/Robot" => robot_page::robot_page(request, config),
-        "/shop" | "/Shop" => shop_page::shop_page(request, config),
-        _ => http::static_response(&request.path, &config.static_root),
+        "/robot" | "/Robot" => robot_page::robot_page(request, config).await,
+        "/shop" | "/Shop" => shop_page::shop_page(request, config).await,
+        _ => http::static_response(&request.path, &config.static_root, request),
     }
 }
 
@@ -98,28 +105,28 @@ mod tests {
         );
     }
 
-    #[test]
-    fn root_route_redirects_to_login_when_logged_out() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn root_route_redirects_to_login_when_logged_out() {
         let config = ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
         };
 
-        let response = route(&request("/"), &config);
+        let response = route(&request("/"), &config).await;
 
         assert_login_redirect(&response, "login");
     }
 
-    #[test]
-    fn root_route_redirects_to_mining_queue_when_logged_in() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn root_route_redirects_to_mining_queue_when_logged_in() {
         let config = ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
         };
 
-        let response = route(&authenticated_request("/"), &config);
+        let response = route(&authenticated_request("/"), &config).await;
 
         assert_eq!(response.status, 302);
         assert!(
@@ -130,8 +137,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn protected_routes_redirect_to_login_when_logged_out() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn protected_routes_redirect_to_login_when_logged_out() {
         let config = ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
@@ -147,7 +154,7 @@ mod tests {
             "/robot",
             "/shop",
         ] {
-            let response = route(&request(path), &config);
+            let response = route(&request(path), &config).await;
             let expected = format!("login?returnTo={}", path.trim_start_matches('/'));
             assert_login_redirect(&response, &expected);
         }
@@ -161,15 +168,15 @@ mod tests {
         );
     }
 
-    #[test]
-    fn logoff_route_clears_session_cookie() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn logoff_route_clears_session_cookie() {
         let config = ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: true,
         };
 
-        let response = route(&request("/logoff"), &config);
+        let response = route(&request("/logoff"), &config).await;
         let cookie_headers: Vec<_> = response
             .headers
             .iter()

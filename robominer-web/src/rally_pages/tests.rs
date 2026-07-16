@@ -81,15 +81,15 @@ fn request(path: &str) -> Request {
     }
 }
 
-#[test]
-fn activity_requires_database_configuration() {
+#[tokio::test(flavor = "current_thread")]
+async fn activity_requires_database_configuration() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
         allow_signup: true,
     };
 
-    let response = activity_page(&request("/activity"), &config);
+    let response = activity_page(&request("/activity"), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);

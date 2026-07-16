@@ -199,6 +199,18 @@ fn sign_payload(payload: &str) -> String {
     encode_hex(&mac.finalize().into_bytes())
 }
 
+pub(crate) fn sign_csrf_payload(user_id: i64) -> String {
+    sign_payload(&format!("csrf.v1.{user_id}"))
+}
+
+pub(crate) fn sign_csrf_anon_payload(nonce: u64) -> String {
+    sign_payload(&format!("csrf.anon.v1.{nonce}"))
+}
+
+pub(crate) fn constant_time_eq_str(left: &str, right: &str) -> bool {
+    constant_time_eq(left, right)
+}
+
 fn session_secret() -> &'static [u8] {
     SESSION_SECRET.get_or_init(|| DEFAULT_DEV_SESSION_SECRET.as_bytes().to_vec())
 }
