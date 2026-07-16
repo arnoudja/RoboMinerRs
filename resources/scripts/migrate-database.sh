@@ -20,21 +20,32 @@ MYSQL_USER="${MYSQL_USER:-robominer}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-password}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-RoboMiner}"
 
+# The mysql CLI does not accept mysql:// URLs as a positional arg (that is treated
+# as a database name). Parse ROBOMINER_DATABASE_URL into MYSQL_* instead.
+if [[ -n "${ROBOMINER_DATABASE_URL:-}" ]]; then
+    if [[ "${ROBOMINER_DATABASE_URL}" =~ ^mysql://([^:/?#]+):([^@/?#]*)@([^:/?#]+):([0-9]+)/([^/?#]+)$ ]]; then
+        MYSQL_USER="${BASH_REMATCH[1]}"
+        MYSQL_PASSWORD="${BASH_REMATCH[2]}"
+        MYSQL_HOST="${BASH_REMATCH[3]}"
+        MYSQL_PORT="${BASH_REMATCH[4]}"
+        MYSQL_DATABASE="${BASH_REMATCH[5]}"
+    else
+        echo "Unsupported ROBOMINER_DATABASE_URL (expected mysql://user:pass@host:port/db)." >&2
+        exit 1
+    fi
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MIGRATIONS_DIR="${ROOT}/resources/database/migrations"
 
 mysql_app() {
-    if [[ -n "${ROBOMINER_DATABASE_URL:-}" ]]; then
-        mysql "${ROBOMINER_DATABASE_URL}" "$@"
-    else
-        mysql \
-            -h "${MYSQL_HOST}" \
-            -P "${MYSQL_PORT}" \
-            -u"${MYSQL_USER}" \
-            -p"${MYSQL_PASSWORD}" \
-            "${MYSQL_DATABASE}" \
-            "$@"
-    fi
+    mysql \
+        -h "${MYSQL_HOST}" \
+        -P "${MYSQL_PORT}" \
+        -u"${MYSQL_USER}" \
+        -p"${MYSQL_PASSWORD}" \
+        "${MYSQL_DATABASE}" \
+        "$@"
 }
 
 mysql_root() {

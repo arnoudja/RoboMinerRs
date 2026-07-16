@@ -56,14 +56,32 @@ apply_migrations_for_url() {
         "${ROOT}/resources/scripts/migrate-database.sh" >&2
 }
 
+parse_database_url_into_mysql_vars() {
+    local url="$1"
+    if [[ "${url}" =~ ^mysql://([^:/?#]+):([^@/?#]*)@([^:/?#]+):([0-9]+)/([^/?#]+)$ ]]; then
+        MYSQL_USER="${BASH_REMATCH[1]}"
+        MYSQL_PASSWORD="${BASH_REMATCH[2]}"
+        MYSQL_HOST="${BASH_REMATCH[3]}"
+        MYSQL_PORT="${BASH_REMATCH[4]}"
+        MYSQL_DATABASE="${BASH_REMATCH[5]}"
+        return 0
+    fi
+    return 1
+}
+
 try_existing_database_url() {
     if [[ -z "${ROBOMINER_DATABASE_URL:-}" ]]; then
         return 1
     fi
 
-    if mysql "${ROBOMINER_DATABASE_URL}" -N -e "SELECT 1 FROM User LIMIT 1" >/dev/null 2>&1; then
+    if ! parse_database_url_into_mysql_vars "${ROBOMINER_DATABASE_URL}"; then
+        log "Ignoring unsupported ROBOMINER_DATABASE_URL; expected mysql://user:pass@host:port/db."
+        return 1
+    fi
+
+    if mysql_app -N -e "SELECT 1 FROM User LIMIT 1" "${MYSQL_DATABASE}" >/dev/null 2>&1; then
         if apply_migrations_for_url "${ROBOMINER_DATABASE_URL}" \
-            && mysql "${ROBOMINER_DATABASE_URL}" -N -e "SELECT 1 FROM SchemaMigration LIMIT 1" >/dev/null 2>&1
+            && schema_migration_ready
         then
             log "Using existing ROBOMINER_DATABASE_URL."
             echo "${ROBOMINER_DATABASE_URL}"
