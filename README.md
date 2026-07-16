@@ -13,7 +13,8 @@ The database scripts are kept under `resources/database/`:
 - `gameData.sql` — seed data (ores, parts, areas, achievements)
 - `balanceTestData.sql` — optional test fixtures
 
-Further docs: [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
+Further docs: [CONTRIBUTING.md](CONTRIBUTING.md) (tests, coverage, **db vs domain
+boundary**), [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
 [gameflow.md](gameflow.md) (early-game balance notes).
 
 ## Build

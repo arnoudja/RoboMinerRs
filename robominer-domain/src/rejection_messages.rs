@@ -2,6 +2,9 @@
 //!
 //! Web pages use the `*_player_message` helpers; engine CLI commands use the `*_cli_message`
 //! helpers. Shared copy lives in a single function when both surfaces use the same text.
+//!
+//! Typed rejection enums live in `robominer-db`; this module owns the prose. See
+//! `CONTRIBUTING.md` (“Crate boundary: robominer-db vs robominer-domain”).
 
 pub fn create_user_rejection_player_message(
     rejection: robominer_db::CreateUserRejection,

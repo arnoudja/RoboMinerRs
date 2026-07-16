@@ -1,3 +1,7 @@
+//! Domain layer: loadouts, simulation, compile-linked program writes, and shared
+//! rejection copy. Persistence and typed mutation contracts live in `robominer-db`.
+//! See `CONTRIBUTING.md` for the crate boundary.
+
 mod rejection_messages;
 
 mod constants;

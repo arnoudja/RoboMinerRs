@@ -1,3 +1,7 @@
+//! Persistence layer: SQL, migrations, pool/config, record DTOs, and typed
+//! `*Request` / `*Rejection` contracts. Game logic, simulation, and rejection
+//! copy live in `robominer-domain`. See `CONTRIBUTING.md` for the crate boundary.
+
 pub use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;
 

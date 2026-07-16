@@ -145,10 +145,43 @@ Gaps worth knowing when adding tests:
 - `/logoff` — covered by `auth_pages/tests.rs` and `router` tests; no DB integration needed.
 - `/editCode` apply/delete — covered by `edit_code_actions.rs`.
 
+## Crate boundary: `robominer-db` vs `robominer-domain`
+
+`robominer-db` is persistence and typed mutation contracts. `robominer-domain` is
+game/application logic on top of db (plus `robominer-program` / `robominer-sim`):
+loadouts, simulation, compile-linked writes, and shared rejection copy.
+
+Dependency direction is one-way: **domain may depend on db; db must not depend on
+domain, sim, or program.**
+
+| Put it in… | When… |
+| --- | --- |
+| `robominer-db` | SQL, migrations, pool/config, record DTOs, typed `*Request` / `*Rejection` / read models |
+| `robominer-domain` | Loadout assembly, rally/pool run + persist façades, program create/update with verify, player/CLI rejection strings |
+| `robominer-web` / `robominer-engine` | HTTP/CLI presentation, routing, formatting beyond shared rejection strings |
+
+### Rules
+
+1. **All SQL lives in `robominer-db`.** Domain may call db helpers and map results; it must not contain `sqlx::query` or raw SQL.
+2. **Db returns typed rejections and records, not player-facing prose.** Enums such as `EnqueueMiningRejection` live with the mutation; strings live in `robominer-domain` (`rejection_messages`).
+3. **Loadout assembly and simulation belong in domain.** Build `RallyLoadout` / `PoolLoadout`, run them, map outcomes to completed records, then call db persist helpers.
+4. **Use a domain façade only when a write spans db + non-db rules.** Program create/update must go through `robominer_domain::create_program_source` / `update_program_source` so compile verification runs. Do not call the bare db helpers from web/engine for that path.
+5. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
+6. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source`.
+7. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
+
+### Examples
+
+- **Rejection split:** `robominer_db::claim_achievement_step` returns `ClaimAchievementStepRejection`; web/engine use `robominer_domain::claim_achievement_step_rejection_message`.
+- **Sim pipeline:** engine `run-rallies` uses domain `load_next_rally_loadout` → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for persist stays in `robominer-db`.
+- **Anti-pattern:** Calling `robominer_db::create_program_source` from web/engine and skipping domain drops verify-and-mark. Embedding `"Unknown robot"`-style strings inside db mutation modules likewise breaks the split.
+
+See also [User-facing rejection messages](#user-facing-rejection-messages) below and the layer table in [ACHIEVEMENTS.md](ACHIEVEMENTS.md).
+
 ## User-facing rejection messages
 
 Player-visible web copy and engine CLI diagnostics both come from
-`robominer_domain::rejection_messages`:
+`robominer_domain::rejection_messages` (see crate boundary above):
 
 - Web pages call the `*_player_message` helpers (often via thin `pub(super)` wrappers in the page module).
 - Engine CLI commands call the matching `*_cli_message` helpers.
