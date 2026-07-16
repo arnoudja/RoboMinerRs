@@ -148,11 +148,7 @@ pub fn load_migrations_from_dir(
         let Some(version) = path.file_stem().and_then(|stem| stem.to_str()) else {
             continue;
         };
-        if !version
-            .chars()
-            .next()
-            .is_some_and(|ch| ch.is_ascii_digit())
-        {
+        if !version.chars().next().is_some_and(|ch| ch.is_ascii_digit()) {
             return Err(MigrateError::InvalidMigration(format!(
                 "migration file {} must start with a numeric version prefix",
                 path.display()

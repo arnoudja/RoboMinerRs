@@ -266,7 +266,8 @@ async fn shop_buy_post_without_csrf_is_rejected() {
     let missing = route(
         &post_request_without_csrf("/shop", form.clone(), Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     assert_eq!(missing.status, 403);
     assert!(
         response_body(&missing).contains("CSRF"),

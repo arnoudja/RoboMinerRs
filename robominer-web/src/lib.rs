@@ -14,7 +14,6 @@ mod help_pages;
 mod html;
 mod http;
 mod leaderboard_page;
-mod server;
 mod mining_area_atlas;
 mod mining_area_overview_page;
 mod mining_queue_page;
@@ -24,6 +23,7 @@ mod rate_limit;
 mod request_helpers;
 mod robot_page;
 mod router;
+mod server;
 mod session;
 mod shop_page;
 

@@ -101,7 +101,8 @@ async fn mining_area_overview_requires_login() {
             headers: HashMap::new(),
         },
         &config,
-    ).await;
+    )
+    .await;
 
     assert_eq!(response.status, 302);
     assert!(response.headers.iter().any(|(name, value)| {

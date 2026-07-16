@@ -1,7 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, login_redirect, mutation_i64,
-    session_username,
-};
+use crate::{Request, Response, ServerConfig, login_redirect, mutation_i64, session_username};
 
 #[derive(Debug)]
 pub(super) struct AchievementsPageState {
@@ -34,7 +31,9 @@ pub(super) async fn achievements_page(request: &Request, config: &ServerConfig) 
             user_id,
             render::render_achievements_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
             ),
         ),

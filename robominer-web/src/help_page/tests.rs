@@ -56,14 +56,17 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
         &config(),
         "helpProgramTips",
         None,
-    ).await;
+    )
+    .await;
     let robot_program = help_text_page(
         &request("/helpRobotProgram"),
         &config(),
         "helpRobotProgram",
         None,
-    ).await;
-    let mechanics = help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None).await;
+    )
+    .await;
+    let mechanics =
+        help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None).await;
 
     assert_eq!(tutorial.status, 200);
     let tutorial_body = String::from_utf8(tutorial.body).expect("html should be utf-8");
@@ -108,7 +111,8 @@ async fn tutorial_step_navigation_links_previous_and_next() {
         &config(),
         "helpTutorial",
         Some(3),
-    ).await;
+    )
+    .await;
     let body = String::from_utf8(step_three.body).expect("html should be utf-8");
 
     assert!(body.contains("Step 3 of 5"));
@@ -126,7 +130,8 @@ async fn tutorial_final_step_links_to_programming_tips() {
         &config(),
         "helpTutorial",
         Some(5),
-    ).await;
+    )
+    .await;
     let body = String::from_utf8(step_five.body).expect("html should be utf-8");
 
     assert!(body.contains("Step 5 of 5"));

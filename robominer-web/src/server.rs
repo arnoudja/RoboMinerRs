@@ -3,12 +3,12 @@ use std::net::{SocketAddr, TcpListener};
 use std::sync::Arc;
 use std::time::Duration;
 
+use axum::Router;
 use axum::body::Body;
 use axum::extract::{ConnectInfo, DefaultBodyLimit, Request as HyperRequest, State};
 use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response as AxumResponse};
 use axum::routing::any;
-use axum::Router;
 use tokio::sync::Semaphore;
 use tower_http::timeout::TimeoutLayer;
 
@@ -129,8 +129,7 @@ async fn dispatch(
 }
 
 fn to_axum_response(response: &Response, head_only: bool) -> AxumResponse {
-    let status =
-        StatusCode::from_u16(response.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    let status = StatusCode::from_u16(response.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let mut builder = AxumResponse::builder()
         .status(status)
         .header(header::CONTENT_TYPE, response.content_type)
@@ -149,10 +148,6 @@ fn to_axum_response(response: &Response, head_only: bool) -> AxumResponse {
     };
 
     builder.body(body).unwrap_or_else(|_| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Internal server error",
-        )
-            .into_response()
+        (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
     })
 }

@@ -44,7 +44,8 @@ async fn robot_apply_post_persists_part_change_across_refresh() {
     let apply_response = route(
         &post_request_query("/robot", query.clone(), fixture.apply_form(), Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     let apply_body = response_body(&apply_response);
 
     assert_eq!(apply_response.status, 200, "robot apply should render");

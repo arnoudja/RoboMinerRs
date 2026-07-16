@@ -1,5 +1,7 @@
 use anyhow::{Result, anyhow};
-use robominer_db::{EMBEDDED_MIGRATIONS, MigrationReport, migration_status, run_embedded_migrations};
+use robominer_db::{
+    EMBEDDED_MIGRATIONS, MigrationReport, migration_status, run_embedded_migrations,
+};
 
 pub(crate) async fn migrate(pool: &robominer_db::MySqlPool) -> Result<()> {
     let report = run_embedded_migrations(pool)

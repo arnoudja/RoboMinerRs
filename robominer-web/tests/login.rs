@@ -50,7 +50,8 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
     let queue_response = route(
         &support::get_request("/miningQueue", Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     assert_eq!(
         queue_response.status, 200,
         "authenticated queue page should render"

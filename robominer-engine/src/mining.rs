@@ -221,9 +221,10 @@ pub(crate) async fn mining_result_states(
     let results = robominer_db::list_mining_result_states_for_user(pool, user_id, max_results)
         .await
         .context("failed to load mining result states")?;
-    let ore_results = robominer_db::list_mining_result_ore_states_for_user(pool, user_id, max_results)
-        .await
-        .context("failed to load mining result ore states")?;
+    let ore_results =
+        robominer_db::list_mining_result_ore_states_for_user(pool, user_id, max_results)
+            .await
+            .context("failed to load mining result ore states")?;
     let action_results =
         robominer_db::list_mining_result_action_states_for_user(pool, user_id, max_results)
             .await

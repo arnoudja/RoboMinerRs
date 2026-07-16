@@ -344,9 +344,7 @@ mod tests {
             .expect("etag");
 
         let mut cached = request;
-        cached
-            .headers
-            .insert("if-none-match".to_string(), etag);
+        cached.headers.insert("if-none-match".to_string(), etag);
         let not_modified = static_response("/css/robominer.css", &root, &cached);
         assert_eq!(not_modified.status, 304);
         assert!(not_modified.body.is_empty());

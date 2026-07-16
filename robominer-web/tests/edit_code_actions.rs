@@ -165,7 +165,8 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     let create_response = route(
         &post_request("/editCode", create_form, Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     assert_eq!(
         create_response.status, 200,
         "edit code create should render before delete"
@@ -186,7 +187,8 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
     let response = route(
         &post_request("/editCode", delete_form, Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");

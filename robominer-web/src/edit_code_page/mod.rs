@@ -1,6 +1,6 @@
 use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, query_i64,
-    query_signed_i64, session_username,
+    Request, Response, ServerConfig, is_post, login_redirect, query_i64, query_signed_i64,
+    session_username,
 };
 
 #[derive(Debug)]
@@ -42,7 +42,9 @@ pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> 
             user_id,
             render::render_edit_code_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
             ),
         ),

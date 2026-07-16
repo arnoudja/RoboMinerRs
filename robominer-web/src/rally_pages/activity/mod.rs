@@ -2,10 +2,7 @@ use super::{
     ACTIVITY_RALLY_MAX_AREAS, ActivityFeedQuery, ActivityPageState, ActivityRallyFilter,
     RallyViewBackLink,
 };
-use crate::{
-    Request, Response, ServerConfig, query_i64, request_user_id,
-    session_username,
-};
+use crate::{Request, Response, ServerConfig, query_i64, request_user_id, session_username};
 
 pub(super) mod render;
 
@@ -19,17 +16,15 @@ pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response
     if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
         let user_id = request_user_id(request).unwrap_or(0);
         let feed_query = ActivityFeedQuery::from_request(request);
-        let result = super::view::load_rally_view_state(
-            pool,
-            user_id,
-            rally_result_id,
-            false,
-        ).await;
+        let result =
+            super::view::load_rally_view_state(pool, user_id, rally_result_id, false).await;
 
         if let Ok(Some(state)) = result {
             return Response::html(super::view::render::render_rally_view_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
                 Some(RallyViewBackLink::Activity(feed_query)),
             ));
@@ -43,7 +38,9 @@ pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response
     match result {
         Ok(state) => Response::html(render::render_activity_page(
             session_username(request),
-            crate::app_shell::hud_markup(request, config).await.as_deref(),
+            crate::app_shell::hud_markup(request, config)
+                .await
+                .as_deref(),
             &state,
             feed_query,
         )),
@@ -78,8 +75,7 @@ async fn load_activity_state(
         .map(|rally| rally.mining_queue_id)
         .collect();
     let participants =
-        robominer_db::list_activity_rally_participants_for_queues(pool, &mining_queue_ids)
-            .await?;
+        robominer_db::list_activity_rally_participants_for_queues(pool, &mining_queue_ids).await?;
     let rally_areas =
         robominer_db::list_activity_rally_area_options(pool, ACTIVITY_RALLY_MAX_AREAS).await?;
     let (queue_items, asset_summary) = if user_id > 0 {

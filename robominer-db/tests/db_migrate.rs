@@ -15,16 +15,14 @@ async fn migrate_on_current_schema_baselines_then_is_idempotent() {
         return;
     };
 
-    let pool = robominer_db::connect(&database_url)
-        .await
-        .expect("connect");
+    let pool = robominer_db::connect(&database_url).await.expect("connect");
 
     // Clear tracking so the runner can re-baseline a current schema.
-    let _ = sqlx::query("DELETE FROM SchemaMigration").execute(&pool).await;
+    let _ = sqlx::query("DELETE FROM SchemaMigration")
+        .execute(&pool)
+        .await;
 
-    let first = run_embedded_migrations(&pool)
-        .await
-        .expect("first migrate");
+    let first = run_embedded_migrations(&pool).await.expect("first migrate");
     assert!(
         !first.baselined.is_empty() || !first.applied.is_empty(),
         "expected migrations to baseline or apply: {first:?}"
@@ -37,7 +35,10 @@ async fn migrate_on_current_schema_baselines_then_is_idempotent() {
     let second = run_embedded_migrations(&pool)
         .await
         .expect("second migrate");
-    assert!(second.applied.is_empty(), "second migrate should not re-apply");
+    assert!(
+        second.applied.is_empty(),
+        "second migrate should not re-apply"
+    );
     assert!(
         second.baselined.is_empty(),
         "second migrate should not re-baseline"
@@ -58,11 +59,11 @@ async fn migrate_applies_pending_version_when_tracking_is_partial() {
         return;
     };
 
-    let pool = robominer_db::connect(&database_url)
-        .await
-        .expect("connect");
+    let pool = robominer_db::connect(&database_url).await.expect("connect");
 
-    let _ = sqlx::query("DELETE FROM SchemaMigration").execute(&pool).await;
+    let _ = sqlx::query("DELETE FROM SchemaMigration")
+        .execute(&pool)
+        .await;
     run_embedded_migrations(&pool)
         .await
         .expect("baseline current schema");
@@ -75,7 +76,10 @@ async fn migrate_applies_pending_version_when_tracking_is_partial() {
     let report = run_migrations(&pool, &pending)
         .await
         .expect("apply self-test migration");
-    assert_eq!(report.applied, vec!["999_migrate_runner_self_test".to_string()]);
+    assert_eq!(
+        report.applied,
+        vec!["999_migrate_runner_self_test".to_string()]
+    );
 
     let again = run_migrations(&pool, &pending)
         .await

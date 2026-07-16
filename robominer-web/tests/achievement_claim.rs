@@ -88,7 +88,8 @@ async fn achievements_claim_get_query_does_not_mutate() {
     let response = route(
         &get_request_query("/achievements", query, Some(&cookie)),
         &config,
-    ).await;
+    )
+    .await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "achievements GET should still render");

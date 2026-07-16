@@ -1,6 +1,6 @@
 use crate::{
-    Request, Response, ServerConfig, login_redirect, mutation_form_has,
-    mutation_i64, query_i64, session_username,
+    Request, Response, ServerConfig, login_redirect, mutation_form_has, mutation_i64, query_i64,
+    session_username,
 };
 
 pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = 7;
@@ -49,14 +49,17 @@ pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Respo
         selected_part_type_id,
         selected_tier_id,
         selected_part_id,
-    ).await;
+    )
+    .await;
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
             user_id,
             render::render_shop_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
             ),
         ),

@@ -8,10 +8,9 @@ pub(crate) async fn leaderboard_states(
     let mining_areas = robominer_db::list_leaderboard_mining_areas(pool)
         .await
         .context("failed to load leaderboard mining areas")?;
-    let mining_area_scores =
-        robominer_db::list_leaderboard_mining_area_scores(pool, max_entries)
-            .await
-            .context("failed to load leaderboard mining area scores")?;
+    let mining_area_scores = robominer_db::list_leaderboard_mining_area_scores(pool, max_entries)
+        .await
+        .context("failed to load leaderboard mining area scores")?;
     let top_robots = robominer_db::list_leaderboard_top_robots(pool, max_entries)
         .await
         .context("failed to load leaderboard top robots")?;

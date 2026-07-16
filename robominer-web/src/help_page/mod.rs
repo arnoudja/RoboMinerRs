@@ -1,6 +1,10 @@
 use crate::{Request, Response, ServerConfig, help_pages, session_username};
 
-pub(super) async fn help_page(request: &Request, config: &ServerConfig, show_welcome: bool) -> Response {
+pub(super) async fn help_page(
+    request: &Request,
+    config: &ServerConfig,
+    show_welcome: bool,
+) -> Response {
     let username = session_username(request);
     let hud = crate::app_shell::hud_markup(request, config).await;
     let welcome_banner = if show_welcome {

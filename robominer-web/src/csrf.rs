@@ -48,7 +48,8 @@ pub(crate) fn html_with_anonymous_csrf(request: &Request, html: String) -> Respo
 }
 
 pub(crate) fn anonymous_csrf_token_for_response(request: &Request) -> String {
-    if let Some(existing) = anonymous_csrf_cookie(request).filter(|token| looks_like_csrf_token(token))
+    if let Some(existing) =
+        anonymous_csrf_cookie(request).filter(|token| looks_like_csrf_token(token))
     {
         existing
     } else {
@@ -76,7 +77,8 @@ pub(crate) fn anonymous_csrf_cookie(request: &Request) -> Option<String> {
 }
 
 pub(crate) fn valid_anonymous_csrf(request: &Request) -> bool {
-    let Some(cookie_token) = anonymous_csrf_cookie(request).filter(|token| looks_like_csrf_token(token))
+    let Some(cookie_token) =
+        anonymous_csrf_cookie(request).filter(|token| looks_like_csrf_token(token))
     else {
         return false;
     };
@@ -192,12 +194,10 @@ mod tests {
             Some(&cookie)
         )));
         assert!(reject_invalid_anonymous_csrf(&request("POST", form, Some(&cookie))).is_none());
-        assert!(reject_invalid_anonymous_csrf(&request(
-            "POST",
-            HashMap::new(),
-            Some(&cookie)
-        ))
-        .is_some());
+        assert!(
+            reject_invalid_anonymous_csrf(&request("POST", HashMap::new(), Some(&cookie)))
+                .is_some()
+        );
     }
 
     #[test]

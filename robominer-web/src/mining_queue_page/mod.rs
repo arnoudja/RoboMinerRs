@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, query_i64,
-    session_username,
+    Request, Response, ServerConfig, is_post, login_redirect, query_i64, session_username,
 };
 
 #[derive(Debug)]
@@ -51,19 +50,17 @@ pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) 
     } else {
         Vec::new()
     };
-    let result = load_mining_queue_page_state(
-        pool,
-        user_id,
-        request,
-        selected_queue_item_ids,
-    ).await;
+    let result =
+        load_mining_queue_page_state(pool, user_id, request, selected_queue_item_ids).await;
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
             user_id,
             render::render_mining_queue_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
             ),
         ),

@@ -1,6 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, session_username,
-};
+use crate::{Request, Response, ServerConfig, is_post, login_redirect, session_username};
 
 #[derive(Debug)]
 pub(super) struct AccountPageState {
@@ -30,7 +28,9 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
         Ok(state) => crate::csrf::html_with_csrf(
             user_id,
             render::render_account_page(
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
             ),
         ),
@@ -114,9 +114,7 @@ async fn load_account_page_state(
             match update_result {
                 Ok(_) => {
                     message = Some("Account information updated".to_string());
-                    if let Some(updated_user) =
-                        robominer_db::get_user_by_id(pool, user_id).await?
-                    {
+                    if let Some(updated_user) = robominer_db::get_user_by_id(pool, user_id).await? {
                         username = updated_user.username;
                         email = updated_user.email;
                         current_username = username.clone();

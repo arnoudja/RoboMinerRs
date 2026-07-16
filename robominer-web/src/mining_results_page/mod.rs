@@ -1,6 +1,5 @@
 use crate::{
-    Request, Response, ServerConfig, login_redirect, query_i64, rally_pages,
-    session_username,
+    Request, Response, ServerConfig, login_redirect, query_i64, rally_pages, session_username,
 };
 
 const MINING_RESULTS_MAX_SHOWN: i64 = 10;
@@ -26,16 +25,14 @@ pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig
     };
 
     if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
-        let result = rally_pages::load_user_rally_view_state(
-            pool,
-            user_id,
-            rally_result_id,
-        ).await;
+        let result = rally_pages::load_user_rally_view_state(pool, user_id, rally_result_id).await;
 
         return match result {
             Ok(Some(state)) => Response::html(rally_pages::render_rally_view_page(
                 session_username(request),
-                crate::app_shell::hud_markup(request, config).await.as_deref(),
+                crate::app_shell::hud_markup(request, config)
+                    .await
+                    .as_deref(),
                 &state,
                 request
                     .query
@@ -52,17 +49,15 @@ pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig
     }
 
     let preferred_run_id = query_i64(request, "runId");
-    let result = load_mining_results_state(
-        pool,
-        user_id,
-        MINING_RESULTS_MAX_SHOWN,
-        preferred_run_id,
-    ).await;
+    let result =
+        load_mining_results_state(pool, user_id, MINING_RESULTS_MAX_SHOWN, preferred_run_id).await;
 
     match result {
         Ok(state) => Response::html(render::render_mining_results_page(
             session_username(request),
-            crate::app_shell::hud_markup(request, config).await.as_deref(),
+            crate::app_shell::hud_markup(request, config)
+                .await
+                .as_deref(),
             &state,
         )),
         Err(error) => {
@@ -79,14 +74,19 @@ async fn load_mining_results_state(
 ) -> Result<MiningResultsPageState, robominer_domain::DomainError> {
     let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
 
-    let results = robominer_db::list_mining_result_states_for_user(pool, user_id, max_results).await?;
+    let results =
+        robominer_db::list_mining_result_states_for_user(pool, user_id, max_results).await?;
 
     Ok(MiningResultsPageState {
         robots: robominer_db::list_mining_queue_page_robots(pool, user_id).await?,
         selected_mining_queue_id: selected_mining_queue_id(&results, preferred_run_id),
         results,
-        ore_results: robominer_db::list_mining_result_ore_states_for_user(pool, user_id, max_results)
-            .await?,
+        ore_results: robominer_db::list_mining_result_ore_states_for_user(
+            pool,
+            user_id,
+            max_results,
+        )
+        .await?,
         action_results: robominer_db::list_mining_result_action_states_for_user(
             pool,
             user_id,

@@ -1,7 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, query_i64, request_user_id,
-    session_username,
-};
+use crate::{Request, Response, ServerConfig, query_i64, request_user_id, session_username};
 
 const LEADERBOARD_PAGE_SIZE: i64 = 10;
 const LEADERBOARD_MAX_LIMIT: i64 = 50;
@@ -134,7 +131,9 @@ pub(super) async fn leaderboard_page(request: &Request, config: &ServerConfig) -
     match result {
         Ok(state) => Response::html(render::render_leaderboard_page(
             session_username(request),
-            crate::app_shell::hud_markup(request, config).await.as_deref(),
+            crate::app_shell::hud_markup(request, config)
+                .await
+                .as_deref(),
             query,
             &state,
         )),
@@ -164,11 +163,8 @@ async fn load_leaderboard_state(
 
     Ok(LeaderboardPageState {
         mining_areas: robominer_db::list_leaderboard_mining_areas(pool).await?,
-        mining_area_scores: robominer_db::list_leaderboard_mining_area_scores(
-            pool,
-            fetch_limit,
-        )
-        .await?,
+        mining_area_scores: robominer_db::list_leaderboard_mining_area_scores(pool, fetch_limit)
+            .await?,
         top_robots,
         top_users,
         viewer_standing,

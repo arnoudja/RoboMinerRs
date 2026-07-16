@@ -32,8 +32,7 @@ async fn rally_view_state(
     require_claimed_viewer_result: bool,
 ) -> Result<Option<RallyViewPageState>, robominer_domain::DomainError> {
     let Some(state) =
-        robominer_db::rally_view_state(pool, user_id, rally_result_id, require_user_result)
-            .await?
+        robominer_db::rally_view_state(pool, user_id, rally_result_id, require_user_result).await?
     else {
         return Ok(None);
     };
@@ -48,8 +47,7 @@ async fn rally_view_state(
     let Some(metadata) = metadata else {
         return Ok(None);
     };
-    let participants =
-        robominer_db::list_rally_view_participants(pool, rally_result_id).await?;
+    let participants = robominer_db::list_rally_view_participants(pool, rally_result_id).await?;
     let mut slots = [
         (state.ai_robot_name.clone(), state.ai_username.clone()),
         (state.ai_robot_name.clone(), state.ai_username.clone()),

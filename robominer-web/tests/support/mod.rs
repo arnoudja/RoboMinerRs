@@ -78,8 +78,7 @@ fn with_csrf_token(
             form.entry("csrfToken".to_string())
                 .or_insert_with(|| csrf_token_for_user(user_id));
         } else if let Some(token) = cookie_value(cookie, "robominer_csrf") {
-            form.entry("csrfToken".to_string())
-                .or_insert(token);
+            form.entry("csrfToken".to_string()).or_insert(token);
         }
     }
     form
@@ -88,14 +87,7 @@ fn with_csrf_token(
 fn cookie_value(cookies: &str, name: &str) -> Option<String> {
     cookies.split(';').find_map(|cookie| {
         let (cookie_name, value) = cookie.trim().split_once('=')?;
-        (cookie_name == name).then(|| {
-            value
-                .split(';')
-                .next()
-                .unwrap_or(value)
-                .trim()
-                .to_string()
-        })
+        (cookie_name == name).then(|| value.split(';').next().unwrap_or(value).trim().to_string())
     })
 }
 
@@ -193,7 +185,11 @@ impl WebSmokeFixture {
     }
 }
 
-pub async fn login_with_credentials(config: &ServerConfig, username: &str, password: &str) -> Response {
+pub async fn login_with_credentials(
+    config: &ServerConfig,
+    username: &str,
+    password: &str,
+) -> Response {
     let (csrf_cookie, token) = anonymous_login_csrf(config).await;
     let mut form = HashMap::new();
     form.insert("loginName".to_string(), username.to_string());
