@@ -44,25 +44,31 @@ pub(crate) async fn run_rally(
         return Ok(false);
     };
 
-    let run = robominer_domain::run_rally_loadout_with_animation_seed(&loadout, options.seed)
-        .with_context(|| {
-            format!(
-                "failed to run rally for mining area {}",
-                options.mining_area_id
-            )
-        })?;
+    let mining_area_id = options.mining_area_id;
+    let seed = options.seed;
+    let sim_loadout = loadout.clone();
+    let run = tokio::task::spawn_blocking(move || {
+        robominer_domain::run_rally_loadout_with_animation_seed(&sim_loadout, seed)
+    })
+    .await
+    .context("rally simulation task failed")?
+    .with_context(|| format!("failed to run rally for mining area {mining_area_id}"))?;
     let outcome = &run.outcome;
 
     print_rally_summary(&loadout, outcome);
 
     if options.persist {
-        let result_data = match options.result_data_file.as_ref() {
-            Some(result_data_file) => fs::read_to_string(result_data_file).with_context(|| {
-                format!(
-                    "failed to read result data file {}",
-                    result_data_file.display()
-                )
-            })?,
+        let result_data = match options.result_data_file {
+            Some(result_data_file) => tokio::task::spawn_blocking(move || {
+                fs::read_to_string(&result_data_file).with_context(|| {
+                    format!(
+                        "failed to read result data file {}",
+                        result_data_file.display()
+                    )
+                })
+            })
+            .await
+            .context("result data file read task failed")??,
             None => run.result_data,
         };
         let rally_result_id =
@@ -149,11 +155,15 @@ async fn run_pool_once(
         return Ok(false);
     }
 
-    let outcome = robominer_domain::run_pool_loadout_with_seed(
-        &loadout,
-        options.seed.wrapping_add(rally_index),
-    )
-    .with_context(|| format!("failed to run pool rally for pool {}", options.pool_id))?;
+    let pool_id = options.pool_id;
+    let seed = options.seed.wrapping_add(rally_index);
+    let sim_loadout = loadout.clone();
+    let outcome = tokio::task::spawn_blocking(move || {
+        robominer_domain::run_pool_loadout_with_seed(&sim_loadout, seed)
+    })
+    .await
+    .context("pool simulation task failed")?
+    .with_context(|| format!("failed to run pool rally for pool {pool_id}"))?;
 
     print_pool_summary(&loadout, &outcome);
 

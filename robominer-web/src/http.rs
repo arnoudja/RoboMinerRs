@@ -1,12 +1,25 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use sha2::{Digest, Sha256};
 
 /// Upper bound for HTTP request bodies (program saves are the largest forms).
 pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
 const STATIC_CACHE_CONTROL: &str = "public, max-age=604800";
+
+#[derive(Clone)]
+struct StaticFileEntry {
+    body: Arc<[u8]>,
+    etag: String,
+    content_type: &'static str,
+}
+
+fn static_file_cache() -> &'static Mutex<HashMap<PathBuf, StaticFileEntry>> {
+    static CACHE: OnceLock<Mutex<HashMap<PathBuf, StaticFileEntry>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
 
 #[derive(Debug)]
 pub struct Request {
@@ -204,45 +217,86 @@ pub(crate) fn first_form_values(values: &HashMap<String, Vec<String>>) -> HashMa
         .collect()
 }
 
-pub(crate) fn static_response(path: &str, static_root: &Path, request: &Request) -> Response {
+pub(crate) async fn static_response(
+    path: &str,
+    static_root: &Path,
+    request: &Request,
+) -> Response {
     let Some(file_path) = static_file_path(path, static_root) else {
         return Response::not_found();
     };
 
-    match fs::read(&file_path) {
-        Ok(body) => {
-            let etag = static_etag(&body);
-            if request
-                .headers
-                .get("if-none-match")
-                .is_some_and(|value| etag_matches(value, &etag))
-            {
-                return Response {
-                    status: 304,
-                    reason: "Not Modified",
-                    content_type: content_type(&file_path),
-                    headers: vec![
-                        ("ETag", etag),
-                        ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
-                    ],
-                    body: Vec::new(),
-                };
-            }
+    let entry = match load_static_file_entry(file_path).await {
+        Ok(Some(entry)) => entry,
+        Ok(None) => return Response::not_found(),
+        Err(_) => return Response::internal_error(),
+    };
 
-            Response {
-                status: 200,
-                reason: "OK",
-                content_type: content_type(&file_path),
-                headers: vec![
-                    ("ETag", etag),
-                    ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
-                ],
-                body,
-            }
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Response::not_found(),
-        Err(_) => Response::internal_error(),
+    if request
+        .headers
+        .get("if-none-match")
+        .is_some_and(|value| etag_matches(value, &entry.etag))
+    {
+        return Response {
+            status: 304,
+            reason: "Not Modified",
+            content_type: entry.content_type,
+            headers: vec![
+                ("ETag", entry.etag.clone()),
+                ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
+            ],
+            body: Vec::new(),
+        };
     }
+
+    Response {
+        status: 200,
+        reason: "OK",
+        content_type: entry.content_type,
+        headers: vec![
+            ("ETag", entry.etag.clone()),
+            ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
+        ],
+        body: entry.body.to_vec(),
+    }
+}
+
+async fn load_static_file_entry(file_path: PathBuf) -> Result<Option<StaticFileEntry>, ()> {
+    if let Some(entry) = static_file_cache()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .get(&file_path)
+        .cloned()
+    {
+        return Ok(Some(entry));
+    }
+
+    let cache_key = file_path.clone();
+    match tokio::task::spawn_blocking(move || read_static_file_entry(file_path))
+        .await
+        .map_err(|_| ())?
+    {
+        Ok(entry) => {
+            static_file_cache()
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .insert(cache_key, entry.clone());
+            Ok(Some(entry))
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(_) => Err(()),
+    }
+}
+
+fn read_static_file_entry(file_path: PathBuf) -> std::io::Result<StaticFileEntry> {
+    let body = fs::read(&file_path)?;
+    let content_type = content_type(&file_path);
+    let etag = static_etag(&body);
+    Ok(StaticFileEntry {
+        body: body.into(),
+        etag,
+        content_type,
+    })
 }
 
 fn static_etag(body: &[u8]) -> String {
@@ -317,8 +371,8 @@ mod tests {
         assert!(parse_form_body_values(&headers, b"a=1").is_empty());
     }
 
-    #[test]
-    fn static_response_sets_cache_headers_and_honors_if_none_match() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn static_response_sets_cache_headers_and_honors_if_none_match() {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
         let request = Request {
             method: "GET".to_string(),
@@ -328,7 +382,7 @@ mod tests {
             form_values: HashMap::new(),
             headers: HashMap::new(),
         };
-        let response = static_response("/css/robominer.css", &root, &request);
+        let response = static_response("/css/robominer.css", &root, &request).await;
         assert_eq!(response.status, 200);
         assert!(
             response
@@ -345,7 +399,7 @@ mod tests {
 
         let mut cached = request;
         cached.headers.insert("if-none-match".to_string(), etag);
-        let not_modified = static_response("/css/robominer.css", &root, &cached);
+        let not_modified = static_response("/css/robominer.css", &root, &cached).await;
         assert_eq!(not_modified.status, 304);
         assert!(not_modified.body.is_empty());
     }

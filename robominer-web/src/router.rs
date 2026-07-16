@@ -56,7 +56,7 @@ pub async fn route(request: &Request, config: &ServerConfig) -> Response {
         }
         "/robot" | "/Robot" => robot_page::robot_page(request, config).await,
         "/shop" | "/Shop" => shop_page::shop_page(request, config).await,
-        _ => http::static_response(&request.path, &config.static_root, request),
+        _ => http::static_response(&request.path, &config.static_root, request).await,
     }
 }
 
