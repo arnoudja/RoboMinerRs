@@ -99,6 +99,7 @@ Optional web keys:
   sessionttlhours <login cookie lifetime in hours; default 24>
   sessionttlsecs <login cookie lifetime in seconds>
   securecookies <1 when served over HTTPS behind a reverse proxy>
+  allowsignup <1 to enable public self-registration; default off>
   trustproxy <1 when a reverse proxy sets X-Forwarded-For / X-Real-Ip>
 
 Or rerun an install script with ROBOMINER_DB_* variables set.
@@ -125,6 +126,9 @@ ensure_web_config_keys() {
     fi
     if [[ "${ROBOMINER_SECURE_COOKIES:-}" == "1" ]] && ! grep -Eq '^[Ss][Ee][Cc][Uu][Rr][Ee][Cc][Oo][Oo][Kk][Ii][Ee][Ss][[:space:]]' "${SHARED_CONFIG_FILE}"; then
         append+="securecookies 1"$'\n'
+    fi
+    if ! grep -Eq '^[Aa][Ll][Ll][Oo][Ww][Ss][Ii][Gg][Nn][Uu][Pp][[:space:]]' "${SHARED_CONFIG_FILE}"; then
+        append+="allowsignup ${ROBOMINER_ALLOW_SIGNUP:-0}"$'\n'
     fi
     if [[ -n "${ROBOMINER_SESSION_TTL_SECS:-}" ]] && ! grep -Eq '^[Ss][Ee][Ss][Ss][Ii][Oo][Nn][Tt][Tt][Ll][Ss][Ee][Cc][Ss][[:space:]]' "${SHARED_CONFIG_FILE}"; then
         append+="sessionttlsecs ${ROBOMINER_SESSION_TTL_SECS}"$'\n'

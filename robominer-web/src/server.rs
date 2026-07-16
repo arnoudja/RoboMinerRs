@@ -7,6 +7,7 @@ use axum::Router;
 use axum::body::Body;
 use axum::extract::{ConnectInfo, DefaultBodyLimit, Request as HyperRequest, State};
 use axum::http::{HeaderValue, StatusCode, header};
+use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response as AxumResponse};
 use axum::routing::any;
 use tokio::sync::Semaphore;
@@ -50,6 +51,8 @@ async fn run(listener: TcpListener, config: ServerConfig) -> std::io::Result<()>
             StatusCode::REQUEST_TIMEOUT,
             REQUEST_TIMEOUT,
         ))
+        // Outermost so timeouts / body-limit errors also get these headers.
+        .layer(middleware::from_fn(add_security_headers))
         .with_state(state);
 
     axum::serve(
@@ -126,6 +129,24 @@ async fn dispatch(
     };
     let response = crate::route(&app_request, &config).await;
     Ok(to_axum_response(&response, head_only))
+}
+
+async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse {
+    let mut response = next.run(request).await;
+    let headers = response.headers_mut();
+    headers.insert(
+        header::X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        header::X_FRAME_OPTIONS,
+        HeaderValue::from_static("SAMEORIGIN"),
+    );
+    headers.insert(
+        header::REFERRER_POLICY,
+        HeaderValue::from_static("strict-origin-when-cross-origin"),
+    );
+    response
 }
 
 fn to_axum_response(response: &Response, head_only: bool) -> AxumResponse {

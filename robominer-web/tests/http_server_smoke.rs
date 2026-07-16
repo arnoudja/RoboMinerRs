@@ -87,6 +87,18 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         get_lower.contains("etag:"),
         "expected ETag header, got:\n{get_response}"
     );
+    assert!(
+        get_lower.contains("x-content-type-options: nosniff"),
+        "expected X-Content-Type-Options, got:\n{get_response}"
+    );
+    assert!(
+        get_lower.contains("x-frame-options: sameorigin"),
+        "expected X-Frame-Options, got:\n{get_response}"
+    );
+    assert!(
+        get_lower.contains("referrer-policy: strict-origin-when-cross-origin"),
+        "expected Referrer-Policy, got:\n{get_response}"
+    );
 
     let oversized = MAX_REQUEST_BODY_BYTES + 1;
     let post_response = raw_http_exchange(

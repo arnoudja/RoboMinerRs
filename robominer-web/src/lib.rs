@@ -65,6 +65,7 @@ pub struct ServerConfig {
     pub static_root: PathBuf,
     pub database_pool: Option<robominer_db::MySqlPool>,
     /// When false, the sign-up form is hidden and create-user POSTs are rejected.
+    /// Config/env default is off (`allowsignup` / `ROBOMINER_ALLOW_SIGNUP` unset).
     pub allow_signup: bool,
     /// When true, trust `X-Forwarded-For` / `X-Real-Ip` for client IP (rate limits,
     /// auth logs). Enable only behind a reverse proxy that overwrites those headers.

@@ -51,7 +51,7 @@ allowsignup 0
 trustproxy 1
 ```
 
-`allowsignup 0` disables public sign-up (invite-only). See
+Public sign-up is off by default; set `allowsignup 1` to open it. See
 [INTERNET-HARDENING.md](../INTERNET-HARDENING.md) for the full public-deployment
 checklist.
 

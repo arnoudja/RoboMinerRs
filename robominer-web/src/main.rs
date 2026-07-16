@@ -107,24 +107,13 @@ fn web_settings(config: &HashMap<String, String>, default_static_root: &Path) ->
             env::var("ROBOMINER_SECURE_COOKIES").ok().as_deref(),
             robominer_db::config_value(config, "securecookies"),
         ),
-        allow_signup: parse_bool_default_true(
+        allow_signup: parse_bool_setting(
             env::var("ROBOMINER_ALLOW_SIGNUP").ok().as_deref(),
             robominer_db::config_value(config, "allowsignup"),
         ),
         trust_proxy: parse_bool_setting(
             env::var("ROBOMINER_TRUST_PROXY").ok().as_deref(),
             robominer_db::config_value(config, "trustproxy"),
-        ),
-    }
-}
-
-fn parse_bool_default_true(env_value: Option<&str>, config_value: Option<&str>) -> bool {
-    let value = env_value.or(config_value);
-    match value {
-        None => true,
-        Some(value) => matches!(
-            value.trim(),
-            "1" | "true" | "TRUE" | "yes" | "YES" | "on" | "ON"
         ),
     }
 }

@@ -243,6 +243,10 @@ ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
 cargo run -p robominer-web
 ```
 
+Public self-registration is off by default. For local development, set
+`ROBOMINER_ALLOW_SIGNUP=1` or `allowsignup 1` in the config file; otherwise create
+users with `robominer-engine create-user`.
+
 Logged-in users are identified by a signed `robominer_session` cookie minted at
 login. The legacy plain `robominer_user_id` cookie is no longer accepted.
 
@@ -259,7 +263,8 @@ deploy/systemd/install-robominer.sh
 For HTTPS, put Caddy or nginx in front of the web host. See
 `deploy/reverse-proxy/README.md` for example configs and
 `deploy/INTERNET-HARDENING.md` for firewall, rate limits, and invite-only
-signup. Bind `robominer-web` to `127.0.0.1`, set `sessionsecret`, and enable
+signup (public registration is off by default; set `allowsignup 1` to open it).
+Bind `robominer-web` to `127.0.0.1`, set `sessionsecret`, and enable
 `securecookies 1` when users reach the site over HTTPS.
 
 See `deploy/systemd/README.md` for the shared `/etc/robominer/robominer.conf`

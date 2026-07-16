@@ -23,8 +23,8 @@ allowsignup 0
 trustproxy 1
 ```
 
-`allowsignup 0` disables public self-registration (invite-only). Omit the key or
-set `allowsignup 1` to keep sign-up open. Override with `ROBOMINER_ALLOW_SIGNUP=0`.
+Public self-registration is off by default. Set `allowsignup 1` (or
+`ROBOMINER_ALLOW_SIGNUP=1`) to open sign-up; keep `allowsignup 0` for invite-only.
 
 `trustproxy 1` trusts `X-Forwarded-For` / `X-Real-Ip` for login rate limits and
 auth failure logs. Enable only when a reverse proxy overwrites those headers;

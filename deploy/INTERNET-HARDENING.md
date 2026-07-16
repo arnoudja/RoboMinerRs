@@ -10,10 +10,10 @@ production hygiene**.
 Internet
    │
    ▼
-Reverse proxy (TLS :443, rate limits, security headers)
+Reverse proxy (TLS :443, rate limits, HSTS)
    │
    ▼
-robominer-web (127.0.0.1:8080 only)
+robominer-web (127.0.0.1:8080; CSRF, rate limits, security headers)
    │
    ├──► MySQL (private network / localhost only)
    └──► robominer-engine (no HTTP, DB access only)
@@ -40,11 +40,11 @@ trustproxy 1
 | `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
 | `sessionsecret` | Signs session cookies; required if not on localhost |
 | `securecookies 1` | `Secure` flag on cookies (use with HTTPS) |
-| `allowsignup 0` | Disable public self-registration (invite-only) |
+| `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
 | `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs |
 
 Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
-`ROBOMINER_ALLOW_SIGNUP=0`, `ROBOMINER_TRUST_PROXY=1`.
+`ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`.
 
 Create accounts while signup is disabled:
 
@@ -141,7 +141,8 @@ resources/scripts/migrate-database.sh
 | TLS works | Browser shows padlock on `https://your-host/login` |
 | Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax` |
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
-| Signup off | `/login?signup=1` shows no sign-up tab when `allowsignup 0` |
+| Signup off (default) | `/login?signup=1` shows no sign-up tab unless `allowsignup 1` |
+| Security headers | `curl -I /login` includes `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` |
 | Engine private | No listening HTTP port for `robominer-engine` |
 | App rate limit | Rapid `/login` POSTs return `429` |
 | CSRF | Authenticated and login/signup POST forms include `csrfToken` |
@@ -153,9 +154,8 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 
 | Gap | Mitigation today |
 | --- | --- |
-| Open signup (default) | Set `allowsignup 0` for invite-only |
 | Weak email validation | Manual account creation via engine CLI |
-| No security headers in app | Proxy adds HSTS, `X-Frame-Options`, etc. |
+| No HSTS in app | Proxy adds `Strict-Transport-Security` (app serves plain HTTP on loopback) |
 
 ### Already covered in-app
 
@@ -171,6 +171,8 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |
+| Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
+| Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
 
 ## Related docs
 
