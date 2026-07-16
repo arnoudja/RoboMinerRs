@@ -1,7 +1,7 @@
 use sqlx::MySqlPool;
 
 use crate::achievements::claim_achievement_step_in_transaction;
-use crate::password::{hash_password, is_legacy_password_hash, verify_argon2_password};
+use crate::password::{hash_password_async, is_legacy_password_hash, verify_argon2_password_async};
 use crate::{
     ClaimAchievementStepRequest, CreateUserRejection, CreateUserRequest, CreatedUser,
     UpdateUserAccountRejection, UpdateUserAccountRequest, UpdatedUserAccount, UserRecord,
@@ -50,6 +50,9 @@ pub async fn create_user(
         return Ok(Err(CreateUserRejection::InvalidPassword));
     }
 
+    // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
+    let password_hash = hash_password_async(request.password.clone()).await;
+
     let mut transaction = pool.begin().await?;
 
     let duplicate_username: Option<i64> =
@@ -72,7 +75,6 @@ pub async fn create_user(
         return Ok(Err(CreateUserRejection::DuplicateEmail));
     }
 
-    let password_hash = hash_password(&request.password);
     let user_result = sqlx::query(
         "INSERT INTO User \
          (username, email, password, achievementPoints, miningQueueSize) \
@@ -119,6 +121,26 @@ pub async fn update_user_account(
     pool: &MySqlPool,
     request: UpdateUserAccountRequest,
 ) -> Result<Result<UpdatedUserAccount, UpdateUserAccountRejection>, sqlx::Error> {
+    if !valid_username(&request.username) {
+        return Ok(Err(UpdateUserAccountRejection::InvalidUsername));
+    }
+    if !valid_email(&request.email) {
+        return Ok(Err(UpdateUserAccountRejection::InvalidEmail));
+    }
+    if request
+        .password
+        .as_ref()
+        .is_some_and(|password| !valid_password(password))
+    {
+        return Ok(Err(UpdateUserAccountRejection::InvalidPassword));
+    }
+
+    // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
+    let password_hash = match request.password {
+        Some(password) => Some(hash_password_async(password).await),
+        None => None,
+    };
+
     let mut transaction = pool.begin().await?;
 
     let user_exists: Option<i64> = sqlx::query_scalar("SELECT id FROM User WHERE id = ? LIMIT 1")
@@ -128,22 +150,6 @@ pub async fn update_user_account(
     if user_exists.is_none() {
         transaction.rollback().await?;
         return Ok(Err(UpdateUserAccountRejection::UnknownUser));
-    }
-    if !valid_username(&request.username) {
-        transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::InvalidUsername));
-    }
-    if !valid_email(&request.email) {
-        transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::InvalidEmail));
-    }
-    if request
-        .password
-        .as_ref()
-        .is_some_and(|password| !valid_password(password))
-    {
-        transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::InvalidPassword));
     }
 
     let duplicate_username: Option<i64> =
@@ -168,8 +174,7 @@ pub async fn update_user_account(
         return Ok(Err(UpdateUserAccountRejection::DuplicateEmail));
     }
 
-    if let Some(password) = request.password {
-        let password_hash = hash_password(&password);
+    if let Some(password_hash) = password_hash {
         sqlx::query("UPDATE User SET username = ?, email = ?, password = ? WHERE id = ?")
             .bind(&request.username)
             .bind(&request.email)
@@ -210,31 +215,30 @@ pub async fn verify_login(
     pool: &MySqlPool,
     request: VerifyLoginRequest,
 ) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
-    let mut transaction = pool.begin().await?;
-
     let Some((user_id, password_hash)) = sqlx::query_as::<_, (i64, String)>(
         "SELECT id, password FROM User WHERE username = ? OR email = ?",
     )
     .bind(&request.login_name)
     .bind(&request.login_name)
-    .fetch_optional(&mut *transaction)
+    .fetch_optional(pool)
     .await?
     else {
-        transaction.rollback().await?;
         return Ok(Err(VerifyLoginRejection::UnknownUser));
     };
 
-    if !verify_password_hash(&mut transaction, &request.password, &password_hash).await? {
-        transaction.rollback().await?;
+    if !verify_password_hash(pool, &request.password, &password_hash).await? {
         return Ok(Err(VerifyLoginRejection::InvalidPassword));
     }
 
-    upgrade_legacy_password_hash(&mut transaction, user_id, &request.password, &password_hash)
-        .await?;
+    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await;
 
+    let mut transaction = pool.begin().await?;
+    if let Some(upgraded_hash) = upgraded_hash {
+        write_password_hash(&mut transaction, user_id, &upgraded_hash).await?;
+    }
     touch_user_last_login_time(&mut transaction, user_id).await?;
-
     transaction.commit().await?;
+
     Ok(Ok(VerifiedLogin { user_id }))
 }
 
@@ -242,51 +246,46 @@ pub async fn verify_user_password(
     pool: &MySqlPool,
     request: VerifyUserPasswordRequest,
 ) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
-    let mut transaction = pool.begin().await?;
-
     let Some(password_hash) =
         sqlx::query_scalar::<_, String>("SELECT password FROM User WHERE id = ?")
             .bind(request.user_id)
-            .fetch_optional(&mut *transaction)
+            .fetch_optional(pool)
             .await?
     else {
-        transaction.rollback().await?;
         return Ok(Err(VerifyLoginRejection::UnknownUser));
     };
 
-    if !verify_password_hash(&mut transaction, &request.password, &password_hash).await? {
-        transaction.rollback().await?;
+    if !verify_password_hash(pool, &request.password, &password_hash).await? {
         return Ok(Err(VerifyLoginRejection::InvalidPassword));
     }
 
-    upgrade_legacy_password_hash(
-        &mut transaction,
-        request.user_id,
-        &request.password,
-        &password_hash,
-    )
-    .await?;
+    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await;
 
-    transaction.commit().await?;
+    if let Some(upgraded_hash) = upgraded_hash {
+        let mut transaction = pool.begin().await?;
+        write_password_hash(&mut transaction, request.user_id, &upgraded_hash).await?;
+        transaction.commit().await?;
+    }
+
     Ok(Ok(VerifiedLogin {
         user_id: request.user_id,
     }))
 }
 
 async fn verify_password_hash(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    pool: &MySqlPool,
     password: &str,
     password_hash: &str,
 ) -> Result<bool, sqlx::Error> {
     if is_legacy_password_hash(password_hash) {
-        return verify_legacy_password_hash(transaction, password, password_hash).await;
+        return verify_legacy_password_hash(pool, password, password_hash).await;
     }
 
-    Ok(verify_argon2_password(password, password_hash))
+    Ok(verify_argon2_password_async(password.to_owned(), password_hash.to_owned()).await)
 }
 
 async fn verify_legacy_password_hash(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    pool: &MySqlPool,
     password: &str,
     password_hash: &str,
 ) -> Result<bool, sqlx::Error> {
@@ -300,25 +299,27 @@ async fn verify_legacy_password_hash(
     let digest: String = sqlx::query_scalar("SELECT SHA2(CONCAT(?, ?), 256)")
         .bind(salt)
         .bind(password)
-        .fetch_one(&mut **transaction)
+        .fetch_one(pool)
         .await?;
 
     Ok(digest.eq_ignore_ascii_case(expected_digest))
 }
 
-async fn upgrade_legacy_password_hash(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    user_id: i64,
-    password: &str,
-    password_hash: &str,
-) -> Result<(), sqlx::Error> {
+async fn maybe_upgrade_password_hash(password: &str, password_hash: &str) -> Option<String> {
     if !is_legacy_password_hash(password_hash) {
-        return Ok(());
+        return None;
     }
 
-    let upgraded_hash = hash_password(password);
+    Some(hash_password_async(password.to_owned()).await)
+}
+
+async fn write_password_hash(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    password_hash: &str,
+) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE User SET password = ? WHERE id = ?")
-        .bind(upgraded_hash)
+        .bind(password_hash)
         .bind(user_id)
         .execute(&mut **transaction)
         .await?;

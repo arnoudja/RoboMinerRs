@@ -7,6 +7,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 argon2 = "0.5.3"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+tokio = { version = "1.48.0", features = ["rt"] }
 
 [dev-dependencies]
 robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }

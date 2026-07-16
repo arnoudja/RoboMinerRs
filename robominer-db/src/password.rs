@@ -21,6 +21,20 @@ pub fn verify_argon2_password(password: &str, password_hash: &str) -> bool {
         .is_ok()
 }
 
+/// Hash on a blocking thread so Argon2 does not stall the Tokio runtime.
+pub async fn hash_password_async(password: String) -> String {
+    tokio::task::spawn_blocking(move || hash_password(&password))
+        .await
+        .expect("password hashing task should not panic")
+}
+
+/// Verify on a blocking thread so Argon2 does not stall the Tokio runtime.
+pub async fn verify_argon2_password_async(password: String, password_hash: String) -> bool {
+    tokio::task::spawn_blocking(move || verify_argon2_password(&password, &password_hash))
+        .await
+        .expect("password verification task should not panic")
+}
+
 pub fn is_legacy_password_hash(password_hash: &str) -> bool {
     password_hash.starts_with("sha256:")
 }
@@ -36,6 +50,14 @@ mod tests {
         assert!(hash.starts_with("$argon2"));
         assert!(verify_argon2_password("test-password", &hash));
         assert!(!verify_argon2_password("wrong-password", &hash));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn async_wrappers_match_sync_hash_verify() {
+        let hash = hash_password_async("async-password".to_string()).await;
+        assert!(hash.starts_with("$argon2"));
+        assert!(verify_argon2_password_async("async-password".to_string(), hash.clone()).await);
+        assert!(!verify_argon2_password_async("wrong-password".to_string(), hash).await);
     }
 
     #[test]
