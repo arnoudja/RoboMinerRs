@@ -217,3 +217,40 @@ install_systemd_units() {
         done
     fi
 }
+
+engine_migrate_command() {
+    echo "${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate"
+}
+
+print_migrate_reminder() {
+    cat <<EOF
+
+Schema migrations are not applied by this install script.
+After the database is reachable and ${SHARED_CONFIG_FILE} is configured, run:
+
+  sudo $(engine_migrate_command)
+
+Check status with:
+
+  sudo ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate-status
+
+Or pass --migrate to this install script to run migrate before enabling services.
+EOF
+}
+
+run_schema_migrate() {
+    local engine_bin="${INSTALL_PREFIX}/bin/robominer-engine"
+
+    if [[ ! -x "${engine_bin}" ]]; then
+        echo "Cannot migrate: ${engine_bin} is not installed." >&2
+        echo "Install the engine (omit --web-only) or run migrate from a host that has it." >&2
+        exit 1
+    fi
+    if [[ ! -f "${SHARED_CONFIG_FILE}" ]]; then
+        echo "Cannot migrate: shared config missing at ${SHARED_CONFIG_FILE}." >&2
+        exit 1
+    fi
+
+    echo "Applying schema migrations..."
+    run_as_root "${engine_bin}" --config "${SHARED_CONFIG_FILE}" migrate
+}

@@ -25,8 +25,23 @@ deploy/systemd/install-web.sh
 Set `ROBOMINER_DB_SERVER`, `ROBOMINER_DB_USER`, `ROBOMINER_DB_PASSWORD`, and
 `ROBOMINER_DB_DATABASE` to create `/etc/robominer/robominer.conf` automatically.
 Set `ROBOMINER_SESSION_SECRET` before install to add a web session signing key.
-Pass `--enable` to install and start the systemd services.
+Pass `--migrate` to apply schema migrations after install (recommended before
+`--enable`). Pass `--enable` to install and start the systemd services.
 Run `deploy/systemd/install-robominer.sh --help` for all options.
+
+The install script does **not** migrate the database unless you pass `--migrate`.
+After a plain install, apply pending schema changes before starting services:
+
+```bash
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status
+```
+
+Typical first-time install with DB config already set:
+
+```bash
+deploy/systemd/install-robominer.sh --migrate --enable
+```
 
 ## Shared config
 
@@ -78,6 +93,7 @@ sudo install -d -o root -g robominer -m 0750 /etc/robominer
 sudoedit /etc/robominer/robominer.conf
 sudo chown root:robominer /etc/robominer/robominer.conf
 sudo chmod 0640 /etc/robominer/robominer.conf
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
 sudo install -D -m 0644 deploy/systemd/robominer-engine.service \
   /etc/systemd/system/robominer-engine.service
 sudo systemctl daemon-reload
@@ -143,7 +159,27 @@ cycle or transaction and exit before starting the next cycle.
 
 Use this runbook when deploying the Rust rally service.
 
-### 1. Preflight
+### 1. Apply schema migrations
+
+After installing or updating binaries, apply pending migrations before starting
+(or restarting) services:
+
+```bash
+sudo /opt/robominer/bin/robominer-engine \
+  --config /etc/robominer/robominer.conf \
+  migrate
+```
+
+Fresh installs can combine this with the install script:
+
+```bash
+deploy/systemd/install-robominer.sh --migrate --enable
+```
+
+(`robominer_deploy.sh` on the Pi already runs `migrate` before restarting
+services.)
+
+### 2. Preflight
 
 Confirm the Rust binary can connect to the production database:
 
@@ -156,7 +192,7 @@ Confirm the Rust binary can connect to the production database:
 This is a dry run. It should print how many mining areas were processed and
 which ready rallies would run, without writing results.
 
-### 2. Manual persisted trial
+### 3. Manual persisted trial
 
 Run one persisted Rust pass manually before enabling the long-running service:
 
@@ -170,7 +206,7 @@ Verify recent rows in `MiningQueue`, `RallyResult`, `MiningOreResult`,
 `RobotActionsDone`, and `RobotMiningAreaScore`, and open at least one rally in
 the web UI to confirm the generated animation payload renders.
 
-### 3. Start Rust services
+### 4. Start Rust services
 
 Start and monitor the services:
 
@@ -183,7 +219,7 @@ journalctl -u robominer-engine.service -f
 Watch for repeated errors, unexpectedly high skipped counts, or missing
 `Persisted rally result` messages when the mining queue has ready work.
 
-### 4. Rollback
+### 5. Rollback
 
 To roll back this deployment:
 

@@ -257,8 +257,12 @@ automatically.
 Install the engine and web host for production with:
 
 ```sh
-deploy/systemd/install-robominer.sh
+deploy/systemd/install-robominer.sh --migrate --enable
 ```
+
+Omit `--migrate` only if you will apply schema changes yourself afterward
+(`robominer-engine migrate`). The install script prints a reminder when it
+skips that step.
 
 For HTTPS, put Caddy or nginx in front of the web host. See
 `deploy/reverse-proxy/README.md` for example configs and

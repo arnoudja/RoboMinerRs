@@ -10,6 +10,7 @@ ENABLE_SERVICE=false
 SKIP_USER=false
 SKIP_CONFIG=false
 SKIP_SYSTEMD=false
+RUN_MIGRATE=false
 INSTALL_ENGINE=true
 INSTALL_WEB=true
 
@@ -22,6 +23,7 @@ Usage:
 
 Options:
   --enable          Enable and start both systemd services after installation.
+  --migrate         Apply schema migrations after install (requires engine + config).
   --engine-only     Install only robominer-engine.
   --web-only        Install only robominer-web.
   --skip-user       Skip service account creation.
@@ -41,6 +43,7 @@ Environment:
     ROBOMINER_WEB_PORT
     ROBOMINER_SESSION_SECRET
     ROBOMINER_SECURE_COOKIES
+    ROBOMINER_ALLOW_SIGNUP
     ROBOMINER_SESSION_TTL_HOURS
     ROBOMINER_SESSION_TTL_SECS
 
@@ -49,13 +52,14 @@ Examples:
   ROBOMINER_DB_SERVER=localhost ROBOMINER_DB_USER=robominer \
     ROBOMINER_DB_PASSWORD=secret ROBOMINER_DB_DATABASE=RoboMiner \
     ROBOMINER_SESSION_SECRET="$(openssl rand -hex 32)" \
-    deploy/systemd/install-robominer.sh --enable
+    deploy/systemd/install-robominer.sh --migrate --enable
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --enable) ENABLE_SERVICE=true ;;
+        --migrate) RUN_MIGRATE=true ;;
         --engine-only)
             INSTALL_ENGINE=true
             INSTALL_WEB=false
@@ -111,9 +115,16 @@ main() {
         ensure_web_config_keys
     fi
 
+    if [[ "${RUN_MIGRATE}" == true ]]; then
+        run_schema_migrate
+    fi
+
     install_systemd_units "${units[@]}"
 
     echo "RoboMiner installation finished."
+    if [[ "${RUN_MIGRATE}" != true ]]; then
+        print_migrate_reminder
+    fi
     if [[ "${INSTALL_ENGINE}" == true ]]; then
         echo "Engine preflight dry run:"
         echo "  ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} run-rallies --once"

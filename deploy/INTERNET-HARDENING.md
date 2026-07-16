@@ -127,10 +127,12 @@ sudo fail2ban-client status robominer-login
 - Dedicated `robominer` DB user with privileges for the `RoboMiner` schema
   (including `CREATE`/`ALTER` for schema migrations)
 - Strong password; store only in `/etc/robominer/robominer.conf` (`chmod 0640`)
-- Apply pending schema migrations after deploy:
+- Apply pending schema migrations after install or deploy (the systemd install
+  script does not migrate unless you pass `--migrate`):
 
 ```bash
-resources/scripts/migrate-database.sh
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
+# from a checkout: resources/scripts/migrate-database.sh
 # or: cargo run -p robominer-engine -- migrate
 ```
 
