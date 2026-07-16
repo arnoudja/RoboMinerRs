@@ -211,23 +211,146 @@ impl From<sqlx::Error> for DomainError {
 
 #[cfg(test)]
 mod tests {
-    use super::DomainError;
+    use std::error::Error;
+
+    use robominer_program::CompileError;
+
+    use super::{DomainError, RobotPartSlot};
 
     #[test]
     fn domain_error_display_includes_database_context() {
         let error =
             DomainError::Database(sqlx::Error::Configuration("database url missing".into()));
         assert!(error.to_string().contains("database error"));
+        assert!(error.source().is_some());
     }
 
     #[test]
-    fn domain_error_display_describes_missing_robot_part_reference() {
-        let error = DomainError::ReferencedRobotPartMissing {
-            robot_id: 4,
-            slot: super::RobotPartSlot::Engine,
-            part_id: 99,
+    fn domain_error_display_covers_reference_and_loadout_variants() {
+        let cases = [
+            (
+                DomainError::ReferencedAiRobotMissing {
+                    mining_area_id: 1,
+                    robot_id: 2,
+                },
+                "missing AI robot 2",
+            ),
+            (
+                DomainError::ReferencedRobotPartMissing {
+                    robot_id: 4,
+                    slot: RobotPartSlot::Engine,
+                    part_id: 99,
+                },
+                "missing engine robot part 99",
+            ),
+            (
+                DomainError::ReferencedQueueRobotMissing {
+                    mining_queue_id: 3,
+                    robot_id: 5,
+                },
+                "mining queue item 3",
+            ),
+            (
+                DomainError::ReferencedPoolMiningAreaMissing {
+                    pool_id: 7,
+                    mining_area_id: 8,
+                },
+                "pool 7 references missing mining area 8",
+            ),
+            (
+                DomainError::ReferencedPoolRobotMissing {
+                    pool_item_id: 9,
+                    robot_id: 10,
+                },
+                "pool item 9",
+            ),
+            (DomainError::RobotIdOutOfRange(1_000_000), "does not fit"),
+            (
+                DomainError::InvalidMiningAreaSize {
+                    mining_area_id: 11,
+                    size_x: 0,
+                    size_y: 5,
+                },
+                "invalid simulator size 0x5",
+            ),
+            (
+                DomainError::InvalidMiningAreaOreSupply {
+                    supply_id: 12,
+                    ore_id: -1,
+                    supply: 0,
+                    radius: -2,
+                },
+                "ore_id=-1",
+            ),
+            (
+                DomainError::TooManyMiningAreaOreTypes {
+                    mining_area_id: 13,
+                    ore_type_count: 99,
+                },
+                "99 ore types",
+            ),
+            (
+                DomainError::InvalidRallyLoadout {
+                    mining_area_id: 14,
+                    queue_entries: 1,
+                },
+                "invalid rally queue size 1",
+            ),
+            (
+                DomainError::InvalidPoolLoadout {
+                    pool_id: 15,
+                    items: 2,
+                },
+                "invalid rally item count 2",
+            ),
+            (
+                DomainError::RallyOutcomeMismatch {
+                    mining_area_id: 16,
+                },
+                "does not match mining area 16",
+            ),
+            (
+                DomainError::PoolOutcomeMismatch { pool_id: 17 },
+                "does not match pool 17",
+            ),
+        ];
+
+        for (error, needle) in cases {
+            assert!(
+                error.to_string().contains(needle),
+                "expected {:?} to contain {needle:?}, got {}",
+                std::mem::discriminant(&error),
+                error
+            );
+            assert!(error.source().is_none());
+        }
+    }
+
+    #[test]
+    fn domain_error_program_compile_includes_source() {
+        let error = DomainError::ProgramCompile {
+            robot_id: 42,
+            source: CompileError::new("syntax error"),
         };
-        assert!(error.to_string().contains("robot 4"));
-        assert!(error.to_string().contains("engine"));
+        assert!(error.to_string().contains("robot 42"));
+        assert!(error.to_string().contains("does not compile"));
+        assert!(error.source().is_some());
+    }
+
+    #[test]
+    fn robot_part_slot_display_names() {
+        assert_eq!(RobotPartSlot::OreContainer.to_string(), "ore container");
+        assert_eq!(RobotPartSlot::MiningUnit.to_string(), "mining unit");
+        assert_eq!(RobotPartSlot::Battery.to_string(), "battery");
+        assert_eq!(RobotPartSlot::MemoryModule.to_string(), "memory module");
+        assert_eq!(RobotPartSlot::Cpu.to_string(), "CPU");
+        assert_eq!(RobotPartSlot::Engine.to_string(), "engine");
+        assert_eq!(RobotPartSlot::OreScanner.to_string(), "ore scanner");
+    }
+
+    #[test]
+    fn domain_error_from_sqlx_wraps_as_database() {
+        let error = DomainError::from(sqlx::Error::Configuration("missing".into()));
+        assert!(matches!(error, DomainError::Database(_)));
     }
 }

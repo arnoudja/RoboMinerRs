@@ -110,6 +110,51 @@ async fn mining_results_requires_database_configuration() {
     assert!(body.contains("ROBOMINER_DATABASE_URL"));
 }
 
+#[tokio::test(flavor = "current_thread")]
+async fn mining_results_redirects_to_login_when_logged_out() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: true,
+        trust_proxy: false,
+    };
+    let request = Request {
+        method: "GET".to_string(),
+        path: "/miningResults".to_string(),
+        query: HashMap::new(),
+        form: HashMap::new(),
+        form_values: HashMap::new(),
+        headers: HashMap::new(),
+    };
+
+    let response = mining_results_page(&request, &config).await;
+    assert_eq!(response.status, 302);
+    assert!(
+        response
+            .headers
+            .iter()
+            .any(|(name, value)| *name == "Location" && value.starts_with("login?"))
+    );
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn mining_results_unknown_rally_returns_not_found_without_database() {
+    // Without a pool the handler still short-circuits on missing DB before rally lookup.
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: true,
+        trust_proxy: false,
+    };
+    let mut request = authenticated_request("/miningResults");
+    request
+        .query
+        .insert("rallyResultId".to_string(), "1".to_string());
+
+    let response = mining_results_page(&request, &config).await;
+    assert_eq!(response.status, 503);
+}
+
 #[test]
 fn mining_results_rendering_groups_results_and_escapes_fields() {
     let html =

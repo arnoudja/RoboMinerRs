@@ -184,7 +184,6 @@ pub(crate) fn session_clear_cookie_header() -> String {
     )
 }
 
-#[cfg(test)]
 pub(crate) fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
     format!(
         "{}; robominer_username={}",
@@ -285,7 +284,6 @@ fn encode_hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-#[cfg(test)]
 fn cookie_encode(value: &str) -> String {
     value
         .bytes()

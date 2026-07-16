@@ -5,7 +5,7 @@ use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
-use robominer_web::{ServerConfig, block_on_database, serve};
+use robominer_web::{ServerConfig, block_on_database, serve, web_settings};
 
 #[derive(Debug, Parser)]
 #[command(name = "robominer-web")]
@@ -58,18 +58,6 @@ fn main() -> io::Result<()> {
     )
 }
 
-struct WebSettings {
-    host: String,
-    port: String,
-    static_root: PathBuf,
-    session_secret: Option<String>,
-    session_ttl_secs: Option<String>,
-    session_ttl_hours: Option<String>,
-    secure_cookies: bool,
-    allow_signup: bool,
-    trust_proxy: bool,
-}
-
 fn load_legacy_config(cli: &Cli) -> (PathBuf, HashMap<String, String>) {
     match robominer_db::load_legacy_config(cli.config.clone(), "robominer-web") {
         Ok((config_path, config)) => (config_path, config),
@@ -81,57 +69,6 @@ fn load_legacy_config(cli: &Cli) -> (PathBuf, HashMap<String, String>) {
             std::process::exit(1);
         }
     }
-}
-
-fn web_settings(config: &HashMap<String, String>, default_static_root: &Path) -> WebSettings {
-    WebSettings {
-        host: env::var("HOST")
-            .ok()
-            .or_else(|| robominer_db::config_value(config, "host").map(str::to_owned))
-            .unwrap_or_else(|| "127.0.0.1".to_string()),
-        port: env::var("PORT")
-            .ok()
-            .or_else(|| robominer_db::config_value(config, "port").map(str::to_owned))
-            .unwrap_or_else(|| "8080".to_string()),
-        static_root: env::var("ROBOMINER_WEB_ROOT")
-            .map(PathBuf::from)
-            .ok()
-            .or_else(|| robominer_db::config_value(config, "webroot").map(PathBuf::from))
-            .unwrap_or_else(|| default_static_root.to_path_buf()),
-        session_secret: env::var("ROBOMINER_SESSION_SECRET")
-            .ok()
-            .or_else(|| robominer_db::config_value(config, "sessionsecret").map(str::to_owned)),
-        session_ttl_secs: env::var("ROBOMINER_SESSION_TTL_SECS").ok(),
-        session_ttl_hours: env::var("ROBOMINER_SESSION_TTL_HOURS").ok(),
-        secure_cookies: parse_bool_setting(
-            env::var("ROBOMINER_SECURE_COOKIES").ok().as_deref(),
-            robominer_db::config_value(config, "securecookies"),
-        ),
-        allow_signup: parse_bool_setting(
-            env::var("ROBOMINER_ALLOW_SIGNUP").ok().as_deref(),
-            robominer_db::config_value(config, "allowsignup"),
-        ),
-        trust_proxy: parse_bool_setting(
-            env::var("ROBOMINER_TRUST_PROXY").ok().as_deref(),
-            robominer_db::config_value(config, "trustproxy"),
-        ),
-    }
-}
-
-fn parse_bool_setting(env_value: Option<&str>, config_value: Option<&str>) -> bool {
-    if let Some(value) = env_value {
-        return matches!(
-            value.trim(),
-            "1" | "true" | "TRUE" | "yes" | "YES" | "on" | "ON"
-        );
-    }
-
-    config_value.is_some_and(|value| {
-        matches!(
-            value.trim(),
-            "1" | "true" | "TRUE" | "yes" | "YES" | "on" | "ON"
-        )
-    })
 }
 
 fn connect_database(

@@ -25,9 +25,11 @@ mod robot_page;
 mod router;
 mod server;
 mod session;
+mod settings;
 mod shop_page;
 
 pub use server::serve;
+pub use settings::{WebSettings, web_settings};
 pub fn configure_session_secret(secret: &str) {
     session::configure_session_secret(secret);
 }
@@ -92,6 +94,23 @@ where
         .block_on(future)
 }
 
+#[cfg(test)]
+mod block_on_database_tests {
+    use super::block_on_database;
+
+    #[test]
+    fn block_on_database_runs_without_current_runtime() {
+        let value = block_on_database(async { 41_i32 + 1 });
+        assert_eq!(value, 42);
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn block_on_database_runs_inside_tokio_runtime() {
+        let value = block_on_database(async { 20_i32 + 2 });
+        assert_eq!(value, 22);
+    }
+}
+
 /// Integration-test helpers for routing against a real database pool.
 #[doc(hidden)]
 pub mod test_support {
@@ -99,6 +118,10 @@ pub mod test_support {
 
     pub use crate::csrf::csrf_token_from_cookie;
     pub use crate::{Request, Response, ServerConfig, configure_session_secret, route};
+
+    pub fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
+        crate::session::format_authenticated_cookie(user_id, username)
+    }
 
     pub fn user_id_from_cookie_header(cookies: &str) -> Option<i64> {
         let request = Request {
