@@ -246,18 +246,22 @@ function updateRobotDebugPanel(robot, step)
     var actionName = rallyActionName(robot.a);
     if (actionEl)
     {
+        var label = null;
         if (actionName)
         {
-            actionEl.textContent = actionName;
+            label = actionName;
         }
         else if (robotLooksIdle(robot, step))
         {
-            actionEl.textContent = 'Idle';
+            label = 'Idle';
         }
-        else
+
+        if (label && typeof robot.l === 'number')
         {
-            actionEl.textContent = '—';
+            label += ' · L' + robot.l;
         }
+
+        actionEl.textContent = label || '—';
     }
 
     var card = document.getElementById('rallyPlayer' + robot.robotnr);
@@ -280,6 +284,52 @@ function updateRobotDebugPanel(robot, step)
         {
             card.classList.remove('rally-view-player-full');
         }
+    }
+
+    if (typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot)
+    {
+        updateRallySourceHighlight(robot.l);
+    }
+}
+
+
+var myRallySourceHighlightLine = null;
+
+
+function updateRallySourceHighlight(line)
+{
+    var sourceCode = document.getElementById('rallySourceCode');
+    if (!sourceCode)
+    {
+        return;
+    }
+
+    if (myRallySourceHighlightLine !== null)
+    {
+        var previous = document.getElementById('rallySourceLine' + myRallySourceHighlightLine);
+        if (previous)
+        {
+            previous.classList.remove('rally-view-source-line-active');
+        }
+        myRallySourceHighlightLine = null;
+    }
+
+    if (typeof line !== 'number' || isNaN(line) || line < 1)
+    {
+        return;
+    }
+
+    var current = document.getElementById('rallySourceLine' + line);
+    if (!current)
+    {
+        return;
+    }
+
+    current.classList.add('rally-view-source-line-active');
+    myRallySourceHighlightLine = line;
+    if (typeof current.scrollIntoView === 'function')
+    {
+        current.scrollIntoView({ block: 'nearest' });
     }
 }
 
@@ -411,6 +461,11 @@ function updateRobotTo(robotNr, step)
         {
             myRobots.robot[robotNr].locations[step].a = myRobots.robot[robotNr].locations[step - 1].a;
         }
+        if (typeof myRobots.robot[robotNr].locations[step].l === 'undefined'
+            && typeof myRobots.robot[robotNr].locations[step - 1].l !== 'undefined')
+        {
+            myRobots.robot[robotNr].locations[step].l = myRobots.robot[robotNr].locations[step - 1].l;
+        }
 
         myRobots.robot[robotNr].updatedTo = step;
     }
@@ -434,6 +489,7 @@ function updateRobotPosition(robotNr, time, stepTime)
         myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t1].B;
         myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t1].C;
         myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
+        myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t1].l;
     }
     else
     {
@@ -449,6 +505,7 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t2].B;
             myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t2].C;
             myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
+            myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t2].l;
         }
         else
         {
@@ -459,7 +516,24 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].A = smoothen(myRobots.robot[robotNr].locations[t1].A, myRobots.robot[robotNr].locations[t2].A, dt, travelTime);
             myRobots.robot[robotNr].B = smoothen(myRobots.robot[robotNr].locations[t1].B, myRobots.robot[robotNr].locations[t2].B, dt, travelTime);
             myRobots.robot[robotNr].C = smoothen(myRobots.robot[robotNr].locations[t1].C, myRobots.robot[robotNr].locations[t2].C, dt, travelTime);
-            myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
+            // At the exact start of a segment (including replay start), prefer t1's line so
+            // locations[0].l (program entry) is shown instead of jumping to the first action cycle.
+            if (dt <= 0 && typeof myRobots.robot[robotNr].locations[t1].l !== 'undefined')
+            {
+                myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
+                myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t1].l;
+            }
+            else if (dt <= 0 && t1 === 0)
+            {
+                // Legacy replays omit locations[0].l — still show program entry.
+                myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
+                myRobots.robot[robotNr].l = 1;
+            }
+            else
+            {
+                myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
+                myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t2].l;
+            }
         }
     }
 }

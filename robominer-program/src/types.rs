@@ -31,6 +31,13 @@ impl ExecutableProgram {
     pub fn requires_runtime(&self) -> bool {
         self.requires_runtime
     }
+
+    /// 1-based source line of the first top-level statement, if any.
+    pub fn entry_source_line(&self) -> Option<u16> {
+        self.statements
+            .first()
+            .map(|statement| statement.source_line)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -44,7 +51,13 @@ pub enum ExecutableAction {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ExecutableStatement {
+pub(crate) struct ExecutableStatement {
+    pub source_line: u16,
+    pub kind: ExecutableStatementKind,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum ExecutableStatementKind {
     Action(ExecutableAction),
     DynamicAction(ExecutableActionExpression),
     Sequence(Vec<ExecutableStatement>),
@@ -70,20 +83,24 @@ pub(crate) enum ExecutableStatement {
 }
 
 impl ExecutableStatement {
+    pub(crate) fn at(source_line: u16, kind: ExecutableStatementKind) -> Self {
+        Self { source_line, kind }
+    }
+
     pub(crate) fn requires_runtime(&self) -> bool {
-        match self {
-            ExecutableStatement::Action(action) => matches!(
+        match &self.kind {
+            ExecutableStatementKind::Action(action) => matches!(
                 action,
                 ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult
             ),
-            ExecutableStatement::DynamicAction(_) => true,
-            ExecutableStatement::Sequence(statements) => {
+            ExecutableStatementKind::DynamicAction(_) => true,
+            ExecutableStatementKind::Sequence(statements) => {
                 statements.iter().any(ExecutableStatement::requires_runtime)
             }
-            ExecutableStatement::Declare { .. }
-            | ExecutableStatement::Assign { .. }
-            | ExecutableStatement::Expression(_) => true,
-            ExecutableStatement::If { .. } | ExecutableStatement::While { .. } => true,
+            ExecutableStatementKind::Declare { .. }
+            | ExecutableStatementKind::Assign { .. }
+            | ExecutableStatementKind::Expression(_) => true,
+            ExecutableStatementKind::If { .. } | ExecutableStatementKind::While { .. } => true,
         }
     }
 }

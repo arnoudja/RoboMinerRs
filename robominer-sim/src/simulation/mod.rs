@@ -133,6 +133,13 @@ impl Simulation {
         }
     }
 
+    fn program_entry_source_line(&self, robot_index: usize) -> Option<u16> {
+        match &self.action_sources[robot_index] {
+            ActionSource::Program { program, .. } => program.entry_source_line(),
+            _ => None,
+        }
+    }
+
     fn init_robot_positions(&mut self) {
         let size_x = self.ground.size_x() as f64;
         let size_y = self.ground.size_y() as f64;
@@ -165,6 +172,7 @@ impl Simulation {
 
         let mut pending_results = vec![ActionResult::None; self.robots.len()];
         let mut cycle_actions = vec![None; self.robots.len()];
+        let mut cycle_source_lines = vec![None; self.robots.len()];
 
         if self.time > 0 {
             for (index, pending_result) in pending_results.iter_mut().enumerate() {
@@ -177,6 +185,9 @@ impl Simulation {
                         &self.robots[index],
                         scan_after > scan_before,
                     ));
+                    cycle_source_lines[index] = self
+                        .program_runner(index)
+                        .and_then(ExecutableRunner::current_source_line);
                     *pending_result = self.process_robot_action(index, action);
                 } else {
                     self.action_results[index] = None;
@@ -194,6 +205,10 @@ impl Simulation {
                         .distance(&self.robots[index].destination);
                     *result = ActionResult::Value(distance * direction);
                 }
+            }
+        } else {
+            for (index, line) in cycle_source_lines.iter_mut().enumerate() {
+                *line = self.program_entry_source_line(index);
             }
         }
 
@@ -213,7 +228,12 @@ impl Simulation {
             }
 
             for (index, robot) in self.robots.iter().enumerate() {
-                animation.record_robot_step(index, robot, cycle_actions[index]);
+                animation.record_robot_step(
+                    index,
+                    robot,
+                    cycle_actions[index],
+                    cycle_source_lines[index],
+                );
             }
         }
 

@@ -82,7 +82,7 @@ impl ExecutableRunner {
                 if value.is_truthy() {
                     frame.index += 1;
                     let loop_body = body.map_or_else(
-                        || ExecutableStatement::Sequence(vec![]),
+                        || ExecutableStatement::at(0, ExecutableStatementKind::Sequence(vec![])),
                         |statement| *statement,
                     );
                     self.push_statement(loop_body, Some(condition));

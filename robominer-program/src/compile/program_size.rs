@@ -1,6 +1,6 @@
 use crate::types::{
     ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableProgram,
-    ExecutableStatement, VariableOperator,
+    ExecutableStatement, ExecutableStatementKind, VariableOperator,
 };
 
 pub(super) fn program_instruction_size(program: &ExecutableProgram) -> usize {
@@ -16,16 +16,16 @@ fn sequence_size(statements: &[ExecutableStatement]) -> usize {
 }
 
 fn statement_size(statement: &ExecutableStatement) -> usize {
-    match statement {
-        ExecutableStatement::Action(action) => action_expression_size(action),
-        ExecutableStatement::DynamicAction(action) => dynamic_action_size(action),
-        ExecutableStatement::Sequence(statements) => sequence_size(statements),
-        ExecutableStatement::Declare { value, .. } => {
+    match &statement.kind {
+        ExecutableStatementKind::Action(action) => action_expression_size(action),
+        ExecutableStatementKind::DynamicAction(action) => dynamic_action_size(action),
+        ExecutableStatementKind::Sequence(statements) => sequence_size(statements),
+        ExecutableStatementKind::Declare { value, .. } => {
             1 + value.as_ref().map(expression_size).unwrap_or(0)
         }
-        ExecutableStatement::Assign { value, .. } => 1 + expression_size(value),
-        ExecutableStatement::Expression(expression) => expression_size(expression),
-        ExecutableStatement::If {
+        ExecutableStatementKind::Assign { value, .. } => 1 + expression_size(value),
+        ExecutableStatementKind::Expression(expression) => expression_size(expression),
+        ExecutableStatementKind::If {
             condition,
             true_body,
             false_body,
@@ -37,7 +37,7 @@ fn statement_size(statement: &ExecutableStatement) -> usize {
                     .map(|body| statement_size(body))
                     .unwrap_or(0)
         }
-        ExecutableStatement::While {
+        ExecutableStatementKind::While {
             condition, body, ..
         } => {
             1 + expression_size(condition)

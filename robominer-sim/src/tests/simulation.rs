@@ -94,8 +94,8 @@ fn animation_data_uses_legacy_javascript_payload_shape() {
 
     assert!(data.contains("var myRobots = {robot: ["));
     assert!(data.contains("robotnr:0"));
-    assert!(data.contains("locations:[{x:0.0,y:0.0,o:45,A:0,B:0,C:0}"));
-    assert!(data.contains("{A:4,a:6}"));
+    assert!(data.contains("locations:[{x:0.0,y:0.0,o:45,A:0,B:0,C:0,l:1}"));
+    assert!(data.contains("{A:4,a:6,l:1}"));
     assert!(data.contains("var myGround = {sizeX:4,sizeY:4,positions:["));
     assert!(data.contains("{x:0,y:0,c:[{A:8},{t:1,A:4}]"));
     assert!(data.contains("var myOreTypes = {A:{id:1,max:8}};"));
@@ -152,5 +152,34 @@ fn animation_data_records_scan_action_index_while_scanning() {
     assert!(
         scan_marks >= 2,
         "expected multiple scan-busy cycles, found {scan_marks} in {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_source_line_for_program_actions() {
+    let program = seeded_program("scan();\nmine();");
+    let mut ground = Ground::new(4, 4);
+    ground.at_mut(0, 0).add_ore(0, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 8;
+    spec.scan_time = 2;
+    spec.cpu_speed = 72;
+    spec.mining_speed = 4;
+
+    let mut simulation = Simulation::new(
+        ground,
+        8,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains("l:1") || data.contains("l:2"),
+        "program animation should include source lines: {data}"
+    );
+    assert!(
+        data.contains("a:6") && data.contains("l:"),
+        "mine cycles should include a source line: {data}"
     );
 }

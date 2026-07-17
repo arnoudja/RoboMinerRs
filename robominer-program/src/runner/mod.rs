@@ -27,6 +27,9 @@ pub struct ExecutableRunner {
     /// See [`pending_physical_action`] and [`pending_action_protocol`].
     pending_physical: Option<PendingPhysicalAction>,
     expression_eval: Option<OngoingExpressionEval>,
+    /// Source line of the statement most recently entered (survives index advance for
+    /// one-shot actions like mine, and multi-cycle pending motion).
+    active_source_line: Option<u16>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -51,6 +54,7 @@ impl ExecutableRunner {
             pending_action: None,
             pending_physical: None,
             expression_eval: None,
+            active_source_line: None,
         }
     }
 
@@ -78,6 +82,18 @@ impl ExecutableRunner {
 
     pub fn has_pending_physical(&self) -> bool {
         self.pending_physical.is_some()
+    }
+
+    /// 1-based source line of the statement currently executing, if any.
+    pub fn current_source_line(&self) -> Option<u16> {
+        if let Some(line) = self.active_source_line {
+            return Some(line);
+        }
+        let frame = self.stack.last()?;
+        if frame.index >= frame.statements.len() {
+            return None;
+        }
+        Some(frame.statements[frame.index].source_line)
     }
 
     pub fn next_action(&mut self, context: &mut ExecutionContext) -> Option<ExecutableAction> {
@@ -109,7 +125,10 @@ impl ExecutableRunner {
                     };
                     break ProgramStep::Action(action);
                 }
-                StepOutcome::Done => break ProgramStep::Done,
+                StepOutcome::Done => {
+                    self.active_source_line = None;
+                    break ProgramStep::Done;
+                }
             }
         };
 
@@ -155,15 +174,16 @@ impl ExecutableRunner {
         };
 
         let statement = frame.statements[frame.index].clone();
+        self.active_source_line = Some(statement.source_line);
 
-        match statement {
-            ExecutableStatement::Action(action) => {
+        match statement.kind {
+            ExecutableStatementKind::Action(action) => {
                 if !PendingPhysicalAction::is_chunked(action) {
                     frame.index += 1;
                 }
                 StepOutcome::Action(action)
             }
-            ExecutableStatement::DynamicAction(action) => {
+            ExecutableStatementKind::DynamicAction(action) => {
                 match action {
                     ExecutableActionExpression::Move(value) => {
                         self.start_expression_evaluation(value, ExpressionResume::DynamicMove);
@@ -177,12 +197,12 @@ impl ExecutableRunner {
                 }
                 StepOutcome::Continue
             }
-            ExecutableStatement::Sequence(statements) => {
+            ExecutableStatementKind::Sequence(statements) => {
                 frame.index += 1;
                 self.push_frame(statements, None, true);
                 StepOutcome::Cpu
             }
-            ExecutableStatement::Declare { name, value } => {
+            ExecutableStatementKind::Declare { name, value } => {
                 if let Some(value) = value {
                     self.start_expression_evaluation(value, ExpressionResume::Declare { name });
                     StepOutcome::Continue
@@ -192,15 +212,15 @@ impl ExecutableRunner {
                     StepOutcome::Cpu
                 }
             }
-            ExecutableStatement::Assign { name, value } => {
+            ExecutableStatementKind::Assign { name, value } => {
                 self.start_expression_evaluation(value, ExpressionResume::Assign { name });
                 StepOutcome::Continue
             }
-            ExecutableStatement::Expression(expression) => {
+            ExecutableStatementKind::Expression(expression) => {
                 self.start_expression_evaluation(expression, ExpressionResume::ExpressionStatement);
                 StepOutcome::Continue
             }
-            ExecutableStatement::If {
+            ExecutableStatementKind::If {
                 condition,
                 true_body,
                 false_body,
@@ -214,7 +234,7 @@ impl ExecutableRunner {
                 );
                 StepOutcome::Continue
             }
-            ExecutableStatement::While {
+            ExecutableStatementKind::While {
                 condition,
                 body,
                 is_do_while,
@@ -292,11 +312,16 @@ impl ExecutableRunner {
         statement: ExecutableStatement,
         repeat_condition: Option<ExecutableExpression>,
     ) {
-        match statement {
-            ExecutableStatement::Sequence(statements) => {
+        let source_line = statement.source_line;
+        match statement.kind {
+            ExecutableStatementKind::Sequence(statements) => {
                 self.push_frame(statements, repeat_condition, true);
             }
-            statement => self.push_frame(vec![statement], repeat_condition, false),
+            kind => self.push_frame(
+                vec![ExecutableStatement::at(source_line, kind)],
+                repeat_condition,
+                false,
+            ),
         }
     }
 

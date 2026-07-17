@@ -15,6 +15,7 @@ mod tests {
             "function updateRobotDebugPanel(",
             "function robotCargoFull(",
             "function rallyActionName(",
+            "function updateRallySourceHighlight(",
         ] {
             assert!(
                 RALLY_ANIMATION_SCRIPT.contains(symbol),

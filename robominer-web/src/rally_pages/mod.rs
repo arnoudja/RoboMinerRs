@@ -136,6 +136,8 @@ pub(super) struct RallyViewPageState {
     pub(super) viewer_score: Option<f64>,
     pub(super) viewer_total_reward: Option<i32>,
     pub(super) viewer_result_claimed: bool,
+    /// Current robot source for the viewer (may differ if edited after the rally).
+    pub(super) viewer_source_code: Option<String>,
 }
 
 mod activity;

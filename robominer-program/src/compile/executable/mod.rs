@@ -2,7 +2,9 @@ mod actions;
 mod expressions;
 mod statements;
 
-use crate::types::{CompileError, ExecutableAction, ExecutableProgram, ExecutableStatement};
+use crate::types::{
+    CompileError, ExecutableAction, ExecutableProgram, ExecutableStatement, ExecutableStatementKind,
+};
 
 use super::input::CompileInput;
 
@@ -24,20 +26,20 @@ pub(super) fn expect_declared_variable(
 
 fn collect_static_actions(statements: &[ExecutableStatement], actions: &mut Vec<ExecutableAction>) {
     for statement in statements {
-        match statement {
-            ExecutableStatement::Action(action) => actions.push(*action),
-            ExecutableStatement::DynamicAction(action) => {
+        match &statement.kind {
+            ExecutableStatementKind::Action(action) => actions.push(*action),
+            ExecutableStatementKind::DynamicAction(action) => {
                 if let Some(action) = action.static_action() {
                     actions.push(action);
                 }
             }
-            ExecutableStatement::Sequence(statements) => {
+            ExecutableStatementKind::Sequence(statements) => {
                 collect_static_actions(statements, actions)
             }
-            ExecutableStatement::Declare { .. }
-            | ExecutableStatement::Assign { .. }
-            | ExecutableStatement::Expression(_) => {}
-            ExecutableStatement::If { .. } | ExecutableStatement::While { .. } => {}
+            ExecutableStatementKind::Declare { .. }
+            | ExecutableStatementKind::Assign { .. }
+            | ExecutableStatementKind::Expression(_) => {}
+            ExecutableStatementKind::If { .. } | ExecutableStatementKind::While { .. } => {}
         }
     }
 }
@@ -45,9 +47,9 @@ fn collect_static_actions(statements: &[ExecutableStatement], actions: &mut Vec<
 pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram, CompileError> {
     let mut input = CompileInput::new(source);
     let root = parse_executable_sequence(&mut input)?;
-    let statements = match root {
-        ExecutableStatement::Sequence(statements) => statements,
-        statement => vec![statement],
+    let statements = match root.kind {
+        ExecutableStatementKind::Sequence(statements) => statements,
+        _ => vec![root],
     };
     let mut actions = Vec::new();
     collect_static_actions(&statements, &mut actions);

@@ -4010,6 +4010,60 @@ body.mining-area-atlas-drawer-open {
     padding: 6px;
 }
 
+.rally-view-source {
+    margin-top: 16px;
+}
+
+.rally-view-source-title {
+    color: #e8f4ff;
+    font-size: 0.95rem;
+    margin: 0 0 6px;
+}
+
+.rally-view-source-note {
+    color: var(--mq-text-muted);
+    font-size: 0.75rem;
+    margin: 0 0 8px;
+}
+
+.rally-view-source-code {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 4px;
+    color: #c5d4ea;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    margin: 0;
+    max-height: 280px;
+    overflow: auto;
+    padding: 8px 0;
+    white-space: pre;
+}
+
+.rally-view-source-line {
+    display: block;
+    padding: 0 10px 0 0;
+}
+
+.rally-view-source-lineno {
+    color: #6a7a94;
+    display: inline-block;
+    min-width: 2.5em;
+    padding: 0 8px 0 10px;
+    text-align: right;
+    user-select: none;
+}
+
+.rally-view-source-line-active {
+    background: rgba(0, 229, 255, 0.14);
+}
+
+.rally-view-source-line-active .rally-view-source-lineno {
+    color: var(--mq-accent);
+    font-weight: bold;
+}
+
 .rally-view-legend-list {
     display: grid;
     gap: 8px;

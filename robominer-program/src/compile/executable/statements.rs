@@ -1,6 +1,6 @@
 use crate::types::{
-    CompileError, ExecutableExpression, ExecutableStatement, Operator, RobotProperty, ValueType,
-    VariableOperator,
+    CompileError, ExecutableExpression, ExecutableStatement, ExecutableStatementKind, Operator,
+    RobotProperty, ValueType, VariableOperator,
 };
 
 use super::super::input::{CompileInput, expect_char, robot_property_mutation_error};
@@ -11,6 +11,7 @@ use super::expressions::parse_executable_expression;
 pub(super) fn parse_executable_sequence(
     input: &mut CompileInput,
 ) -> Result<ExecutableStatement, CompileError> {
+    let source_line = clamp_line(input.current_line);
     expect_char(input, '{', "'{' expected")?;
 
     let outer_scope = input.variables.scope_depth;
@@ -43,7 +44,14 @@ pub(super) fn parse_executable_sequence(
     expect_char(input, '}', "'}' expected")?;
     input.variables.set_scope_depth(outer_scope);
 
-    Ok(ExecutableStatement::Sequence(statements))
+    Ok(ExecutableStatement::at(
+        source_line,
+        ExecutableStatementKind::Sequence(statements),
+    ))
+}
+
+fn clamp_line(line: usize) -> u16 {
+    line.min(u16::MAX as usize) as u16
 }
 
 fn parse_executable_statement(
@@ -54,6 +62,7 @@ fn parse_executable_statement(
     }
 
     if input.use_next_word("while") {
+        let source_line = clamp_line(input.current_line);
         expect_char(input, '(', "'(' expected")?;
         let condition = parse_executable_expression(input)?.ok_or_else(|| {
             CompileError::new(format!(
@@ -70,16 +79,20 @@ fn parse_executable_statement(
         };
 
         return Ok((
-            ExecutableStatement::While {
-                condition,
-                body,
-                is_do_while: false,
-            },
+            ExecutableStatement::at(
+                source_line,
+                ExecutableStatementKind::While {
+                    condition,
+                    body,
+                    is_do_while: false,
+                },
+            ),
             true,
         ));
     }
 
     if input.use_next_word("do") {
+        let source_line = clamp_line(input.current_line);
         if input.peek() != Some('{') {
             return Err(CompileError::new(format!(
                 "Syntax error at line {}. '{{' expected",
@@ -107,16 +120,20 @@ fn parse_executable_statement(
         let terminated = input.eat_char(';', false);
 
         return Ok((
-            ExecutableStatement::While {
-                condition,
-                body,
-                is_do_while: true,
-            },
+            ExecutableStatement::at(
+                source_line,
+                ExecutableStatementKind::While {
+                    condition,
+                    body,
+                    is_do_while: true,
+                },
+            ),
             terminated,
         ));
     }
 
     if input.use_next_word("if") {
+        let source_line = clamp_line(input.current_line);
         expect_char(input, '(', "'(' expected")?;
         let condition = parse_executable_expression(input)?.ok_or_else(|| {
             CompileError::new(format!(
@@ -134,11 +151,14 @@ fn parse_executable_statement(
         }
 
         return Ok((
-            ExecutableStatement::If {
-                condition,
-                true_body,
-                false_body,
-            },
+            ExecutableStatement::at(
+                source_line,
+                ExecutableStatementKind::If {
+                    condition,
+                    true_body,
+                    false_body,
+                },
+            ),
             true,
         ));
     }
@@ -149,6 +169,7 @@ fn parse_executable_statement(
 fn parse_executable_expression_statement(
     input: &mut CompileInput,
 ) -> Result<ExecutableStatement, CompileError> {
+    let source_line = clamp_line(input.current_line);
     let upcoming = input.get_next_word();
     if matches!(upcoming, "mine" | "move" | "rotate" | "dump") {
         return parse_executable_action_statement(input);
@@ -161,7 +182,10 @@ fn parse_executable_expression_statement(
         ))
     })?;
 
-    Ok(ExecutableStatement::Expression(expression))
+    Ok(ExecutableStatement::at(
+        source_line,
+        ExecutableStatementKind::Expression(expression),
+    ))
 }
 
 fn parse_executable_item(input: &mut CompileInput) -> Result<ExecutableStatement, CompileError> {
@@ -179,6 +203,7 @@ fn parse_executable_item(input: &mut CompileInput) -> Result<ExecutableStatement
 fn parse_executable_variable_statement(
     input: &mut CompileInput,
 ) -> Result<Option<ExecutableStatement>, CompileError> {
+    let source_line = clamp_line(input.current_line);
     let is_const = input.use_next_word("const");
 
     let value_type = if input.use_next_word("int") {
@@ -225,7 +250,10 @@ fn parse_executable_variable_statement(
 
         input.variables.declare(name.clone(), value_type, is_const);
 
-        return Ok(Some(ExecutableStatement::Declare { name, value }));
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Declare { name, value },
+        )));
     }
 
     if is_const {
@@ -255,11 +283,12 @@ fn parse_executable_variable_statement(
 
     if variable_operator != VariableOperator::None {
         expect_declared_variable(input, &name)?;
-        return Ok(Some(ExecutableStatement::Expression(
-            ExecutableExpression::VariableUpdate {
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Expression(ExecutableExpression::VariableUpdate {
                 name,
                 operator: variable_operator,
-            },
+            }),
         )));
     }
 
@@ -277,14 +306,17 @@ fn parse_executable_variable_statement(
                 input.current_line
             ))
         })?;
-        return Ok(Some(ExecutableStatement::Assign {
-            name: name.clone(),
-            value: ExecutableExpression::Binary {
-                operator: Operator::Addition,
-                left: Box::new(ExecutableExpression::Variable(name)),
-                right: Box::new(rhs),
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Assign {
+                name: name.clone(),
+                value: ExecutableExpression::Binary {
+                    operator: Operator::Addition,
+                    left: Box::new(ExecutableExpression::Variable(name)),
+                    right: Box::new(rhs),
+                },
             },
-        }));
+        )));
     }
 
     if input.eat_sequence("-=") {
@@ -301,14 +333,17 @@ fn parse_executable_variable_statement(
                 input.current_line
             ))
         })?;
-        return Ok(Some(ExecutableStatement::Assign {
-            name: name.clone(),
-            value: ExecutableExpression::Binary {
-                operator: Operator::Subtraction,
-                left: Box::new(ExecutableExpression::Variable(name)),
-                right: Box::new(rhs),
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Assign {
+                name: name.clone(),
+                value: ExecutableExpression::Binary {
+                    operator: Operator::Subtraction,
+                    left: Box::new(ExecutableExpression::Variable(name)),
+                    right: Box::new(rhs),
+                },
             },
-        }));
+        )));
     }
 
     if input.eat_char('=', false) {
@@ -325,26 +360,31 @@ fn parse_executable_variable_statement(
                 input.current_line
             ))
         })?;
-        return Ok(Some(ExecutableStatement::Assign { name, value }));
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Assign { name, value },
+        )));
     }
 
     if input.eat_sequence("++") {
         expect_declared_variable(input, &name)?;
-        return Ok(Some(ExecutableStatement::Expression(
-            ExecutableExpression::VariableUpdate {
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Expression(ExecutableExpression::VariableUpdate {
                 name,
                 operator: VariableOperator::PostIncrement,
-            },
+            }),
         )));
     }
 
     if input.eat_sequence("--") {
         expect_declared_variable(input, &name)?;
-        return Ok(Some(ExecutableStatement::Expression(
-            ExecutableExpression::VariableUpdate {
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Expression(ExecutableExpression::VariableUpdate {
                 name,
                 operator: VariableOperator::PostDecrement,
-            },
+            }),
         )));
     }
 
@@ -361,8 +401,9 @@ fn parse_executable_variable_statement(
         if input.eat_char('=', false) || input.eat_sequence("++") || input.eat_sequence("--") {
             return Err(robot_property_mutation_error(input.current_line));
         }
-        return Ok(Some(ExecutableStatement::Expression(
-            ExecutableExpression::RobotProperty(property),
+        return Ok(Some(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Expression(ExecutableExpression::RobotProperty(property)),
         )));
     }
 

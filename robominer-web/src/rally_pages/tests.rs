@@ -67,6 +67,7 @@ fn sample_rally_view_state(slots: [(String, String); 4]) -> RallyViewPageState {
         viewer_score: None,
         viewer_total_reward: None,
         viewer_result_claimed: false,
+        viewer_source_code: None,
     }
 }
 
@@ -441,6 +442,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
             viewer_score: None,
             viewer_total_reward: None,
             viewer_result_claimed: false,
+            viewer_source_code: None,
         },
         None,
     );
@@ -465,6 +467,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("return robot.a === 1;"));
     assert!(html.contains(r#"id="progressCanvas""#));
     assert!(html.contains(r#"id="rallyPlayPause">Play</button>"#));
+    assert!(html.contains(r#"data-speed="0.1">0.1×</button>"#));
     assert!(html.contains(r#"id="rallyRestart">Restart</button>"#));
     assert!(html.contains(r#"id="rallyProgressTrack""#));
     assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
@@ -502,6 +505,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
             viewer_score: Some(42.5),
             viewer_total_reward: Some(17),
             viewer_result_claimed: true,
+            viewer_source_code: Some("scan();\nmine();\n".to_string()),
         },
         Some("runId=10&robotId=7").map(RallyViewBackLink::MiningResults),
     );
@@ -514,6 +518,10 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"<dt>Score</dt><dd>42.5</dd>"#));
     assert!(html.contains(r#"class="rally-view-context-payout">+17</dd>"#));
     assert!(html.contains(r#"var myRallyViewerSlot = 0;"#));
+    assert!(html.contains(r#"id="rallySourceCode""#));
+    assert!(html.contains(r#"id="rallySourceLine1""#));
+    assert!(html.contains(r#"class="rally-view-source-text">scan();</span>"#));
+    assert!(html.contains("function updateRallySourceHighlight(line)"));
     assert!(html.contains(r#"href="miningQueue?robotId=7">Mining queue</a>"#));
     assert!(html.contains(r#"href="robot?robotId=7">Robot workshop</a>"#));
     assert!(html.contains(r#"href="miningAreaOverview">Compare areas</a>"#));

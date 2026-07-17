@@ -1,6 +1,6 @@
 use crate::types::{
     CompileError, ExecutableAction, ExecutableActionExpression, ExecutableExpression,
-    ExecutableStatement,
+    ExecutableStatement, ExecutableStatementKind,
 };
 
 use super::super::input::{CompileInput, expect_char, expect_empty_call};
@@ -9,33 +9,47 @@ use super::expressions::parse_executable_expression;
 pub(super) fn parse_executable_action_statement(
     input: &mut CompileInput,
 ) -> Result<ExecutableStatement, CompileError> {
+    let source_line = input.current_line.min(u16::MAX as usize) as u16;
+
     if input.use_next_word("mine") {
         expect_empty_call(input)?;
-        return Ok(ExecutableStatement::Action(ExecutableAction::Mine));
+        return Ok(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Action(ExecutableAction::Mine),
+        ));
     }
 
     if input.use_next_word("move") {
         let action = ExecutableActionExpression::Move(parse_executable_call_expression(input)?);
-        return Ok(action
-            .static_action()
-            .map(ExecutableStatement::Action)
-            .unwrap_or(ExecutableStatement::DynamicAction(action)));
+        return Ok(ExecutableStatement::at(
+            source_line,
+            action
+                .static_action()
+                .map(ExecutableStatementKind::Action)
+                .unwrap_or(ExecutableStatementKind::DynamicAction(action)),
+        ));
     }
 
     if input.use_next_word("rotate") {
         let action = ExecutableActionExpression::Rotate(parse_executable_call_expression(input)?);
-        return Ok(action
-            .static_action()
-            .map(ExecutableStatement::Action)
-            .unwrap_or(ExecutableStatement::DynamicAction(action)));
+        return Ok(ExecutableStatement::at(
+            source_line,
+            action
+                .static_action()
+                .map(ExecutableStatementKind::Action)
+                .unwrap_or(ExecutableStatementKind::DynamicAction(action)),
+        ));
     }
 
     if input.use_next_word("dump") {
         let action = ExecutableActionExpression::Dump(parse_executable_call_expression(input)?);
-        return Ok(action
-            .static_action()
-            .map(ExecutableStatement::Action)
-            .unwrap_or(ExecutableStatement::DynamicAction(action)));
+        return Ok(ExecutableStatement::at(
+            source_line,
+            action
+                .static_action()
+                .map(ExecutableStatementKind::Action)
+                .unwrap_or(ExecutableStatementKind::DynamicAction(action)),
+        ));
     }
 
     Err(CompileError::new(format!(

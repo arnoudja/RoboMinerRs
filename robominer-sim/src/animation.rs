@@ -18,6 +18,9 @@ struct RobotAnimationStep {
     /// Optional action index for this cycle (`RobotAction::action_index`, or 0 for scan).
     /// Absent on the initial step and on legacy replays.
     action_index: Option<u8>,
+    /// Optional 1-based source line of the statement executing this cycle.
+    /// Absent on the initial step, scripted action lists, and legacy replays.
+    source_line: Option<u16>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -69,12 +72,14 @@ impl AnimationRecorder {
         robot_index: usize,
         robot: &Robot,
         action_index: Option<u8>,
+        source_line: Option<u16>,
     ) {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
             ore: *robot.ore(),
             time_fraction: robot.time_fraction,
             action_index,
+            source_line,
         });
     }
 
@@ -181,6 +186,11 @@ fn write_robot_step_array(output: &mut String, steps: &[RobotAnimationStep]) {
         // Always emit when present so Wait cycles stay distinguishable after delta compression.
         if let Some(action_index) = step.action_index {
             values.push(format!("a:{action_index}"));
+        }
+
+        // Always emit when present so the viewer can highlight the active statement.
+        if let Some(source_line) = step.source_line {
+            values.push(format!("l:{source_line}"));
         }
 
         if step.time_fraction < 0.9 || values.is_empty() {

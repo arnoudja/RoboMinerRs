@@ -155,6 +155,9 @@ fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
     );
     body.push_str(r#"<div class="rally-view-speed" aria-label="Playback speed">"#);
     body.push_str(
+        r#"<button type="button" class="rally-view-speed-button" data-speed="0.1">0.1×</button>"#,
+    );
+    body.push_str(
         r#"<button type="button" class="rally-view-speed-button rally-view-speed-button-active" data-speed="1">1×</button>"#,
     );
     body.push_str(
@@ -194,7 +197,27 @@ fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
     }
     body.push_str("</div>");
     render_rally_view_legend(body);
+    if let Some(source) = state.viewer_source_code.as_deref() {
+        render_rally_view_source(body, source);
+    }
     body.push_str("</aside></div>");
+}
+
+fn render_rally_view_source(body: &mut String, source: &str) {
+    body.push_str(r#"<section class="rally-view-source" aria-label="Your program">"#);
+    body.push_str(r#"<h2 class="rally-view-source-title">Your program</h2>"#);
+    body.push_str(
+        r#"<p class="rally-view-source-note">Highlighted line is the statement running in the replay. Uses the robot's current source, which may differ if you edited after the rally.</p>"#,
+    );
+    body.push_str(r#"<pre class="rally-view-source-code" id="rallySourceCode">"#);
+    for (index, line) in source.lines().enumerate() {
+        let line_number = index + 1;
+        body.push_str(&format!(
+            r#"<span class="rally-view-source-line" data-line="{line_number}" id="rallySourceLine{line_number}"><span class="rally-view-source-lineno">{line_number}</span><span class="rally-view-source-text">{}</span></span>"#,
+            escape_html(line),
+        ));
+    }
+    body.push_str("</pre></section>");
 }
 
 fn render_rally_view_player(
