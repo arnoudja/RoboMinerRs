@@ -289,11 +289,37 @@ function updateRobotDebugPanel(robot, step)
     if (typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot)
     {
         updateRallySourceHighlight(robot.l);
+        updateRallyEditCodeLink(robot.l);
     }
 }
 
 
 var myRallySourceHighlightLine = null;
+
+
+function updateRallyEditCodeLink(line)
+{
+    var link = document.getElementById('rallyEditCodeLink');
+    if (!link)
+    {
+        return;
+    }
+
+    var baseHref = link.getAttribute('data-edit-href');
+    if (!baseHref)
+    {
+        return;
+    }
+
+    if (typeof line === 'number' && !isNaN(line) && line >= 1)
+    {
+        link.href = baseHref + '&line=' + encodeURIComponent(String(Math.floor(line)));
+    }
+    else
+    {
+        link.href = baseHref;
+    }
+}
 
 
 function updateRallySourceHighlight(line)

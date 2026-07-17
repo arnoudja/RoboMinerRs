@@ -3,9 +3,63 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
     var allowPageUnload = false;
 
     function syncEditCodeUrl(sourceId) {
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId));
+        if (!(window.history && window.history.replaceState)) {
+            return;
         }
+        var url = 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId);
+        var line = editCodeUrlParam('line');
+        if (line) {
+            url += '&line=' + encodeURIComponent(line);
+        }
+        window.history.replaceState(null, '', url);
+    }
+
+    function editCodeUrlParam(name) {
+        var search = window.location.search;
+        if (!search) {
+            return null;
+        }
+        var params = search.substring(1).split('&');
+        for (var index = 0; index < params.length; index += 1) {
+            var pair = params[index].split('=');
+            if (decodeURIComponent(pair[0]) === name && pair[1]) {
+                return decodeURIComponent(pair[1]);
+            }
+        }
+        return null;
+    }
+
+    function focusSourceLine(panel, lineNumber) {
+        var textarea = panel && panel.querySelector('textarea[name="sourceCode"]');
+        if (!textarea || typeof lineNumber !== 'number' || isNaN(lineNumber) || lineNumber < 1) {
+            return;
+        }
+        var lines = textarea.value.split('\n');
+        if (lines.length === 0) {
+            return;
+        }
+        var targetLine = Math.min(Math.floor(lineNumber), lines.length);
+        var start = 0;
+        for (var index = 0; index < targetLine - 1; index += 1) {
+            start += lines[index].length + 1;
+        }
+        var end = start + lines[targetLine - 1].length;
+        textarea.focus();
+        if (typeof textarea.setSelectionRange === 'function') {
+            textarea.setSelectionRange(start, end);
+        }
+        var style = window.getComputedStyle(textarea);
+        var lineHeight = parseFloat(style.lineHeight);
+        if (!lineHeight || isNaN(lineHeight)) {
+            var fontSize = parseFloat(style.fontSize);
+            lineHeight = (fontSize && !isNaN(fontSize) ? fontSize : 14) * 1.4;
+        }
+        var paddingTop = parseFloat(style.paddingTop);
+        if (!paddingTop || isNaN(paddingTop)) {
+            paddingTop = 0;
+        }
+        textarea.scrollTop = Math.max(0, paddingTop + (targetLine - 1) * lineHeight - textarea.clientHeight / 3);
+        syncLineNumbersForTextarea(textarea);
     }
 
     function setPanelEnabled(panel, enabled) {
@@ -310,27 +364,35 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
     }
 
     function editCodeUrlSourceId() {
-        var search = window.location.search;
-        if (!search) {
+        return editCodeUrlParam('nextProgramSourceId');
+    }
+
+    function editCodeUrlLine() {
+        var raw = editCodeUrlParam('line');
+        if (!raw) {
             return null;
         }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === 'nextProgramSourceId' && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
+        var line = parseInt(raw, 10);
+        if (isNaN(line) || line < 1) {
+            return null;
         }
-        return null;
+        return line;
     }
 
     var preferredSourceId = editCodeUrlSourceId();
+    var preferredLine = editCodeUrlLine();
     if (preferredSourceId && document.querySelector('.edit-code-panel[data-source-id="' + preferredSourceId + '"]')) {
         selectProgramSource(preferredSourceId, false);
     } else {
         var firstCard = document.querySelector('.edit-code-program-card');
         if (firstCard) {
             selectProgramSource(firstCard.getAttribute('data-source-id'), false);
+        }
+    }
+    if (preferredLine) {
+        var activePanel = document.querySelector('.edit-code-panel-active');
+        if (activePanel) {
+            focusSourceLine(activePanel, preferredLine);
         }
     }
 

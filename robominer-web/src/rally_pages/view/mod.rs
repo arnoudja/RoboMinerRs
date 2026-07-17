@@ -82,6 +82,14 @@ async fn rally_view_state(
         None => None,
     };
 
+    let viewer_program_source_id = match metadata.viewer_robot_id {
+        Some(robot_id) => robominer_db::get_robot(pool, robot_id)
+            .await?
+            .and_then(|robot| robot.program_source_id)
+            .filter(|program_source_id| *program_source_id > 0),
+        None => None,
+    };
+
     Ok(Some(RallyViewPageState {
         result_data: state.result_data,
         ores,
@@ -94,6 +102,7 @@ async fn rally_view_state(
         viewer_total_reward: metadata.viewer_total_reward,
         viewer_result_claimed: metadata.viewer_result_claimed,
         viewer_source_code,
+        viewer_program_source_id,
     }))
 }
 pub fn valid_mining_results_return_to(value: &str) -> Option<&str> {

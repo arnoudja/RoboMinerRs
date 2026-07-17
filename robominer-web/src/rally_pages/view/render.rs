@@ -127,6 +127,12 @@ fn render_rally_view_quick_links(body: &mut String, state: &RallyViewPageState) 
         r#"<a class="rally-view-quick-link" href="robot?robotId={}">Robot workshop</a>"#,
         robot_id
     ));
+    if let Some(program_source_id) = state.viewer_program_source_id {
+        body.push_str(&format!(
+            r#"<a class="rally-view-quick-link" href="editCode?nextProgramSourceId={}">Edit code</a>"#,
+            program_source_id
+        ));
+    }
     body.push_str(r#"<a class="rally-view-quick-link" href="shop">Shop parts</a>"#);
     body.push_str(&format!(
         r#"<a class="rally-view-quick-link" href="{}">Compare areas</a>"#,
@@ -198,12 +204,20 @@ fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
     body.push_str("</div>");
     render_rally_view_legend(body);
     if state.viewer_player_number.is_some() {
-        render_rally_view_source(body, state.viewer_source_code.as_deref());
+        render_rally_view_source(
+            body,
+            state.viewer_source_code.as_deref(),
+            state.viewer_program_source_id,
+        );
     }
     body.push_str("</aside></div>");
 }
 
-fn render_rally_view_source(body: &mut String, source: Option<&str>) {
+fn render_rally_view_source(
+    body: &mut String,
+    source: Option<&str>,
+    program_source_id: Option<i64>,
+) {
     body.push_str(r#"<section class="rally-view-source" aria-label="Your program">"#);
     body.push_str(r#"<h2 class="rally-view-source-title">Your program</h2>"#);
     match source {
@@ -211,6 +225,9 @@ fn render_rally_view_source(body: &mut String, source: Option<&str>) {
             body.push_str(
                 r#"<p class="rally-view-source-note">Highlighted line is the statement running in the replay. Source is the private snapshot from this rally.</p>"#,
             );
+            if let Some(program_source_id) = program_source_id {
+                render_rally_view_edit_code_link(body, program_source_id, true);
+            }
             body.push_str(r#"<pre class="rally-view-source-code" id="rallySourceCode">"#);
             for (index, line) in source.lines().enumerate() {
                 let line_number = index + 1;
@@ -228,9 +245,32 @@ fn render_rally_view_source(body: &mut String, source: Option<&str>) {
             body.push_str(
                 r#"<p class="rally-view-source-note">This rally did not store a private program snapshot, so line highlighting is not shown.</p>"#,
             );
+            if let Some(program_source_id) = program_source_id {
+                render_rally_view_edit_code_link(body, program_source_id, false);
+            }
         }
     }
     body.push_str("</section>");
+}
+
+fn render_rally_view_edit_code_link(
+    body: &mut String,
+    program_source_id: i64,
+    track_highlighted_line: bool,
+) {
+    let href = format!("editCode?nextProgramSourceId={program_source_id}");
+    if track_highlighted_line {
+        body.push_str(&format!(
+            r#"<p class="rally-view-source-edit"><a id="rallyEditCodeLink" class="rally-view-source-edit-link" data-edit-href="{href}" href="{href}">Edit code at highlighted line</a></p>"#,
+        ));
+        body.push_str(
+            r#"<p class="rally-view-source-note">Opens the robot's current linked program in the editor (may differ from this snapshot).</p>"#,
+        );
+    } else {
+        body.push_str(&format!(
+            r#"<p class="rally-view-source-edit"><a class="rally-view-source-edit-link" href="{href}">Edit linked program</a></p>"#,
+        ));
+    }
 }
 
 fn render_rally_view_player(

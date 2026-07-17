@@ -16,6 +16,7 @@ mod tests {
             "function robotCargoFull(",
             "function rallyActionName(",
             "function updateRallySourceHighlight(",
+            "function updateRallyEditCodeLink(",
             "function scrollRallySourceLineIntoView(",
         ] {
             assert!(

@@ -140,6 +140,9 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(html.contains("function attachLineNumberListeners(textarea)"));
     assert!(html.contains("function selectProgramSource(sourceId, updateUrl)"));
     assert!(html.contains("function isPanelDirty(panel)"));
+    assert!(html.contains("function editCodeUrlParam(name)"));
+    assert!(html.contains("function focusSourceLine(panel, lineNumber)"));
+    assert!(html.contains("function editCodeUrlLine()"));
     assert!(html.contains("function editCodeSaveBlockReason(panel)"));
     assert!(html.contains("function updateEditCodeSaveState(panel)"));
     assert!(html.contains("function updateEditCodeSummary(sourceId)"));

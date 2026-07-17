@@ -68,6 +68,7 @@ fn sample_rally_view_state(slots: [(String, String); 4]) -> RallyViewPageState {
         viewer_total_reward: None,
         viewer_result_claimed: false,
         viewer_source_code: None,
+        viewer_program_source_id: None,
     }
 }
 
@@ -443,6 +444,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
             viewer_total_reward: None,
             viewer_result_claimed: false,
             viewer_source_code: None,
+            viewer_program_source_id: None,
         },
         None,
     );
@@ -518,6 +520,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
             viewer_total_reward: Some(17),
             viewer_result_claimed: true,
             viewer_source_code: Some("scan();\nmine();\n".to_string()),
+            viewer_program_source_id: Some(11),
         },
         Some("runId=10&robotId=7").map(RallyViewBackLink::MiningResults),
     );
@@ -534,11 +537,19 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"id="rallySourceLine1""#));
     assert!(html.contains(r#"class="rally-view-source-text">scan();</span>"#));
     assert!(html.contains("function updateRallySourceHighlight(line)"));
+    assert!(html.contains("function updateRallyEditCodeLink(line)"));
     assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
     assert!(html.contains(
         "Highlighted line is the statement running in the replay. Source is the private snapshot from this rally."
     ));
     assert!(!html.contains("Source snapshot unavailable."));
+    assert!(html.contains(
+        r#"id="rallyEditCodeLink" class="rally-view-source-edit-link" data-edit-href="editCode?nextProgramSourceId=11" href="editCode?nextProgramSourceId=11">Edit code at highlighted line</a>"#
+    ));
+    assert!(html.contains(
+        "Opens the robot's current linked program in the editor (may differ from this snapshot)."
+    ));
+    assert!(html.contains(r#"href="editCode?nextProgramSourceId=11">Edit code</a>"#));
     assert!(html.contains(r#"href="miningQueue?robotId=7">Mining queue</a>"#));
     assert!(html.contains(r#"href="robot?robotId=7">Robot workshop</a>"#));
     assert!(html.contains(r#"href="miningAreaOverview">Compare areas</a>"#));
@@ -566,6 +577,7 @@ fn rally_view_shows_snapshot_unavailable_without_executed_source() {
             viewer_total_reward: Some(17),
             viewer_result_claimed: true,
             viewer_source_code: None,
+            viewer_program_source_id: Some(11),
         },
         None,
     );
@@ -575,6 +587,10 @@ fn rally_view_shows_snapshot_unavailable_without_executed_source() {
     assert!(html.contains(
         "This rally did not store a private program snapshot, so line highlighting is not shown."
     ));
+    assert!(html.contains(
+        r#"href="editCode?nextProgramSourceId=11">Edit linked program</a>"#
+    ));
+    assert!(!html.contains(r#"id="rallyEditCodeLink""#));
     assert!(!html.contains(r#"id="rallySourceCode""#));
     assert!(!html.contains(r#"id="rallySourceLine1""#));
 }
