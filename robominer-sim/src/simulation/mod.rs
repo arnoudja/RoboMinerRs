@@ -219,14 +219,6 @@ impl Simulation {
                     .copied()
                     .unwrap_or(RobotAction::Wait)
             }
-            ActionSource::RepeatingActions(actions) => {
-                self.action_result_expected[robot_index] = false;
-                if actions.is_empty() {
-                    RobotAction::Wait
-                } else {
-                    actions[((self.time - 1) as usize) % actions.len()]
-                }
-            }
             ActionSource::Program { .. } => self.run_program_cpu_loop(robot_index),
         }
     }

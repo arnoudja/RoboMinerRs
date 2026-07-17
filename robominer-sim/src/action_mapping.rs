@@ -1,7 +1,12 @@
 //! Maps program [`ExecutableAction`] values to simulation [`RobotAction`] values.
 //!
-//! Shared by static program expansion (`RepeatingActions`) and the runtime program
-//! bridge (`program_bridge`). See [`robominer_program::pending_action_protocol`].
+//! Used by the runtime program bridge (`program_bridge`) and as a **test/mapper**
+//! helper to expand literal action lists into per-cycle chunks.
+//! Player programs always run through [`crate::ScriptedRobot::from_executable_program`]
+//! as [`crate::robot::ActionSource::Program`] — never via static expansion — because
+//! expand cannot represent scan, control flow, or dynamic arguments.
+//!
+//! See [`robominer_program::pending_action_protocol`].
 
 use robominer_program::ExecutableAction;
 use robominer_program::motion::{expand_motion_steps, is_zero_motion, motion_chunk, record_motion_step};
@@ -84,7 +89,11 @@ fn extend_chunked_motion(
     }
 }
 
-/// Expand a static executable program into per-cycle robot actions.
+/// Expand a static list of literal executable actions into per-cycle robot actions.
+///
+/// This is a mapper/test helper only. Do not use it to drive player programs —
+/// [`crate::ScriptedRobot::from_executable_program`] always uses the live runner.
+/// Scan actions are rejected: they have no static expansion and must use the program bridge.
 pub(crate) fn expand_executable_actions(
     spec: &RobotSpec,
     actions: &[ExecutableAction],
@@ -114,7 +123,11 @@ pub(crate) fn expand_executable_actions(
                 result.push(RobotAction::DumpOre((ore_type - 1) as usize));
             }
             ExecutableAction::Dump(_) => result.push(RobotAction::DumpAll),
-            ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult => {}
+            ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult => {
+                panic!(
+                    "scan actions cannot be statically expanded; use ActionSource::Program via from_executable_program"
+                );
+            }
         }
     }
 
@@ -216,6 +229,13 @@ mod tests {
             robot_action_from_executable(ExecutableAction::Rotate(180.0), &spec)
         );
         assert_eq!(expanded.last().copied(), Some(RobotAction::Mine));
+    }
+
+    #[test]
+    #[should_panic(expected = "scan actions cannot be statically expanded")]
+    fn expand_executable_actions_rejects_scan() {
+        let spec = test_spec();
+        let _ = expand_executable_actions(&spec, &[ExecutableAction::StartScan(0.0)]);
     }
 
     #[test]

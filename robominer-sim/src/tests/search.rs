@@ -169,9 +169,11 @@ fn search_loop_keeps_found_false_and_repeats_move() {
 
     simulation.run();
 
-    let runner = simulation
-        .program_runner(0)
-        .expect("search loop robot should run an executable program");
+    assert!(
+        simulation.program_runner(0).is_some(),
+        "search loop robot should run an executable program"
+    );
+    let runner = simulation.program_runner(0).unwrap();
     assert_eq!(
         runner.runtime_variable("found"),
         0.0,

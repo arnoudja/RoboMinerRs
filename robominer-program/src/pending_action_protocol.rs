@@ -14,6 +14,13 @@
 //! *where* execution is in source code; the simulator tracks *how much* physical
 //! work remains and whether a scan has finished.
 //!
+//! ## Execution path
+//!
+//! [`robominer_sim::ScriptedRobot::from_executable_program`] always installs
+//! `ActionSource::Program` (live runner). Static expansion of literal action lists
+//! is a mapper/test helper only and must not drive player or rally robots: it drops
+//! scan/control-flow and cannot feed action results back into expressions.
+//!
 //! ## End-to-end cycle flow
 //!
 //! ```text

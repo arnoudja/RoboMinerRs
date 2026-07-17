@@ -28,6 +28,10 @@ fn executable_move_uses_robot_max_cycles_property() {
 fn executable_moves_are_split_across_turns() {
     let program = robominer_program::compile_executable_source("move(2.5);")
         .expect("source should compile to executable actions");
+    assert!(
+        !program.requires_runtime(),
+        "literal move(2.5) is a static action tape"
+    );
 
     let mut spec = RobotSpec::test_robot();
     spec.forward_speed = 1.0;
@@ -37,6 +41,10 @@ fn executable_moves_are_split_across_turns() {
         Ground::new(5, 5),
         3,
         vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    assert!(
+        simulation.program_runner(0).is_some(),
+        "literal programs must still use the live runner, not RepeatingActions"
     );
 
     simulation.run();

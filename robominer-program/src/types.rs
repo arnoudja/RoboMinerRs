@@ -72,7 +72,10 @@ pub(crate) enum ExecutableStatement {
 impl ExecutableStatement {
     pub(crate) fn requires_runtime(&self) -> bool {
         match self {
-            ExecutableStatement::Action(_) => false,
+            ExecutableStatement::Action(action) => matches!(
+                action,
+                ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult
+            ),
             ExecutableStatement::DynamicAction(_) => true,
             ExecutableStatement::Sequence(statements) => {
                 statements.iter().any(ExecutableStatement::requires_runtime)

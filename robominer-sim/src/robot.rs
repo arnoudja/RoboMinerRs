@@ -1,7 +1,6 @@
 use robominer_program::{ExecutableProgram, ExecutableRunner};
 
 use crate::MAX_ORE_TYPES;
-use crate::action_mapping::expand_executable_actions;
 use crate::ground::{GroundUnit, ScanSnapshot, ScanState};
 use crate::physics::position_at_time;
 use crate::position::Position;
@@ -266,7 +265,6 @@ pub struct ScriptedRobot {
 #[derive(Clone, Debug)]
 pub(crate) enum ActionSource {
     Actions(Vec<RobotAction>),
-    RepeatingActions(Vec<RobotAction>),
     Program {
         program: Box<ExecutableProgram>,
         runner: Box<ExecutableRunner>,
@@ -282,21 +280,16 @@ impl ScriptedRobot {
     }
 
     pub fn from_executable_program(spec: RobotSpec, program: &ExecutableProgram) -> Self {
-        if program.requires_runtime() {
-            Self {
-                spec,
-                action_source: ActionSource::Program {
-                    program: Box::new(program.clone()),
-                    runner: Box::new(program.runner()),
-                },
-            }
-        } else {
-            let actions = expand_executable_actions(&spec, program.actions());
-
-            Self {
-                spec,
-                action_source: ActionSource::RepeatingActions(actions),
-            }
+        // Always use the live runner. Static expand (`RepeatingActions`) cannot express
+        // scan, control flow, or dynamic arguments and must not silently run a partial
+        // action tape for player programs. See `pending_action_protocol` and
+        // `expand_executable_actions` (test/mapper utility only).
+        Self {
+            spec,
+            action_source: ActionSource::Program {
+                program: Box::new(program.clone()),
+                runner: Box::new(program.runner()),
+            },
         }
     }
 }
