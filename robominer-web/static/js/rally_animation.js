@@ -327,9 +327,24 @@ function updateRallySourceHighlight(line)
 
     current.classList.add('rally-view-source-line-active');
     myRallySourceHighlightLine = line;
-    if (typeof current.scrollIntoView === 'function')
+    scrollRallySourceLineIntoView(sourceCode, current);
+}
+
+
+function scrollRallySourceLineIntoView(container, lineEl)
+{
+    var containerRect = container.getBoundingClientRect();
+    var lineRect = lineEl.getBoundingClientRect();
+    var above = lineRect.top - containerRect.top;
+    var below = lineRect.bottom - containerRect.bottom;
+
+    if (above < 0)
     {
-        current.scrollIntoView({ block: 'nearest' });
+        container.scrollTop += above;
+    }
+    else if (below > 0)
+    {
+        container.scrollTop += below;
     }
 }
 

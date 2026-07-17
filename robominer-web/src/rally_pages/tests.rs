@@ -522,6 +522,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"id="rallySourceLine1""#));
     assert!(html.contains(r#"class="rally-view-source-text">scan();</span>"#));
     assert!(html.contains("function updateRallySourceHighlight(line)"));
+    assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
     assert!(html.contains("Source is the private snapshot from this rally when available."));
     assert!(html.contains(r#"href="miningQueue?robotId=7">Mining queue</a>"#));
     assert!(html.contains(r#"href="robot?robotId=7">Robot workshop</a>"#));
