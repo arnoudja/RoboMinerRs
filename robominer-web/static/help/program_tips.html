@@ -371,3 +371,59 @@ while (true)
     &lsaquo;Movement, collision detection etc.&gt;
 }
             </p>
+            <h2>Moving toward scanned ore</h2>
+            <p class="helptext">
+                After scan() finds the ore you want, a common next step is move(oreDistance()).
+                That works when the ore is ahead of you. It does not help when you are already
+                standing on the ore: oreDistance() is then 0, and move(0) leaves the robot still.
+            </p>
+            <p class="helptext">
+                Guard the move so you only travel when there is a positive distance:
+            </p>
+            <p class="codeexample">
+scan();
+if (oreType() == 1)
+{
+    if (oreDistance() &gt; 0)
+    {
+        move(oreDistance());
+    }
+    while (mine());
+}
+            </p>
+            <p class="helptext">
+                The same guard belongs in any seeker loop that rescans after mining and then
+                calls move(oreDistance()) again.
+            </p>
+            <h2>Nested heaps and mixed cells</h2>
+            <p class="helptext">
+                Later areas often place a small high-value heap inside a larger lower-value heap.
+                Three rules interact badly if you ignore them:
+            </p>
+            <ul>
+                <li>scan() reports the nearest ore of any type, not "nearest type 1 only".</li>
+                <li>mine() collects every type on the cell under the robot.</li>
+                <li>dump(2) only drops medium ore; dump(3) drops low; dump(0) drops everything.</li>
+            </ul>
+            <p class="helptext">
+                A typical failure mode looks frozen in the replay: the robot stands on type 1,
+                mine() returns 0 because the container is full of mixed ore, dump(2) frees nothing
+                useful, and move(oreDistance()) is move(0). Battery still drains while nothing moves.
+            </p>
+            <p class="helptext">
+                Dump the types you do not want to keep, and treat mine() returning 0 while ore is
+                still underfoot as a cargo or empty-cell problem — not as a reason to keep calling
+                move(oreDistance()) blindly:
+            </p>
+            <p class="codeexample">
+while (mine());
+dump(2);
+dump(3);
+if (oreType() == 1 &amp;&amp; oreDistance() &gt; 0)
+{
+    move(oreDistance());
+}
+            </p>
+            <p class="helptext">
+                More detail on scan, mine, and dump is in the Mechanics and Robot programming guides.
+            </p>

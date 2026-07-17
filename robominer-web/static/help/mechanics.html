@@ -115,8 +115,16 @@
                 So move() is a physical action, as is rotate(), mine() and dump().
             </p>
             <p class="helptext">
-                CPU actions are all other code actions, like flow control, calculations and variable assignment.
-                The ore(), time(), robot properties, scan(), oreDistance(), and oreType() instructions also are CPU actions as they don't take any physical action.
+                CPU actions are flow control, calculations, variable assignment, ore(), time(),
+                and robot property reads. They do not change the robot pose or cargo by themselves.
+            </p>
+            <p class="helptext">
+                Scanning is special. scan() starts a scanner job and counts as initiating work
+                (it returns the scanner's scan time in CPU cycles). The scan then completes after
+                that many CPU cycles in the background. oreDistance() and oreType() are not free
+                reads while a scan is still running: they finish the remaining scan cycles first,
+                which can cost a large share of your CPU budget for that mining cycle.
+                Budget CPU speed with scanTime in mind when you scan often.
             </p>
             <p class="helptext">
                 The Physical actions are also called Cycles.
@@ -220,6 +228,30 @@
             </p>
             <p class="helptext">
                 If the Wait actions are above 20%, you might consider buying a better CPU or creating a more efficient program.
+            </p>
+            <h2>Scanning and ore heaps</h2>
+            <p class="helptext">
+                Ore is placed in round heaps. Different ore types can overlap: a small high-value heap
+                often sits inside a larger lower-value one.
+            </p>
+            <p class="helptext">
+                scan() reports the nearest cell that still has any ore.
+                It does not skip lower-value ore to find type 1 further along the same ray.
+                If you are standing on a cell that has ore, oreDistance() is 0 and oreType()
+                describes that cell (when several types share a cell, the richer type wins).
+            </p>
+            <p class="helptext">
+                mine() digs the cell under the robot center and pulls every ore type present there
+                into the container, up to mining speed and free cargo space.
+                dump(n) drops only that type (1 = high quality, 2 = medium, 3 = low);
+                dump(0) dumps everything.
+            </p>
+            <p class="helptext">
+                That combination is why nested heaps surprise players: you may scan type 1,
+                mine a mixed cell, fill cargo with unwanted ore, and keep seeing type 1 underfoot
+                while mine() returns 0 because the container is full.
+                Dump the types you do not want to keep, or move off the cell before scanning again.
+                See Programming tips for safe move(oreDistance()) patterns.
             </p>
             <h2>Engine</h2>
             <p class="helptext">

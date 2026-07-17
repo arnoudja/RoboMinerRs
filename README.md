@@ -15,7 +15,8 @@ The database scripts are kept under `resources/database/`:
 
 Further docs: [CONTRIBUTING.md](CONTRIBUTING.md) (tests, coverage, **db vs domain
 boundary**), [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
-[gameflow.md](gameflow.md) (early-game balance notes).
+[gameflow.md](gameflow.md) (early-game balance notes), [ROBOTS.md](ROBOTS.md)
+(sample robot programs).
 
 ## Build
 

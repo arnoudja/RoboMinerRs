@@ -59,7 +59,9 @@
                 </tr>
             </table>
             <h3>mine()</h3>
-            <p class="helptext">Try to mine minerals from the current robot location.</p>
+            <p class="helptext">Try to mine minerals from the current robot location.
+                Mining always digs the ground cell under the robot center and collects every ore type present on that cell.
+                There is no way to mine only type 1 with mine() itself — use dump() afterward if you need to discard lower-value ore.</p>
             <table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
@@ -69,7 +71,7 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The amount of ore mined.</td>
+                    <td class="helptable">The amount of ore mined. Returns 0 when the cell is empty, the container is full, or nothing can be extracted this cycle.</td>
                 </tr>
             </table>
             <p class="helptext">The amount of ore mined each turn is limited by two factors:</p>
@@ -209,7 +211,8 @@
                 </tr>
             </table>
             <h3>scan()</h3>
-            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). Use oreDistance() or oreType() to read the result once the scan has finished.</p>
+            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). Use oreDistance() or oreType() to read the result once the scan has finished.
+                The scanner reports the nearest ore of any type along the ray. Outer lower-value ore can hide a richer heap further away on the same line of sight.</p>
             <table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
@@ -228,7 +231,8 @@
                 </tr>
             </table>
             <h3>oreDistance()</h3>
-            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.</p>
+            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.
+                When the robot is already standing on ore, the distance is 0. Only call move(oreDistance()) when the distance is greater than 0.</p>
             <table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
