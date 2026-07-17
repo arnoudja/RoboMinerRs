@@ -6,6 +6,11 @@
 /// Distance/angle comparisons and chunk remainders smaller than this are zero.
 pub const MOTION_EPSILON: f64 = 0.000_001;
 
+/// True when a move/rotate amount is too small to produce physical motion.
+pub fn is_zero_motion(amount: f64) -> bool {
+    amount.abs() <= MOTION_EPSILON
+}
+
 /// Result of applying one cycle's worth of travel to a pending move/rotate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MotionStepOutcome {
@@ -27,7 +32,7 @@ impl MotionStepOutcome {
 ///
 /// Returns `(signed_step, signed_remaining)`.
 pub fn motion_chunk(signed_amount: f64, speed: f64) -> Option<(f64, f64)> {
-    if signed_amount == 0.0 || speed <= 0.0 {
+    if is_zero_motion(signed_amount) || speed <= 0.0 {
         None
     } else {
         let step = signed_amount.signum() * signed_amount.abs().min(speed);
@@ -83,7 +88,17 @@ mod tests {
         assert_eq!(motion_chunk(-2.5, 1.0), Some((-1.0, -1.5)));
         assert_eq!(motion_chunk(1.0, 1.5), Some((1.0, 0.0)));
         assert_eq!(motion_chunk(0.0, 1.0), None);
+        assert_eq!(motion_chunk(MOTION_EPSILON, 1.0), None);
+        assert_eq!(motion_chunk(-MOTION_EPSILON / 2.0, 1.0), None);
         assert_eq!(motion_chunk(1.0, 0.0), None);
+    }
+
+    #[test]
+    fn is_zero_motion_uses_epsilon() {
+        assert!(is_zero_motion(0.0));
+        assert!(is_zero_motion(MOTION_EPSILON));
+        assert!(is_zero_motion(-MOTION_EPSILON));
+        assert!(!is_zero_motion(MOTION_EPSILON * 2.0));
     }
 
     #[test]

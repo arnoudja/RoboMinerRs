@@ -7,6 +7,7 @@
 //! See also [`crate::pending_action_protocol`].
 
 use crate::ExecutableAction;
+use crate::motion::is_zero_motion;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PhysicalCompletion {
@@ -31,8 +32,8 @@ pub(crate) enum ContinuePhysicalAction {
 impl PendingPhysicalAction {
     pub(crate) fn is_chunked(action: ExecutableAction) -> bool {
         match action {
-            ExecutableAction::Move(distance) => distance != 0.0,
-            ExecutableAction::Rotate(rotation) => rotation != 0.0,
+            ExecutableAction::Move(distance) => !is_zero_motion(distance),
+            ExecutableAction::Rotate(rotation) => !is_zero_motion(rotation),
             _ => false,
         }
     }
@@ -138,6 +139,12 @@ mod tests {
         )));
         assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
             0.0
+        )));
+        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+            crate::motion::MOTION_EPSILON
+        )));
+        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Rotate(
+            -crate::motion::MOTION_EPSILON / 2.0
         )));
         assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Mine));
     }

@@ -4,7 +4,7 @@
 //! bridge (`program_bridge`). See [`robominer_program::pending_action_protocol`].
 
 use robominer_program::ExecutableAction;
-use robominer_program::motion::{expand_motion_steps, motion_chunk, record_motion_step};
+use robominer_program::motion::{expand_motion_steps, is_zero_motion, motion_chunk, record_motion_step};
 
 use crate::robot::{RobotAction, RobotSpec};
 
@@ -170,14 +170,14 @@ pub(crate) fn map_awaiting_executable(
     spec: &RobotSpec,
 ) -> (Option<PendingExpressionAction>, RobotAction) {
     match action {
-        ExecutableAction::Move(amount) if amount != 0.0 => {
+        ExecutableAction::Move(amount) if !is_zero_motion(amount) => {
             let pending = PendingExpressionAction::Move {
                 remaining: amount,
                 accumulated: 0.0,
             };
             (Some(pending), pending.next_robot_action(spec))
         }
-        ExecutableAction::Rotate(amount) if amount != 0.0 => {
+        ExecutableAction::Rotate(amount) if !is_zero_motion(amount) => {
             let pending = PendingExpressionAction::Rotate {
                 remaining: amount,
                 accumulated: 0.0,
@@ -225,6 +225,18 @@ mod tests {
 
         assert!(pending.is_some());
         assert_eq!(robot_action, RobotAction::Move(1.0));
+    }
+
+    #[test]
+    fn map_awaiting_executable_treats_epsilon_move_as_wait() {
+        let spec = test_spec();
+        let (pending, robot_action) = map_awaiting_executable(
+            ExecutableAction::Move(robominer_program::motion::MOTION_EPSILON),
+            &spec,
+        );
+
+        assert!(pending.is_none());
+        assert_eq!(robot_action, RobotAction::Wait);
     }
 
     #[test]

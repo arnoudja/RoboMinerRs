@@ -171,3 +171,20 @@ fn dynamic_expression_move_zero_from_variable_selects_true_branch() {
     );
     assert!(!runner.has_pending_physical());
 }
+
+#[test]
+fn dynamic_expression_move_below_epsilon_completes_without_pending() {
+    // MOTION_EPSILON is 1e-6; values at or below it must not start pending motion.
+    let program = compile_executable_source(
+        "int d = 0.000001; if (move(d) == 0) { mine(); } else { rotate(90); }",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+    assert!(!runner.has_pending_physical());
+}

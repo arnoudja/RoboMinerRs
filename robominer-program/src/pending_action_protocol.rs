@@ -145,9 +145,10 @@
 //!   `ExecutableRunner::step` for that robot; chunk delivery is sim-driven.
 //! - While `ExecutableRunner::pending_physical` is `Some` for a chunked move/rotate, the
 //!   runner must **not** advance past that statement until `action_result` is `Some`.
-//! - `move(0)` / `rotate(0)` are not chunked: expression forms complete immediately with
-//!   result `0` (no pending), and dynamic statements advance the frame when emitting them.
-//!   The sim maps zero motion to `Wait` and does not return an action result.
+//! - `move(0)` / `rotate(0)` (and amounts within [`crate::motion::MOTION_EPSILON`]) are not
+//!   chunked: expression forms complete immediately with result `0` (no pending), and dynamic
+//!   statements advance the frame when emitting them. The sim maps zero motion to `Wait` and
+//!   does not return an action result.
 //! - `ExecutionContext::action_result` is `None` between partial sim chunks so the
 //!   runner does not treat an incomplete move as finished.
 //! - `ExecutableRunner::step` clears `awaits_action_result` at entry; it is set again
