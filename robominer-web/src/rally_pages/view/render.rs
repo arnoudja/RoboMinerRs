@@ -198,26 +198,39 @@ fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
     body.push_str("</div>");
     render_rally_view_legend(body);
     if state.viewer_player_number.is_some() {
-        render_rally_view_source(body, state.viewer_source_code.as_deref().unwrap_or(""));
+        render_rally_view_source(body, state.viewer_source_code.as_deref());
     }
     body.push_str("</aside></div>");
 }
 
-fn render_rally_view_source(body: &mut String, source: &str) {
+fn render_rally_view_source(body: &mut String, source: Option<&str>) {
     body.push_str(r#"<section class="rally-view-source" aria-label="Your program">"#);
     body.push_str(r#"<h2 class="rally-view-source-title">Your program</h2>"#);
-    body.push_str(
-        r#"<p class="rally-view-source-note">Highlighted line is the statement running in the replay. Source is the private snapshot from this rally when available.</p>"#,
-    );
-    body.push_str(r#"<pre class="rally-view-source-code" id="rallySourceCode">"#);
-    for (index, line) in source.lines().enumerate() {
-        let line_number = index + 1;
-        body.push_str(&format!(
-            r#"<span class="rally-view-source-line" data-line="{line_number}" id="rallySourceLine{line_number}"><span class="rally-view-source-lineno">{line_number}</span><span class="rally-view-source-text">{}</span></span>"#,
-            escape_html(line),
-        ));
+    match source {
+        Some(source) if !source.is_empty() => {
+            body.push_str(
+                r#"<p class="rally-view-source-note">Highlighted line is the statement running in the replay. Source is the private snapshot from this rally.</p>"#,
+            );
+            body.push_str(r#"<pre class="rally-view-source-code" id="rallySourceCode">"#);
+            for (index, line) in source.lines().enumerate() {
+                let line_number = index + 1;
+                body.push_str(&format!(
+                    r#"<span class="rally-view-source-line" data-line="{line_number}" id="rallySourceLine{line_number}"><span class="rally-view-source-lineno">{line_number}</span><span class="rally-view-source-text">{}</span></span>"#,
+                    escape_html(line),
+                ));
+            }
+            body.push_str("</pre>");
+        }
+        _ => {
+            body.push_str(
+                r#"<p class="rally-view-source-unavailable">Source snapshot unavailable.</p>"#,
+            );
+            body.push_str(
+                r#"<p class="rally-view-source-note">This rally did not store a private program snapshot, so line highlighting is not shown.</p>"#,
+            );
+        }
     }
-    body.push_str("</pre></section>");
+    body.push_str("</section>");
 }
 
 fn render_rally_view_player(

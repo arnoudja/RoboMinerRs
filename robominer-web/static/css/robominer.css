@@ -4026,6 +4026,12 @@ body.mining-area-atlas-drawer-open {
     margin: 0 0 8px;
 }
 
+.rally-view-source-unavailable {
+    color: #d7e2f5;
+    font-size: 0.85rem;
+    margin: 0 0 6px;
+}
+
 .rally-view-source-code {
     background: rgba(4, 8, 14, 0.9);
     border: 1px solid rgba(42, 58, 92, 0.75);

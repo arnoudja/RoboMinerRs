@@ -121,6 +121,14 @@ async fn rally_view_renders_from_mining_results_and_activity() {
         mining_body.contains("Rally replay"),
         "expected rally title:\n{mining_body}"
     );
+    assert!(
+        mining_body.contains("Source snapshot unavailable."),
+        "legacy queues without executedSourceCode must not invent live source:\n{mining_body}"
+    );
+    assert!(
+        !mining_body.contains(r#"id="rallySourceCode""#),
+        "unavailable snapshot should omit source panel code:\n{mining_body}"
+    );
 
     let activity = route(
         &get_request_query("/activity", query, Some(&cookie)),

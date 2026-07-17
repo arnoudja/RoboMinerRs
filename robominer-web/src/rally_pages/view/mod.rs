@@ -74,10 +74,9 @@ async fn rally_view_state(
             .await?;
             match snapshot {
                 Some(source) if !source.is_empty() => Some(source),
-                // Legacy rallies before executedSourceCode: fall back to live robot source.
-                _ => robominer_db::get_robot(pool, robot_id)
-                    .await?
-                    .map(|robot| robot.source_code),
+                // Older rallies have no private snapshot; do not fall back to live source
+                // (it can disagree with replay line numbers after the program was edited).
+                _ => None,
             }
         }
         None => None,

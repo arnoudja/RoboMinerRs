@@ -535,10 +535,48 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"class="rally-view-source-text">scan();</span>"#));
     assert!(html.contains("function updateRallySourceHighlight(line)"));
     assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
-    assert!(html.contains("Source is the private snapshot from this rally when available."));
+    assert!(html.contains(
+        "Highlighted line is the statement running in the replay. Source is the private snapshot from this rally."
+    ));
+    assert!(!html.contains("Source snapshot unavailable."));
     assert!(html.contains(r#"href="miningQueue?robotId=7">Mining queue</a>"#));
     assert!(html.contains(r#"href="robot?robotId=7">Robot workshop</a>"#));
     assert!(html.contains(r#"href="miningAreaOverview">Compare areas</a>"#));
+}
+
+#[test]
+fn rally_view_shows_snapshot_unavailable_without_executed_source() {
+    let html = render_rally_view_page(
+        "Player".to_string(),
+        None,
+        &RallyViewPageState {
+            result_data: "var myOreTypes = {};".to_string(),
+            ores: Vec::new(),
+            slots: [
+                ("Lead Bot".to_string(), "Owner".to_string()),
+                ("Other Bot".to_string(), "Other Owner".to_string()),
+                ("Bot 2".to_string(), "User 2".to_string()),
+                ("Bot 3".to_string(), "User 3".to_string()),
+            ],
+            mining_area_name: "Deep Mine".to_string(),
+            viewer_player_number: Some(0),
+            viewer_robot_id: Some(7),
+            viewer_robot_name: Some("Lead Bot".to_string()),
+            viewer_score: Some(42.5),
+            viewer_total_reward: Some(17),
+            viewer_result_claimed: true,
+            viewer_source_code: None,
+        },
+        None,
+    );
+
+    assert!(html.contains(r#"class="rally-view-source""#));
+    assert!(html.contains("Source snapshot unavailable."));
+    assert!(html.contains(
+        "This rally did not store a private program snapshot, so line highlighting is not shown."
+    ));
+    assert!(!html.contains(r#"id="rallySourceCode""#));
+    assert!(!html.contains(r#"id="rallySourceLine1""#));
 }
 
 #[test]
