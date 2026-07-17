@@ -64,7 +64,12 @@ impl ExecutableRunner {
         };
 
         if let ExpressionWork::PushAction(action) = &work {
-            if PendingPhysicalAction::is_chunked(*action) {
+            if matches!(
+                action,
+                ExecutableAction::Move(_) | ExecutableAction::Rotate(_)
+            ) {
+                // Zero move/rotate must complete immediately: the sim maps them to Wait
+                // and never returns an action result, which would livelock pending state.
                 return self.step_expression_move_or_rotate(action_result, Some(*action));
             }
             if action_result.is_none() {
@@ -229,6 +234,15 @@ impl ExecutableRunner {
                 _ => unreachable!("dynamic move/rotate requires matching work item"),
             }
         });
+
+        if !PendingPhysicalAction::is_chunked(action) {
+            // move(0) / rotate(0) travel nothing; complete with 0 without awaiting the sim.
+            let eval = self.expression_eval.as_mut().expect("expression eval");
+            eval.values.push(0.0);
+            eval.index += 1;
+            return self.complete_expression_work_if_done();
+        }
+
         *action_result = None;
         StepOutcome::Action(self.start_pending_physical(action, PhysicalCompletion::Expression))
     }

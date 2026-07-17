@@ -97,3 +97,39 @@ fn expression_rotate_blocked_selects_false_branch() {
         Some(ExecutableAction::Move(1.0))
     );
 }
+
+#[test]
+fn expression_rotate_zero_completes_immediately_without_pending() {
+    let program = compile_executable_source("if (rotate(0) == 0) { mine(); } else { move(1); }")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+    assert!(!runner.has_pending_physical());
+}
+
+#[test]
+fn dynamic_statement_rotate_zero_advances_to_next_statement() {
+    let program = compile_executable_source("int r = 0; rotate(r); mine();")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    loop {
+        match runner.step(&mut context) {
+            ProgramStep::Action(ExecutableAction::Rotate(0.0)) => break,
+            ProgramStep::Cpu => {}
+            other => panic!("unexpected step before rotate(0): {other:?}"),
+        }
+    }
+    assert!(!runner.has_pending_physical());
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+}

@@ -120,3 +120,54 @@ fn runner_keeps_pending_physical_while_action_result_is_missing() {
     ));
     assert!(runner.has_pending_physical());
 }
+
+#[test]
+fn expression_move_zero_completes_immediately_without_pending() {
+    let program = compile_executable_source("if (move(0) == 0) { mine(); } else { rotate(90); }")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+    assert!(!runner.has_pending_physical());
+}
+
+#[test]
+fn dynamic_statement_move_zero_advances_to_next_statement() {
+    let program =
+        compile_executable_source("int d = 0; move(d); mine();").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    loop {
+        match runner.step(&mut context) {
+            ProgramStep::Action(ExecutableAction::Move(0.0)) => break,
+            ProgramStep::Cpu => {}
+            other => panic!("unexpected step before move(0): {other:?}"),
+        }
+    }
+    assert!(!runner.has_pending_physical());
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+}
+
+#[test]
+fn dynamic_expression_move_zero_from_variable_selects_true_branch() {
+    let program =
+        compile_executable_source("int d = 0; if (move(d) == 0) { mine(); } else { rotate(90); }")
+            .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+    assert!(!runner.has_pending_physical());
+}
