@@ -64,9 +64,22 @@ async fn rally_view_state(
     }
 
     let viewer_source_code = match metadata.viewer_robot_id {
-        Some(robot_id) => robominer_db::get_robot(pool, robot_id)
-            .await?
-            .map(|robot| robot.source_code),
+        Some(robot_id) => {
+            let snapshot = robominer_db::rally_view_executed_source_code(
+                pool,
+                user_id,
+                rally_result_id,
+                robot_id,
+            )
+            .await?;
+            match snapshot {
+                Some(source) if !source.is_empty() => Some(source),
+                // Legacy rallies before executedSourceCode: fall back to live robot source.
+                _ => robominer_db::get_robot(pool, robot_id)
+                    .await?
+                    .map(|robot| robot.source_code),
+            }
+        }
         None => None,
     };
 

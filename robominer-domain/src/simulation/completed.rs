@@ -72,6 +72,7 @@ pub fn completed_rally_record(
             })?,
             mining_end_seconds_from_now: entry.queue.seconds_left,
             score: outcome_participant.score,
+            executed_source_code: Some(entry.robot.robot.source_code.clone()),
             ore_results: completed_ore_results(&ore_ids, &outcome_participant.ore),
             action_results: completed_action_results(&outcome_participant.actions_done),
         });

@@ -182,4 +182,8 @@ fn animation_data_records_source_line_for_program_actions() {
         data.contains("a:6") && data.contains("l:"),
         "mine cycles should include a source line: {data}"
     );
+    assert!(
+        !data.contains("src:"),
+        "program source must not be embedded in shared animation data: {data}"
+    );
 }

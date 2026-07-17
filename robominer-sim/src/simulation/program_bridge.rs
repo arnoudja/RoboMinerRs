@@ -136,8 +136,9 @@ impl Simulation {
             let mut context = self.build_execution_context(robot_index);
 
             let step = {
-                let ActionSource::Program { program: _, runner } =
-                    &mut self.action_sources[robot_index]
+                let ActionSource::Program {
+                    program: _, runner, ..
+                } = &mut self.action_sources[robot_index]
                 else {
                     self.action_result_expected[robot_index] = false;
                     return RobotAction::Wait;
@@ -152,8 +153,9 @@ impl Simulation {
                     self.tick_scan(robot_index);
                 }
                 ProgramStep::Done => {
-                    let ActionSource::Program { program, runner } =
-                        &mut self.action_sources[robot_index]
+                    let ActionSource::Program {
+                        program, runner, ..
+                    } = &mut self.action_sources[robot_index]
                     else {
                         return RobotAction::Wait;
                     };

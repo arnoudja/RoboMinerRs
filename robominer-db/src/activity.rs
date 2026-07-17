@@ -373,3 +373,28 @@ pub async fn list_rally_view_participants(
             .collect()
     })
 }
+
+/// Private program snapshot for the viewing user's queue entry in this rally.
+pub async fn rally_view_executed_source_code(
+    pool: &MySqlPool,
+    user_id: i64,
+    rally_result_id: i64,
+    robot_id: i64,
+) -> Result<Option<String>, sqlx::Error> {
+    sqlx::query_scalar::<_, Option<String>>(
+        "SELECT MiningQueue.executedSourceCode \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         WHERE MiningQueue.rallyResultId = ? \
+           AND MiningQueue.robotId = ? \
+           AND Robot.userId = ? \
+         ORDER BY MiningQueue.playerNumber, MiningQueue.id \
+         LIMIT 1",
+    )
+    .bind(rally_result_id)
+    .bind(robot_id)
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .map(|row| row.flatten())
+}

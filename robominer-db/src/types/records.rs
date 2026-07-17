@@ -413,6 +413,8 @@ pub struct CompletedRallyParticipantRecord {
     pub player_number: i32,
     pub mining_end_seconds_from_now: i32,
     pub score: f64,
+    /// Program source that ran for this queue entry; private to the owner via MiningQueue.
+    pub executed_source_code: Option<String>,
     pub ore_results: Vec<CompletedRallyOreRecord>,
     pub action_results: Vec<CompletedRallyActionRecord>,
 }

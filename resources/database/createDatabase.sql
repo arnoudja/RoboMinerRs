@@ -274,6 +274,7 @@ score DOUBLE NULL,
 creationTime TIMESTAMP NOT NULL DEFAULT NOW(),
 miningEndTime TIMESTAMP NULL,
 claimed BOOL NOT NULL DEFAULT FALSE,
+executedSourceCode TEXT NULL,
 INDEX (miningAreaId, rallyResultId)
 );
 

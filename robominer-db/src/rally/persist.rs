@@ -85,12 +85,14 @@ async fn update_mining_queue_for_completed_rally(
         "UPDATE MiningQueue \
          SET rallyResultId = ?, \
              miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), \
-             playerNumber = ? \
+             playerNumber = ?, \
+             executedSourceCode = ? \
          WHERE id = ?",
     )
     .bind(rally_result_id)
     .bind(participant.mining_end_seconds_from_now)
     .bind(participant.player_number)
+    .bind(&participant.executed_source_code)
     .bind(participant.mining_queue_id)
     .execute(&mut **transaction)
     .await?;

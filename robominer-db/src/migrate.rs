@@ -3,10 +3,18 @@ use std::path::{Path, PathBuf};
 use sqlx::{MySqlPool, Row};
 
 /// Embedded schema migrations, ordered by version prefix.
-pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[(
-    "001_rename_scan_speed_to_scan_time",
-    include_str!("../../resources/database/migrations/001_rename_scan_speed_to_scan_time.sql"),
-)];
+pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
+    (
+        "001_rename_scan_speed_to_scan_time",
+        include_str!("../../resources/database/migrations/001_rename_scan_speed_to_scan_time.sql"),
+    ),
+    (
+        "002_mining_queue_executed_source_code",
+        include_str!(
+            "../../resources/database/migrations/002_mining_queue_executed_source_code.sql"
+        ),
+    ),
+];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MigrationReport {

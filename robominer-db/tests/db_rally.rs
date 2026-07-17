@@ -31,6 +31,7 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
                 player_number: 0,
                 mining_end_seconds_from_now: 10,
                 score: 88.0,
+                executed_source_code: Some("mine();".to_string()),
                 ore_results: vec![CompletedRallyOreRecord {
                     ore_id: fixture.ore_id,
                     amount: 6,
@@ -62,6 +63,14 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
     assert_eq!(queue.get::<Option<i32>, _>("playerNumber"), Some(0));
     assert!(queue.get::<Option<f64>, _>("score").unwrap_or_default() > 0.0);
     assert_eq!(queue.get::<i8, _>("ended"), 1);
+
+    let executed_source: Option<String> =
+        sqlx::query_scalar("SELECT executedSourceCode FROM MiningQueue WHERE id = ?")
+            .bind(fixture.mining_queue_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load executed source");
+    assert_eq!(executed_source.as_deref(), Some("mine();"));
 
     let ore_amount: i32 = sqlx::query_scalar(
         "SELECT amount FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?",
