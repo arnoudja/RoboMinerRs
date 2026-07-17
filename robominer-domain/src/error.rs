@@ -304,9 +304,7 @@ mod tests {
                 "invalid rally item count 2",
             ),
             (
-                DomainError::RallyOutcomeMismatch {
-                    mining_area_id: 16,
-                },
+                DomainError::RallyOutcomeMismatch { mining_area_id: 16 },
                 "does not match mining area 16",
             ),
             (

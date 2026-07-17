@@ -175,6 +175,97 @@ function drawRobotOre(robot)
 }
 
 
+var RALLY_ACTION_NAMES = {
+    0: 'Scan',
+    1: 'Wait',
+    2: 'Forward',
+    3: 'Backward',
+    4: 'Rotate R',
+    5: 'Rotate L',
+    6: 'Mine',
+    7: 'Dump'
+};
+
+
+function rallyActionName(actionIndex)
+{
+    if (typeof actionIndex !== 'number' || isNaN(actionIndex))
+    {
+        return null;
+    }
+
+    return RALLY_ACTION_NAMES[actionIndex] || ('Action ' + actionIndex);
+}
+
+
+function robotLooksIdle(robot, step)
+{
+    if (typeof robot.a === 'number')
+    {
+        return robot.a === 0 || robot.a === 1;
+    }
+
+    if (!robot.locations || step <= 0 || step >= robot.locations.length)
+    {
+        return false;
+    }
+
+    var previous = robot.locations[step - 1];
+    var current = robot.locations[step];
+    return previous.x === current.x
+        && previous.y === current.y
+        && previous.o === current.o
+        && previous.A === current.A
+        && previous.B === current.B
+        && previous.C === current.C;
+}
+
+
+function updateRobotDebugPanel(robot, step)
+{
+    var cargoEl = document.getElementById('robotCargo' + robot.robotnr);
+    if (cargoEl)
+    {
+        var total = Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C);
+        cargoEl.textContent = 'A ' + Math.round(robot.A)
+            + ' · B ' + Math.round(robot.B)
+            + ' · C ' + Math.round(robot.C)
+            + '  (' + total + '/' + robot.maxore + ')';
+    }
+
+    var actionEl = document.getElementById('robotAction' + robot.robotnr);
+    var actionName = rallyActionName(robot.a);
+    if (actionEl)
+    {
+        if (actionName)
+        {
+            actionEl.textContent = actionName;
+        }
+        else if (robotLooksIdle(robot, step))
+        {
+            actionEl.textContent = 'Idle';
+        }
+        else
+        {
+            actionEl.textContent = '—';
+        }
+    }
+
+    var card = document.getElementById('rallyPlayer' + robot.robotnr);
+    if (card)
+    {
+        if (robotLooksIdle(robot, step))
+        {
+            card.classList.add('rally-view-player-idle');
+        }
+        else
+        {
+            card.classList.remove('rally-view-player-idle');
+        }
+    }
+}
+
+
 function drawInitialGround(scale)
 {
     myGround.updatedTo = 0;
@@ -297,6 +388,11 @@ function updateRobotTo(robotNr, step)
         {
             myRobots.robot[robotNr].locations[step].C = myRobots.robot[robotNr].locations[step - 1].C;
         }
+        if (typeof myRobots.robot[robotNr].locations[step].a === 'undefined'
+            && typeof myRobots.robot[robotNr].locations[step - 1].a !== 'undefined')
+        {
+            myRobots.robot[robotNr].locations[step].a = myRobots.robot[robotNr].locations[step - 1].a;
+        }
 
         myRobots.robot[robotNr].updatedTo = step;
     }
@@ -319,6 +415,7 @@ function updateRobotPosition(robotNr, time, stepTime)
         myRobots.robot[robotNr].A = myRobots.robot[robotNr].locations[t1].A;
         myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t1].B;
         myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t1].C;
+        myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
     }
     else
     {
@@ -333,6 +430,7 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].A = myRobots.robot[robotNr].locations[t2].A;
             myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t2].B;
             myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t2].C;
+            myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
         }
         else
         {
@@ -343,6 +441,7 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].A = smoothen(myRobots.robot[robotNr].locations[t1].A, myRobots.robot[robotNr].locations[t2].A, dt, travelTime);
             myRobots.robot[robotNr].B = smoothen(myRobots.robot[robotNr].locations[t1].B, myRobots.robot[robotNr].locations[t2].B, dt, travelTime);
             myRobots.robot[robotNr].C = smoothen(myRobots.robot[robotNr].locations[t1].C, myRobots.robot[robotNr].locations[t2].C, dt, travelTime);
+            myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
         }
     }
 }
@@ -482,6 +581,7 @@ function renderRallyFrame()
         updateRobotPosition(i, time, stepTime);
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
+        updateRobotDebugPanel(myRobots.robot[i], cycle);
     }
 }
 

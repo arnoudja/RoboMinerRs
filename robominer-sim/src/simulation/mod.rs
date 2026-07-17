@@ -12,7 +12,15 @@ use crate::animation::AnimationRecorder;
 use crate::ground::Ground;
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
-use crate::robot::{ActionSource, Robot, RobotAction, ScriptedRobot};
+use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, ScriptedRobot};
+
+fn animation_action_index(action: RobotAction, scanned_this_cycle: bool) -> u8 {
+    if scanned_this_cycle && matches!(action, RobotAction::Wait) {
+        ROBOT_ACTION_TYPE_SCAN as u8
+    } else {
+        action.action_index() as u8
+    }
+}
 
 pub struct Simulation {
     ground: Ground,
@@ -155,11 +163,16 @@ impl Simulation {
         }
 
         let mut pending_results = vec![ActionResult::None; self.robots.len()];
+        let mut cycle_actions = vec![None; self.robots.len()];
 
         if self.time > 0 {
             for (index, pending_result) in pending_results.iter_mut().enumerate() {
                 if self.robots[index].spec.max_turns >= self.time {
+                    let scan_before = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
                     let action = self.next_robot_action(index);
+                    let scan_after = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
+                    cycle_actions[index] =
+                        Some(animation_action_index(action, scan_after > scan_before));
                     *pending_result = self.process_robot_action(index, action);
                 } else {
                     self.action_results[index] = None;
@@ -196,7 +209,7 @@ impl Simulation {
             }
 
             for (index, robot) in self.robots.iter().enumerate() {
-                animation.record_robot_step(index, robot);
+                animation.record_robot_step(index, robot, cycle_actions[index]);
             }
         }
 

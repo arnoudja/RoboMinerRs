@@ -215,7 +215,7 @@ fn render_rally_view_player(
         ""
     };
     body.push_str(&format!(
-        r#"<article class="rally-view-player rally-view-player-{index}{self_class}"><header class="rally-view-player-header"><span class="rally-view-player-color" aria-hidden="true"></span><div><p class="rally-view-player-user">{you_badge}{}</p><p class="rally-view-player-robot">{}</p></div></header><div class="rally-view-player-chart"><canvas id="oreCanvas{index}" width="50" height="200"></canvas></div></article>"#,
+        r#"<article class="rally-view-player rally-view-player-{index}{self_class}" id="rallyPlayer{index}"><header class="rally-view-player-header"><span class="rally-view-player-color" aria-hidden="true"></span><div><p class="rally-view-player-user">{you_badge}{}</p><p class="rally-view-player-robot">{}</p></div></header><div class="rally-view-player-debug"><p class="rally-view-player-cargo" id="robotCargo{index}">A 0 · B 0 · C 0</p><p class="rally-view-player-action" id="robotAction{index}">—</p></div><div class="rally-view-player-chart"><canvas id="oreCanvas{index}" width="50" height="200"></canvas></div></article>"#,
         escape_html(username),
         escape_html(robot_name),
     ));

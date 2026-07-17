@@ -209,10 +209,7 @@ fn scan_bridge_stand_on_ore_move_ore_distance_reaches_mine() {
 
     while simulation.robot(0).actions_done()[6] == 0 && simulation.time() < max_turns {
         assert!(
-            !simulation
-                .program_runner(0)
-                .unwrap()
-                .has_pending_physical(),
+            !simulation.program_runner(0).unwrap().has_pending_physical(),
             "move(oreDistance()) with distance 0 must not leave pending physical state"
         );
         simulation.advance_test_turn();
@@ -227,10 +224,7 @@ fn scan_bridge_stand_on_ore_move_ore_distance_reaches_mine() {
         "mine should run after move(oreDistance()) returns 0 while standing on ore"
     );
     assert!(
-        !simulation
-            .program_runner(0)
-            .unwrap()
-            .has_pending_physical(),
+        !simulation.program_runner(0).unwrap().has_pending_physical(),
         "runner should clear pending physical after zero-distance move"
     );
 }

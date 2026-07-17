@@ -15,6 +15,9 @@ struct RobotAnimationStep {
     position: Position,
     ore: [i32; MAX_ORE_TYPES],
     time_fraction: f64,
+    /// Optional action index for this cycle (`RobotAction::action_index`, or 0 for scan).
+    /// Absent on the initial step and on legacy replays.
+    action_index: Option<u8>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -61,11 +64,17 @@ impl AnimationRecorder {
             .push(GroundAnimationStep { time, ore });
     }
 
-    pub(crate) fn record_robot_step(&mut self, robot_index: usize, robot: &Robot) {
+    pub(crate) fn record_robot_step(
+        &mut self,
+        robot_index: usize,
+        robot: &Robot,
+        action_index: Option<u8>,
+    ) {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
             ore: *robot.ore(),
             time_fraction: robot.time_fraction,
+            action_index,
         });
     }
 
@@ -167,6 +176,11 @@ fn write_robot_step_array(output: &mut String, steps: &[RobotAnimationStep]) {
         if index == 0 || step.ore[2] != last_ore_c {
             values.push(format!("C:{}", step.ore[2]));
             last_ore_c = step.ore[2];
+        }
+
+        // Always emit when present so Wait cycles stay distinguishable after delta compression.
+        if let Some(action_index) = step.action_index {
+            values.push(format!("a:{action_index}"));
         }
 
         if step.time_fraction < 0.9 || values.is_empty() {

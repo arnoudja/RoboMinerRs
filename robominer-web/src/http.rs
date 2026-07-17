@@ -217,11 +217,7 @@ pub(crate) fn first_form_values(values: &HashMap<String, Vec<String>>) -> HashMa
         .collect()
 }
 
-pub(crate) async fn static_response(
-    path: &str,
-    static_root: &Path,
-    request: &Request,
-) -> Response {
+pub(crate) async fn static_response(path: &str, static_root: &Path, request: &Request) -> Response {
     let Some(file_path) = static_file_path(path, static_root) else {
         return Response::not_found();
     };

@@ -280,10 +280,9 @@ impl ScriptedRobot {
     }
 
     pub fn from_executable_program(spec: RobotSpec, program: &ExecutableProgram) -> Self {
-        // Always use the live runner. Static expand (`RepeatingActions`) cannot express
-        // scan, control flow, or dynamic arguments and must not silently run a partial
-        // action tape for player programs. See `pending_action_protocol` and
-        // `expand_executable_actions` (test/mapper utility only).
+        // Always use the live runner. Static expand cannot express scan, control flow,
+        // or dynamic arguments and must not silently run a partial action tape for
+        // player programs. See `pending_action_protocol`.
         Self {
             spec,
             action_source: ActionSource::Program {

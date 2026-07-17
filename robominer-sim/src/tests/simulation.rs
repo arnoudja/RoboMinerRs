@@ -95,8 +95,30 @@ fn animation_data_uses_legacy_javascript_payload_shape() {
     assert!(data.contains("var myRobots = {robot: ["));
     assert!(data.contains("robotnr:0"));
     assert!(data.contains("locations:[{x:0.0,y:0.0,o:45,A:0,B:0,C:0}"));
-    assert!(data.contains("{A:4}"));
+    assert!(data.contains("{A:4,a:6}"));
     assert!(data.contains("var myGround = {sizeX:4,sizeY:4,positions:["));
     assert!(data.contains("{x:0,y:0,c:[{A:8},{t:1,A:4}]"));
     assert!(data.contains("var myOreTypes = {A:{id:1,max:8}};"));
+}
+
+#[test]
+fn animation_data_records_wait_action_index_on_idle_cycles() {
+    let ground = Ground::new(4, 4);
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 2;
+
+    let mut simulation = Simulation::new(
+        ground,
+        2,
+        vec![ScriptedRobot::new(
+            spec,
+            vec![RobotAction::Wait, RobotAction::Wait],
+        )],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains("a:1"),
+        "wait cycles should emit action index 1: {data}"
+    );
 }

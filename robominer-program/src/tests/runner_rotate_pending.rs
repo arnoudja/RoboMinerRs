@@ -114,8 +114,8 @@ fn expression_rotate_zero_completes_immediately_without_pending() {
 
 #[test]
 fn dynamic_statement_rotate_zero_advances_to_next_statement() {
-    let program = compile_executable_source("int r = 0; rotate(r); mine();")
-        .expect("program should compile");
+    let program =
+        compile_executable_source("int r = 0; rotate(r); mine();").expect("program should compile");
     let mut runner = program.runner();
     let mut context = test_context(5, None);
 

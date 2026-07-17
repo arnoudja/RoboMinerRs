@@ -64,9 +64,7 @@ async fn rally_view_renders_from_mining_results_and_activity() {
     let fixture = CancelMiningQueueFixture::create(&pool).await;
     let rally_result_id = insert_row_id(
         &pool,
-        sqlx::query(
-            "INSERT INTO RallyResult (resultData) VALUES ('var myRobots = {robot: []};')",
-        ),
+        sqlx::query("INSERT INTO RallyResult (resultData) VALUES ('var myRobots = {robot: []};')"),
     )
     .await;
     fixture.rally_result_id.set(Some(rally_result_id));

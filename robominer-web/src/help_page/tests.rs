@@ -88,8 +88,13 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     assert!(tips_body.contains(r#"class="help-article-toc""#));
     assert!(tips_body.contains("href=\"#repeated-mining\""));
     assert!(tips_body.contains(r#"<h2 id="repeated-mining">Repeated mining</h2>"#));
-    assert!(tips_body.contains(r#"<h2 id="moving-toward-scanned-ore">Moving toward scanned ore</h2>"#));
-    assert!(tips_body.contains(r#"<h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>"#));
+    assert!(
+        tips_body.contains(r#"<h2 id="moving-toward-scanned-ore">Moving toward scanned ore</h2>"#)
+    );
+    assert!(
+        tips_body
+            .contains(r#"<h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>"#)
+    );
     assert!(tips_body.contains("oreDistance() &gt; 0"));
     assert!(tips_body.contains("move(oreDistance())"));
     assert!(tips_body.contains(r#"<pre class="help-code-block"><code>"#));
@@ -100,14 +105,19 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     assert!(robot_program_body.contains(r#"class="help-article-toc""#));
     assert!(robot_program_body.contains(r#"<h2 id="statements">Statements</h2>"#));
     assert!(robot_program_body.contains("collects every ore type present on that cell"));
-    assert!(robot_program_body.contains("Only call move(oreDistance()) when the distance is greater than 0"));
+    assert!(
+        robot_program_body
+            .contains("Only call move(oreDistance()) when the distance is greater than 0")
+    );
     assert!(robot_program_body.contains("<h1>Robot programming help</h1>"));
 
     assert_eq!(mechanics.status, 200);
     let mechanics_body = String::from_utf8(mechanics.body).expect("html should be utf-8");
     assert!(mechanics_body.contains(r#"class="help-article-toc""#));
     assert!(mechanics_body.contains(r#"<h2 id="ore-container">Ore Container</h2>"#));
-    assert!(mechanics_body.contains(r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#));
+    assert!(
+        mechanics_body.contains(r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#)
+    );
     assert!(mechanics_body.contains("finish the remaining scan cycles first"));
     assert!(mechanics_body.contains(r#"<div class="help-table-wrap"><table class="helptable">"#));
     assert!(mechanics_body.contains("<h1>RoboMiner Mechanics</h1>"));

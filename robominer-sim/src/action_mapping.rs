@@ -1,15 +1,14 @@
 //! Maps program [`ExecutableAction`] values to simulation [`RobotAction`] values.
 //!
-//! Used by the runtime program bridge (`program_bridge`) and as a **test/mapper**
-//! helper to expand literal action lists into per-cycle chunks.
-//! Player programs always run through [`crate::ScriptedRobot::from_executable_program`]
-//! as [`crate::robot::ActionSource::Program`] — never via static expansion — because
+//! Used by the runtime program bridge (`program_bridge`). Player programs always run
+//! through [`crate::ScriptedRobot::from_executable_program`] as
+//! [`crate::robot::ActionSource::Program`] — never via static expansion — because
 //! expand cannot represent scan, control flow, or dynamic arguments.
 //!
 //! See [`robominer_program::pending_action_protocol`].
 
 use robominer_program::ExecutableAction;
-use robominer_program::motion::{expand_motion_steps, is_zero_motion, motion_chunk, record_motion_step};
+use robominer_program::motion::{is_zero_motion, motion_chunk, record_motion_step};
 
 use crate::robot::{RobotAction, RobotSpec};
 
@@ -70,68 +69,6 @@ pub(crate) fn robot_action_from_executable(
         ExecutableAction::Rotate(rotation) => motion_chunk_robot_action(rotation, spec, true),
         other => non_motion_robot_action(other).unwrap_or(RobotAction::Wait),
     }
-}
-
-fn extend_chunked_motion(
-    result: &mut Vec<RobotAction>,
-    amount: f64,
-    speed: f64,
-    action: impl Fn(f64) -> RobotAction,
-) {
-    let steps = expand_motion_steps(amount, speed);
-    if steps.is_empty() {
-        result.push(RobotAction::Wait);
-        return;
-    }
-
-    for step in steps {
-        result.push(action(step));
-    }
-}
-
-/// Expand a static list of literal executable actions into per-cycle robot actions.
-///
-/// This is a mapper/test helper only. Do not use it to drive player programs —
-/// [`crate::ScriptedRobot::from_executable_program`] always uses the live runner.
-/// Scan actions are rejected: they have no static expansion and must use the program bridge.
-pub(crate) fn expand_executable_actions(
-    spec: &RobotSpec,
-    actions: &[ExecutableAction],
-) -> Vec<RobotAction> {
-    let mut result = Vec::new();
-
-    for action in actions {
-        match *action {
-            ExecutableAction::Move(distance) => {
-                extend_chunked_motion(
-                    &mut result,
-                    distance,
-                    move_speed(spec, distance),
-                    RobotAction::Move,
-                );
-            }
-            ExecutableAction::Rotate(rotation) => {
-                extend_chunked_motion(
-                    &mut result,
-                    rotation,
-                    rotate_speed(spec),
-                    RobotAction::Rotate,
-                );
-            }
-            ExecutableAction::Mine => result.push(RobotAction::Mine),
-            ExecutableAction::Dump(ore_type) if ore_type > 0 => {
-                result.push(RobotAction::DumpOre((ore_type - 1) as usize));
-            }
-            ExecutableAction::Dump(_) => result.push(RobotAction::DumpAll),
-            ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult => {
-                panic!(
-                    "scan actions cannot be statically expanded; use ActionSource::Program via from_executable_program"
-                );
-            }
-        }
-    }
-
-    result
 }
 
 /// Per-cycle chunking state for move/rotate actions emitted by the program runner.
@@ -204,9 +141,69 @@ pub(crate) fn map_awaiting_executable(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use robominer_program::motion::expand_motion_steps;
 
     fn test_spec() -> RobotSpec {
         RobotSpec::test_robot()
+    }
+
+    fn extend_chunked_motion(
+        result: &mut Vec<RobotAction>,
+        amount: f64,
+        speed: f64,
+        action: impl Fn(f64) -> RobotAction,
+    ) {
+        let steps = expand_motion_steps(amount, speed);
+        if steps.is_empty() {
+            result.push(RobotAction::Wait);
+            return;
+        }
+
+        for step in steps {
+            result.push(action(step));
+        }
+    }
+
+    /// Test-only mirror of static expansion. Kept to assert chunk sizing stays aligned
+    /// with [`robot_action_from_executable`]; not used to drive player programs.
+    fn expand_executable_actions(
+        spec: &RobotSpec,
+        actions: &[ExecutableAction],
+    ) -> Vec<RobotAction> {
+        let mut result = Vec::new();
+
+        for action in actions {
+            match *action {
+                ExecutableAction::Move(distance) => {
+                    extend_chunked_motion(
+                        &mut result,
+                        distance,
+                        move_speed(spec, distance),
+                        RobotAction::Move,
+                    );
+                }
+                ExecutableAction::Rotate(rotation) => {
+                    extend_chunked_motion(
+                        &mut result,
+                        rotation,
+                        rotate_speed(spec),
+                        RobotAction::Rotate,
+                    );
+                }
+                ExecutableAction::Mine => result.push(RobotAction::Mine),
+                ExecutableAction::Dump(ore_type) if ore_type > 0 => {
+                    result.push(RobotAction::DumpOre((ore_type - 1) as usize));
+                }
+                ExecutableAction::Dump(_) => result.push(RobotAction::DumpAll),
+                ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult => {
+                    panic!(
+                        "scan actions cannot be statically expanded; use ActionSource::Program via from_executable_program"
+                    );
+                }
+            }
+        }
+
+        result
     }
 
     #[test]

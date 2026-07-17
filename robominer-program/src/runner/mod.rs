@@ -259,10 +259,7 @@ impl ExecutableRunner {
             }
             crate::ActionAwaitKind::Motion => {
                 // Chunked motion must use start_pending_physical, not scalar pending_action.
-                debug_assert!(
-                    false,
-                    "motion action queued via pending_action: {action:?}"
-                );
+                debug_assert!(false, "motion action queued via pending_action: {action:?}");
                 return self.start_pending_physical(action, PhysicalCompletion::Expression);
             }
             crate::ActionAwaitKind::None => {

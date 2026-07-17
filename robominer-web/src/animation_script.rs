@@ -12,6 +12,8 @@ mod tests {
             "function rallySeekToRatio(",
             "function drawRobot(",
             "function robotColor(",
+            "function updateRobotDebugPanel(",
+            "function rallyActionName(",
         ] {
             assert!(
                 RALLY_ANIMATION_SCRIPT.contains(symbol),

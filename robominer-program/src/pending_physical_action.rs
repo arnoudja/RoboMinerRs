@@ -147,9 +147,9 @@ mod tests {
         assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
             crate::motion::MOTION_EPSILON
         )));
-        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Rotate(
-            -crate::motion::MOTION_EPSILON / 2.0
-        )));
+        assert!(!PendingPhysicalAction::is_chunked(
+            ExecutableAction::Rotate(-crate::motion::MOTION_EPSILON / 2.0)
+        ));
         assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Mine));
     }
 }
