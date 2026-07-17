@@ -307,7 +307,7 @@ fn render_rally_view_bootstrap_script(
                     context.rect(0, 0, canvas.width, canvas.height);
                     context.fillStyle = 'red';
                     context.fill();
-                    document.getElementById('oreLegendAName').innerHTML = getOreName(myOreTypes.A.id);
+                    document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);
                     document.getElementById('oreLegendA').style.display = 'flex';
                 }}
 
@@ -318,7 +318,7 @@ fn render_rally_view_bootstrap_script(
                     context.rect(0, 0, canvas.width, canvas.height);
                     context.fillStyle = 'green';
                     context.fill();
-                    document.getElementById('oreLegendBName').innerHTML = getOreName(myOreTypes.B.id);
+                    document.getElementById('oreLegendBName').textContent = getOreName(myOreTypes.B.id);
                     document.getElementById('oreLegendB').style.display = 'flex';
                 }}
 
@@ -329,7 +329,7 @@ fn render_rally_view_bootstrap_script(
                     context.rect(0, 0, canvas.width, canvas.height);
                     context.fillStyle = 'blue';
                     context.fill();
-                    document.getElementById('oreLegendCName').innerHTML = getOreName(myOreTypes.C.id);
+                    document.getElementById('oreLegendCName').textContent = getOreName(myOreTypes.C.id);
                     document.getElementById('oreLegendC').style.display = 'flex';
                 }}
 

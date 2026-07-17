@@ -482,6 +482,18 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("function runanimation()"));
     assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
     assert!(html.contains("var myOreTypes = {};"));
+    assert!(html.contains(
+        "document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);"
+    ));
+    assert!(html.contains(
+        "document.getElementById('oreLegendBName').textContent = getOreName(myOreTypes.B.id);"
+    ));
+    assert!(html.contains(
+        "document.getElementById('oreLegendCName').textContent = getOreName(myOreTypes.C.id);"
+    ));
+    assert!(!html.contains("oreLegendAName').innerHTML"));
+    assert!(!html.contains("oreLegendBName').innerHTML"));
+    assert!(!html.contains("oreLegendCName').innerHTML"));
 }
 
 #[test]
