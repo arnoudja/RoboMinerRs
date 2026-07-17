@@ -9,13 +9,14 @@ use robominer_program::ExecutableRunner;
 use crate::OreAnimationData;
 use crate::action_mapping::PendingExpressionAction;
 use crate::animation::AnimationRecorder;
-use crate::ground::Ground;
+use crate::ground::{Ground, ScanState};
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, ScriptedRobot};
 
-fn animation_action_index(action: RobotAction, scanned_this_cycle: bool) -> u8 {
-    if scanned_this_cycle && matches!(action, RobotAction::Wait) {
+fn animation_action_index(action: RobotAction, robot: &Robot, scanned_this_cycle: bool) -> u8 {
+    let scan_busy = scanned_this_cycle || matches!(robot.scan_state, ScanState::Scanning { .. });
+    if scan_busy && matches!(action, RobotAction::Wait) {
         ROBOT_ACTION_TYPE_SCAN as u8
     } else {
         action.action_index() as u8
@@ -171,8 +172,11 @@ impl Simulation {
                     let scan_before = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
                     let action = self.next_robot_action(index);
                     let scan_after = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
-                    cycle_actions[index] =
-                        Some(animation_action_index(action, scan_after > scan_before));
+                    cycle_actions[index] = Some(animation_action_index(
+                        action,
+                        &self.robots[index],
+                        scan_after > scan_before,
+                    ));
                     *pending_result = self.process_robot_action(index, action);
                 } else {
                     self.action_results[index] = None;

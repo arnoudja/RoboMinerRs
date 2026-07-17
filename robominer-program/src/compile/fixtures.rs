@@ -298,7 +298,9 @@ while (!found)
     }
 }
 
-move(oreDistance());
+if (oreDistance() > 0) {
+    move(oreDistance());
+}
 
 while (found) {
     while (mine());
@@ -313,7 +315,9 @@ while (found) {
 
     if (oreType() == 1) {
         dump(2);
-        move(oreDistance());
+        if (oreDistance() > 0) {
+            move(oreDistance());
+        }
     } else {
         found = false;
     }

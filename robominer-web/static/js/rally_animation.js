@@ -202,7 +202,8 @@ function robotLooksIdle(robot, step)
 {
     if (typeof robot.a === 'number')
     {
-        return robot.a === 0 || robot.a === 1;
+        // Wait only — Scan (0) is productive work, not idle.
+        return robot.a === 1;
     }
 
     if (!robot.locations || step <= 0 || step >= robot.locations.length)
@@ -221,16 +222,24 @@ function robotLooksIdle(robot, step)
 }
 
 
+function robotCargoFull(robot)
+{
+    return Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C) >= robot.maxore;
+}
+
+
 function updateRobotDebugPanel(robot, step)
 {
     var cargoEl = document.getElementById('robotCargo' + robot.robotnr);
+    var total = Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C);
+    var full = robotCargoFull(robot);
     if (cargoEl)
     {
-        var total = Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C);
         cargoEl.textContent = 'A ' + Math.round(robot.A)
             + ' · B ' + Math.round(robot.B)
             + ' · C ' + Math.round(robot.C)
-            + '  (' + total + '/' + robot.maxore + ')';
+            + '  (' + total + '/' + robot.maxore + ')'
+            + (full ? ' FULL' : '');
     }
 
     var actionEl = document.getElementById('robotAction' + robot.robotnr);
@@ -261,6 +270,15 @@ function updateRobotDebugPanel(robot, step)
         else
         {
             card.classList.remove('rally-view-player-idle');
+        }
+
+        if (full)
+        {
+            card.classList.add('rally-view-player-full');
+        }
+        else
+        {
+            card.classList.remove('rally-view-player-full');
         }
     }
 }

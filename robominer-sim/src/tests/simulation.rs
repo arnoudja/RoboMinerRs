@@ -122,3 +122,35 @@ fn animation_data_records_wait_action_index_on_idle_cycles() {
         "wait cycles should emit action index 1: {data}"
     );
 }
+
+#[test]
+fn animation_data_records_scan_action_index_while_scanning() {
+    let source = "scan(); if (oreDistance() < 0) { rotate(0); } mine();";
+    let program = seeded_program(source);
+
+    let mut ground = Ground::new(10, 10);
+    ground.add_ore_heap(4, 4, 0, 2, 2);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.cpu_speed = 1;
+    spec.scan_time = 6;
+    spec.scan_distance = 50;
+    spec.max_turns = 4;
+
+    let mut simulation = Simulation::new(
+        ground,
+        4,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains("a:0"),
+        "scan-busy wait cycles should emit action index 0: {data}"
+    );
+    let scan_marks = data.matches("a:0").count();
+    assert!(
+        scan_marks >= 2,
+        "expected multiple scan-busy cycles, found {scan_marks} in {data}"
+    );
+}

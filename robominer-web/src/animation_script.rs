@@ -13,6 +13,7 @@ mod tests {
             "function drawRobot(",
             "function robotColor(",
             "function updateRobotDebugPanel(",
+            "function robotCargoFull(",
             "function rallyActionName(",
         ] {
             assert!(
