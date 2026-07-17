@@ -75,6 +75,7 @@ impl ExecutableRunner {
             if action_result.is_none() {
                 return StepOutcome::Action(self.queue_pending_action(*action));
             }
+            self.pending_action = None;
         }
 
         if matches!(

@@ -82,6 +82,28 @@ fn record_action_result_accumulates_partial_chunks_then_finishes() {
 }
 
 #[test]
+fn wait_while_motion_pending_force_completes_with_accumulated() {
+    let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 3);
+    simulation.prepare_test_run();
+    simulation.test_set_pending_expression(
+        0,
+        Some(PendingExpressionAction::Move {
+            remaining: 0.5,
+            accumulated: 1.5,
+        }),
+    );
+
+    // Sim maps a no-op cycle to Wait → ActionResult::None while pending remains.
+    simulation.test_record_action_result(0, ActionResult::None);
+
+    assert_close(simulation.test_action_result(0).unwrap(), 1.5);
+    assert!(
+        simulation.pending_expression_action(0).is_none(),
+        "Wait must force-complete stuck motion pending instead of livelocking"
+    );
+}
+
+#[test]
 fn blocked_move_chunk_finishes_pending_with_accumulated_travel() {
     let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 3);
     simulation.prepare_test_run();

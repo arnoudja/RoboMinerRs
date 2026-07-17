@@ -39,6 +39,10 @@ impl PendingPhysicalAction {
     }
 
     pub(crate) fn start(action: ExecutableAction, completion: PhysicalCompletion) -> Self {
+        debug_assert!(
+            Self::is_chunked(action),
+            "pending physical requires chunked move/rotate, got {action:?}"
+        );
         Self { action, completion }
     }
 

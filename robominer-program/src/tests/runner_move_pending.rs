@@ -122,6 +122,25 @@ fn runner_keeps_pending_physical_while_action_result_is_missing() {
 }
 
 #[test]
+fn statement_move_zero_advances_without_awaiting_result() {
+    let program = compile_executable_source("move(0); mine();").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.step(&mut context),
+        ProgramStep::Action(ExecutableAction::Move(0.0))
+    );
+    assert!(!runner.awaits_action_result());
+    assert!(!runner.has_pending_physical());
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+}
+
+#[test]
 fn expression_move_zero_completes_immediately_without_pending() {
     let program = compile_executable_source("if (move(0) == 0) { mine(); } else { rotate(90); }")
         .expect("program should compile");

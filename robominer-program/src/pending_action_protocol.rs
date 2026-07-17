@@ -139,6 +139,27 @@
 //! past the `scan()` statement. The same preservation applies while
 //! `awaits_scan_result()` is true.
 //!
+//! ## Await kinds
+//!
+//! Every emitted [`ExecutableAction`] has an [`crate::ActionAwaitKind`] from
+//! [`crate::await_kind`]:
+//!
+//! | Kind | Examples | Awaits `action_result`? |
+//! |---|---|---|
+//! | `None` | `move(0)`, `AwaitScanResult`, statement side effects | No |
+//! | `Scalar` | expression `mine()` / `dump(n)` | Yes (one cycle) |
+//! | `Motion` | chunked `move` / `rotate` | Yes (via pending physical + sim chunks) |
+//! | `ScanStart` | `scan()` | Result written in the CPU loop, not via Wait |
+//!
+//! **Invariant:** never set `awaits_action_result` / `action_result_expected` for a
+//! Wait-mapped action (`ActionAwaitKind::None` for motion amounts within
+//! [`crate::motion::MOTION_EPSILON`]). The sim maps those to `Wait`, which produces
+//! `ActionResult::None` and would otherwise livelock the runner.
+//!
+//! If sim pending motion still exists when a cycle yields `Wait` (for example zero
+//! engine speed with remaining distance), `record_action_result` force-completes the
+//! pending action with the accumulated travel so the runner can resume.
+//!
 //! ## Invariants
 //!
 //! - While `pending_expression_actions[i]` is `Some`, the simulation must **not** call
@@ -174,7 +195,7 @@
 //!
 //! ## Related code
 //!
-//! - Runner: `pending_physical_action`, `start_pending_physical`, `handle_continue_physical`
+//! - Runner: `pending_await`, `pending_physical_action`, `start_pending_physical`, `handle_continue_physical`
 //! - Runner scan eval: `expression_eval::step` (`PushStartScan`, `PushOreDistance`, `PushOreType`)
 //! - Motion chunking: [`motion`]
 //! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`, `complete_scan_now`,

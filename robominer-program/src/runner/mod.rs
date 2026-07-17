@@ -252,8 +252,27 @@ impl ExecutableRunner {
     }
 
     fn queue_pending_action(&mut self, action: ExecutableAction) -> ExecutableAction {
-        self.awaits_action_result = true;
-        self.pending_action = Some(action);
+        match crate::await_kind(action) {
+            crate::ActionAwaitKind::Scalar | crate::ActionAwaitKind::ScanStart => {
+                self.awaits_action_result = true;
+                self.pending_action = Some(action);
+            }
+            crate::ActionAwaitKind::Motion => {
+                // Chunked motion must use start_pending_physical, not scalar pending_action.
+                debug_assert!(
+                    false,
+                    "motion action queued via pending_action: {action:?}"
+                );
+                return self.start_pending_physical(action, PhysicalCompletion::Expression);
+            }
+            crate::ActionAwaitKind::None => {
+                // Wait-mapped actions never produce action_result; emit without awaiting.
+                debug_assert!(
+                    false,
+                    "queued action that does not produce a result: {action:?}"
+                );
+            }
+        }
         action
     }
 
@@ -262,6 +281,10 @@ impl ExecutableRunner {
         action: ExecutableAction,
         completion: PhysicalCompletion,
     ) -> ExecutableAction {
+        debug_assert!(
+            crate::await_kind(action) == crate::ActionAwaitKind::Motion,
+            "start_pending_physical requires Motion await kind, got {action:?}"
+        );
         self.awaits_action_result = true;
         self.pending_physical = Some(PendingPhysicalAction::start(action, completion));
         action

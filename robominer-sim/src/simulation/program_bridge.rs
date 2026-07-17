@@ -181,6 +181,7 @@ impl Simulation {
                             return RobotAction::Wait;
                         };
                         runner.awaits_action_result()
+                            && robominer_program::await_kind(action).expects_physics_result()
                     };
                     self.action_results[robot_index] = context.action_result;
                     self.action_result_expected[robot_index] = awaits;
@@ -199,11 +200,20 @@ impl Simulation {
     }
 
     pub(super) fn record_action_result(&mut self, robot_index: usize, result: ActionResult) {
+        if matches!(result, ActionResult::None) {
+            // Wait (or other no-ops) while motion is still pending: remaining distance is
+            // within epsilon or speed is zero. Finish with the accumulated travel so the
+            // runner is not left awaiting a result that will never arrive.
+            if let Some(pending) = self.pending_expression_actions[robot_index].take() {
+                self.action_results[robot_index] = Some(pending.accumulated());
+            }
+            return;
+        }
+
         let value = match result {
-            ActionResult::None => return,
             ActionResult::Mine => self.robots[robot_index].last_mined() as f64,
             ActionResult::Value(value) => value,
-            ActionResult::Move { .. } => return,
+            ActionResult::Move { .. } | ActionResult::None => return,
         };
 
         if let Some(pending) = &mut self.pending_expression_actions[robot_index] {

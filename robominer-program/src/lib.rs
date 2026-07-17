@@ -6,6 +6,7 @@
 mod compile;
 pub mod motion;
 pub mod pending_action_protocol;
+mod pending_await;
 mod pending_physical_action;
 mod pose;
 mod runner;
@@ -18,6 +19,7 @@ pub use compile::{
     compatibility_fixture_source, compatibility_fixtures, compile_executable_source,
     compile_source, verify_source,
 };
+pub use pending_await::{ActionAwaitKind, await_kind};
 pub use pose::{rally_map_position, rally_robot_pose};
 pub use runner::ExecutableRunner;
 pub use types::{
