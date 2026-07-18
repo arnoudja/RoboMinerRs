@@ -156,7 +156,6 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 
 | Gap | Mitigation today |
 | --- | --- |
-| Weak email validation | Manual account creation via engine CLI |
 | No HSTS in app | Proxy adds `Strict-Transport-Security` (app serves plain HTTP on loopback) |
 
 ### Already covered in-app
@@ -169,12 +168,14 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Request timeouts | 30s |
 | POST-only form mutations | GET cannot drive shop/queue/account writes |
 | App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
+| Account password rate limit | `/account` POSTs limited by IP and `user:{id}` before Argon2 verify |
 | Client IP | Peer address by default; `trustproxy 1` enables proxy headers |
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |
 | Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
+| Email validation | Local + domain with TLD on signup / account update |
 
 ## Related docs
 

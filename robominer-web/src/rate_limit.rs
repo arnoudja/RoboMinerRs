@@ -5,8 +5,8 @@ use std::time::{Duration, Instant};
 use crate::http::Request;
 
 const AUTH_WINDOW: Duration = Duration::from_secs(60);
-const MAX_ATTEMPTS_PER_IP: usize = 10;
-const MAX_ATTEMPTS_PER_LOGIN: usize = 5;
+pub(crate) const MAX_ATTEMPTS_PER_IP: usize = 10;
+pub(crate) const MAX_ATTEMPTS_PER_LOGIN: usize = 5;
 
 static AUTH_RATE_LIMITER: OnceLock<Mutex<AuthRateLimiter>> = OnceLock::new();
 

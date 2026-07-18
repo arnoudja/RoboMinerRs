@@ -1,3 +1,6 @@
+use crate::rate_limit::{
+    auth_attempt_is_rate_limited, client_ip, log_auth_failure, record_auth_attempt,
+};
 use crate::{Request, Response, ServerConfig, is_post, login_redirect, session_username};
 
 #[derive(Debug)]
@@ -16,6 +19,20 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
     if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
         return response;
     }
+
+    // Account updates always verify the current password (Argon2). Rate-limit before DB work.
+    if is_account_update_post(request) {
+        let ip = client_ip(request, config.trust_proxy);
+        let account_key = account_rate_limit_key(user_id);
+        if auth_attempt_is_rate_limited(&ip, &account_key) {
+            log_auth_failure(&ip, &account_key, "rate_limited");
+            return Response::too_many_requests(
+                "Too many account password checks. Please try again later.",
+            );
+        }
+        record_auth_attempt(&ip, &account_key);
+    }
+
     let Some(pool) = config.database_pool.as_ref() else {
         return Response::service_unavailable(
             "Account requires ROBOMINER_DATABASE_URL to be configured",
@@ -37,6 +54,14 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
         ),
         Err(error) => Response::service_unavailable(format!("Unable to load account: {error}")),
     }
+}
+
+fn is_account_update_post(request: &Request) -> bool {
+    is_post(request) && request.form.contains_key("username")
+}
+
+fn account_rate_limit_key(user_id: i64) -> String {
+    format!("user:{user_id}")
 }
 
 async fn load_account_page_state(

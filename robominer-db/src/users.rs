@@ -346,7 +346,48 @@ fn valid_username(username: &str) -> bool {
 }
 
 fn valid_email(email: &str) -> bool {
-    !email.is_empty() && email.contains('@')
+    let email = email.trim();
+    if !(3..=254).contains(&email.len()) || email.contains(char::is_whitespace) {
+        return false;
+    }
+
+    let Some((local, domain)) = email.split_once('@') else {
+        return false;
+    };
+    if local.is_empty()
+        || domain.is_empty()
+        || local.len() > 64
+        || domain.contains('@')
+        || local.starts_with('.')
+        || local.ends_with('.')
+        || local.contains("..")
+        || domain.starts_with('.')
+        || domain.ends_with('.')
+        || domain.contains("..")
+        || domain.starts_with('-')
+        || domain.ends_with('-')
+    {
+        return false;
+    }
+
+    if !local
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '%' | '+' | '-'))
+    {
+        return false;
+    }
+
+    if !domain
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-'))
+    {
+        return false;
+    }
+
+    let Some((host, tld)) = domain.rsplit_once('.') else {
+        return false;
+    };
+    !host.is_empty() && tld.len() >= 2 && tld.chars().all(|ch| ch.is_ascii_alphabetic())
 }
 
 fn valid_password(password: &str) -> bool {
@@ -366,10 +407,27 @@ mod tests {
     }
 
     #[test]
-    fn valid_email_requires_non_empty_address_with_at_sign() {
+    fn valid_email_requires_local_and_domain_with_tld() {
         assert!(valid_email("player@example.invalid"));
+        assert!(valid_email("a.b+tag@example.com"));
+        assert!(valid_email("  user_name%test@sub.example.org  "));
+
         assert!(!valid_email(""));
         assert!(!valid_email("missing-at.example"));
+        assert!(!valid_email("@example.com"));
+        assert!(!valid_email("user@"));
+        assert!(!valid_email("user@@example.com"));
+        assert!(!valid_email("user@example"));
+        assert!(!valid_email("user @example.com"));
+        assert!(!valid_email("user@exam ple.com"));
+        assert!(!valid_email("user@.example.com"));
+        assert!(!valid_email("user@example."));
+        assert!(!valid_email(".user@example.com"));
+        assert!(!valid_email("user.@example.com"));
+        assert!(!valid_email("us..er@example.com"));
+        assert!(!valid_email("user@-example.com"));
+        assert!(!valid_email("user@example.c"));
+        assert!(!valid_email("user@example.123"));
     }
 
     #[test]

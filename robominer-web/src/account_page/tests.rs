@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::csrf::csrf_token_from_cookie;
+use crate::rate_limit::{
+    MAX_ATTEMPTS_PER_LOGIN, record_auth_attempt, reset_auth_rate_limiter_for_tests,
+};
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
@@ -24,6 +28,30 @@ fn authenticated_request(path: &str) -> Request {
     }
 }
 
+fn authenticated_account_update_request() -> Request {
+    let cookie = format_authenticated_cookie(42, "Player");
+    let token = csrf_token_from_cookie(&cookie).expect("csrf token");
+    let mut form = HashMap::new();
+    form.insert("username".to_string(), "Player".to_string());
+    form.insert("email".to_string(), "player@example.invalid".to_string());
+    form.insert("currentpassword".to_string(), "wrong-password".to_string());
+    form.insert("csrfToken".to_string(), token);
+    Request {
+        method: "POST".to_string(),
+        path: "/account".to_string(),
+        query: HashMap::new(),
+        form: form.clone(),
+        form_values: form
+            .into_iter()
+            .map(|(name, value)| (name, vec![value]))
+            .collect(),
+        headers: HashMap::from([
+            ("cookie".to_string(), cookie),
+            ("x-robominer-peer".to_string(), "198.51.100.70".to_string()),
+        ]),
+    }
+}
+
 #[tokio::test(flavor = "current_thread")]
 async fn account_requires_database_configuration() {
     let config = ServerConfig {
@@ -38,6 +66,27 @@ async fn account_requires_database_configuration() {
 
     assert_eq!(response.status, 503);
     assert!(body.contains("ROBOMINER_DATABASE_URL"));
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn account_update_is_rate_limited_before_database_work() {
+    reset_auth_rate_limiter_for_tests();
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: true,
+        trust_proxy: false,
+    };
+
+    for index in 0..MAX_ATTEMPTS_PER_LOGIN {
+        let ip = format!("198.51.100.{index}");
+        record_auth_attempt(&ip, "user:42");
+    }
+
+    let response = account_page(&authenticated_account_update_request(), &config).await;
+    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    assert_eq!(response.status, 429);
+    assert!(body.contains("Too many account password checks"));
 }
 
 #[test]
