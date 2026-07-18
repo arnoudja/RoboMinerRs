@@ -493,6 +493,42 @@ fn rally_view_rendering_refuses_unsupported_result_data() {
 }
 
 #[test]
+fn rally_view_rendering_refuses_incomplete_versioned_result_data() {
+    let html = render_rally_view_page(
+        "Player".to_string(),
+        None,
+        &RallyViewPageState {
+            result_data: r#"{"v":1,"robots":{"robot":[{"robotnr":0}]},"ground":{"sizeX":1,"sizeY":1}}"#
+                .to_string(),
+            ores: vec![],
+            slots: [
+                ("Bot 0".to_string(), "User 0".to_string()),
+                ("Bot 1".to_string(), "User 1".to_string()),
+                ("Bot 2".to_string(), "User 2".to_string()),
+                ("Bot 3".to_string(), "User 3".to_string()),
+            ],
+            mining_area_name: "Area".to_string(),
+            viewer_player_number: None,
+            viewer_robot_id: None,
+            viewer_robot_name: None,
+            viewer_score: None,
+            viewer_total_reward: None,
+            viewer_result_claimed: false,
+            viewer_source_code: None,
+            viewer_program_source_id: None,
+        },
+        None,
+    );
+
+    assert!(!html.contains(r#"id="rally-result-data""#));
+    assert!(!html.contains(r#"id="rallyCanvas""#));
+    assert!(html.contains("Replay unavailable"));
+    assert!(html.contains(
+        "This rally replay payload is missing, corrupt, or uses an unsupported version."
+    ));
+}
+
+#[test]
 fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     let html = render_rally_view_page(
         "Player".to_string(),
@@ -567,7 +603,10 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
     assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
     assert!(html.contains(r#""v":1"#));
-    assert!(html.contains("applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));"));
+    assert!(html.contains("applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));"));
+    assert!(html.contains("function showRallyReplayUnavailable(detail)"));
+    assert!(html.contains("function validateRallyResultPayload(payload)"));
+    assert!(html.contains("showRallyReplayUnavailable(rallyPayloadError);"));
     assert!(html.contains(
         "document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);"
     ));

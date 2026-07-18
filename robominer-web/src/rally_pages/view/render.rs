@@ -23,11 +23,39 @@ fn classify_rally_result_payload(result_data: &str) -> RallyResultPayloadKind {
     }
 
     match serde_json::from_str::<serde_json::Value>(result_data) {
-        Ok(value) if value.get("v").and_then(|version| version.as_u64()) == Some(1) => {
-            RallyResultPayloadKind::VersionedJson
-        }
+        Ok(value) if is_valid_v1_rally_payload(&value) => RallyResultPayloadKind::VersionedJson,
         _ => RallyResultPayloadKind::Unsupported,
     }
+}
+
+fn is_valid_v1_rally_payload(value: &serde_json::Value) -> bool {
+    if value.get("v").and_then(|version| version.as_u64()) != Some(1) {
+        return false;
+    }
+
+    let Some(robots) = value
+        .get("robots")
+        .and_then(|robots| robots.get("robot"))
+        .and_then(|robots| robots.as_array())
+    else {
+        return false;
+    };
+
+    for robot in robots {
+        if !robot.get("locations").and_then(|locations| locations.as_array()).is_some() {
+            return false;
+        }
+    }
+
+    let Some(ground) = value.get("ground") else {
+        return false;
+    };
+    ground.get("sizeX").and_then(|size| size.as_i64()).is_some()
+        && ground.get("sizeY").and_then(|size| size.as_i64()).is_some()
+        && ground
+            .get("positions")
+            .and_then(|positions| positions.as_array())
+            .is_some()
 }
 
 pub fn render_rally_view_page(
@@ -412,7 +440,20 @@ fn render_rally_view_bootstrap_script(
                             }};
                     }})();
 
-                applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));
+                var rallyPayloadError = null;
+                try {{
+                    var rallyResultDataEl = document.getElementById('rally-result-data');
+                    if (!rallyResultDataEl) {{
+                        rallyPayloadError = 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
+                    }} else {{
+                        rallyPayloadError = applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));
+                    }}
+                }} catch (error) {{
+                    rallyPayloadError = 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
+                }}
+                if (rallyPayloadError) {{
+                    showRallyReplayUnavailable(rallyPayloadError);
+                }} else {{
                 var myRallyViewerSlot = {viewer_slot};
 
                 var myRallyCanvas = document.getElementById('rallyCanvas');
@@ -459,6 +500,7 @@ fn render_rally_view_bootstrap_script(
                 }}
 
                 runanimation();
+                }}
             </script>"#,
     ));
 }
