@@ -73,7 +73,7 @@ async fn account_update_post_persists_profile_changes() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
-async fn account_password_change_invalidates_other_sessions() {
+async fn account_password_change_persists_and_invalidates_other_sessions() {
     if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
         eprintln!("skipping account web test: ROBOMINER_DATABASE_URL is not set");
         return;
@@ -93,6 +93,12 @@ async fn account_password_change_invalidates_other_sessions() {
         create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
     let config = server_config(pool.clone());
 
+    let hash_before: String = sqlx::query_scalar("SELECT password FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("password hash before change");
+
     let old_cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
     let changing_cookie =
         cookie_header(&login_with_credentials(&config, &username, &password).await);
@@ -100,9 +106,9 @@ async fn account_password_change_invalidates_other_sessions() {
     let mut form = HashMap::new();
     form.insert("username".to_string(), username.clone());
     form.insert("email".to_string(), format!("{prefix}@example.invalid"));
-    form.insert("currentpassword".to_string(), password);
+    form.insert("currentpassword".to_string(), password.clone());
     form.insert("newpassword".to_string(), new_password.clone());
-    form.insert("confirmpassword".to_string(), new_password);
+    form.insert("confirmpassword".to_string(), new_password.clone());
 
     let change_response =
         route(&post_request("/account", form, Some(&changing_cookie)), &config).await;
@@ -111,6 +117,20 @@ async fn account_password_change_invalidates_other_sessions() {
     assert!(
         change_body.contains("Account information updated"),
         "expected password change success:\n{change_body}"
+    );
+
+    let hash_after: String = sqlx::query_scalar("SELECT password FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("password hash after change");
+    assert!(
+        hash_after.starts_with("$argon2"),
+        "changed password should be stored as Argon2"
+    );
+    assert_ne!(
+        hash_before, hash_after,
+        "password change should rewrite the stored hash"
     );
 
     let fresh_cookie = cookie_header(&change_response);
@@ -149,6 +169,24 @@ async fn account_password_change_invalidates_other_sessions() {
     assert_eq!(
         active_response.status, 200,
         "re-issued session after password change should still work"
+    );
+
+    let old_login = login_with_credentials(&config, &username, &password).await;
+    let old_login_body = response_body(&old_login);
+    assert_eq!(old_login.status, 200, "old password should no longer log in");
+    assert!(
+        old_login_body.contains("Invalid login name or password"),
+        "expected login failure for old password:\n{old_login_body}"
+    );
+
+    let new_login = login_with_credentials(&config, &username, &new_password).await;
+    assert_eq!(
+        new_login.status, 302,
+        "new password should log in successfully"
+    );
+    assert!(
+        cookie_header(&new_login).contains("robominer_session="),
+        "successful login should set a session cookie"
     );
 
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
