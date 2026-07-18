@@ -30,7 +30,7 @@ mysql_app() {
         -P "${MYSQL_PORT}" \
         -u"${MYSQL_USER}" \
         -p"${MYSQL_PASSWORD}" \
-        "$@"
+        "$@" 2>/dev/null
 }
 
 mysql_root_ping() {
@@ -50,10 +50,25 @@ schema_migration_ready() {
     mysql_app -N -e "SELECT 1 FROM SchemaMigration LIMIT 1" "${MYSQL_DATABASE}" >/dev/null 2>&1
 }
 
+# Apply migrations quietly; print output only on failure.
 apply_migrations_for_url() {
     local database_url="$1"
-    ROBOMINER_DATABASE_URL="${database_url}" \
-        "${ROOT}/resources/scripts/migrate-database.sh" >&2
+    local output=""
+    local status=0
+
+    set +e
+    output="$(
+        ROBOMINER_DATABASE_URL="${database_url}" \
+            "${ROOT}/resources/scripts/migrate-database.sh" 2>&1
+    )"
+    status=$?
+    set -e
+
+    if [[ "${status}" -ne 0 ]]; then
+        printf '%s\n' "${output}" >&2
+        return "${status}"
+    fi
+    return 0
 }
 
 parse_database_url_into_mysql_vars() {
@@ -93,9 +108,11 @@ try_existing_database_url() {
     return 1
 }
 
+# Best-effort full init. Root auth failures (e.g. auth_socket) are expected on
+# some host installs; callers should treat failure as "try Docker next".
 init_database() {
     MYSQL_HOST="${MYSQL_HOST}" MYSQL_PORT="${MYSQL_PORT}" \
-        "${ROOT}/resources/scripts/init-ci-database.sh" >&2
+        "${ROOT}/resources/scripts/init-ci-database.sh" >/dev/null 2>&1
 }
 
 try_local_mysql() {
@@ -104,22 +121,26 @@ try_local_mysql() {
     fi
 
     if schema_ready; then
+        # Schema already present: migrate only. Skip init-ci-database so
+        # expected root CREATE USER / grant noise (ERROR 1698) stays quiet.
         apply_migrations_for_url "$(database_url)" || true
-        init_database || true
         if schema_migration_ready; then
             log "Using MySQL already running at ${MYSQL_HOST}:${MYSQL_PORT}."
             database_url
             return 0
         fi
-        log "Local MySQL at ${MYSQL_HOST}:${MYSQL_PORT} lacks SchemaMigration privileges; trying Docker."
+        log "Local MySQL at ${MYSQL_HOST}:${MYSQL_PORT} cannot apply migrations; trying Docker..."
         return 1
     fi
 
     log "MySQL is running at ${MYSQL_HOST}:${MYSQL_PORT}, but RoboMiner schema is missing."
     if init_database && schema_migration_ready; then
+        log "Initialized RoboMiner schema at ${MYSQL_HOST}:${MYSQL_PORT}."
         database_url
         return 0
     fi
+
+    log "Could not initialize local MySQL at ${MYSQL_HOST}:${MYSQL_PORT}; trying Docker..."
     return 1
 }
 
@@ -133,13 +154,13 @@ start_docker_mysql() {
 
     if docker ps --format '{{.Names}}' | grep -qx "${DOCKER_CONTAINER}"; then
         log "Reusing running Docker container ${DOCKER_CONTAINER} on port ${MYSQL_PORT}."
-        if schema_ready; then
-            init_database
-            database_url
-            return 0
+        if ! schema_ready || ! schema_migration_ready; then
+            # Docker root password is known; init may print progress — keep it.
+            MYSQL_HOST="${MYSQL_HOST}" MYSQL_PORT="${MYSQL_PORT}" \
+                "${ROOT}/resources/scripts/init-ci-database.sh" >&2
+        else
+            apply_migrations_for_url "$(database_url)" || true
         fi
-
-        init_database
         database_url
         return 0
     fi
@@ -160,7 +181,8 @@ start_docker_mysql() {
             "${DOCKER_IMAGE}" >/dev/null
     fi
 
-    init_database
+    MYSQL_HOST="${MYSQL_HOST}" MYSQL_PORT="${MYSQL_PORT}" \
+        "${ROOT}/resources/scripts/init-ci-database.sh" >&2
     database_url
 }
 
@@ -177,6 +199,7 @@ main() {
         return 0
     fi
 
+    log "Trying Docker MySQL on port ${DOCKER_PORT}..."
     if url="$(start_docker_mysql)"; then
         echo "${url}"
         return 0
