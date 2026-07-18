@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, ensure};
 use robominer_db::{
     EMBEDDED_MIGRATIONS, MigrationReport, migration_status, run_embedded_migrations,
 };
@@ -11,11 +11,23 @@ pub(crate) async fn migrate(pool: &robominer_db::MySqlPool) -> Result<()> {
     Ok(())
 }
 
-pub(crate) async fn migrate_status(pool: &robominer_db::MySqlPool) -> Result<()> {
+pub(crate) async fn migrate_status(pool: &robominer_db::MySqlPool, check: bool) -> Result<()> {
     let status = migration_status(pool, EMBEDDED_MIGRATIONS)
         .await
         .map_err(|error| anyhow!(error))?;
     print!("{}", format_status(&status));
+    if check {
+        let pending: Vec<&str> = status
+            .iter()
+            .filter(|(_, applied)| !*applied)
+            .map(|(version, _)| version.as_str())
+            .collect();
+        ensure!(
+            pending.is_empty(),
+            "pending schema migrations: {}",
+            pending.join(", ")
+        );
+    }
     Ok(())
 }
 

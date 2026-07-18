@@ -141,7 +141,11 @@ resources/scripts/migrate-database.sh
 # or:
 cargo run -p robominer-engine -- migrate
 cargo run -p robominer-engine -- migrate-status
+cargo run -p robominer-engine -- migrate-status --check
 ```
+
+`migrate-status --check` exits non-zero while migrations are pending. The web host
+exposes loopback readiness at `GET /health` (database ping + migration currency).
 
 Versioned SQL lives under `resources/database/migrations/` (`NNN_description.sql`).
 

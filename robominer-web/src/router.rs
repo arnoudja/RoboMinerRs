@@ -1,12 +1,18 @@
 use crate::Request;
 use crate::session::{self, session_clear_cookie_header};
 use crate::{
-    Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, help_page,
-    http, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
+    Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, health,
+    help_page, http, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
     mining_results_page, query_i64, rally_pages, request_user_id, robot_page, shop_page,
 };
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
+    if matches!(request.path.as_str(), "/health" | "/Health")
+        && matches!(request.method.as_str(), "GET" | "HEAD")
+    {
+        return health::health_response(config).await;
+    }
+
     let mut request = request.clone();
     let clear_stale_session = match config.database_pool.as_ref() {
         Some(pool) => strip_stale_session_cookie(&mut request, pool).await,
@@ -175,6 +181,22 @@ mod tests {
                 .iter()
                 .any(|(name, value)| *name == "Location" && value == expected_location)
         );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn health_route_is_public_without_database() {
+        let config = ServerConfig {
+            static_root: PathBuf::from("robominer-web/static"),
+            database_pool: None,
+            allow_signup: true,
+            trust_proxy: false,
+        };
+
+        let response = route(&request("/health"), &config).await;
+
+        assert_eq!(response.status, 200);
+        let body = String::from_utf8_lossy(&response.body);
+        assert!(body.contains("database=unconfigured"), "body={body}");
     }
 
     #[tokio::test(flavor = "current_thread")]

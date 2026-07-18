@@ -174,8 +174,11 @@ install_engine_binary() {
 
 install_web_binary() {
     local binary_dest="${INSTALL_PREFIX}/bin/robominer-web"
+    local health_dest="${INSTALL_PREFIX}/bin/robominer-wait-web-health"
     echo "Installing binary to ${binary_dest}..."
     run_as_root install -D -m 0755 "${ROOT}/target/release/robominer-web" "${binary_dest}"
+    echo "Installing health waiter to ${health_dest}..."
+    run_as_root install -D -m 0755 "${ROOT}/deploy/systemd/wait-web-health.sh" "${health_dest}"
 }
 
 install_systemd_units() {
@@ -232,7 +235,7 @@ After the database is reachable and ${SHARED_CONFIG_FILE} is configured, run:
 
 Check status with:
 
-  sudo ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate-status
+  sudo ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate-status --check
 
 Or pass --migrate to this install script to run migrate before enabling services.
 EOF

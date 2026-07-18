@@ -329,5 +329,9 @@ pub(crate) enum Command {
     /// Apply pending schema migrations (or baseline a current schema).
     Migrate,
     /// Show applied/pending schema migrations.
-    MigrateStatus,
+    MigrateStatus {
+        /// Exit non-zero when any embedded migration is still pending.
+        #[arg(long)]
+        check: bool,
+    },
 }

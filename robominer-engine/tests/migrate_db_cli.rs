@@ -31,6 +31,18 @@ async fn migrate_status_lists_embedded_migrations() {
         "expected version/status columns in stdout:\n{stdout}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
+
+    let check = run_engine(&[
+        "--database-url".to_string(),
+        database_url,
+        "migrate-status".to_string(),
+        "--check".to_string(),
+    ]);
+    let (check_stdout, check_stderr) = output_text(&check);
+    assert!(
+        check.status.success(),
+        "expected migrate-status --check to succeed on current schema\nstdout:\n{check_stdout}\nstderr:\n{check_stderr}"
+    );
 }
 
 #[tokio::test]

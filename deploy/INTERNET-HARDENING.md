@@ -132,8 +132,16 @@ sudo fail2ban-client status robominer-login
 
 ```bash
 sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
 # from a checkout: resources/scripts/migrate-database.sh
 # or: cargo run -p robominer-engine -- migrate
+```
+
+Confirm readiness after start:
+
+```bash
+curl -fsS http://127.0.0.1:8080/health
+# expect: ok / database=ok / migrations=ok
 ```
 
 ## 7. Verification
@@ -143,6 +151,7 @@ sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf 
 | TLS works | Browser shows padlock on `https://your-host/login` |
 | Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax` |
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
+| Health / migrations | `curl -fsS http://127.0.0.1:8080/health` → `ok` + `migrations=ok` |
 | Signup off (default) | `/login?signup=1` shows no sign-up tab unless `allowsignup 1` |
 | Security headers | `curl -I /login` includes `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` |
 | Engine private | No listening HTTP port for `robominer-engine` |

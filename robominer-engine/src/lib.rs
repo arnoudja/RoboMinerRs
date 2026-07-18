@@ -518,9 +518,9 @@ pub async fn run() -> Result<()> {
             let pool = connect_database(cli.database_url, cli.config).await?;
             migrate(&pool).await
         }
-        Command::MigrateStatus => {
+        Command::MigrateStatus { check } => {
             let pool = connect_database(cli.database_url, cli.config).await?;
-            migrate_status(&pool).await
+            migrate_status(&pool, check).await
         }
     }
 }

@@ -11,6 +11,7 @@ mod csrf;
 mod edit_code_page;
 mod help_page;
 mod help_pages;
+mod health;
 mod html;
 mod http;
 mod leaderboard_page;

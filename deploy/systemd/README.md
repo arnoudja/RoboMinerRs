@@ -34,7 +34,21 @@ After a plain install, apply pending schema changes before starting services:
 
 ```bash
 sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
+```
+
+`migrate-status --check` exits non-zero while any embedded migration is still
+pending. The engine unit runs that as `ExecStartPre` so a stale schema fails
+startup instead of looping on SQL errors.
+
+The web unit probes loopback `GET /health` after start (`ExecStartPost` via
+`robominer-wait-web-health`). That endpoint returns 200 only when the process is
+up, the database answers, and migrations are current (or when no database is
+configured). Manual check:
+
+```bash
+curl -fsS http://127.0.0.1:8080/health
+sudo /opt/robominer/bin/robominer-wait-web-health
 ```
 
 Typical first-time install with DB config already set:
@@ -94,6 +108,7 @@ sudoedit /etc/robominer/robominer.conf
 sudo chown root:robominer /etc/robominer/robominer.conf
 sudo chmod 0640 /etc/robominer/robominer.conf
 sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
 sudo install -D -m 0644 deploy/systemd/robominer-engine.service \
   /etc/systemd/system/robominer-engine.service
 sudo systemctl daemon-reload
@@ -110,6 +125,8 @@ Manual install steps:
 ```bash
 cargo build --release -p robominer-web
 sudo install -D -m 0755 target/release/robominer-web /opt/robominer/bin/robominer-web
+sudo install -D -m 0755 deploy/systemd/wait-web-health.sh \
+  /opt/robominer/bin/robominer-wait-web-health
 sudo install -d -o robominer -g robominer -m 0755 /opt/robominer/static/css
 sudo install -m 0644 robominer-web/static/css/robominer.css \
   /opt/robominer/static/css/robominer.css

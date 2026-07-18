@@ -10,8 +10,11 @@ User=robominer
 Group=robominer
 WorkingDirectory=/opt/robominer
 ExecStart=/opt/robominer/bin/robominer-web --config /etc/robominer/robominer.conf
+# Fail the unit if loopback /health does not become ready (DB + migrations).
+ExecStartPost=/opt/robominer/bin/robominer-wait-web-health /etc/robominer/robominer.conf
 Restart=on-failure
 RestartSec=10
+TimeoutStartSec=90
 TimeoutStopSec=30
 NoNewPrivileges=true
 PrivateTmp=true

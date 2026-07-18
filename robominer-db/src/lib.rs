@@ -57,6 +57,11 @@ pub async fn connect(database_url: &str) -> Result<MySqlPool, sqlx::Error> {
     connect_with_max_connections(database_url, DEFAULT_MAX_CONNECTIONS).await
 }
 
+/// Cheap connectivity probe used by `/health` and similar readiness checks.
+pub async fn ping(pool: &MySqlPool) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT 1").execute(pool).await.map(|_| ())
+}
+
 pub async fn connect_with_max_connections(
     database_url: &str,
     max_connections: u32,

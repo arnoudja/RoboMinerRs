@@ -112,4 +112,23 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         post_response.starts_with("HTTP/1.1 413"),
         "expected 413 for oversized body, got:\n{post_response}"
     );
+
+    let health_response = raw_http_exchange(
+        &addr,
+        "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+    );
+    assert!(
+        health_response.starts_with("HTTP/1.1 200"),
+        "expected 200 for /health without database, got:\n{health_response}"
+    );
+    assert!(
+        health_response.contains("database=unconfigured"),
+        "expected unconfigured database marker, got:\n{health_response}"
+    );
+    assert!(
+        health_response
+            .to_ascii_lowercase()
+            .contains("cache-control: no-store"),
+        "expected no-store Cache-Control on /health, got:\n{health_response}"
+    );
 }
