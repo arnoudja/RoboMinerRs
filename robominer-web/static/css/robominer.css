@@ -4058,7 +4058,10 @@ body.mining-area-atlas-drawer-open {
     max-height: 280px;
     overflow: auto;
     padding: 8px 0;
-    white-space: pre;
+    /* Avoid <pre> + white-space:pre: iOS Safari collapses block children onto one line. */
+    white-space: normal;
+    word-wrap: normal;
+    overflow-wrap: normal;
 }
 
 .rally-view-source-line {
@@ -4073,6 +4076,11 @@ body.mining-area-atlas-drawer-open {
     padding: 0 8px 0 10px;
     text-align: right;
     user-select: none;
+}
+
+.rally-view-source-text {
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .rally-view-source-line-active {

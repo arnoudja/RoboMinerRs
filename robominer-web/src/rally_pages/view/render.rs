@@ -228,15 +228,17 @@ fn render_rally_view_source(
             if let Some(program_source_id) = program_source_id {
                 render_rally_view_edit_code_link(body, program_source_id, true);
             }
-            body.push_str(r#"<pre class="rally-view-source-code" id="rallySourceCode">"#);
+            body.push_str(
+                r#"<div class="rally-view-source-code" id="rallySourceCode" role="region" aria-label="Program source">"#,
+            );
             for (index, line) in source.lines().enumerate() {
                 let line_number = index + 1;
                 body.push_str(&format!(
-                    r#"<span class="rally-view-source-line" data-line="{line_number}" id="rallySourceLine{line_number}"><span class="rally-view-source-lineno">{line_number}</span><span class="rally-view-source-text">{}</span></span>"#,
+                    r#"<div class="rally-view-source-line" data-line="{line_number}" id="rallySourceLine{line_number}"><span class="rally-view-source-lineno">{line_number}</span><code class="rally-view-source-text">{}</code></div>"#,
                     escape_html(line),
                 ));
             }
-            body.push_str("</pre>");
+            body.push_str("</div>");
         }
         _ => {
             body.push_str(

@@ -534,8 +534,12 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"class="rally-view-context-payout">+17</dd>"#));
     assert!(html.contains(r#"var myRallyViewerSlot = 0;"#));
     assert!(html.contains(r#"id="rallySourceCode""#));
+    assert!(html.contains(r#"class="rally-view-source-code" id="rallySourceCode""#));
+    assert!(!html.contains("<pre class=\"rally-view-source-code\""));
     assert!(html.contains(r#"id="rallySourceLine1""#));
-    assert!(html.contains(r#"class="rally-view-source-text">scan();</span>"#));
+    assert!(html.contains(r#"class="rally-view-source-text">scan();</code>"#));
+    assert!(html.contains(r#"class="rally-view-source-line" data-line="1""#));
+    assert!(html.contains(r#"class="rally-view-source-line" data-line="2""#));
     assert!(html.contains("function updateRallySourceHighlight(line)"));
     assert!(html.contains("function updateRallyEditCodeLink(line)"));
     assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
