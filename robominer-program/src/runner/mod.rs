@@ -11,6 +11,8 @@ pub(crate) struct ExecutionFrame {
     statements: Vec<ExecutableStatement>,
     index: usize,
     repeat_condition: Option<ExecutableExpression>,
+    /// Source line of the while/do that owns [`Self::repeat_condition`].
+    repeat_source_line: Option<u16>,
     scoped: bool,
 }
 
@@ -28,7 +30,8 @@ pub struct ExecutableRunner {
     pending_physical: Option<PendingPhysicalAction>,
     expression_eval: Option<OngoingExpressionEval>,
     /// Source line of the statement most recently entered (survives index advance for
-    /// one-shot actions like mine, and multi-cycle pending motion).
+    /// one-shot actions like mine, and multi-cycle pending motion). Refreshed to the
+    /// while/do line when a loop re-checks its condition.
     active_source_line: Option<u16>,
 }
 
@@ -47,6 +50,7 @@ impl ExecutableRunner {
                 statements: program.statements,
                 index: 0,
                 repeat_condition: None,
+                repeat_source_line: None,
                 scoped: false,
             }],
             variables: RuntimeVariables::default(),
@@ -149,13 +153,18 @@ impl ExecutableRunner {
             return outcome;
         }
 
-        let repeat_condition = self
+        let repeat_frame = self
             .stack
             .last()
             .filter(|frame| frame.index >= frame.statements.len())
-            .and_then(|frame| frame.repeat_condition.clone());
+            .map(|frame| (frame.repeat_condition.clone(), frame.repeat_source_line));
 
-        if let Some(condition) = repeat_condition {
+        if let Some((Some(condition), repeat_line)) = repeat_frame {
+            // Re-attribute to the while/do line before evaluating the condition again
+            // (otherwise sticky active_source_line keeps the last body statement).
+            if let Some(line) = repeat_line {
+                self.active_source_line = Some(line);
+            }
             self.start_expression_evaluation(condition, ExpressionResume::RepeatCondition);
             return StepOutcome::Continue;
         }
@@ -199,7 +208,7 @@ impl ExecutableRunner {
             }
             ExecutableStatementKind::Sequence(statements) => {
                 frame.index += 1;
-                self.push_frame(statements, None, true);
+                self.push_frame(statements, None, None, true);
                 StepOutcome::Cpu
             }
             ExecutableStatementKind::Declare { name, value } => {
@@ -239,10 +248,11 @@ impl ExecutableRunner {
                 body,
                 is_do_while,
             } => {
+                let loop_line = statement.source_line;
                 if is_do_while {
                     if let Some(body) = body {
                         frame.index += 1;
-                        self.push_statement(*body, Some(condition));
+                        self.push_statement(*body, Some(condition), Some(loop_line));
                         StepOutcome::Cpu
                     } else if let Some(action) = condition.first_action() {
                         if PendingPhysicalAction::is_chunked(action) {
@@ -263,6 +273,7 @@ impl ExecutableRunner {
                         ExpressionResume::While {
                             condition: resume_condition,
                             body,
+                            source_line: loop_line,
                         },
                     );
                     StepOutcome::Continue
@@ -311,15 +322,17 @@ impl ExecutableRunner {
         &mut self,
         statement: ExecutableStatement,
         repeat_condition: Option<ExecutableExpression>,
+        repeat_source_line: Option<u16>,
     ) {
         let source_line = statement.source_line;
         match statement.kind {
             ExecutableStatementKind::Sequence(statements) => {
-                self.push_frame(statements, repeat_condition, true);
+                self.push_frame(statements, repeat_condition, repeat_source_line, true);
             }
             kind => self.push_frame(
                 vec![ExecutableStatement::at(source_line, kind)],
                 repeat_condition,
+                repeat_source_line,
                 false,
             ),
         }
@@ -329,6 +342,7 @@ impl ExecutableRunner {
         &mut self,
         statements: Vec<ExecutableStatement>,
         repeat_condition: Option<ExecutableExpression>,
+        repeat_source_line: Option<u16>,
         scoped: bool,
     ) {
         if scoped {
@@ -339,6 +353,7 @@ impl ExecutableRunner {
             statements,
             index: 0,
             repeat_condition,
+            repeat_source_line,
             scoped,
         });
     }

@@ -13,6 +13,7 @@ pub(crate) enum ExpressionResume {
     While {
         condition: ExecutableExpression,
         body: Option<Box<ExecutableStatement>>,
+        source_line: u16,
     },
     Declare {
         name: String,
@@ -70,11 +71,15 @@ impl ExecutableRunner {
                     .expect("if condition requires an active frame");
                 frame.index += 1;
                 if let Some(body) = body {
-                    self.push_statement(*body, None);
+                    self.push_statement(*body, None, None);
                 }
                 ExpressionComplete::Continue
             }
-            ExpressionResume::While { condition, body } => {
+            ExpressionResume::While {
+                condition,
+                body,
+                source_line,
+            } => {
                 let frame = self
                     .stack
                     .last_mut()
@@ -82,10 +87,15 @@ impl ExecutableRunner {
                 if value.is_truthy() {
                     frame.index += 1;
                     let loop_body = body.map_or_else(
-                        || ExecutableStatement::at(0, ExecutableStatementKind::Sequence(vec![])),
+                        || {
+                            ExecutableStatement::at(
+                                source_line,
+                                ExecutableStatementKind::Sequence(vec![]),
+                            )
+                        },
                         |statement| *statement,
                     );
-                    self.push_statement(loop_body, Some(condition));
+                    self.push_statement(loop_body, Some(condition), Some(source_line));
                     ExpressionComplete::Continue
                 } else {
                     frame.index += 1;

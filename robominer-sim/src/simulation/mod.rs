@@ -205,6 +205,10 @@ impl Simulation {
                     self.action_result_expected[index] = false;
                     self.pending_expression_actions[index] = None;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
+                    // Keep the last statement highlight after the battery expires.
+                    cycle_source_lines[index] = self
+                        .program_runner(index)
+                        .and_then(ExecutableRunner::current_source_line);
                 }
             }
 
