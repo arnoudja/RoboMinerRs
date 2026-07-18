@@ -3837,6 +3837,15 @@ body.mining-area-atlas-drawer-open {
     color: #e8f4ff;
 }
 
+.rally-view-control-button:focus-visible,
+.rally-view-speed-button:focus-visible,
+.rally-view-progress-track:focus-visible {
+    border-color: rgba(0, 229, 255, 0.85);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.35);
+    color: #e8f4ff;
+    outline: none;
+}
+
 .rally-view-speed {
     display: inline-flex;
     flex-wrap: wrap;
@@ -3881,6 +3890,13 @@ body.mining-area-atlas-drawer-open {
     color: #c5d4ea;
     font-family: Consolas, "Courier New", monospace;
     font-size: 0.88rem;
+    margin: 0;
+}
+
+.rally-view-keyboard-hint {
+    color: var(--mq-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
     margin: 0;
 }
 

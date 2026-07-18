@@ -222,7 +222,7 @@ fn render_rally_view_deck(
         body.push_str(r#"<div class="rally-view-transport">"#);
         body.push_str(r#"<div class="rally-view-controls">"#);
         body.push_str(
-            r#"<button type="button" class="rally-view-control-button" id="rallyPlayPause">Play</button>"#,
+            r#"<button type="button" class="rally-view-control-button" id="rallyPlayPause" aria-keyshortcuts="Space">Play</button>"#,
         );
         body.push_str(
             r#"<button type="button" class="rally-view-control-button" id="rallyRestart">Restart</button>"#,
@@ -243,11 +243,14 @@ fn render_rally_view_deck(
         body.push_str("</div></div>");
         body.push_str(r#"<div class="rally-view-progress">"#);
         body.push_str(
-            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" aria-label="Seek rally replay"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
+            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" role="slider" aria-label="Seek rally replay" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="Cycle 0 of 0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
         );
         body.push_str("</div>");
         body.push_str(
             r#"<p class="rally-view-cycle-status">Cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
+        );
+        body.push_str(
+            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → seek · Shift+← → skip 10 · Home/End jump</p>"#,
         );
         body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
         body.push_str(
