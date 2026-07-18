@@ -1,9 +1,16 @@
 use std::collections::BTreeMap;
 
+use serde_json::{Map, Number, Value, json};
+
 use crate::MAX_ORE_TYPES;
 use crate::ground::Ground;
 use crate::position::Position;
 use crate::robot::Robot;
+
+/// Current on-disk / wire format for rally animation payloads stored in
+/// `RallyResult.resultData`. Older rows may still contain executable JavaScript
+/// (`var myRobots = …`); the web viewer accepts both.
+pub const ANIMATION_PAYLOAD_VERSION: u32 = 1;
 
 pub struct OreAnimationData {
     pub ore_id: i64,
@@ -89,195 +96,193 @@ impl AnimationRecorder {
         robots: &[Robot],
         ore_data: &[OreAnimationData],
     ) -> String {
-        let mut output = String::new();
-
-        write_robots_animation(&mut output, &self.robot_steps, robots);
-        write_ground_animation(&mut output, ground, &self.ground_changes);
-        write_ore_animation(&mut output, ore_data);
-
-        output
+        let payload = json!({
+            "v": ANIMATION_PAYLOAD_VERSION,
+            "robots": robots_animation_value(&self.robot_steps, robots),
+            "ground": ground_animation_value(ground, &self.ground_changes),
+            "oreTypes": ore_animation_value(ore_data),
+        });
+        // Prevent `</script>` breakout when the JSON is embedded in HTML.
+        payload.to_string().replace('<', "\\u003c")
     }
 }
 
-fn write_robots_animation(
-    output: &mut String,
-    robot_steps: &[Vec<RobotAnimationStep>],
-    robots: &[Robot],
-) {
-    output.push_str("var myRobots = {robot: [");
+fn robots_animation_value(robot_steps: &[Vec<RobotAnimationStep>], robots: &[Robot]) -> Value {
+    let mut robot_values = Vec::with_capacity(robot_steps.len());
 
     for (index, steps) in robot_steps.iter().enumerate() {
-        if index > 0 {
-            output.push(',');
-        }
-
         let first_step = steps
             .first()
             .expect("animation should record at least one step per robot");
         let spec = robots[index].spec();
 
-        output.push_str(&format!(
-            "{{robotnr:{},x:{},y:{},o:{},A:{},B:{},C:{},size:{},maxore:{},maxturns:{},locations:",
-            index,
-            format_legacy_float(first_step.position.x),
-            format_legacy_float(first_step.position.y),
-            first_step.position.orientation,
-            first_step.ore[0],
-            first_step.ore[1],
-            first_step.ore[2],
-            format_legacy_float(spec.robot_size),
-            spec.max_ore,
-            spec.max_turns
-        ));
-        write_robot_step_array(output, steps);
-        output.push_str("}\n");
+        robot_values.push(json!({
+            "robotnr": index,
+            "x": legacy_float(first_step.position.x),
+            "y": legacy_float(first_step.position.y),
+            "o": first_step.position.orientation,
+            "A": first_step.ore[0],
+            "B": first_step.ore[1],
+            "C": first_step.ore[2],
+            "size": legacy_float(spec.robot_size),
+            "maxore": spec.max_ore,
+            "maxturns": spec.max_turns,
+            "locations": robot_step_array_value(steps),
+        }));
     }
 
-    output.push_str("]};\n");
+    json!({ "robot": robot_values })
 }
 
-fn write_robot_step_array(output: &mut String, steps: &[RobotAnimationStep]) {
-    output.push('[');
-
+fn robot_step_array_value(steps: &[RobotAnimationStep]) -> Value {
     let mut last_x = 0.0;
     let mut last_y = 0.0;
     let mut last_orientation = 0;
     let mut last_ore_a = 0;
     let mut last_ore_b = 0;
     let mut last_ore_c = 0;
+    let mut values = Vec::with_capacity(steps.len());
 
     for (index, step) in steps.iter().enumerate() {
-        if index > 0 {
-            output.push(',');
-        }
-
-        let mut values = Vec::new();
+        let mut object = Map::new();
 
         if index == 0 || step.position.x != last_x {
-            values.push(format!("x:{}", format_legacy_float(step.position.x)));
+            object.insert("x".to_string(), json!(legacy_float(step.position.x)));
             last_x = step.position.x;
         }
 
         if index == 0 || step.position.y != last_y {
-            values.push(format!("y:{}", format_legacy_float(step.position.y)));
+            object.insert("y".to_string(), json!(legacy_float(step.position.y)));
             last_y = step.position.y;
         }
 
         if index == 0 || step.position.orientation != last_orientation {
-            values.push(format!("o:{}", step.position.orientation));
+            object.insert("o".to_string(), json!(step.position.orientation));
             last_orientation = step.position.orientation;
         }
 
         if index == 0 || step.ore[0] != last_ore_a {
-            values.push(format!("A:{}", step.ore[0]));
+            object.insert("A".to_string(), json!(step.ore[0]));
             last_ore_a = step.ore[0];
         }
 
         if index == 0 || step.ore[1] != last_ore_b {
-            values.push(format!("B:{}", step.ore[1]));
+            object.insert("B".to_string(), json!(step.ore[1]));
             last_ore_b = step.ore[1];
         }
 
         if index == 0 || step.ore[2] != last_ore_c {
-            values.push(format!("C:{}", step.ore[2]));
+            object.insert("C".to_string(), json!(step.ore[2]));
             last_ore_c = step.ore[2];
         }
 
         // Always emit when present so Wait cycles stay distinguishable after delta compression.
         if let Some(action_index) = step.action_index {
-            values.push(format!("a:{action_index}"));
+            object.insert("a".to_string(), json!(action_index));
         }
 
         // Always emit when present so the viewer can highlight the active statement.
         if let Some(source_line) = step.source_line {
-            values.push(format!("l:{source_line}"));
+            object.insert("l".to_string(), json!(source_line));
         }
 
-        if step.time_fraction < 0.9 || values.is_empty() {
-            values.push(format!("t:{}", format_legacy_float(step.time_fraction)));
+        if step.time_fraction < 0.9 || object.is_empty() {
+            object.insert("t".to_string(), json!(legacy_float(step.time_fraction)));
         }
 
-        output.push('{');
-        output.push_str(&values.join(","));
-        output.push('}');
+        values.push(Value::Object(object));
     }
 
-    output.push(']');
+    Value::Array(values)
 }
 
-fn write_ground_animation(
-    output: &mut String,
+fn ground_animation_value(
     ground: &Ground,
     ground_changes: &BTreeMap<(usize, usize), Vec<GroundAnimationStep>>,
-) {
-    output.push_str(&format!(
-        "var myGround = {{sizeX:{},sizeY:{},positions:[",
-        ground.size_x(),
-        ground.size_y()
-    ));
+) -> Value {
+    let mut positions = Vec::with_capacity(ground_changes.len());
 
-    for (index, ((x, y), changes)) in ground_changes.iter().enumerate() {
-        if index > 0 {
-            output.push(',');
-        }
-
-        output.push_str(&format!("{{x:{x},y:{y},c:"));
-        write_ground_change_array(output, changes);
-        output.push_str("}\n");
+    for ((x, y), changes) in ground_changes {
+        positions.push(json!({
+            "x": x,
+            "y": y,
+            "c": ground_change_array_value(changes),
+        }));
     }
 
-    output.push_str("]};\n");
+    json!({
+        "sizeX": ground.size_x(),
+        "sizeY": ground.size_y(),
+        "positions": positions,
+    })
 }
 
-fn write_ground_change_array(output: &mut String, changes: &[GroundAnimationStep]) {
-    output.push('[');
+fn ground_change_array_value(changes: &[GroundAnimationStep]) -> Value {
+    let mut values = Vec::with_capacity(changes.len());
 
-    for (index, change) in changes.iter().enumerate() {
-        if index > 0 {
-            output.push(',');
-        }
-
-        let mut values = Vec::new();
+    for change in changes {
+        let mut object = Map::new();
 
         if change.time > 0 {
-            values.push(format!("t:{}", change.time));
+            object.insert("t".to_string(), json!(change.time));
         }
         if change.ore[0] > 0 {
-            values.push(format!("A:{}", change.ore[0]));
+            object.insert("A".to_string(), json!(change.ore[0]));
         }
         if change.ore[1] > 0 {
-            values.push(format!("B:{}", change.ore[1]));
+            object.insert("B".to_string(), json!(change.ore[1]));
         }
         if change.ore[2] > 0 {
-            values.push(format!("C:{}", change.ore[2]));
+            object.insert("C".to_string(), json!(change.ore[2]));
         }
 
-        output.push('{');
-        output.push_str(&values.join(","));
-        output.push('}');
+        values.push(Value::Object(object));
     }
 
-    output.push(']');
+    Value::Array(values)
 }
 
-fn write_ore_animation(output: &mut String, ore_data: &[OreAnimationData]) {
-    output.push_str("var myOreTypes = {");
+fn ore_animation_value(ore_data: &[OreAnimationData]) -> Value {
+    let mut object = Map::new();
 
     for (index, ore) in ore_data.iter().enumerate() {
-        if index > 0 {
-            output.push(',');
-        }
-
-        let ore_key = (b'A' + index as u8) as char;
-        output.push_str(&format!(
-            "{ore_key}:{{id:{},max:{}}}",
-            ore.ore_id, ore.max_amount
-        ));
+        let ore_key = ((b'A' + index as u8) as char).to_string();
+        object.insert(
+            ore_key,
+            json!({
+                "id": ore.ore_id,
+                "max": ore.max_amount,
+            }),
+        );
     }
 
-    output.push_str("};\n");
+    Value::Object(object)
 }
 
-fn format_legacy_float(value: f64) -> String {
-    format!("{value:.1}")
+fn legacy_float(value: f64) -> Value {
+    let rounded = (value * 10.0).round() / 10.0;
+    Number::from_f64(rounded)
+        .map(Value::Number)
+        .unwrap_or(Value::Null)
+}
+
+/// True when `resultData` looks like pre-JSON executable JavaScript.
+pub fn is_legacy_javascript_result_data(result_data: &str) -> bool {
+    let trimmed = result_data.trim_start();
+    trimmed.starts_with("var myRobots")
+        || trimmed.starts_with("var myGround")
+        || trimmed.starts_with("var myOreTypes")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_legacy_javascript_result_data;
+
+    #[test]
+    fn detects_legacy_javascript_payloads() {
+        assert!(is_legacy_javascript_result_data("var myRobots = {robot: []};"));
+        assert!(!is_legacy_javascript_result_data(
+            r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#
+        ));
+    }
 }

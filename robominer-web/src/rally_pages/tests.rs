@@ -57,7 +57,7 @@ fn default_activity_feed_query() -> ActivityFeedQuery {
 
 fn sample_rally_view_state(slots: [(String, String); 4]) -> RallyViewPageState {
     RallyViewPageState {
-        result_data: "var myOreTypes = {};".to_string(),
+        result_data: r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
         ores: Vec::new(),
         slots,
         mining_area_name: "Area & One".to_string(),
@@ -420,12 +420,44 @@ fn activity_rendering_shows_sidebar_queue_snapshot() {
 }
 
 #[test]
-fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
+fn rally_view_rendering_keeps_legacy_javascript_result_data_executable() {
     let html = render_rally_view_page(
         "Player".to_string(),
         None,
         &RallyViewPageState {
             result_data: "var myOreTypes = {};".to_string(),
+            ores: vec![],
+            slots: [
+                ("Bot 0".to_string(), "User 0".to_string()),
+                ("Bot 1".to_string(), "User 1".to_string()),
+                ("Bot 2".to_string(), "User 2".to_string()),
+                ("Bot 3".to_string(), "User 3".to_string()),
+            ],
+            mining_area_name: "Area".to_string(),
+            viewer_player_number: None,
+            viewer_robot_id: None,
+            viewer_robot_name: None,
+            viewer_score: None,
+            viewer_total_reward: None,
+            viewer_result_claimed: false,
+            viewer_source_code: None,
+            viewer_program_source_id: None,
+        },
+        None,
+    );
+
+    assert!(!html.contains(r#"id="rally-result-data""#));
+    assert!(html.contains("var myOreTypes = {};"));
+    assert!(!html.contains("applyRallyResultPayload(JSON.parse"));
+}
+
+#[test]
+fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
+    let html = render_rally_view_page(
+        "Player".to_string(),
+        None,
+        &RallyViewPageState {
+            result_data: r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
             ores: vec![robominer_db::OreRecord {
                 id: 1,
                 ore_name: "Ore <A> & 'B'".to_string(),
@@ -483,7 +515,9 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("var myRallyContext = myRallyCanvas.getContext('2d');"));
     assert!(html.contains("function runanimation()"));
     assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
-    assert!(html.contains("var myOreTypes = {};"));
+    assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
+    assert!(html.contains(r#""v":1"#));
+    assert!(html.contains("applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));"));
     assert!(html.contains(
         "document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);"
     ));
@@ -504,7 +538,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         "Player".to_string(),
         None,
         &RallyViewPageState {
-            result_data: "var myOreTypes = {};".to_string(),
+            result_data: r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
             ores: Vec::new(),
             slots: [
                 ("Lead Bot".to_string(), "Owner".to_string()),
@@ -565,7 +599,7 @@ fn rally_view_shows_snapshot_unavailable_without_executed_source() {
         "Player".to_string(),
         None,
         &RallyViewPageState {
-            result_data: "var myOreTypes = {};".to_string(),
+            result_data: r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
             ores: Vec::new(),
             slots: [
                 ("Lead Bot".to_string(), "Owner".to_string()),

@@ -3,6 +3,24 @@ function rgbToHex(r, g, b) {
 }
 
 
+/**
+ * Load a versioned rally animation payload into the viewer globals.
+ * Payload shape (v1): { v, robots, ground, oreTypes }.
+ * Legacy executable `var myRobots = …` rows are still injected by the page bootstrap.
+ */
+function applyRallyResultPayload(payload)
+{
+    if (!payload || payload.v !== 1)
+    {
+        throw new Error('Unsupported rally result payload version');
+    }
+
+    myRobots = payload.robots;
+    myGround = payload.ground;
+    myOreTypes = payload.oreTypes || {};
+}
+
+
 function smoothen(v1, v2, t, i)
 {
     return (v1 * (i - t) + v2 * t) / i;

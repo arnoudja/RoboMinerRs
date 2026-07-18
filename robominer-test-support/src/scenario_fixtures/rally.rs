@@ -118,9 +118,10 @@ impl RallyFixture {
                 .fetch_one(pool)
                 .await
                 .expect("failed to load rally result data");
-        assert!(result_data.contains("var myRobots = {robot: ["));
-        assert!(result_data.contains("var myGround = {"));
-        assert!(result_data.contains("var myOreTypes = {A:{id:"));
+        assert!(result_data.contains(r#""v":1"#));
+        assert!(result_data.contains(r#""robots":{"robot":["#));
+        assert!(result_data.contains(r#""ground":{"#));
+        assert!(result_data.contains(r#""oreTypes":{"A":{"id":"#));
 
         let ore_amount: Option<i32> = sqlx::query_scalar(
             "SELECT amount FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?",

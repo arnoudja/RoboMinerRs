@@ -73,7 +73,7 @@ fn ore_heap_matches_legacy_radial_shape() {
 }
 
 #[test]
-fn animation_data_uses_legacy_javascript_payload_shape() {
+fn animation_data_uses_versioned_json_payload_shape() {
     let program = seeded_program("mine();");
     let mut ground = Ground::new(4, 4);
     ground.at_mut(0, 0).add_ore(0, 8);
@@ -92,13 +92,23 @@ fn animation_data_uses_legacy_javascript_payload_shape() {
         max_amount: 8,
     }]);
 
-    assert!(data.contains("var myRobots = {robot: ["));
-    assert!(data.contains("robotnr:0"));
-    assert!(data.contains("locations:[{x:0.0,y:0.0,o:45,A:0,B:0,C:0,l:1}"));
-    assert!(data.contains("{A:4,a:6,l:1}"));
-    assert!(data.contains("var myGround = {sizeX:4,sizeY:4,positions:["));
-    assert!(data.contains("{x:0,y:0,c:[{A:8},{t:1,A:4}]"));
-    assert!(data.contains("var myOreTypes = {A:{id:1,max:8}};"));
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+    assert_eq!(payload["v"], 1);
+    assert_eq!(payload["robots"]["robot"][0]["robotnr"], 0);
+    assert_eq!(payload["robots"]["robot"][0]["locations"][0]["l"], 1);
+    assert_eq!(payload["robots"]["robot"][0]["locations"][1]["A"], 4);
+    assert_eq!(payload["robots"]["robot"][0]["locations"][1]["a"], 6);
+    assert_eq!(payload["robots"]["robot"][0]["locations"][1]["l"], 1);
+    assert_eq!(payload["ground"]["sizeX"], 4);
+    assert_eq!(payload["ground"]["sizeY"], 4);
+    assert_eq!(payload["ground"]["positions"][0]["x"], 0);
+    assert_eq!(payload["ground"]["positions"][0]["c"][0]["A"], 8);
+    assert_eq!(payload["ground"]["positions"][0]["c"][1]["t"], 1);
+    assert_eq!(payload["ground"]["positions"][0]["c"][1]["A"], 4);
+    assert_eq!(payload["oreTypes"]["A"]["id"], 1);
+    assert_eq!(payload["oreTypes"]["A"]["max"], 8);
+    assert!(!data.contains('<'));
 }
 
 #[test]
@@ -118,7 +128,7 @@ fn animation_data_records_wait_action_index_on_idle_cycles() {
     let data = simulation.run_with_animation(&[]);
 
     assert!(
-        data.contains("a:1"),
+        data.contains(r#""a":1"#),
         "wait cycles should emit action index 1: {data}"
     );
 }
@@ -145,10 +155,10 @@ fn animation_data_records_scan_action_index_while_scanning() {
     let data = simulation.run_with_animation(&[]);
 
     assert!(
-        data.contains("a:0"),
+        data.contains(r#""a":0"#),
         "scan-busy wait cycles should emit action index 0: {data}"
     );
-    let scan_marks = data.matches("a:0").count();
+    let scan_marks = data.matches(r#""a":0"#).count();
     assert!(
         scan_marks >= 2,
         "expected multiple scan-busy cycles, found {scan_marks} in {data}"
@@ -175,11 +185,11 @@ fn animation_data_records_source_line_for_program_actions() {
     let data = simulation.run_with_animation(&[]);
 
     assert!(
-        data.contains("l:1") || data.contains("l:2"),
+        data.contains(r#""l":1"#) || data.contains(r#""l":2"#),
         "program animation should include source lines: {data}"
     );
     assert!(
-        data.contains("a:6") && data.contains("l:"),
+        data.contains(r#""a":6"#) && data.contains(r#""l":"#),
         "mine cycles should include a source line: {data}"
     );
     assert!(

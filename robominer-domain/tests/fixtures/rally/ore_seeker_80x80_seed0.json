@@ -148,7 +148,7 @@
       "mining_area_id": 11080,
       "player_number": 0,
       "mining_end_seconds_from_now": 9,
-      "score": 999.9999280000001,
+      "score": 999.999928,
       "ore_results": [
         {
           "ore_id": 3,
@@ -188,8 +188,9 @@
     }
   ],
   "animation_contains": [
-    "var myRobots = {robot: [",
-    "var myGround = {sizeX:80,sizeY:80,positions:[",
-    "var myOreTypes = {"
+    "\"v\":1",
+    "\"robots\":{\"robot\":[",
+    "\"ground\":{\"sizeX\":80,\"sizeY\":80,\"positions\":[",
+    "\"oreTypes\":{"
   ]
 }

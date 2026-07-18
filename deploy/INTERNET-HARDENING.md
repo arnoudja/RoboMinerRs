@@ -166,6 +166,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Gap | Mitigation today |
 | --- | --- |
 | No HSTS in app | Proxy adds `Strict-Transport-Security` (app serves plain HTTP on loopback) |
+| No full CSP yet | New rally `resultData` is versioned JSON (not executable). Replay page still uses inline bootstrap/player JS; legacy DB rows may still inject old `var myRobots` scripts until they age out |
 
 ### Already covered in-app
 
@@ -186,6 +187,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
 | Email validation | Local + domain with TLD on signup / account update |
+| Rally replay payload | New runs store versioned JSON (`{"v":1,…}`) in `RallyResult.resultData`; viewer loads via `application/json` |
 
 ## Related docs
 

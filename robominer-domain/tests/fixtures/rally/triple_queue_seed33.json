@@ -204,8 +204,9 @@
     }
   ],
   "animation_contains": [
-    "var myRobots = {robot: [",
-    "var myGround = {sizeX:4,sizeY:4,positions:[",
-    "var myOreTypes = {"
+    "\"v\":1",
+    "\"robots\":{\"robot\":[",
+    "\"ground\":{\"sizeX\":4,\"sizeY\":4,\"positions\":[",
+    "\"oreTypes\":{"
   ]
 }

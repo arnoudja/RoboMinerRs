@@ -54,7 +54,7 @@ fn run_rally_loadout_returns_outcomes_for_queued_and_ai_robots() {
 }
 
 #[test]
-fn run_rally_loadout_with_animation_returns_legacy_result_data() {
+fn run_rally_loadout_with_animation_returns_versioned_json_result_data() {
     let mut area = unit_test_mining_area_record(1001);
     area.max_moves = 1;
     let mining_area = MiningAreaLoadout::new(
@@ -77,15 +77,14 @@ fn run_rally_loadout_with_animation_returns_legacy_result_data() {
     let run = run_rally_loadout_with_animation_seed(&rally, 0).expect("rally should run");
 
     assert_eq!(run.outcome.mining_area_id, 1001);
-    assert!(run.result_data.contains("var myRobots = {robot: ["));
-    assert!(
-        run.result_data
-            .contains("var myGround = {sizeX:4,sizeY:4,positions:[")
-    );
-    assert!(
-        run.result_data
-            .contains("var myOreTypes = {A:{id:1,max:10}};")
-    );
+    let payload: serde_json::Value =
+        serde_json::from_str(&run.result_data).expect("result data should be JSON");
+    assert_eq!(payload["v"], 1);
+    assert!(payload["robots"]["robot"].as_array().is_some_and(|r| !r.is_empty()));
+    assert_eq!(payload["ground"]["sizeX"], 4);
+    assert_eq!(payload["ground"]["sizeY"], 4);
+    assert_eq!(payload["oreTypes"]["A"]["id"], 1);
+    assert_eq!(payload["oreTypes"]["A"]["max"], 10);
 }
 
 #[test]

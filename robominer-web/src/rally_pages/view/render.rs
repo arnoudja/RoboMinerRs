@@ -3,6 +3,13 @@ use crate::html::{escape_html, escape_js_string, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
 
+fn is_legacy_javascript_result_data(result_data: &str) -> bool {
+    let trimmed = result_data.trim_start();
+    trimmed.starts_with("var myRobots")
+        || trimmed.starts_with("var myGround")
+        || trimmed.starts_with("var myOreTypes")
+}
+
 pub fn render_rally_view_page(
     username: String,
     hud: Option<&str>,
@@ -325,6 +332,26 @@ fn render_rally_view_bootstrap_script(
         .viewer_player_number
         .map(|player_number| player_number.to_string())
         .unwrap_or_else(|| "null".to_string());
+
+    let legacy_javascript = is_legacy_javascript_result_data(result_data);
+    if !legacy_javascript {
+        // Versioned JSON payload — not executed as script.
+        body.push_str(r#"<script type="application/json" id="rally-result-data">"#);
+        body.push_str(result_data);
+        body.push_str("</script>");
+    }
+
+    let payload_bootstrap = if legacy_javascript {
+        // Pre-JSON rows still store executable `var myRobots = …` source.
+        format!("{result_data}\n")
+    } else {
+        String::from(
+            r#"
+                applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));
+"#,
+        )
+    };
+
     body.push_str(&format!(
         r#"<script>
                 function getOreName(oreId) {{
@@ -341,8 +368,7 @@ fn render_rally_view_bootstrap_script(
                                 window.setTimeout(callback, 1000 / 60);
                             }};
                     }})();
-                {result_data}
-
+                {payload_bootstrap}
                 var myRallyViewerSlot = {viewer_slot};
 
                 var myRallyCanvas = document.getElementById('rallyCanvas');

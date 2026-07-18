@@ -6,3 +6,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 robominer-program = { version = "0.1.0", path = "../robominer-program" }
+serde_json = { version = "1.0.149", features = ["preserve_order"] }

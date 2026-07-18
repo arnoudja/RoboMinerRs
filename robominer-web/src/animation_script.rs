@@ -7,6 +7,7 @@ mod tests {
     #[test]
     fn rally_animation_script_exposes_core_viewer_functions() {
         for symbol in [
+            "function applyRallyResultPayload(",
             "function runanimation(",
             "function rallySetSpeed(",
             "function rallySeekToRatio(",

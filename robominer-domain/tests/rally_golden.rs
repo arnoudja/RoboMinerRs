@@ -145,13 +145,14 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
                 })
                 .collect(),
             animation_contains: vec![
-                "var myRobots = {robot: [".to_string(),
+                r#""v":1"#.to_string(),
+                r#""robots":{"robot":["#.to_string(),
                 format!(
-                    "var myGround = {{sizeX:{},sizeY:{},positions:[",
+                    r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,
                     scenario.loadout.mining_area.area.size_x,
                     scenario.loadout.mining_area.area.size_y,
                 ),
-                "var myOreTypes = {".to_string(),
+                r#""oreTypes":{"#.to_string(),
             ],
         },
         animation_data: run.result_data,
