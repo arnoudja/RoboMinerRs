@@ -3768,6 +3768,30 @@ body.mining-area-atlas-drawer-open {
     padding: 12px;
 }
 
+.rally-view-replay-unavailable {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+    min-height: 220px;
+    padding: 18px 16px;
+}
+
+.rally-view-replay-unavailable-title {
+    color: #e8f4ff;
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.rally-view-replay-unavailable-note {
+    color: var(--mq-text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 36rem;
+}
+
 .rally-view-canvas-wrap {
     background: rgba(4, 8, 14, 0.95);
     border: 1px solid rgba(42, 58, 92, 0.85);

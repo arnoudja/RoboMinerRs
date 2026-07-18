@@ -3,11 +3,31 @@ use crate::html::{escape_html, escape_js_string, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RallyResultPayloadKind {
+    VersionedJson,
+    LegacyExecutable,
+    Unsupported,
+}
+
 fn is_legacy_javascript_result_data(result_data: &str) -> bool {
     let trimmed = result_data.trim_start();
     trimmed.starts_with("var myRobots")
         || trimmed.starts_with("var myGround")
         || trimmed.starts_with("var myOreTypes")
+}
+
+fn classify_rally_result_payload(result_data: &str) -> RallyResultPayloadKind {
+    if is_legacy_javascript_result_data(result_data) {
+        return RallyResultPayloadKind::LegacyExecutable;
+    }
+
+    match serde_json::from_str::<serde_json::Value>(result_data) {
+        Ok(value) if value.get("v").and_then(|version| version.as_u64()) == Some(1) => {
+            RallyResultPayloadKind::VersionedJson
+        }
+        _ => RallyResultPayloadKind::Unsupported,
+    }
 }
 
 pub fn render_rally_view_page(
@@ -25,15 +45,22 @@ pub fn render_rally_view_page(
         ));
     }
 
+    let payload_kind = classify_rally_result_payload(&state.result_data);
+    let replay_available = payload_kind == RallyResultPayloadKind::VersionedJson;
+
     let mut body = String::from(r#"<div class="rally-view-page">"#);
     render_rally_view_header(&mut body, back_link);
     render_rally_view_context(&mut body, state);
-    body.push_str("<script>");
-    body.push_str(animation_script::RALLY_ANIMATION_SCRIPT);
-    body.push_str("</script>");
-    render_rally_view_deck(&mut body, state);
+    if replay_available {
+        body.push_str("<script>");
+        body.push_str(animation_script::RALLY_ANIMATION_SCRIPT);
+        body.push_str("</script>");
+    }
+    render_rally_view_deck(&mut body, state, replay_available, payload_kind);
     render_rally_view_quick_links(&mut body, state);
-    render_rally_view_bootstrap_script(&mut body, &ore_cases, &state.result_data, state);
+    if replay_available {
+        render_rally_view_bootstrap_script(&mut body, &ore_cases, &state.result_data, state);
+    }
     body.push_str("</div>");
 
     layout(
@@ -152,47 +179,57 @@ fn render_rally_view_quick_links(body: &mut String, state: &RallyViewPageState) 
     body.push_str("</nav>");
 }
 
-fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
+fn render_rally_view_deck(
+    body: &mut String,
+    state: &RallyViewPageState,
+    replay_available: bool,
+    payload_kind: RallyResultPayloadKind,
+) {
     body.push_str(r#"<div class="rally-view-deck">"#);
     body.push_str(r#"<section class="rally-view-stage" aria-label="Rally map">"#);
-    body.push_str(r#"<div class="rally-view-canvas-wrap">"#);
-    body.push_str(r#"<canvas id="rallyCanvas" width="600" height="600"></canvas>"#);
-    body.push_str("</div>");
-    body.push_str(r#"<div class="rally-view-transport">"#);
-    body.push_str(r#"<div class="rally-view-controls">"#);
-    body.push_str(
-        r#"<button type="button" class="rally-view-control-button" id="rallyPlayPause">Play</button>"#,
-    );
-    body.push_str(
-        r#"<button type="button" class="rally-view-control-button" id="rallyRestart">Restart</button>"#,
-    );
-    body.push_str(r#"<div class="rally-view-speed" aria-label="Playback speed">"#);
-    body.push_str(
-        r#"<button type="button" class="rally-view-speed-button" data-speed="0.1">0.1×</button>"#,
-    );
-    body.push_str(
-        r#"<button type="button" class="rally-view-speed-button rally-view-speed-button-active" data-speed="1">1×</button>"#,
-    );
-    body.push_str(
-        r#"<button type="button" class="rally-view-speed-button" data-speed="2">2×</button>"#,
-    );
-    body.push_str(
-        r#"<button type="button" class="rally-view-speed-button" data-speed="4">4×</button>"#,
-    );
-    body.push_str("</div></div>");
-    body.push_str(r#"<div class="rally-view-progress">"#);
-    body.push_str(
-        r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" aria-label="Seek rally replay"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
-    );
-    body.push_str("</div>");
-    body.push_str(
-        r#"<p class="rally-view-cycle-status">Cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
-    );
-    body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
-    body.push_str(
-        r#"<canvas id="progressCanvas" class="rally-view-progress-canvas" width="600" height="50" hidden></canvas>"#,
-    );
-    body.push_str("</div></section>");
+    if replay_available {
+        body.push_str(r#"<div class="rally-view-canvas-wrap">"#);
+        body.push_str(r#"<canvas id="rallyCanvas" width="600" height="600"></canvas>"#);
+        body.push_str("</div>");
+        body.push_str(r#"<div class="rally-view-transport">"#);
+        body.push_str(r#"<div class="rally-view-controls">"#);
+        body.push_str(
+            r#"<button type="button" class="rally-view-control-button" id="rallyPlayPause">Play</button>"#,
+        );
+        body.push_str(
+            r#"<button type="button" class="rally-view-control-button" id="rallyRestart">Restart</button>"#,
+        );
+        body.push_str(r#"<div class="rally-view-speed" aria-label="Playback speed">"#);
+        body.push_str(
+            r#"<button type="button" class="rally-view-speed-button" data-speed="0.1">0.1×</button>"#,
+        );
+        body.push_str(
+            r#"<button type="button" class="rally-view-speed-button rally-view-speed-button-active" data-speed="1">1×</button>"#,
+        );
+        body.push_str(
+            r#"<button type="button" class="rally-view-speed-button" data-speed="2">2×</button>"#,
+        );
+        body.push_str(
+            r#"<button type="button" class="rally-view-speed-button" data-speed="4">4×</button>"#,
+        );
+        body.push_str("</div></div>");
+        body.push_str(r#"<div class="rally-view-progress">"#);
+        body.push_str(
+            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" aria-label="Seek rally replay"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
+        );
+        body.push_str("</div>");
+        body.push_str(
+            r#"<p class="rally-view-cycle-status">Cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
+        );
+        body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
+        body.push_str(
+            r#"<canvas id="progressCanvas" class="rally-view-progress-canvas" width="600" height="50" hidden></canvas>"#,
+        );
+        body.push_str("</div>");
+    } else {
+        render_rally_view_replay_unavailable(body, payload_kind);
+    }
+    body.push_str("</section>");
     body.push_str(r#"<aside class="rally-view-sidebar">"#);
     body.push_str(r#"<h2 class="rally-view-sidebar-title">Players</h2>"#);
     body.push_str(r#"<div class="rally-view-players">"#);
@@ -218,6 +255,26 @@ fn render_rally_view_deck(body: &mut String, state: &RallyViewPageState) {
         );
     }
     body.push_str("</aside></div>");
+}
+
+fn render_rally_view_replay_unavailable(body: &mut String, payload_kind: RallyResultPayloadKind) {
+    let detail = match payload_kind {
+        RallyResultPayloadKind::LegacyExecutable => {
+            "This rally was stored in an older executable format that is no longer played for security reasons."
+        }
+        RallyResultPayloadKind::Unsupported => {
+            "This rally replay payload is missing, corrupt, or uses an unsupported version."
+        }
+        RallyResultPayloadKind::VersionedJson => {
+            "This rally replay is unavailable."
+        }
+    };
+    body.push_str(r#"<div class="rally-view-replay-unavailable" role="status">"#);
+    body.push_str(r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#);
+    body.push_str(&format!(
+        r#"<p class="rally-view-replay-unavailable-note">{detail}</p>"#
+    ));
+    body.push_str("</div>");
 }
 
 fn render_rally_view_source(
@@ -333,24 +390,10 @@ fn render_rally_view_bootstrap_script(
         .map(|player_number| player_number.to_string())
         .unwrap_or_else(|| "null".to_string());
 
-    let legacy_javascript = is_legacy_javascript_result_data(result_data);
-    if !legacy_javascript {
-        // Versioned JSON payload — not executed as script.
-        body.push_str(r#"<script type="application/json" id="rally-result-data">"#);
-        body.push_str(result_data);
-        body.push_str("</script>");
-    }
-
-    let payload_bootstrap = if legacy_javascript {
-        // Pre-JSON rows still store executable `var myRobots = …` source.
-        format!("{result_data}\n")
-    } else {
-        String::from(
-            r#"
-                applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));
-"#,
-        )
-    };
+    // Versioned JSON only — never inject stored resultData as executable script.
+    body.push_str(r#"<script type="application/json" id="rally-result-data">"#);
+    body.push_str(result_data);
+    body.push_str("</script>");
 
     body.push_str(&format!(
         r#"<script>
@@ -368,7 +411,8 @@ fn render_rally_view_bootstrap_script(
                                 window.setTimeout(callback, 1000 / 60);
                             }};
                     }})();
-                {payload_bootstrap}
+
+                applyRallyResultPayload(JSON.parse(document.getElementById('rally-result-data').textContent));
                 var myRallyViewerSlot = {viewer_slot};
 
                 var myRallyCanvas = document.getElementById('rallyCanvas');

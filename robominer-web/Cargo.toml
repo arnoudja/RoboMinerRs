@@ -10,6 +10,7 @@ clap = { version = "4.6.1", features = ["derive"] }
 hmac = "0.12.1"
 robominer-db = { version = "0.1.0", path = "../robominer-db" }
 robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
+serde_json = "1"
 sha2 = "0.10.9"
 tokio = { version = "1.52.1", features = ["macros", "net", "rt", "rt-multi-thread", "sync"] }
 tower-http = { version = "0.6.8", features = ["timeout"] }

@@ -8,8 +8,8 @@ use crate::position::Position;
 use crate::robot::Robot;
 
 /// Current on-disk / wire format for rally animation payloads stored in
-/// `RallyResult.resultData`. Older rows may still contain executable JavaScript
-/// (`var myRobots = …`); the web viewer accepts both.
+/// `RallyResult.resultData`. Older executable JavaScript rows (`var myRobots = …`)
+/// are no longer played by the web viewer.
 pub const ANIMATION_PAYLOAD_VERSION: u32 = 1;
 
 pub struct OreAnimationData {

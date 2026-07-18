@@ -6,7 +6,7 @@ function rgbToHex(r, g, b) {
 /**
  * Load a versioned rally animation payload into the viewer globals.
  * Payload shape (v1): { v, robots, ground, oreTypes }.
- * Legacy executable `var myRobots = …` rows are still injected by the page bootstrap.
+ * Legacy executable `var myRobots = …` rows are rejected by the page and never injected.
  */
 function applyRallyResultPayload(payload)
 {

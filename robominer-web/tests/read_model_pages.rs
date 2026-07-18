@@ -129,6 +129,14 @@ async fn rally_view_renders_from_mining_results_and_activity() {
         !mining_body.contains(r#"id="rallySourceCode""#),
         "unavailable snapshot should omit source panel code:\n{mining_body}"
     );
+    assert!(
+        mining_body.contains("Replay unavailable"),
+        "legacy executable resultData must not be injected:\n{mining_body}"
+    );
+    assert!(
+        !mining_body.contains("var myRobots = {robot: []};"),
+        "legacy executable resultData must not appear in the page:\n{mining_body}"
+    );
 
     let activity = route(
         &get_request_query("/activity", query, Some(&cookie)),

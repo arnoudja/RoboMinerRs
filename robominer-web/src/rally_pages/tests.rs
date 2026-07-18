@@ -420,7 +420,7 @@ fn activity_rendering_shows_sidebar_queue_snapshot() {
 }
 
 #[test]
-fn rally_view_rendering_keeps_legacy_javascript_result_data_executable() {
+fn rally_view_rendering_refuses_legacy_javascript_result_data() {
     let html = render_rally_view_page(
         "Player".to_string(),
         None,
@@ -447,8 +447,49 @@ fn rally_view_rendering_keeps_legacy_javascript_result_data_executable() {
     );
 
     assert!(!html.contains(r#"id="rally-result-data""#));
-    assert!(html.contains("var myOreTypes = {};"));
+    assert!(!html.contains("var myOreTypes = {};"));
     assert!(!html.contains("applyRallyResultPayload(JSON.parse"));
+    assert!(!html.contains("function runanimation("));
+    assert!(!html.contains(r#"id="rallyCanvas""#));
+    assert!(html.contains("Replay unavailable"));
+    assert!(html.contains(
+        "This rally was stored in an older executable format that is no longer played for security reasons."
+    ));
+}
+
+#[test]
+fn rally_view_rendering_refuses_unsupported_result_data() {
+    let html = render_rally_view_page(
+        "Player".to_string(),
+        None,
+        &RallyViewPageState {
+            result_data: r#"{"v":2,"robots":{"robot":[]}}"#.to_string(),
+            ores: vec![],
+            slots: [
+                ("Bot 0".to_string(), "User 0".to_string()),
+                ("Bot 1".to_string(), "User 1".to_string()),
+                ("Bot 2".to_string(), "User 2".to_string()),
+                ("Bot 3".to_string(), "User 3".to_string()),
+            ],
+            mining_area_name: "Area".to_string(),
+            viewer_player_number: None,
+            viewer_robot_id: None,
+            viewer_robot_name: None,
+            viewer_score: None,
+            viewer_total_reward: None,
+            viewer_result_claimed: false,
+            viewer_source_code: None,
+            viewer_program_source_id: None,
+        },
+        None,
+    );
+
+    assert!(!html.contains(r#"id="rally-result-data""#));
+    assert!(!html.contains(r#""v":2"#));
+    assert!(html.contains("Replay unavailable"));
+    assert!(html.contains(
+        "This rally replay payload is missing, corrupt, or uses an unsupported version."
+    ));
 }
 
 #[test]
