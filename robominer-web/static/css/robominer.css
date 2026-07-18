@@ -4025,6 +4025,21 @@ body.mining-area-atlas-drawer-open {
     margin-bottom: 8px;
 }
 
+.rally-view-player-battery {
+    display: grid;
+    gap: 3px;
+    margin: 0 0 2px;
+}
+
+.rally-view-player-battery-meta {
+    align-items: baseline;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rally-view-player-battery-caption,
+.rally-view-player-turns,
 .rally-view-player-cargo,
 .rally-view-player-action {
     color: #c5d4ea;
@@ -4032,6 +4047,32 @@ body.mining-area-atlas-drawer-open {
     font-size: 0.72rem;
     letter-spacing: 0.02em;
     margin: 0;
+}
+
+.rally-view-player-battery-caption {
+    color: var(--mq-text-muted);
+    text-transform: uppercase;
+}
+
+.rally-view-player-battery-track {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 999px;
+    height: 7px;
+    overflow: hidden;
+}
+
+.rally-view-player-battery-fill {
+    background: linear-gradient(90deg, #2f9e6f 0%, #48c878 100%);
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+    transition: width 80ms linear;
+    width: 100%;
+}
+
+.rally-view-player-battery-low .rally-view-player-battery-fill {
+    background: linear-gradient(90deg, #b45309 0%, #f59e0b 100%);
 }
 
 .rally-view-player-action {
@@ -4054,6 +4095,20 @@ body.mining-area-atlas-drawer-open {
 .rally-view-player-full .rally-view-player-cargo {
     color: #48c878;
     font-weight: bold;
+}
+
+.rally-view-player-depleted {
+    border-color: rgba(148, 163, 184, 0.55);
+}
+
+.rally-view-player-depleted .rally-view-player-turns {
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+.rally-view-player-depleted .rally-view-player-battery-fill {
+    background: rgba(148, 163, 184, 0.35);
+    width: 0 !important;
 }
 
 .rally-view-player-chart {

@@ -15,6 +15,7 @@ mod tests {
             "function robotColor(",
             "function updateRobotDebugPanel(",
             "function robotCargoFull(",
+            "function robotTurnsRemaining(",
             "function rallyActionName(",
             "function updateRallySourceHighlight(",
             "function updateRallyEditCodeLink(",

@@ -246,8 +246,76 @@ function robotCargoFull(robot)
 }
 
 
+function robotTurnsRemaining(robot, step)
+{
+    if (typeof robot.maxturns !== 'number' || isNaN(robot.maxturns))
+    {
+        return null;
+    }
+
+    var remaining = Math.floor(robot.maxturns) - Math.floor(step);
+    if (remaining < 0)
+    {
+        remaining = 0;
+    }
+    return remaining;
+}
+
+
 function updateRobotDebugPanel(robot, step)
 {
+    var turnsEl = document.getElementById('robotTurns' + robot.robotnr);
+    var batteryEl = document.getElementById('robotBattery' + robot.robotnr);
+    var batteryFillEl = document.getElementById('robotBatteryFill' + robot.robotnr);
+    var remainingTurns = robotTurnsRemaining(robot, step);
+    var depleted = remainingTurns === 0;
+    var maxTurns = typeof robot.maxturns === 'number' && !isNaN(robot.maxturns)
+        ? Math.floor(robot.maxturns)
+        : 0;
+    var ratio = 0;
+    if (remainingTurns !== null && maxTurns > 0)
+    {
+        ratio = remainingTurns / maxTurns;
+    }
+    if (turnsEl)
+    {
+        if (remainingTurns === null || maxTurns <= 0)
+        {
+            turnsEl.textContent = '—';
+        }
+        else
+        {
+            turnsEl.textContent = remainingTurns + ' / ' + maxTurns
+                + (depleted ? ' OUT' : '');
+        }
+    }
+    if (batteryFillEl)
+    {
+        batteryFillEl.style.width = (ratio * 100) + '%';
+    }
+    if (batteryEl)
+    {
+        if (remainingTurns === null || maxTurns <= 0)
+        {
+            batteryEl.setAttribute('aria-valuemax', '0');
+            batteryEl.setAttribute('aria-valuenow', '0');
+            batteryEl.classList.remove('rally-view-player-battery-low');
+        }
+        else
+        {
+            batteryEl.setAttribute('aria-valuemax', String(maxTurns));
+            batteryEl.setAttribute('aria-valuenow', String(remainingTurns));
+            if (ratio > 0 && ratio <= 0.2)
+            {
+                batteryEl.classList.add('rally-view-player-battery-low');
+            }
+            else
+            {
+                batteryEl.classList.remove('rally-view-player-battery-low');
+            }
+        }
+    }
+
     var cargoEl = document.getElementById('robotCargo' + robot.robotnr);
     var total = Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C);
     var full = robotCargoFull(robot);
@@ -301,6 +369,15 @@ function updateRobotDebugPanel(robot, step)
         else
         {
             card.classList.remove('rally-view-player-full');
+        }
+
+        if (depleted)
+        {
+            card.classList.add('rally-view-player-depleted');
+        }
+        else
+        {
+            card.classList.remove('rally-view-player-depleted');
         }
     }
 

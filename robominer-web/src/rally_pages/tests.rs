@@ -533,11 +533,17 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains(r#"class="rally-view-player-user">User &lt;0&gt;</p>"#));
     assert!(html.contains(r#"class="rally-view-player-robot">Bot &lt;0&gt;</p>"#));
     assert!(html.contains(r#"id="oreCanvas0""#));
+    assert!(html.contains(r#"id="robotBattery0""#));
+    assert!(html.contains(r#"id="robotBatteryFill0""#));
+    assert!(html.contains(r#"id="robotTurns0""#));
     assert!(html.contains(r#"id="robotCargo0""#));
     assert!(html.contains(r#"id="robotAction0""#));
     assert!(html.contains(r#"id="rallyPlayer0""#));
     assert!(html.contains("function updateRobotDebugPanel(robot, step)"));
     assert!(html.contains("function robotCargoFull(robot)"));
+    assert!(html.contains("function robotTurnsRemaining(robot, step)"));
+    assert!(html.contains("rally-view-player-battery-fill"));
+    assert!(html.contains("rally-view-player-depleted"));
     assert!(html.contains("var RALLY_ACTION_NAMES = {"));
     assert!(html.contains("return robot.a === 1;"));
     assert!(html.contains(r#"id="progressCanvas""#));
