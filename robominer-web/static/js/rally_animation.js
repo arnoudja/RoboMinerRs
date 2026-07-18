@@ -472,46 +472,54 @@ function scrollRallySourceLineIntoView(container, lineEl)
 
 function drawInitialGround(scale)
 {
-    myGround.updatedTo = 0;
+    drawFullGroundAt(0, scale);
+}
+
+
+function groundChangeTime(change)
+{
+    return typeof change.t === 'undefined' ? 0 : change.t;
+}
+
+
+function findGroundChangeIndex(position, step)
+{
+    var changes = position.c;
+    if (!changes || changes.length === 0)
+    {
+        return 0;
+    }
+
+    var low = 0;
+    var high = changes.length - 1;
+    var best = 0;
+    while (low <= high)
+    {
+        var mid = (low + high) >> 1;
+        if (groundChangeTime(changes[mid]) <= step)
+        {
+            best = mid;
+            low = mid + 1;
+        }
+        else
+        {
+            high = mid - 1;
+        }
+    }
+    return best;
+}
+
+
+function drawFullGroundAt(step, scale)
+{
+    myGround.updatedTo = step;
 
     myRallyContext.beginPath();
     myRallyContext.rect(0, 0, 600, 600);
     myRallyContext.fillStyle = 'black';
     myRallyContext.fill();
 
-    var oreAMax = typeof myOreTypes.A !== 'undefined' ? myOreTypes.A.max : 255;
-    var oreBMax = typeof myOreTypes.B !== 'undefined' ? myOreTypes.B.max : 255;
-    var oreCMax = typeof myOreTypes.C !== 'undefined' ? myOreTypes.C.max : 255;
-
-    for (var i = 0; i < myGround.positions.length; i++)
-    {
-        myGround.positions[i].lastDrawn = 0;
-
-        var x = myGround.positions[i].x;
-        var y = myGround.positions[i].y;
-
-        var changes = myGround.positions[i].c[0];
-
-        var oreA = 0;
-        var oreB = 0;
-        var oreC = 0;
-
-        if (typeof changes.t === 'undefined' || changes.t === 0)
-        {
-            oreA = typeof changes.A !== 'undefined' ? changes.A : 0;
-            oreB = typeof changes.B !== 'undefined' ? changes.B : 0;
-            oreC = typeof changes.C !== 'undefined' ? changes.C : 0;
-        }
-
-        var oreAIntensity = Math.min(255, Math.floor(oreA * 255 / oreAMax));
-        var oreBIntensity = Math.min(255, Math.floor(oreB * 255 / oreBMax));
-        var oreCIntensity = Math.min(255, Math.floor(oreC * 255 / oreCMax));
-
-        myRallyContext.beginPath();
-        myRallyContext.rect(x * scale, y * scale, scale, scale);
-        myRallyContext.fillStyle = rgbToHex(oreAIntensity, oreBIntensity, oreCIntensity);
-        myRallyContext.fill();
-    }
+    drawGroundAt(step, scale, 0, 0, myGround.sizeX, myGround.sizeY);
 }
 
 
@@ -533,15 +541,7 @@ function drawGroundAt(step, scale, fromX, fromY, tillX, tillY)
         {
             var x = myGround.positions[i].x;
             var y = myGround.positions[i].y;
-
-            var j = myGround.positions[i].lastDrawn;
-
-            while (myGround.positions[i].c.length > (j + 1) &&
-                   myGround.positions[i].c[j + 1].t <= step)
-            {
-                j++;
-            }
-
+            var j = findGroundChangeIndex(myGround.positions[i], step);
             myGround.positions[i].lastDrawn = j;
 
             var changes = myGround.positions[i].c[j];
@@ -564,46 +564,58 @@ function drawGroundAt(step, scale, fromX, fromY, tillX, tillY)
 
 function updateRobotTo(robotNr, step)
 {
-    if (step > myRobots.robot[robotNr].updatedTo && step < myRobots.robot[robotNr].locations.length)
+    var robot = myRobots.robot[robotNr];
+    if (!robot.locations || robot.locations.length === 0)
     {
-        updateRobotTo(robotNr, step - 1);
+        return;
+    }
 
-        if (typeof myRobots.robot[robotNr].locations[step].x === 'undefined')
+    var target = Math.min(step, robot.locations.length - 1);
+    var filled = typeof robot.updatedTo === 'number' ? robot.updatedTo : 0;
+    if (target <= filled)
+    {
+        return;
+    }
+
+    for (var s = filled + 1; s <= target; s++)
+    {
+        var current = robot.locations[s];
+        var previous = robot.locations[s - 1];
+
+        if (typeof current.x === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].x = myRobots.robot[robotNr].locations[step - 1].x;
+            current.x = previous.x;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].y === 'undefined')
+        if (typeof current.y === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].y = myRobots.robot[robotNr].locations[step - 1].y;
+            current.y = previous.y;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].o === 'undefined')
+        if (typeof current.o === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].o = myRobots.robot[robotNr].locations[step - 1].o;
+            current.o = previous.o;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].A === 'undefined')
+        if (typeof current.A === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].A = myRobots.robot[robotNr].locations[step - 1].A;
+            current.A = previous.A;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].B === 'undefined')
+        if (typeof current.B === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].B = myRobots.robot[robotNr].locations[step - 1].B;
+            current.B = previous.B;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].C === 'undefined')
+        if (typeof current.C === 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].C = myRobots.robot[robotNr].locations[step - 1].C;
+            current.C = previous.C;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].a === 'undefined'
-            && typeof myRobots.robot[robotNr].locations[step - 1].a !== 'undefined')
+        if (typeof current.a === 'undefined' && typeof previous.a !== 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].a = myRobots.robot[robotNr].locations[step - 1].a;
+            current.a = previous.a;
         }
-        if (typeof myRobots.robot[robotNr].locations[step].l === 'undefined'
-            && typeof myRobots.robot[robotNr].locations[step - 1].l !== 'undefined')
+        if (typeof current.l === 'undefined' && typeof previous.l !== 'undefined')
         {
-            myRobots.robot[robotNr].locations[step].l = myRobots.robot[robotNr].locations[step - 1].l;
+            current.l = previous.l;
         }
 
-        myRobots.robot[robotNr].updatedTo = step;
+        robot.updatedTo = s;
     }
 }
 
@@ -814,6 +826,67 @@ function renderRallyFrame()
 }
 
 
+function redrawRallyScene()
+{
+    if (!rallyHasAnimationData() || typeof myGround === 'undefined')
+    {
+        return;
+    }
+
+    var time = myRallyPlayer.elapsedMs;
+    var stepTime = rallyStepTime();
+    var totalSteps = rallyTotalSteps();
+    var totalTime = rallyTotalTime();
+    var completed = totalTime > 0 ? time / totalTime : 0;
+    if (completed > 1)
+    {
+        completed = 1;
+    }
+
+    var cycle = Math.floor(time / stepTime);
+    if (cycle > totalSteps)
+    {
+        cycle = totalSteps;
+    }
+
+    rallyUpdateTransportUi(completed, cycle);
+
+    var scale = myRallyPlayer.scale;
+    drawFullGroundAt(cycle, scale);
+
+    for (var i = 0; i < myRobots.robot.length; i++)
+    {
+        updateRobotPosition(i, time, stepTime);
+        drawRobot(myRobots.robot[i], scale, cycle);
+        drawRobotOre(myRobots.robot[i]);
+        updateRobotDebugPanel(myRobots.robot[i], cycle);
+    }
+}
+
+
+function expandAllRobotLocationDeltas()
+{
+    if (!rallyHasAnimationData())
+    {
+        return;
+    }
+
+    for (var i = 0; i < myRobots.robot.length; i++)
+    {
+        var robot = myRobots.robot[i];
+        if (!robot.locations || robot.locations.length === 0)
+        {
+            continue;
+        }
+        if (typeof robot.updatedTo !== 'number')
+        {
+            robot.updatedTo = 0;
+        }
+        updateRobotTo(i, robot.locations.length - 1);
+    }
+}
+
+
 function rallyAnimationLoop(timestamp)
 {
     if (!myRallyPlayer.playing)
@@ -901,22 +974,8 @@ function rallyRestart()
         return;
     }
 
-    for (var i = 0; i < myRobots.robot.length; i++)
-    {
-        myRobots.robot[i].updatedTo = 0;
-    }
-
-    if (typeof myGround !== 'undefined')
-    {
-        myGround.updatedTo = 0;
-        for (var g = 0; g < myGround.positions.length; g++)
-        {
-            myGround.positions[g].lastDrawn = 0;
-        }
-    }
-
-    drawInitialGround(myRallyPlayer.scale);
-    renderRallyFrame();
+    // Keep expanded location deltas; redraw the scene at cycle 0.
+    redrawRallyScene();
 }
 
 
@@ -933,22 +992,9 @@ function rallySeekToRatio(ratio)
     myRallyPlayer.elapsedMs = ratio * rallyTotalTime();
     myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime();
 
-    for (var i = 0; i < myRobots.robot.length; i++)
-    {
-        myRobots.robot[i].updatedTo = 0;
-    }
-
-    if (typeof myGround !== 'undefined')
-    {
-        myGround.updatedTo = 0;
-        for (var g = 0; g < myGround.positions.length; g++)
-        {
-            myGround.positions[g].lastDrawn = 0;
-        }
-    }
-
-    drawInitialGround(myRallyPlayer.scale);
-    renderRallyFrame();
+    // Avoid resetting filled deltas / ground cursors: expand only what is still
+    // missing, then paint the full frame at the seek target.
+    redrawRallyScene();
 
     if (wasPlaying && !myRallyPlayer.finished)
     {
@@ -1060,16 +1106,12 @@ function runanimation()
     myRallyPlayer.finished = false;
     myRallyPlayer.speed = 1;
 
-    drawInitialGround(myRallyPlayer.scale);
-
     for (var i = 0; i < myRobots.robot.length; i++)
     {
         myRobots.robot[i].updatedTo = 0;
-        drawRobot(myRobots.robot[i], myRallyPlayer.scale, 0);
-        drawRobotOre(myRobots.robot[i]);
     }
+    expandAllRobotLocationDeltas();
 
     rallyBindTransportControls();
-    rallyUpdateTransportUi(0, 0);
-    renderRallyFrame();
+    redrawRallyScene();
 }

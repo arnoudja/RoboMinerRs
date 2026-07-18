@@ -554,6 +554,9 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
     assert!(html.contains("function rallyPlay()"));
     assert!(html.contains("function rallySeekToRatio(ratio)"));
+    assert!(html.contains("function redrawRallyScene()"));
+    assert!(html.contains("function expandAllRobotLocationDeltas()"));
+    assert!(html.contains("function findGroundChangeIndex(position, step)"));
     assert!(html.contains("function robotDrawRadiusPixels(robot, scale)"));
     assert!(
         html.contains("myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY)")
