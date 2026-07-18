@@ -58,6 +58,7 @@ impl RobotCycleStatus {
 struct RobotAnimationStep {
     position: Position,
     ore: [i32; MAX_ORE_TYPES],
+    depot: [i32; MAX_ORE_TYPES],
     time_fraction: f64,
     /// Optional action index for this cycle (`RobotAction::action_index`, or 0 for scan).
     /// Absent on the initial step and on legacy replays.
@@ -124,6 +125,7 @@ impl AnimationRecorder {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
             ore: *robot.ore(),
+            depot: *robot.depot(),
             time_fraction: robot.time_fraction,
             action_index,
             source_line,
@@ -156,32 +158,49 @@ fn robots_animation_value(robot_steps: &[Vec<RobotAnimationStep>], robots: &[Rob
             .first()
             .expect("animation should record at least one step per robot");
         let spec = robots[index].spec();
+        let depot_capacity = robots[index].depot_capacity();
+        let record_depot = depot_capacity.iter().take(3).any(|&cap| cap > 0);
 
-        robot_values.push(json!({
-            "robotnr": index,
-            "x": legacy_float(first_step.position.x),
-            "y": legacy_float(first_step.position.y),
-            "o": first_step.position.orientation,
-            "A": first_step.ore[0],
-            "B": first_step.ore[1],
-            "C": first_step.ore[2],
-            "size": legacy_float(spec.robot_size),
-            "maxore": spec.max_ore,
-            "maxturns": spec.max_turns,
-            "locations": robot_step_array_value(steps),
-        }));
+        let mut robot_object = Map::new();
+        robot_object.insert("robotnr".to_string(), json!(index));
+        robot_object.insert("x".to_string(), json!(legacy_float(first_step.position.x)));
+        robot_object.insert("y".to_string(), json!(legacy_float(first_step.position.y)));
+        robot_object.insert("o".to_string(), json!(first_step.position.orientation));
+        robot_object.insert("A".to_string(), json!(first_step.ore[0]));
+        robot_object.insert("B".to_string(), json!(first_step.ore[1]));
+        robot_object.insert("C".to_string(), json!(first_step.ore[2]));
+        robot_object.insert("size".to_string(), json!(legacy_float(spec.robot_size)));
+        robot_object.insert("maxore".to_string(), json!(spec.max_ore));
+        robot_object.insert("maxturns".to_string(), json!(spec.max_turns));
+        if record_depot {
+            robot_object.insert("depotMaxA".to_string(), json!(depot_capacity[0]));
+            robot_object.insert("depotMaxB".to_string(), json!(depot_capacity[1]));
+            robot_object.insert("depotMaxC".to_string(), json!(depot_capacity[2]));
+            robot_object.insert("DA".to_string(), json!(first_step.depot[0]));
+            robot_object.insert("DB".to_string(), json!(first_step.depot[1]));
+            robot_object.insert("DC".to_string(), json!(first_step.depot[2]));
+        }
+        robot_object.insert(
+            "locations".to_string(),
+            robot_step_array_value(steps, record_depot),
+        );
+
+        robot_values.push(Value::Object(robot_object));
     }
 
     json!({ "robot": robot_values })
 }
 
-fn robot_step_array_value(steps: &[RobotAnimationStep]) -> Value {
+fn robot_step_array_value(steps: &[RobotAnimationStep], record_depot: bool) -> Value {
     let mut last_x = 0.0;
     let mut last_y = 0.0;
     let mut last_orientation = 0;
     let mut last_ore_a = 0;
     let mut last_ore_b = 0;
     let mut last_ore_c = 0;
+    let mut last_depot_a = 0;
+    let mut last_depot_b = 0;
+    let mut last_depot_c = 0;
     let mut values = Vec::with_capacity(steps.len());
 
     for (index, step) in steps.iter().enumerate() {
@@ -215,6 +234,21 @@ fn robot_step_array_value(steps: &[RobotAnimationStep]) -> Value {
         if index == 0 || step.ore[2] != last_ore_c {
             object.insert("C".to_string(), json!(step.ore[2]));
             last_ore_c = step.ore[2];
+        }
+
+        if record_depot {
+            if index == 0 || step.depot[0] != last_depot_a {
+                object.insert("DA".to_string(), json!(step.depot[0]));
+                last_depot_a = step.depot[0];
+            }
+            if index == 0 || step.depot[1] != last_depot_b {
+                object.insert("DB".to_string(), json!(step.depot[1]));
+                last_depot_b = step.depot[1];
+            }
+            if index == 0 || step.depot[2] != last_depot_c {
+                object.insert("DC".to_string(), json!(step.depot[2]));
+                last_depot_c = step.depot[2];
+            }
         }
 
         // Always emit when present so Wait cycles stay distinguishable after delta compression.

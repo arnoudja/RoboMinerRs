@@ -28,5 +28,6 @@ pub(crate) fn scripted_robot_from_loadout_source(
         }
     })?;
 
-    Ok(ScriptedRobot::from_executable_program(spec, &program))
+    Ok(ScriptedRobot::from_executable_program(spec, &program)
+        .with_depot_capacity(loadout.depot_capacity))
 }

@@ -26,8 +26,8 @@ impl AchievementScenario {
         sqlx::query(
             "INSERT INTO AchievementStep \
              (achievementId, step, achievementPoints, miningQueueReward, robotReward, \
-              oreId, maxOreReward) \
-             VALUES (?, 1, 7, 2, 0, ?, 80)",
+              oreId, maxOreReward, maxDepotReward) \
+             VALUES (?, 1, 7, 2, 0, ?, 80, 40)",
         )
         .bind(achievement_id)
         .bind(ore_id)
@@ -90,6 +90,17 @@ impl AchievementScenario {
                 .expect("failed to load user rewards");
         assert_eq!(achievement_points, expected_points);
         assert_eq!(mining_queue_size, expected_queue_size);
+
+        let (max_allowed, depot_max_allowed): (i32, i32) = sqlx::query_as(
+            "SELECT maxAllowed, depotMaxAllowed FROM UserOreAsset WHERE userId = ? AND oreId = ?",
+        )
+        .bind(self.user_id)
+        .bind(self.ore_id)
+        .fetch_one(pool)
+        .await
+        .expect("failed to load ore asset caps");
+        assert_eq!(max_allowed, 80);
+        assert_eq!(depot_max_allowed, 40);
     }
 
     pub async fn cleanup(&self, pool: &MySqlPool, delete_user: bool) {

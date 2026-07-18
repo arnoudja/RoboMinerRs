@@ -42,6 +42,18 @@ function updateRobotTo(robotNr, step)
         {
             current.C = previous.C;
         }
+        if (typeof current.DA === 'undefined' && typeof previous.DA !== 'undefined')
+        {
+            current.DA = previous.DA;
+        }
+        if (typeof current.DB === 'undefined' && typeof previous.DB !== 'undefined')
+        {
+            current.DB = previous.DB;
+        }
+        if (typeof current.DC === 'undefined' && typeof previous.DC !== 'undefined')
+        {
+            current.DC = previous.DC;
+        }
         if (typeof current.a === 'undefined' && typeof previous.a !== 'undefined')
         {
             current.a = previous.a;
@@ -73,6 +85,9 @@ function updateRobotPosition(robotNr, time, stepTime)
         myRobots.robot[robotNr].A = myRobots.robot[robotNr].locations[t1].A;
         myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t1].B;
         myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t1].C;
+        myRobots.robot[robotNr].DA = myRobots.robot[robotNr].locations[t1].DA;
+        myRobots.robot[robotNr].DB = myRobots.robot[robotNr].locations[t1].DB;
+        myRobots.robot[robotNr].DC = myRobots.robot[robotNr].locations[t1].DC;
         myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
         myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t1].l;
         myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t1].s;
@@ -90,6 +105,9 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].A = myRobots.robot[robotNr].locations[t2].A;
             myRobots.robot[robotNr].B = myRobots.robot[robotNr].locations[t2].B;
             myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t2].C;
+            myRobots.robot[robotNr].DA = myRobots.robot[robotNr].locations[t2].DA;
+            myRobots.robot[robotNr].DB = myRobots.robot[robotNr].locations[t2].DB;
+            myRobots.robot[robotNr].DC = myRobots.robot[robotNr].locations[t2].DC;
             myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
             myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t2].l;
             myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t2].s;
@@ -103,6 +121,24 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].A = smoothen(myRobots.robot[robotNr].locations[t1].A, myRobots.robot[robotNr].locations[t2].A, dt, travelTime);
             myRobots.robot[robotNr].B = smoothen(myRobots.robot[robotNr].locations[t1].B, myRobots.robot[robotNr].locations[t2].B, dt, travelTime);
             myRobots.robot[robotNr].C = smoothen(myRobots.robot[robotNr].locations[t1].C, myRobots.robot[robotNr].locations[t2].C, dt, travelTime);
+            myRobots.robot[robotNr].DA = smoothen(
+                typeof myRobots.robot[robotNr].locations[t1].DA !== 'undefined' ? myRobots.robot[robotNr].locations[t1].DA : 0,
+                typeof myRobots.robot[robotNr].locations[t2].DA !== 'undefined' ? myRobots.robot[robotNr].locations[t2].DA : 0,
+                dt,
+                travelTime
+            );
+            myRobots.robot[robotNr].DB = smoothen(
+                typeof myRobots.robot[robotNr].locations[t1].DB !== 'undefined' ? myRobots.robot[robotNr].locations[t1].DB : 0,
+                typeof myRobots.robot[robotNr].locations[t2].DB !== 'undefined' ? myRobots.robot[robotNr].locations[t2].DB : 0,
+                dt,
+                travelTime
+            );
+            myRobots.robot[robotNr].DC = smoothen(
+                typeof myRobots.robot[robotNr].locations[t1].DC !== 'undefined' ? myRobots.robot[robotNr].locations[t1].DC : 0,
+                typeof myRobots.robot[robotNr].locations[t2].DC !== 'undefined' ? myRobots.robot[robotNr].locations[t2].DC : 0,
+                dt,
+                travelTime
+            );
             // At the exact start of a segment (including replay start), prefer t1's line so
             // locations[0].l (program entry) is shown instead of jumping to the first action cycle.
             if (dt <= 0 && typeof myRobots.robot[robotNr].locations[t1].l !== 'undefined')
@@ -274,6 +310,7 @@ function renderRallyFrame()
         updateRobotPosition(i, time, stepTime);
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
+        drawRobotDepot(myRobots.robot[i]);
         updateRobotDebugPanel(myRobots.robot[i], cycle);
     }
 }
@@ -312,6 +349,7 @@ function redrawRallyScene()
         updateRobotPosition(i, time, stepTime);
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
+        drawRobotDepot(myRobots.robot[i]);
         updateRobotDebugPanel(myRobots.robot[i], cycle);
     }
 }

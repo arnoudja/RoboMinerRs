@@ -90,6 +90,8 @@ fn sample_achievement_record(
         ore_name: Some("Ore <C>".to_string()),
         current_ore_maximum: 50,
         max_ore_reward: 100,
+        current_depot_maximum: 10,
+        max_depot_reward: 25,
         mining_area_id: Some(2),
         mining_area_name: Some("Area & D".to_string()),
         claimable,
@@ -177,6 +179,8 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
     assert!(html.contains("Description &amp; B"));
     assert!(html.contains("Ore &lt;C&gt; ore maximum"));
     assert!(html.contains("50 → 100"));
+    assert!(html.contains("Ore &lt;C&gt; depot maximum"));
+    assert!(html.contains("10 → 25"));
     assert!(html.contains("Area &amp; D"));
     assert!(html.contains("New robot"));
     assert!(html.contains(r#"class="sufficientbalance">(11)"#));

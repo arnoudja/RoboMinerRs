@@ -97,7 +97,7 @@ fn pool_rally_outcome(
                 pool_item_id: item.item.id,
                 robot_id: item.robot.robot.id,
                 score: robot.calculate_score(),
-                ore_results: pool_item_ore_results(&ore_ids, robot.ore()),
+                ore_results: pool_item_ore_results(&ore_ids, &robot.result_ore()),
             }
         })
         .collect();

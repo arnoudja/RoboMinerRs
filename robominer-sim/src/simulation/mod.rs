@@ -63,7 +63,11 @@ impl Simulation {
         let pending_expression_actions = vec![None; action_sources.len()];
         let robots = robots
             .into_iter()
-            .map(|robot| Robot::new(robot.spec))
+            .map(|robot| {
+                let mut built = Robot::new(robot.spec);
+                built.set_depot_capacity(robot.depot_capacity);
+                built
+            })
             .collect();
 
         Self {

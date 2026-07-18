@@ -267,6 +267,8 @@ pub struct AchievementPageStateRecord {
     pub ore_name: Option<String>,
     pub current_ore_maximum: i32,
     pub max_ore_reward: i32,
+    pub current_depot_maximum: i32,
+    pub max_depot_reward: i32,
     pub mining_area_id: Option<i64>,
     pub mining_area_name: Option<String>,
     pub claimable: bool,

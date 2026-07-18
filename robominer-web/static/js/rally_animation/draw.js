@@ -138,40 +138,83 @@ function eraseRobot(robot, scale, step)
 }
 
 
+function drawStackedOreBar(context, canvas, robotnr, amountA, amountB, amountC, capacity)
+{
+    var borderWidth = 3;
+    var oreWidth = canvas.width - 2 * borderWidth;
+    var oreHeight = canvas.height - 2 * borderWidth;
+    var maxCapacity = capacity > 0 ? capacity : 1;
+    var oreAHeight = Math.floor(amountA * oreHeight / maxCapacity);
+    var oreBHeight = Math.floor((amountA + amountB) * oreHeight / maxCapacity) - oreAHeight;
+    var oreCHeight = Math.floor((amountA + amountB + amountC) * oreHeight / maxCapacity) - oreAHeight - oreBHeight;
+
+    context.beginPath();
+    context.rect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = robotColor(robotnr);
+    context.fill();
+
+    context.beginPath();
+    context.rect(borderWidth, borderWidth, oreWidth, canvas.height - 2 * borderWidth);
+    context.fillStyle = 'black';
+    context.fill();
+
+    context.beginPath();
+    context.rect(borderWidth, canvas.height - borderWidth - oreAHeight, oreWidth, oreAHeight);
+    context.fillStyle = 'red';
+    context.fill();
+
+    context.beginPath();
+    context.rect(borderWidth, canvas.height - borderWidth - oreAHeight - oreBHeight, oreWidth, oreBHeight);
+    context.fillStyle = 'green';
+    context.fill();
+
+    context.beginPath();
+    context.rect(
+        borderWidth,
+        canvas.height - borderWidth - oreAHeight - oreBHeight - oreCHeight,
+        oreWidth,
+        oreCHeight
+    );
+    context.fillStyle = 'blue';
+    context.fill();
+}
+
+
 function drawRobotOre(robot)
 {
     var i = robot.robotnr;
-    var borderWidth = 3;
-    var oreWidth = myOreCanvas[i].width - 2 * borderWidth;
-    var oreHeight = myOreCanvas[i].height - 2 * borderWidth;
-    var oreAHeight = Math.floor(robot.A * oreHeight / robot.maxore);
-    var oreBHeight = Math.floor((robot.A + robot.B) * oreHeight / robot.maxore) - oreAHeight;
-    var oreCHeight = Math.floor((robot.A + robot.B + robot.C) * oreHeight / robot.maxore) - oreAHeight - oreBHeight;
+    drawStackedOreBar(
+        myOreContext[i],
+        myOreCanvas[i],
+        robot.robotnr,
+        robot.A,
+        robot.B,
+        robot.C,
+        robot.maxore
+    );
+}
 
-    myOreContext[i].beginPath();
-    myOreContext[i].rect(0, 0, myOreCanvas[i].width, myOreCanvas[i].height);
-    myOreContext[i].fillStyle = robotColor(robot.robotnr);
-    myOreContext[i].fill();
 
-    myOreContext[i].beginPath();
-    myOreContext[i].rect(borderWidth, borderWidth, oreWidth, myOreCanvas[i].height - 2 * borderWidth);
-    myOreContext[i].fillStyle = 'black';
-    myOreContext[i].fill();
+function drawRobotDepot(robot)
+{
+    var i = robot.robotnr;
+    if (!myDepotCanvas[i] || !myDepotContext[i] || !robotHasDepot(robot))
+    {
+        return;
+    }
 
-    myOreContext[i].beginPath();
-    myOreContext[i].rect(borderWidth, myOreCanvas[i].height - borderWidth - oreAHeight, oreWidth, oreAHeight);
-    myOreContext[i].fillStyle = 'red';
-    myOreContext[i].fill();
-
-    myOreContext[i].beginPath();
-    myOreContext[i].rect(borderWidth, myOreCanvas[i].height - borderWidth - oreAHeight - oreBHeight, oreWidth, oreBHeight);
-    myOreContext[i].fillStyle = 'green';
-    myOreContext[i].fill();
-
-    myOreContext[i].beginPath();
-    myOreContext[i].rect(borderWidth, myOreCanvas[i].height - borderWidth - oreAHeight - oreBHeight - oreCHeight, oreWidth, oreCHeight);
-    myOreContext[i].fillStyle = 'blue';
-    myOreContext[i].fill();
+    var depotA = typeof robot.DA === 'number' ? robot.DA : Number(robot.DA) || 0;
+    var depotB = typeof robot.DB === 'number' ? robot.DB : Number(robot.DB) || 0;
+    var depotC = typeof robot.DC === 'number' ? robot.DC : Number(robot.DC) || 0;
+    drawStackedOreBar(
+        myDepotContext[i],
+        myDepotCanvas[i],
+        robot.robotnr,
+        depotA,
+        depotB,
+        depotC,
+        robotDepotMaxTotal(robot)
+    );
 }
 
 

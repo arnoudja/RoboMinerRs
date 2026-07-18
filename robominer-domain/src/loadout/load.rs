@@ -1,4 +1,5 @@
 use robominer_db::{MiningRallyQueueRecord, MySqlPool, RobotPartRecord, RobotRecord};
+use robominer_sim::MAX_ORE_TYPES;
 
 use crate::constants::{RALLY_EXPIRY_START_SECONDS, RALLY_SIZE};
 use crate::error::{DomainError, RobotPartSlot};
@@ -62,6 +63,7 @@ pub async fn load_next_rally_loadout(
     }
 
     let mut queue_entries = Vec::with_capacity(queue_rows.len());
+    let ore_type_ids = area_ore_type_ids(&mining_area.ore_supplies);
 
     for queue in queue_rows {
         let robot = load_robot_loadout(pool, queue.queue.robot_id)
@@ -70,6 +72,13 @@ pub async fn load_next_rally_loadout(
                 mining_queue_id: queue.queue.id,
                 robot_id: queue.queue.robot_id,
             })?;
+
+        let user_caps =
+            robominer_db::list_user_depot_max_allowed(pool, robot.robot.user_id).await?;
+        let robot = robot.with_depot_capacity(depot_capacity_for_ore_types(
+            &ore_type_ids,
+            &user_caps,
+        ));
 
         queue_entries.push(RallyQueueEntry::new(queue, robot));
     }
@@ -198,4 +207,35 @@ async fn load_optional_robot_part(
             part_id,
         })
         .map(Some)
+}
+
+/// Ore-type slot order matching rally/sim `legacy_ore_ids` (unique ore ids, highest first).
+fn area_ore_type_ids(ore_supplies: &[robominer_db::MiningAreaOreSupplyRecord]) -> Vec<i64> {
+    let mut supplies = ore_supplies.to_vec();
+    supplies.sort_by(|left, right| {
+        right
+            .ore_id
+            .cmp(&left.ore_id)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+
+    let mut ids = Vec::new();
+    for supply in &supplies {
+        if !ids.contains(&supply.ore_id) {
+            ids.push(supply.ore_id);
+        }
+    }
+    ids
+}
+
+fn depot_capacity_for_ore_types(ore_type_ids: &[i64], user_caps: &[(i64, i32)]) -> [i32; MAX_ORE_TYPES] {
+    let mut capacity = [0; MAX_ORE_TYPES];
+    for (slot, ore_id) in ore_type_ids.iter().enumerate().take(MAX_ORE_TYPES) {
+        capacity[slot] = user_caps
+            .iter()
+            .find(|(id, _)| id == ore_id)
+            .map(|(_, cap)| *cap)
+            .unwrap_or(0);
+    }
+    capacity
 }

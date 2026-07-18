@@ -299,32 +299,51 @@ pub(crate) fn process_dump(
     ore_type: Option<usize>,
     time: i32,
 ) -> (i32, Option<GroundAnimationChange>) {
+    let mut dumped = 0;
+
+    if robot.is_at_home() {
+        match ore_type {
+            Some(ore_type) if ore_type < MAX_ORE_TYPES => {
+                dumped += robot.deposit_to_depot(ore_type);
+            }
+            _ => {
+                for ore_type in 0..MAX_ORE_TYPES {
+                    dumped += robot.deposit_to_depot(ore_type);
+                }
+            }
+        }
+    }
+
     let position = robot.center_position();
     let x = position.x as usize;
     let y = position.y as usize;
     let ground_unit = ground.at_position_mut(position);
-    let mut dumped = 0;
+    let mut to_ground = 0;
 
     match ore_type {
         Some(ore_type) if ore_type < MAX_ORE_TYPES => {
             if robot.ore_at(ore_type) > 0 {
-                dumped = robot.ore_at(ore_type);
-                ground_unit.add_ore(ore_type, dumped);
+                let amount = robot.ore_at(ore_type);
+                to_ground += amount;
+                ground_unit.add_ore(ore_type, amount);
                 robot.clear_ore(ore_type);
             }
         }
         _ => {
             for ore_type in 0..MAX_ORE_TYPES {
                 if robot.ore_at(ore_type) > 0 {
-                    dumped += robot.ore_at(ore_type);
-                    ground_unit.add_ore(ore_type, robot.ore_at(ore_type));
+                    let amount = robot.ore_at(ore_type);
+                    to_ground += amount;
+                    ground_unit.add_ore(ore_type, amount);
                     robot.clear_ore(ore_type);
                 }
             }
         }
     }
 
-    let change = (dumped > 0).then(|| GroundAnimationChange {
+    dumped += to_ground;
+
+    let change = (to_ground > 0).then(|| GroundAnimationChange {
         x,
         y,
         time,

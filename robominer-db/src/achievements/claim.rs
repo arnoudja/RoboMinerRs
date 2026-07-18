@@ -13,6 +13,7 @@ struct AchievementStepState {
     mining_area_id: Option<i64>,
     ore_id: Option<i64>,
     max_ore_reward: i32,
+    max_depot_reward: i32,
 }
 
 pub async fn claim_achievement_step(
@@ -104,6 +105,8 @@ pub(crate) async fn claim_achievement_step_in_transaction(
     if let Some(ore_id) = step.ore_id {
         increase_user_ore_maximum(transaction, request.user_id, ore_id, step.max_ore_reward)
             .await?;
+        increase_user_depot_maximum(transaction, request.user_id, ore_id, step.max_depot_reward)
+            .await?;
     }
 
     let robot_count = user_robot_count(transaction, request.user_id).await?;
@@ -132,7 +135,7 @@ async fn load_achievement_step(
 ) -> Result<Option<AchievementStepState>, sqlx::Error> {
     let row = sqlx::query(
         "SELECT achievementPoints, miningQueueReward, robotReward, miningAreaId, oreId, \
-                maxOreReward \
+                maxOreReward, maxDepotReward \
          FROM AchievementStep \
          WHERE achievementId = ? AND step = ?",
     )
@@ -149,6 +152,7 @@ async fn load_achievement_step(
             mining_area_id: row.try_get("miningAreaId")?,
             ore_id: row.try_get("oreId")?,
             max_ore_reward: row.try_get("maxOreReward")?,
+            max_depot_reward: row.try_get("maxDepotReward")?,
         })
     })
     .transpose()
@@ -231,6 +235,30 @@ async fn increase_user_ore_maximum(
     .bind(user_id)
     .bind(ore_id)
     .bind(max_ore_reward)
+    .execute(&mut **transaction)
+    .await?;
+
+    Ok(())
+}
+
+async fn increase_user_depot_maximum(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    ore_id: i64,
+    max_depot_reward: i32,
+) -> Result<(), sqlx::Error> {
+    use crate::INITIAL_ORE_WALLET_MAX;
+
+    sqlx::query(
+        "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed, depotMaxAllowed) \
+         VALUES (?, ?, 0, ?, ?) \
+         ON DUPLICATE KEY UPDATE \
+         depotMaxAllowed = GREATEST(depotMaxAllowed, VALUES(depotMaxAllowed))",
+    )
+    .bind(user_id)
+    .bind(ore_id)
+    .bind(INITIAL_ORE_WALLET_MAX)
+    .bind(max_depot_reward)
     .execute(&mut **transaction)
     .await?;
 

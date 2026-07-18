@@ -15,8 +15,9 @@ pub async fn list_user_ore_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<UserOreAssetStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i32, i32)>(
-        "SELECT UserOreAsset.oreId, Ore.oreName, UserOreAsset.amount, UserOreAsset.maxAllowed \
+    sqlx::query_as::<_, (i64, String, i32, i32, i32)>(
+        "SELECT UserOreAsset.oreId, Ore.oreName, UserOreAsset.amount, UserOreAsset.maxAllowed, \
+                UserOreAsset.depotMaxAllowed \
          FROM UserOreAsset \
          INNER JOIN Ore ON Ore.id = UserOreAsset.oreId \
          WHERE UserOreAsset.userId = ? \
@@ -28,15 +29,34 @@ pub async fn list_user_ore_asset_states(
     .map(|rows| {
         rows.into_iter()
             .map(
-                |(ore_id, ore_name, amount, max_allowed)| UserOreAssetStateRecord {
-                    ore_id,
-                    ore_name,
-                    amount,
-                    max_allowed,
+                |(ore_id, ore_name, amount, max_allowed, depot_max_allowed)| {
+                    UserOreAssetStateRecord {
+                        ore_id,
+                        ore_name,
+                        amount,
+                        max_allowed,
+                        depot_max_allowed,
+                    }
                 },
             )
             .collect()
     })
+}
+
+/// Per-ore depot capacity for a user (defaults to empty when no asset rows exist).
+pub async fn list_user_depot_max_allowed(
+    pool: &MySqlPool,
+    user_id: i64,
+) -> Result<Vec<(i64, i32)>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, i32)>(
+        "SELECT oreId, depotMaxAllowed \
+         FROM UserOreAsset \
+         WHERE userId = ? \
+         ORDER BY oreId",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
 }
 
 pub async fn load_user_asset_summary(

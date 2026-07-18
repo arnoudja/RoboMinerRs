@@ -109,6 +109,45 @@ fn animation_data_uses_versioned_json_payload_shape() {
     assert_eq!(payload["oreTypes"]["A"]["id"], 1);
     assert_eq!(payload["oreTypes"]["A"]["max"], 8);
     assert!(!data.contains('<'));
+    assert!(payload["robots"]["robot"][0].get("depotMaxA").is_none());
+}
+
+#[test]
+fn animation_data_includes_depot_when_capacity_is_unlocked() {
+    let program = seeded_program("mine(); dump(0);");
+    let mut ground = Ground::new(4, 4);
+    ground.at_mut(0, 0).add_ore(0, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 2;
+    spec.mining_speed = 5;
+
+    let mut capacity = [0; MAX_ORE_TYPES];
+    capacity[0] = 10;
+    let mut simulation = Simulation::new(
+        ground,
+        2,
+        vec![
+            ScriptedRobot::from_executable_program(spec, &program).with_depot_capacity(capacity),
+        ],
+    );
+    let data = simulation.run_with_animation(&[OreAnimationData {
+        ore_id: 1,
+        max_amount: 8,
+    }]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+
+    assert_eq!(payload["robots"]["robot"][0]["depotMaxA"], 10);
+    assert_eq!(payload["robots"]["robot"][0]["depotMaxB"], 0);
+    assert_eq!(payload["robots"]["robot"][0]["depotMaxC"], 0);
+    // After mine then dump at spawn, depot should hold mined ore.
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("locations");
+    let last = locations.last().expect("last location");
+    assert_eq!(last["DA"], 4);
+    assert_eq!(simulation.robot(0).depot()[0], 4);
 }
 
 #[test]

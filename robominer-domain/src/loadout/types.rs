@@ -38,11 +38,22 @@ impl RobotLoadoutParts {
 pub struct RobotLoadout {
     pub robot: RobotRecord,
     pub parts: RobotLoadoutParts,
+    /// Per area ore-type slot depot capacity for this robot's owner (zeros for AI).
+    pub depot_capacity: [i32; MAX_ORE_TYPES],
 }
 
 impl RobotLoadout {
     pub fn new(robot: RobotRecord, parts: RobotLoadoutParts) -> Self {
-        Self { robot, parts }
+        Self {
+            robot,
+            parts,
+            depot_capacity: [0; MAX_ORE_TYPES],
+        }
+    }
+
+    pub fn with_depot_capacity(mut self, depot_capacity: [i32; MAX_ORE_TYPES]) -> Self {
+        self.depot_capacity = depot_capacity;
+        self
     }
 
     pub fn simulator_spec(&self) -> Result<RobotSpec, DomainError> {

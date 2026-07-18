@@ -4057,6 +4057,7 @@ body.mining-area-atlas-drawer-open {
 .rally-view-player-battery-caption,
 .rally-view-player-turns,
 .rally-view-player-cargo,
+.rally-view-player-depot,
 .rally-view-player-action {
     color: #c5d4ea;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -4141,8 +4142,28 @@ body.mining-area-atlas-drawer-open {
     border: 1px solid rgba(42, 58, 92, 0.65);
     border-radius: 4px;
     display: flex;
+    gap: 8px;
     justify-content: center;
     padding: 6px;
+}
+
+.rally-view-player-chart-bar {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rally-view-player-chart-bar[hidden] {
+    display: none !important;
+}
+
+.rally-view-player-chart-label {
+    color: var(--mq-text-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .rally-view-source {

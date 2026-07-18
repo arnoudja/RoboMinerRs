@@ -135,7 +135,7 @@ fn rally_outcome(
                 robot_id: participant.robot_id,
                 is_ai: participant.is_ai,
                 position: robot.position(),
-                ore: *robot.ore(),
+                ore: robot.result_ore(),
                 score: robot.calculate_score(),
                 actions_done: *robot.actions_done(),
             }

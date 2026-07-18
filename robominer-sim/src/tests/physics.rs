@@ -326,3 +326,76 @@ fn process_dump_empty_robot_returns_zero_without_change() {
     assert_eq!(dumped, 0);
     assert!(change.is_none());
 }
+
+#[test]
+fn process_dump_at_home_fills_depot_up_to_capacity() {
+    let bounds = bounds_for_ground(5, 5, 1.0);
+    let mut ground = Ground::new(5, 5);
+    let mut robot = test_robot_at(Position::new(0.0, 0.0, 0), bounds);
+    let center = robot.center_position();
+    robot.initial_center_x = center.x;
+    robot.initial_center_y = center.y;
+    robot.set_depot_capacity({
+        let mut capacity = [0; MAX_ORE_TYPES];
+        capacity[0] = 10;
+        capacity
+    });
+    robot.add_ore(0, 7);
+
+    let (dumped, change) = process_dump(&mut ground, &mut robot, None, 3);
+
+    assert_eq!(dumped, 7);
+    assert_eq!(robot.ore_at(0), 0);
+    assert_eq!(robot.depot()[0], 7);
+    assert_eq!(ground.at(0, 0).ore_at(0), 0);
+    assert!(change.is_none());
+    assert_eq!(robot.result_ore()[0], 7);
+    assert!(robot.calculate_score() > 0.0);
+}
+
+#[test]
+fn process_dump_at_home_overflow_goes_to_ground() {
+    let bounds = bounds_for_ground(5, 5, 1.0);
+    let mut ground = Ground::new(5, 5);
+    let mut robot = test_robot_at(Position::new(0.0, 0.0, 0), bounds);
+    let center = robot.center_position();
+    robot.initial_center_x = center.x;
+    robot.initial_center_y = center.y;
+    robot.set_depot_capacity({
+        let mut capacity = [0; MAX_ORE_TYPES];
+        capacity[0] = 3;
+        capacity
+    });
+    robot.add_ore(0, 8);
+
+    let (dumped, change) = process_dump(&mut ground, &mut robot, Some(0), 4);
+
+    assert_eq!(dumped, 8);
+    assert_eq!(robot.depot()[0], 3);
+    assert_eq!(robot.ore_at(0), 0);
+    assert_eq!(ground.at(0, 0).ore_at(0), 5);
+    assert!(change.is_some());
+    assert_eq!(robot.result_ore()[0], 3);
+}
+
+#[test]
+fn process_dump_away_from_home_ignores_depot_capacity() {
+    let bounds = bounds_for_ground(5, 5, 1.0);
+    let mut ground = Ground::new(5, 5);
+    let mut robot = test_robot_at(Position::new(2.0, 2.0, 0), bounds);
+    robot.initial_center_x = 0.5;
+    robot.initial_center_y = 0.5;
+    robot.set_depot_capacity({
+        let mut capacity = [0; MAX_ORE_TYPES];
+        capacity[0] = 100;
+        capacity
+    });
+    robot.add_ore(0, 6);
+
+    let (dumped, change) = process_dump(&mut ground, &mut robot, None, 5);
+
+    assert_eq!(dumped, 6);
+    assert_eq!(robot.depot()[0], 0);
+    assert_eq!(ground.at(2, 2).ore_at(0), 6);
+    assert!(change.is_some());
+}

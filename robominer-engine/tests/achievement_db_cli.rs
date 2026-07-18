@@ -340,7 +340,7 @@ async fn achievement_page_states_report_display_model() {
     assert_eq!(view_line, vec!["V", "1"]);
 
     let achievement_line = find_prefixed_line(&stdout, &format!("A\t{}\t", fixture.achievement_id));
-    assert_eq!(achievement_line.len(), 19);
+    assert_eq!(achievement_line.len(), 21);
     assert!(achievement_line[2].ends_with("-achievement"));
     assert_eq!(achievement_line[3], "test achievement");
     assert_eq!(achievement_line[4], "0");
@@ -355,9 +355,11 @@ async fn achievement_page_states_report_display_model() {
     assert!(achievement_line[13].ends_with("-ore"));
     assert_eq!(achievement_line[14], "5");
     assert_eq!(achievement_line[15], "80");
-    assert_eq!(achievement_line[16], "");
-    assert_eq!(achievement_line[17], "");
-    assert_eq!(achievement_line[18], "true");
+    assert_eq!(achievement_line[16], "0");
+    assert_eq!(achievement_line[17], "40");
+    assert_eq!(achievement_line[18], "");
+    assert_eq!(achievement_line[19], "");
+    assert_eq!(achievement_line[20], "true");
 
     let total_line = find_prefixed_line(&stdout, &format!("T\t{}\t", fixture.achievement_id));
     assert_eq!(total_line.len(), 6);

@@ -68,6 +68,7 @@ pub struct UserOreAssetStateRecord {
     pub ore_name: String,
     pub amount: i32,
     pub max_allowed: i32,
+    pub depot_max_allowed: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

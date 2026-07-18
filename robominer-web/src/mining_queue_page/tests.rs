@@ -59,6 +59,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                 ore_name: "Ore & Two".to_string(),
                 amount: 40,
                 max_allowed: 100,
+            depot_max_allowed: 0,
             }],
             robots: vec![robominer_db::MiningQueuePageRobotRecord {
                 robot_id: 1,
@@ -257,6 +258,7 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
                 ore_name: "Iron".to_string(),
                 amount: 10,
                 max_allowed: 100,
+            depot_max_allowed: 0,
             }],
             robots: vec![robominer_db::MiningQueuePageRobotRecord {
                 robot_id: 1,
@@ -319,6 +321,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                 ore_name: "Iron".to_string(),
                 amount: 40,
                 max_allowed: 100,
+            depot_max_allowed: 0,
             }],
             robots: vec![robominer_db::MiningQueuePageRobotRecord {
                 robot_id: 1,

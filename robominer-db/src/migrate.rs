@@ -18,6 +18,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "003_user_session_version",
         include_str!("../../resources/database/migrations/003_user_session_version.sql"),
     ),
+    (
+        "004_ore_depot_capacity",
+        include_str!("../../resources/database/migrations/004_ore_depot_capacity.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -143,6 +143,12 @@ pub async fn list_achievement_page_states_for_user(
                                  AND UserOreAsset.oreId = AchievementStep.oreId), {initial}) AS SIGNED) \
                   AS currentOreMaximum, \
                 AchievementStep.maxOreReward AS maxOreReward, \
+                CAST(COALESCE((SELECT UserOreAsset.depotMaxAllowed \
+                               FROM UserOreAsset \
+                               WHERE UserOreAsset.userId = UserAchievement.userId \
+                                 AND UserOreAsset.oreId = AchievementStep.oreId), 0) AS SIGNED) \
+                  AS currentDepotMaximum, \
+                AchievementStep.maxDepotReward AS maxDepotReward, \
                 MiningArea.id AS miningAreaId, \
                 MiningArea.areaName AS miningAreaName, \
                 CASE WHEN NOT EXISTS \
@@ -203,6 +209,8 @@ pub async fn list_achievement_page_states_for_user(
                         ore_name: row.try_get("oreName")?,
                         current_ore_maximum: row.try_get("currentOreMaximum")?,
                         max_ore_reward: row.try_get("maxOreReward")?,
+                        current_depot_maximum: row.try_get("currentDepotMaximum")?,
+                        max_depot_reward: row.try_get("maxDepotReward")?,
                         mining_area_id: row.try_get("miningAreaId")?,
                         mining_area_name: row.try_get("miningAreaName")?,
                         claimable: row.try_get::<i8, _>("claimable")? != 0,

@@ -75,7 +75,7 @@ pub(crate) async fn achievement_page_states(
 
     for achievement in achievements {
         println!(
-            "A\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            "A\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             achievement.achievement_id,
             escape_state_field(&achievement.title),
             escape_state_field(&achievement.description),
@@ -91,6 +91,8 @@ pub(crate) async fn achievement_page_states(
             escape_state_field(achievement.ore_name.as_deref().unwrap_or_default()),
             achievement.current_ore_maximum,
             achievement.max_ore_reward,
+            achievement.current_depot_maximum,
+            achievement.max_depot_reward,
             optional_id(achievement.mining_area_id),
             escape_state_field(achievement.mining_area_name.as_deref().unwrap_or_default()),
             achievement.claimable

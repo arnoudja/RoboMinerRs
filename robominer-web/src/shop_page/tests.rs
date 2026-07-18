@@ -83,6 +83,7 @@ fn sample_shop_state(message: Option<String>) -> ShopPageState {
             ore_name: "Ore & Two".to_string(),
             amount: 40,
             max_allowed: 100,
+        depot_max_allowed: 0,
         }],
     }
 }
@@ -230,6 +231,7 @@ fn shop_shows_disabled_buy_and_sell_with_reasons() {
         ore_name: "Iron".to_string(),
         amount: 10,
         max_allowed: 100,
+    depot_max_allowed: 0,
     }];
 
     let html = render_shop_page("Player".to_string(), None, &state);
@@ -373,18 +375,21 @@ fn shop_part_costs_are_sorted_by_ore_id_descending() {
             ore_name: "Cerbonium".to_string(),
             amount: 100,
             max_allowed: 100,
+        depot_max_allowed: 0,
         },
         robominer_db::UserOreAssetStateRecord {
             ore_id: 2,
             ore_name: "Iron".to_string(),
             amount: 100,
             max_allowed: 100,
+        depot_max_allowed: 0,
         },
         robominer_db::UserOreAssetStateRecord {
             ore_id: 3,
             ore_name: "Lithabine".to_string(),
             amount: 100,
             max_allowed: 100,
+        depot_max_allowed: 0,
         },
     ];
 

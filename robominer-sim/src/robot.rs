@@ -81,6 +81,8 @@ pub struct Robot {
     pub(crate) position: Position,
     pub(crate) destination: Position,
     pub(crate) ore: [i32; MAX_ORE_TYPES],
+    pub(crate) depot: [i32; MAX_ORE_TYPES],
+    pub(crate) depot_capacity: [i32; MAX_ORE_TYPES],
     pub(crate) target_mining: [i32; MAX_ORE_TYPES],
     pub(crate) last_mined: i32,
     pub(crate) time_left: i32,
@@ -105,6 +107,8 @@ impl Robot {
             position: Position::default(),
             destination: Position::default(),
             ore: [0; MAX_ORE_TYPES],
+            depot: [0; MAX_ORE_TYPES],
+            depot_capacity: [0; MAX_ORE_TYPES],
             target_mining: [0; MAX_ORE_TYPES],
             last_mined: 0,
             time_left: 0,
@@ -158,6 +162,27 @@ impl Robot {
         &self.ore
     }
 
+    pub fn depot(&self) -> &[i32; MAX_ORE_TYPES] {
+        &self.depot
+    }
+
+    pub fn depot_capacity(&self) -> &[i32; MAX_ORE_TYPES] {
+        &self.depot_capacity
+    }
+
+    /// Cargo plus depot contents — the mining session haul.
+    pub fn result_ore(&self) -> [i32; MAX_ORE_TYPES] {
+        let mut combined = self.ore;
+        for (slot, depot_amount) in combined.iter_mut().zip(self.depot.iter()) {
+            *slot += depot_amount;
+        }
+        combined
+    }
+
+    pub fn set_depot_capacity(&mut self, capacity: [i32; MAX_ORE_TYPES]) {
+        self.depot_capacity = capacity;
+    }
+
     pub fn ore_at(&self, ore_type: usize) -> i32 {
         self.ore[ore_type]
     }
@@ -179,7 +204,29 @@ impl Robot {
     }
 
     pub fn calculate_score(&self) -> f64 {
-        calculate_score(self.ore)
+        calculate_score(self.result_ore())
+    }
+
+    pub(crate) fn is_at_home(&self) -> bool {
+        let center = self.center_position();
+        center.x as usize == self.initial_center_x as usize
+            && center.y as usize == self.initial_center_y as usize
+    }
+
+    /// Move cargo into the depot up to remaining capacity. Returns amount deposited.
+    pub(crate) fn deposit_to_depot(&mut self, ore_type: usize) -> i32 {
+        if ore_type >= MAX_ORE_TYPES {
+            return 0;
+        }
+        let cargo = self.ore[ore_type];
+        if cargo <= 0 {
+            return 0;
+        }
+        let room = (self.depot_capacity[ore_type] - self.depot[ore_type]).max(0);
+        let to_depot = cargo.min(room);
+        self.depot[ore_type] += to_depot;
+        self.ore[ore_type] -= to_depot;
+        to_depot
     }
 
     pub(crate) fn center_position(&self) -> Position {
@@ -260,6 +307,7 @@ impl Robot {
 pub struct ScriptedRobot {
     pub(crate) spec: RobotSpec,
     pub(crate) action_source: ActionSource,
+    pub(crate) depot_capacity: [i32; MAX_ORE_TYPES],
 }
 
 #[derive(Clone, Debug)]
@@ -276,6 +324,7 @@ impl ScriptedRobot {
         Self {
             spec,
             action_source: ActionSource::Actions(actions),
+            depot_capacity: [0; MAX_ORE_TYPES],
         }
     }
 
@@ -289,6 +338,12 @@ impl ScriptedRobot {
                 program: Box::new(program.clone()),
                 runner: Box::new(program.runner()),
             },
+            depot_capacity: [0; MAX_ORE_TYPES],
         }
+    }
+
+    pub fn with_depot_capacity(mut self, depot_capacity: [i32; MAX_ORE_TYPES]) -> Self {
+        self.depot_capacity = depot_capacity;
+        self
     }
 }

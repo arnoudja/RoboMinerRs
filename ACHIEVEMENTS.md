@@ -29,10 +29,11 @@ Seed data lives in `resources/database/gameData.sql` (achievement section from l
 | `robotReward` | If the user owns fewer robots than this value, a default robot is created. |
 | `miningAreaId` | Inserts `UserMiningArea` (unlocks the area for queueing). |
 | `oreId` + `maxOreReward` | Raises `UserOreAsset.maxAllowed` for that ore (never lowers it). |
+| `oreId` + `maxDepotReward` | Raises `UserOreAsset.depotMaxAllowed` for that ore (never lowers it). |
 
 Every seeded step awards **10 achievement points**.
 
-### Wallet cap vs robot container
+### Wallet cap vs robot container vs depot
 
 These are separate limits:
 
@@ -42,8 +43,12 @@ These are separate limits:
   created on claim or shop interaction.
 - **Robot container** (`RobotPart.oreCapacity` on the ore container part): how
   much ore a robot carries during a rally.
+- **Depot** (`UserOreAsset.depotMaxAllowed`): how much of each ore type a robot
+  can bank at its spawn cell by dumping during a rally. Starts at **0**; raised
+  only by `maxDepotReward`. End-of-rally haul = depot + container.
 
 Achievement `maxOreReward` only raises the **wallet** cap.
+Achievement `maxDepotReward` only raises the **depot** cap.
 
 ## How progress is measured
 

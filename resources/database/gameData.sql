@@ -290,7 +290,7 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 -- Batteries - Cerbonium
 insert into RobotPart (id,  typeId, partName,            orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (301, 3,      'Standard Battery',  101,        110,             5,            10,     10,     0),
+               values (301, 3,      'Standard Battery',  101,        140,             5,            10,     10,     0),
                       (302, 3,      'Enhanced Battery',  102,        230,             6,            12,     12,     0),
                       (303, 3,      'Cerbonium Battery', 103,        420,             7,            14,     14,     0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
@@ -963,8 +963,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (2,             3,    1,     25);
 
-insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
-                     values (2,             4,    10,                1,     50);
+insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
+                     values (2,             4,    10,                1,     50,           0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (2,             4,    1,     50);
 

@@ -208,6 +208,17 @@ fn render_achievement_card(
             achievement.current_ore_maximum,
             new_ore_maximum
         ));
+        if achievement.max_depot_reward > 0 || achievement.current_depot_maximum > 0 {
+            let new_depot_maximum = achievement
+                .current_depot_maximum
+                .max(achievement.max_depot_reward);
+            body.push_str(&format!(
+                r#"<li><span class="achievement-reward-label">{} depot maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
+                escape_html(ore_name),
+                achievement.current_depot_maximum,
+                new_depot_maximum
+            ));
+        }
     }
     if i64::from(achievement.robot_reward) > robot_count {
         body.push_str(r#"<li><span class="achievement-reward-label">Robot</span><span class="achievement-reward-value">New robot</span></li>"#);

@@ -49,8 +49,8 @@ impl AchievementCliFixture {
         sqlx::query(
             "INSERT INTO AchievementStep \
              (achievementId, step, achievementPoints, miningQueueReward, robotReward, \
-              oreId, maxOreReward) \
-             VALUES (?, 1, 7, 2, ?, ?, 80)",
+              oreId, maxOreReward, maxDepotReward) \
+             VALUES (?, 1, 7, 2, ?, ?, 80, 40)",
         )
         .bind(achievement_id)
         .bind(if robot_reward { 1 } else { 0 })
@@ -146,8 +146,8 @@ impl AchievementCliFixture {
         .expect("failed to load claimed steps");
         assert_eq!(steps_claimed, 1);
 
-        let max_allowed: i32 = sqlx::query_scalar(
-            "SELECT maxAllowed FROM UserOreAsset WHERE userId = ? AND oreId = ?",
+        let (max_allowed, depot_max_allowed): (i32, i32) = sqlx::query_as(
+            "SELECT maxAllowed, depotMaxAllowed FROM UserOreAsset WHERE userId = ? AND oreId = ?",
         )
         .bind(self.user_id)
         .bind(self.ore_id)
@@ -155,6 +155,7 @@ impl AchievementCliFixture {
         .await
         .expect("failed to load ore max reward");
         assert_eq!(max_allowed, 80);
+        assert_eq!(depot_max_allowed, 40);
     }
 
     pub async fn assert_successor_unlocked(&self, pool: &MySqlPool) {
