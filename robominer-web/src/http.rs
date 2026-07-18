@@ -21,7 +21,7 @@ fn static_file_cache() -> &'static Mutex<HashMap<PathBuf, StaticFileEntry>> {
     CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Request {
     pub method: String,
     pub path: String,

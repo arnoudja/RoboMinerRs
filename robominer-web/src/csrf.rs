@@ -166,7 +166,7 @@ mod tests {
 
     fn authenticated_cookie(user_id: i64) -> String {
         ensure_secret();
-        session::session_set_cookie_header(user_id, false)
+        session::session_set_cookie_header(user_id, false, 0)
     }
 
     fn request(method: &str, form: HashMap<String, String>, cookie: Option<&str>) -> Request {

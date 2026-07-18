@@ -14,6 +14,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
             "../../resources/database/migrations/002_mining_queue_executed_source_code.sql"
         ),
     ),
+    (
+        "003_user_session_version",
+        include_str!("../../resources/database/migrations/003_user_session_version.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -254,7 +258,8 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
 
     let has_scan_speed = column_exists(pool, "Robot", "scanSpeed").await?;
     let has_scan_time = column_exists(pool, "Robot", "scanTime").await?;
-    Ok(!has_scan_speed && has_scan_time)
+    let has_session_version = column_exists(pool, "User", "sessionVersion").await?;
+    Ok(!has_scan_speed && has_scan_time && has_session_version)
 }
 
 async fn table_exists(pool: &MySqlPool, table_name: &str) -> Result<bool, MigrateError> {

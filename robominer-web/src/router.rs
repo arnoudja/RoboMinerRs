@@ -1,4 +1,5 @@
 use crate::Request;
+use crate::session::{self, session_clear_cookie_header};
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, help_page,
     http, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
@@ -6,6 +7,77 @@ use crate::{
 };
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
+    let mut request = request.clone();
+    let clear_stale_session = match config.database_pool.as_ref() {
+        Some(pool) => strip_stale_session_cookie(&mut request, pool).await,
+        None => false,
+    };
+
+    let mut response = dispatch(&request, config).await;
+    if clear_stale_session {
+        response = clear_stale_session_cookies(response);
+    }
+    response
+}
+
+async fn strip_stale_session_cookie(
+    request: &mut Request,
+    pool: &robominer_db::MySqlPool,
+) -> bool {
+    let Some(session) = session::session_from_request(request) else {
+        return false;
+    };
+
+    let Ok(current_version) = robominer_db::get_user_session_version(pool, session.user_id).await
+    else {
+        // Fail open on transient DB errors so a blip does not mass-log everyone out.
+        return false;
+    };
+
+    let session_valid = current_version == Some(session.session_version);
+    if session_valid {
+        return false;
+    }
+
+    if let Some(cookies) = request.headers.get_mut("cookie") {
+        *cookies = strip_named_cookie(cookies, "robominer_session");
+    }
+    true
+}
+
+fn strip_named_cookie(cookies: &str, name: &str) -> String {
+    cookies
+        .split(';')
+        .filter_map(|cookie| {
+            let trimmed = cookie.trim();
+            if trimmed.is_empty() {
+                return None;
+            }
+            let cookie_name = trimmed.split_once('=').map(|(n, _)| n).unwrap_or(trimmed);
+            if cookie_name == name {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+fn clear_stale_session_cookies(response: Response) -> Response {
+    response
+        .with_header("Set-Cookie", session_clear_cookie_header())
+        .with_header(
+            "Set-Cookie",
+            "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
+        )
+        .with_header(
+            "Set-Cookie",
+            "robominer_username=; Max-Age=0; Path=/; SameSite=Lax",
+        )
+}
+
+async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
     if !matches!(request.method.as_str(), "GET" | "HEAD" | "POST") {
         return Response::method_not_allowed();
     }

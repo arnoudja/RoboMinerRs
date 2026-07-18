@@ -93,13 +93,14 @@ async fn account_update_is_rate_limited_before_database_work() {
 fn account_rendering_preserves_form_contract_and_escapes_fields() {
     let html = render_account_page(
         None,
-        &AccountPageState {
-            username: "User <Edit>".to_string(),
-            email: "user&edit@example.com".to_string(),
-            current_username: "User <Current>".to_string(),
-            message: Some("Updated <ok>".to_string()),
-            error_message: Some("Error <bad>".to_string()),
-        },
+        &            AccountPageState {
+                username: "User <Edit>".to_string(),
+                email: "user&edit@example.com".to_string(),
+                current_username: "User <Current>".to_string(),
+                message: Some("Updated <ok>".to_string()),
+                error_message: Some("Error <bad>".to_string()),
+                reissue_session_version: None,
+            },
     );
 
     assert!(html.contains(r#"class="account-page""#));

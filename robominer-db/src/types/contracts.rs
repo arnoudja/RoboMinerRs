@@ -152,6 +152,7 @@ pub struct CreateUserRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CreatedUser {
     pub user_id: i64,
+    pub session_version: i32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -175,6 +176,8 @@ pub struct UpdateUserAccountRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UpdatedUserAccount {
     pub user_id: i64,
+    pub session_version: i32,
+    pub password_changed: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -196,6 +199,7 @@ pub struct VerifyLoginRequest {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VerifiedLogin {
     pub user_id: i64,
+    pub session_version: i32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

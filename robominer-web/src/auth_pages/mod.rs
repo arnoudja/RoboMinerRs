@@ -122,6 +122,7 @@ async fn process_login_request(
                 return Ok(auth_redirect_response(
                     redirect_target,
                     verified.user_id,
+                    verified.session_version,
                     &username,
                     remember_login,
                     remember_cookie(&login_name, remember_login),
@@ -183,6 +184,7 @@ async fn process_login_request(
                     return Ok(auth_redirect_response(
                         "help?welcome=1",
                         created.user_id,
+                        created.session_version,
                         &new_username,
                         false,
                         None,
@@ -243,6 +245,7 @@ fn return_to_from_request(request: &Request) -> Option<String> {
 pub(super) fn auth_redirect_response(
     location: &str,
     user_id: i64,
+    session_version: i32,
     username: &str,
     persistent_session: bool,
     remember_cookie: Option<String>,
@@ -250,7 +253,7 @@ pub(super) fn auth_redirect_response(
     let mut response = Response::redirect(location)
         .with_header(
             "Set-Cookie",
-            session::session_set_cookie_header(user_id, persistent_session),
+            session::session_set_cookie_header(user_id, persistent_session, session_version),
         )
         .with_header(
             "Set-Cookie",

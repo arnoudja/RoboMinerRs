@@ -25,6 +25,7 @@ pub(crate) struct SessionClaims {
     pub user_id: i64,
     pub expires_at: u64,
     pub nonce: u64,
+    pub session_version: i32,
 }
 
 pub fn is_local_bind_host(host: &str) -> bool {
@@ -142,10 +143,14 @@ pub(crate) fn session_from_cookie_header(cookies: &str) -> Option<SessionClaims>
     cookie_value(cookies, SESSION_COOKIE_NAME).and_then(|value| verify_session_token(&value))
 }
 
-pub(crate) fn session_set_cookie_header(user_id: i64, persistent: bool) -> String {
+pub(crate) fn session_set_cookie_header(
+    user_id: i64,
+    persistent: bool,
+    session_version: i32,
+) -> String {
     let ttl_secs = session_ttl_secs(persistent);
     let expires_at = session_expiry_timestamp(ttl_secs);
-    let token = create_session_token(user_id, expires_at, new_session_nonce());
+    let token = create_session_token(user_id, expires_at, new_session_nonce(), session_version);
     format!(
         "{SESSION_COOKIE_NAME}={token}; Max-Age={ttl_secs}; Path=/; HttpOnly; SameSite=Lax{}",
         secure_cookie_suffix()
@@ -158,7 +163,12 @@ pub(crate) fn session_cookie_header_for_claims(session: SessionClaims) -> String
         .expires_at
         .saturating_sub(current_unix_timestamp())
         .max(1);
-    let token = create_session_token(session.user_id, session.expires_at, session.nonce);
+    let token = create_session_token(
+        session.user_id,
+        session.expires_at,
+        session.nonce,
+        session.session_version,
+    );
     format!(
         "{SESSION_COOKIE_NAME}={token}; Max-Age={max_age}; Path=/; HttpOnly; SameSite=Lax{}",
         secure_cookie_suffix()
@@ -187,7 +197,7 @@ pub(crate) fn session_clear_cookie_header() -> String {
 pub(crate) fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
     format!(
         "{}; robominer_username={}",
-        session_set_cookie_header(user_id, false),
+        session_set_cookie_header(user_id, false, 0),
         cookie_encode(username)
     )
 }
@@ -199,8 +209,13 @@ pub(crate) fn cookie_value(cookies: &str, name: &str) -> Option<String> {
     })
 }
 
-fn create_session_token(user_id: i64, expires_at: u64, nonce: u64) -> String {
-    let payload = format!("{user_id}.{expires_at}.{nonce}");
+fn create_session_token(
+    user_id: i64,
+    expires_at: u64,
+    nonce: u64,
+    session_version: i32,
+) -> String {
+    let payload = format!("{user_id}.{expires_at}.{nonce}.{session_version}");
     let signature = sign_payload(&payload);
     format!("{payload}.{signature}")
 }
@@ -216,6 +231,11 @@ fn verify_session_token(token: &str) -> Option<SessionClaims> {
     let user_id = parts.next()?.parse::<i64>().ok()?;
     let expires_at = parts.next()?.parse::<u64>().ok()?;
     let nonce = parts.next()?.parse::<u64>().ok()?;
+    // Legacy tokens omitted session_version; treat them as version 0.
+    let session_version = match parts.next() {
+        Some(value) => value.parse::<i32>().ok()?,
+        None => 0,
+    };
     if parts.next().is_some() {
         return None;
     }
@@ -230,6 +250,7 @@ fn verify_session_token(token: &str) -> Option<SessionClaims> {
         user_id,
         expires_at,
         nonce,
+        session_version,
     })
 }
 
@@ -284,7 +305,7 @@ fn encode_hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-fn cookie_encode(value: &str) -> String {
+pub(crate) fn cookie_encode(value: &str) -> String {
     value
         .bytes()
         .flat_map(|byte| match byte {
@@ -298,7 +319,7 @@ fn cookie_encode(value: &str) -> String {
 
 #[cfg(test)]
 fn create_session_token_for_tests(user_id: i64) -> String {
-    create_session_token(user_id, u64::MAX / 2, new_session_nonce())
+    create_session_token(user_id, u64::MAX / 2, new_session_nonce(), 0)
 }
 
 #[cfg(test)]
@@ -360,6 +381,17 @@ mod tests {
         let session = verify_session_token(&token).expect("valid session");
         assert_eq!(session.user_id, 42);
         assert!(session.nonce > 0);
+        assert_eq!(session.session_version, 0);
+    }
+
+    #[test]
+    fn session_token_embeds_and_verifies_session_version() {
+        ensure_test_session_secret();
+        let token = super::create_session_token(42, u64::MAX / 2, 9, 7);
+        let session = verify_session_token(&token).expect("valid session");
+        assert_eq!(session.user_id, 42);
+        assert_eq!(session.nonce, 9);
+        assert_eq!(session.session_version, 7);
     }
 
     #[test]
@@ -373,14 +405,14 @@ mod tests {
     #[test]
     fn expired_session_token_is_rejected() {
         ensure_test_session_secret();
-        let token = super::create_session_token(42, 1, 1);
+        let token = super::create_session_token(42, 1, 1, 0);
         assert_eq!(verify_session_token(&token), None);
     }
 
     #[test]
     fn user_id_from_request_uses_signed_session_cookie() {
         ensure_test_session_secret();
-        let cookie = session_set_cookie_header(77, false);
+        let cookie = session_set_cookie_header(77, false, 0);
         let request = request_with_cookie(&cookie);
 
         assert_eq!(user_id_from_request(&request), Some(77));
@@ -416,7 +448,7 @@ mod tests {
     fn session_set_cookie_header_uses_configured_max_age() {
         ensure_test_session_secret();
         super::configure_session_ttl_secs(3_600);
-        let cookie = session_set_cookie_header(77, false);
+        let cookie = session_set_cookie_header(77, false, 0);
         assert!(cookie.contains("; Max-Age=3600;"));
         super::configure_session_ttl_secs(DEFAULT_SESSION_TTL_SECS);
     }
@@ -425,7 +457,7 @@ mod tests {
     fn session_set_cookie_header_uses_default_max_age_matching_token_ttl() {
         ensure_test_session_secret();
         super::configure_session_ttl_secs(DEFAULT_SESSION_TTL_SECS);
-        let cookie = session_set_cookie_header(77, false);
+        let cookie = session_set_cookie_header(77, false, 0);
         assert!(cookie.starts_with("robominer_session="));
         assert!(cookie.contains("; Max-Age=86400;"));
     }
@@ -433,7 +465,7 @@ mod tests {
     #[test]
     fn persistent_session_set_cookie_header_uses_longer_max_age() {
         ensure_test_session_secret();
-        let cookie = session_set_cookie_header(77, true);
+        let cookie = session_set_cookie_header(77, true, 0);
         assert!(cookie.contains("; Max-Age=2592000;"));
     }
 
@@ -477,7 +509,7 @@ mod tests {
         super::configure_session_secret("secure-cookie-test-secret");
         super::configure_secure_cookies(true);
 
-        let cookie = session_set_cookie_header(42, false);
+        let cookie = session_set_cookie_header(42, false, 0);
 
         assert!(cookie.ends_with("; Secure"));
     }

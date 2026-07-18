@@ -185,6 +185,7 @@ fn auth_redirect_sets_rust_auth_and_remember_cookies() {
     let response = auth_redirect_response(
         "miningQueue",
         42,
+        0,
         "User Name",
         true,
         remember_cookie("user@example.com", true),

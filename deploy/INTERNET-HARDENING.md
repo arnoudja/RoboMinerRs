@@ -169,6 +169,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | POST-only form mutations | GET cannot drive shop/queue/account writes |
 | App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
 | Account password rate limit | `/account` POSTs limited by IP and `user:{id}` before Argon2 verify |
+| Session invalidation on password change | `User.sessionVersion` bumped; cookie version checked on each request |
 | Client IP | Peer address by default; `trustproxy 1` enables proxy headers |
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |

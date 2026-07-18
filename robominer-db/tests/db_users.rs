@@ -75,6 +75,8 @@ async fn create_user_inserts_user_and_claims_initial_achievement() {
     assert!(user.password_hash.starts_with("$argon2"));
     assert_eq!(user.achievement_points, 10);
     assert_eq!(user.mining_queue_size, 1);
+    assert_eq!(user.session_version, 0);
+    assert_eq!(created.session_version, 0);
 
     let steps_claimed: i32 = sqlx::query_scalar(
         "SELECT stepsClaimed FROM UserAchievement WHERE userId = ? AND achievementId = 1",
@@ -275,6 +277,63 @@ async fn update_user_account_rejects_duplicate_email() {
         .bind(second_user_id)
         .execute(&pool)
         .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn update_user_account_bumps_session_version_only_when_password_changes() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-db-session-version");
+    let username = format!("{prefix}-user");
+    let email = format!("{prefix}@example.invalid");
+    let user_id =
+        insert_user_with_credentials(&pool, &username, &email, "test-password-1").await;
+
+    let profile_only = update_user_account(
+        &pool,
+        UpdateUserAccountRequest {
+            user_id,
+            username: format!("{prefix}-renamed"),
+            email: email.clone(),
+            password: None,
+        },
+    )
+    .await
+    .expect("update should not fail at sql layer")
+    .expect("profile update should succeed");
+    assert!(!profile_only.password_changed);
+    assert_eq!(profile_only.session_version, 0);
+
+    let with_password = update_user_account(
+        &pool,
+        UpdateUserAccountRequest {
+            user_id,
+            username: format!("{prefix}-renamed"),
+            email,
+            password: Some("test-password-2".to_string()),
+        },
+    )
+    .await
+    .expect("update should not fail at sql layer")
+    .expect("password update should succeed");
+    assert!(with_password.password_changed);
+    assert_eq!(with_password.session_version, 1);
+
+    let stored: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("load session version");
+    assert_eq!(stored, 1);
+
+    cleanup_created_user(&pool, user_id).await;
 }
 
 async fn cleanup_created_user(pool: &robominer_db::MySqlPool, user_id: i64) {
