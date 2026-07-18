@@ -39,7 +39,11 @@ async fn verify_and_mark_program_source(
     program_source_id: i64,
     source_code: &str,
 ) -> Result<(), DomainError> {
-    let verification = robominer_program::verify_source(source_code);
+    // Compile/verify is CPU-bound; keep it off the Tokio worker (editCode save path).
+    let source_code = source_code.to_owned();
+    let verification = tokio::task::spawn_blocking(move || robominer_program::verify_source(&source_code))
+        .await
+        .expect("program verification task should not panic");
     if verification.verified {
         robominer_db::set_valid_program_source(pool, program_source_id, verification.compiled_size)
             .await
