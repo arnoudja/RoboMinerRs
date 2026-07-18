@@ -16,8 +16,8 @@ mod types;
 mod tests;
 
 pub use compile::{
-    compatibility_fixture_source, compatibility_fixtures, compile_executable_source,
-    compile_source, verify_source,
+    clear_compile_cache, compatibility_fixture_source, compatibility_fixtures, compile_cache_stats,
+    compile_executable_source, compile_source, verify_source,
 };
 pub use pending_await::{ActionAwaitKind, await_kind};
 pub use pose::{rally_map_position, rally_robot_pose};

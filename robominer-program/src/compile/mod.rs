@@ -1,5 +1,6 @@
 use crate::types::{CompileError, ExecutableProgram, Verification};
 
+mod cache;
 mod executable;
 mod fixtures;
 mod input;
@@ -8,6 +9,7 @@ mod program_size;
 use executable::parse_executable_program;
 use program_size::program_instruction_size;
 
+pub use cache::{clear_compile_cache, compile_cache_stats};
 pub use fixtures::{compatibility_fixture_source, compatibility_fixtures};
 
 pub fn verify_source(source: &str) -> Verification {
@@ -26,16 +28,18 @@ pub fn verify_source(source: &str) -> Verification {
 }
 
 pub fn compile_source(source: &str) -> Result<usize, CompileError> {
-    Ok(program_instruction_size(&parse_executable_program(source)?))
+    Ok(compile_executable_source_with_size(source)?.0)
 }
 
 pub fn compile_executable_source(source: &str) -> Result<ExecutableProgram, CompileError> {
-    parse_executable_program(source)
+    Ok(compile_executable_source_with_size(source)?.1)
 }
 
 fn compile_executable_source_with_size(
     source: &str,
 ) -> Result<(usize, ExecutableProgram), CompileError> {
-    let program = parse_executable_program(source)?;
-    Ok((program_instruction_size(&program), program))
+    cache::get_or_insert_with(source, || {
+        let program = parse_executable_program(source)?;
+        Ok((program_instruction_size(&program), program))
+    })
 }
