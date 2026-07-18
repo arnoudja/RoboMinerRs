@@ -141,7 +141,12 @@ impl AnimationRecorder {
     ) -> String {
         let payload = json!({
             "v": ANIMATION_PAYLOAD_VERSION,
-            "robots": robots_animation_value(&self.robot_steps, robots),
+            "robots": robots_animation_value(
+                &self.robot_steps,
+                robots,
+                ground.size_x(),
+                ground.size_y(),
+            ),
             "ground": ground_animation_value(ground, &self.ground_changes),
             "oreTypes": ore_animation_value(ore_data),
         });
@@ -150,7 +155,32 @@ impl AnimationRecorder {
     }
 }
 
-fn robots_animation_value(robot_steps: &[Vec<RobotAnimationStep>], robots: &[Robot]) -> Value {
+/// Axis-aligned square on the map corner where this robot slot spawns.
+/// Side length is `ceil(robot_size)` cells, anchored at the map corner.
+fn depot_home_square(
+    robot_index: usize,
+    robot_size: f64,
+    size_x: usize,
+    size_y: usize,
+) -> (usize, usize, usize) {
+    let side = robot_size.ceil().max(1.0) as usize;
+    let side = side.min(size_x.max(1)).min(size_y.max(1));
+    let (x, y) = match robot_index {
+        0 => (0, 0),
+        1 => (0, size_y.saturating_sub(side)),
+        2 => (size_x.saturating_sub(side), 0),
+        3 => (size_x.saturating_sub(side), size_y.saturating_sub(side)),
+        _ => (0, 0),
+    };
+    (x, y, side)
+}
+
+fn robots_animation_value(
+    robot_steps: &[Vec<RobotAnimationStep>],
+    robots: &[Robot],
+    size_x: usize,
+    size_y: usize,
+) -> Value {
     let mut robot_values = Vec::with_capacity(robot_steps.len());
 
     for (index, steps) in robot_steps.iter().enumerate() {
@@ -173,12 +203,17 @@ fn robots_animation_value(robot_steps: &[Vec<RobotAnimationStep>], robots: &[Rob
         robot_object.insert("maxore".to_string(), json!(spec.max_ore));
         robot_object.insert("maxturns".to_string(), json!(spec.max_turns));
         if record_depot {
+            let (home_x, home_y, home_size) =
+                depot_home_square(index, spec.robot_size, size_x, size_y);
             robot_object.insert("depotMaxA".to_string(), json!(depot_capacity[0]));
             robot_object.insert("depotMaxB".to_string(), json!(depot_capacity[1]));
             robot_object.insert("depotMaxC".to_string(), json!(depot_capacity[2]));
             robot_object.insert("DA".to_string(), json!(first_step.depot[0]));
             robot_object.insert("DB".to_string(), json!(first_step.depot[1]));
             robot_object.insert("DC".to_string(), json!(first_step.depot[2]));
+            robot_object.insert("homeX".to_string(), json!(home_x));
+            robot_object.insert("homeY".to_string(), json!(home_y));
+            robot_object.insert("homeSize".to_string(), json!(home_size));
         }
         robot_object.insert(
             "locations".to_string(),

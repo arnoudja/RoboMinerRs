@@ -141,6 +141,9 @@ fn animation_data_includes_depot_when_capacity_is_unlocked() {
     assert_eq!(payload["robots"]["robot"][0]["depotMaxA"], 10);
     assert_eq!(payload["robots"]["robot"][0]["depotMaxB"], 0);
     assert_eq!(payload["robots"]["robot"][0]["depotMaxC"], 0);
+    assert_eq!(payload["robots"]["robot"][0]["homeX"], 0);
+    assert_eq!(payload["robots"]["robot"][0]["homeY"], 0);
+    assert_eq!(payload["robots"]["robot"][0]["homeSize"], 1);
     // After mine then dump at spawn, depot should hold mined ore.
     let locations = payload["robots"]["robot"][0]["locations"]
         .as_array()
@@ -148,6 +151,41 @@ fn animation_data_includes_depot_when_capacity_is_unlocked() {
     let last = locations.last().expect("last location");
     assert_eq!(last["DA"], 4);
     assert_eq!(simulation.robot(0).depot()[0], 4);
+}
+
+#[test]
+fn animation_data_depot_home_square_uses_ceil_robot_size_at_spawn_corner() {
+    let ground = Ground::new(8, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 1;
+    spec.robot_size = 1.5;
+
+    let mut capacity = [0; MAX_ORE_TYPES];
+    capacity[0] = 5;
+    let robots = (0..4)
+        .map(|_| {
+            ScriptedRobot::new(spec.clone(), vec![RobotAction::Wait]).with_depot_capacity(capacity)
+        })
+        .collect();
+    let mut simulation = Simulation::new(ground, 1, robots);
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+
+    let robots = payload["robots"]["robot"].as_array().expect("robots");
+    assert_eq!(robots[0]["homeX"], 0);
+    assert_eq!(robots[0]["homeY"], 0);
+    assert_eq!(robots[0]["homeSize"], 2);
+    assert_eq!(robots[1]["homeX"], 0);
+    assert_eq!(robots[1]["homeY"], 6);
+    assert_eq!(robots[1]["homeSize"], 2);
+    assert_eq!(robots[2]["homeX"], 6);
+    assert_eq!(robots[2]["homeY"], 0);
+    assert_eq!(robots[2]["homeSize"], 2);
+    assert_eq!(robots[3]["homeX"], 6);
+    assert_eq!(robots[3]["homeY"], 6);
+    assert_eq!(robots[3]["homeSize"], 2);
 }
 
 #[test]

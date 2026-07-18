@@ -964,7 +964,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
                                            values (2,             3,    1,     25);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
-                     values (2,             4,    10,                1,     50,           0);
+                     values (2,             4,    10,                1,     50,           5);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (2,             4,    1,     50);
 
@@ -1555,3 +1555,17 @@ select max(OrePriceAmount.oreId)
 from OrePriceAmount
 where OrePriceAmount.orePriceId = RobotPart.orePriceId
 );
+
+
+-- Update depot values
+update UserOreAsset
+set depotMaxAllowed = COALESCE(
+(
+ select max(AchievementStep.maxDepotReward)
+ from AchievementStep, UserAchievement
+ where AchievementStep.achievementId = UserAchievement.achievementId
+ and AchievementStep.step <= UserAchievement.stepsClaimed
+ and AchievementStep.oreId = UserOreAsset.oreId
+ and UserAchievement.userId = UserOreAsset.userId
+ and AchievementStep.maxDepotReward is not null
+), 0);

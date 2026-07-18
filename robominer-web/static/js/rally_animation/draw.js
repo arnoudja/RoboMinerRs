@@ -105,6 +105,92 @@ function drawRobot(robot, scale, turn)
 }
 
 
+function depotHomeSquare(robot)
+{
+    if (!robotHasDepot(robot))
+    {
+        return null;
+    }
+
+    var side = Number(robot.homeSize);
+    if (isNaN(side) || side < 1)
+    {
+        side = Math.ceil(Number(robot.size) || 1);
+        if (side < 1)
+        {
+            side = 1;
+        }
+    }
+
+    var homeX = Number(robot.homeX);
+    var homeY = Number(robot.homeY);
+    if (!isNaN(homeX) && !isNaN(homeY))
+    {
+        return { x: homeX, y: homeY, side: side };
+    }
+
+    if (typeof myGround === 'undefined')
+    {
+        return null;
+    }
+
+    switch (robot.robotnr)
+    {
+        case 0:
+            return { x: 0, y: 0, side: side };
+        case 1:
+            return { x: 0, y: myGround.sizeY - side, side: side };
+        case 2:
+            return { x: myGround.sizeX - side, y: 0, side: side };
+        case 3:
+            return { x: myGround.sizeX - side, y: myGround.sizeY - side, side: side };
+        default:
+            return null;
+    }
+}
+
+
+function drawDepotHome(robot, scale)
+{
+    var home = depotHomeSquare(robot);
+    if (!home)
+    {
+        return;
+    }
+
+    var x = home.x * scale;
+    var y = home.y * scale;
+    var size = home.side * scale;
+    var lineWidth = Math.max(2, Math.floor(scale * 0.08));
+
+    myRallyContext.save();
+    myRallyContext.strokeStyle = robotColor(robot.robotnr);
+    myRallyContext.lineWidth = lineWidth;
+    myRallyContext.setLineDash([Math.max(3, Math.floor(scale * 0.18)), Math.max(2, Math.floor(scale * 0.12))]);
+    myRallyContext.strokeRect(
+        x + lineWidth / 2,
+        y + lineWidth / 2,
+        size - lineWidth,
+        size - lineWidth
+    );
+    myRallyContext.restore();
+}
+
+
+function drawDepotHomes(scale)
+{
+    if (!rallyHasAnimationData())
+    {
+        return;
+    }
+
+    for (var i = 0; i < myRobots.robot.length; i++)
+    {
+        drawDepotHome(myRobots.robot[i], scale);
+    }
+}
+
+
 function eraseRobot(robot, scale, step)
 {
     var center = robotCenterPixels(robot, scale);
