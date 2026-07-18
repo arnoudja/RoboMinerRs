@@ -263,6 +263,74 @@ fn animation_data_records_motion_status_when_speed_is_zero() {
 }
 
 #[test]
+fn animation_data_records_wall_status_when_move_is_fully_blocked() {
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 1;
+    spec.backward_speed = 1.0;
+
+    let mut simulation = Simulation::new(
+        Ground::new(4, 4),
+        1,
+        // Robot 0 starts in the SW corner; Backward drives into the wall.
+        vec![ScriptedRobot::new(spec, vec![RobotAction::Backward])],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"wall""#),
+        "fully wall-blocked move should emit stuck status wall: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_robot_status_when_move_is_fully_blocked() {
+    let mut mover = RobotSpec::test_robot();
+    mover.forward_speed = 1.0;
+    mover.robot_size = 1.0;
+    mover.max_turns = 1;
+
+    let mut blocker = RobotSpec::test_robot();
+    blocker.robot_size = 1.0;
+    blocker.max_turns = 1;
+
+    // 2x2 map: robots 0 and 1 start exactly one body-diameter apart, already touching.
+    let mut simulation = Simulation::new(
+        Ground::new(2, 2),
+        1,
+        vec![
+            ScriptedRobot::new(mover, vec![RobotAction::Forward]),
+            ScriptedRobot::new(blocker, vec![RobotAction::Wait]),
+        ],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"robot""#),
+        "fully robot-blocked move should emit stuck status robot: {data}"
+    );
+}
+
+#[test]
+fn animation_data_omits_wall_status_for_partial_wall_clip() {
+    let mut spec = RobotSpec::test_robot();
+    spec.forward_speed = 10.0;
+    spec.max_turns = 1;
+
+    let mut simulation = Simulation::new(
+        Ground::new(5, 5),
+        1,
+        // Moves toward the far corner and is clipped, but still travels.
+        vec![ScriptedRobot::new(spec, vec![RobotAction::Forward])],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        !data.contains(r#""s":"wall""#),
+        "partial wall clip must not be labeled stuck: {data}"
+    );
+}
+
+#[test]
 fn animation_data_records_source_line_for_program_actions() {
     let program = seeded_program("scan();\nmine();");
     let mut ground = Ground::new(4, 4);

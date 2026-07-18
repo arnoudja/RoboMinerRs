@@ -5,6 +5,7 @@ mod program_bridge;
 mod test_support;
 
 use robominer_program::ExecutableRunner;
+use robominer_program::motion::is_zero_motion;
 
 use crate::OreAnimationData;
 use crate::action_mapping::PendingExpressionAction;
@@ -207,6 +208,18 @@ impl Simulation {
                 }
             }
 
+            // Travel after wall clipping, before robot-robot collisions.
+            let mut pre_collision_travel = vec![None; self.robots.len()];
+            for (index, result) in pending_results.iter().enumerate() {
+                if matches!(result, ActionResult::Move { .. }) {
+                    pre_collision_travel[index] = Some(
+                        self.robots[index]
+                            .position
+                            .distance(&self.robots[index].destination),
+                    );
+                }
+            }
+
             self.check_collisions();
 
             for (index, result) in pending_results.iter_mut().enumerate() {
@@ -214,6 +227,15 @@ impl Simulation {
                     let distance = self.robots[index]
                         .position
                         .distance(&self.robots[index].destination);
+                    if is_zero_motion(distance) {
+                        let wall_blocked = pre_collision_travel[index]
+                            .is_some_and(is_zero_motion);
+                        cycle_statuses[index] = Some(if wall_blocked {
+                            RobotCycleStatus::Wall
+                        } else {
+                            RobotCycleStatus::Robot
+                        });
+                    }
                     *result = ActionResult::Value(distance * direction);
                 }
             }

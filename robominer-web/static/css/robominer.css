@@ -4088,6 +4088,15 @@ body.mining-area-atlas-drawer-open {
     color: #ffb020;
 }
 
+.rally-view-player-blocked {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.12);
+}
+
+.rally-view-player-blocked .rally-view-player-action {
+    color: #f87171;
+}
+
 .rally-view-player-full {
     border-color: rgba(72, 200, 120, 0.75);
 }

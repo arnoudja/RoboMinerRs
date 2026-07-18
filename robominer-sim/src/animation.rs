@@ -31,6 +31,10 @@ pub enum RobotCycleStatus {
     Zero,
     /// Non-zero motion requested but no chunk could be issued (e.g. zero speed).
     Motion,
+    /// Requested move ended at the start pose due to map bounds.
+    Wall,
+    /// Requested move ended at the start pose due to another robot.
+    Robot,
     /// Explicit or residual Wait with no more specific cause.
     Wait,
 }
@@ -43,6 +47,8 @@ impl RobotCycleStatus {
             Self::Cpu => "cpu",
             Self::Zero => "zero",
             Self::Motion => "motion",
+            Self::Wall => "wall",
+            Self::Robot => "robot",
             Self::Wait => "wait",
         }
     }

@@ -297,6 +297,10 @@ function rallyStatusLabel(status)
             return 'Zero-distance move';
         case 'motion':
             return 'Cannot move';
+        case 'wall':
+            return 'Blocked by wall';
+        case 'robot':
+            return 'Blocked by robot';
         case 'wait':
             return 'Wait';
         default:
@@ -311,7 +315,7 @@ function robotLooksIdle(robot, step)
     {
         return true;
     }
-    if (robot.s === 'scan' || robot.s === 'battery')
+    if (robot.s === 'scan' || robot.s === 'battery' || robot.s === 'wall' || robot.s === 'robot')
     {
         return false;
     }
@@ -335,6 +339,12 @@ function robotLooksIdle(robot, step)
         && previous.A === current.A
         && previous.B === current.B
         && previous.C === current.C;
+}
+
+
+function robotLooksBlocked(robot)
+{
+    return robot.s === 'wall' || robot.s === 'robot';
 }
 
 
@@ -463,6 +473,15 @@ function updateRobotDebugPanel(robot, step)
         else
         {
             card.classList.remove('rally-view-player-idle');
+        }
+
+        if (robotLooksBlocked(robot))
+        {
+            card.classList.add('rally-view-player-blocked');
+        }
+        else
+        {
+            card.classList.remove('rally-view-player-blocked');
         }
 
         if (full)
