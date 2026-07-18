@@ -66,12 +66,12 @@ resources/scripts/run-coverage-with-db.sh --html --output-dir target/coverage-ht
 
 CI uploads `lcov.info` as a workflow artifact on every push and pull request. The coverage job
 also uploads to Codecov when configured and fails when line coverage drops below
-`ROBOMINER_COVERAGE_FAIL_UNDER_LINES` (currently 89 in CI).
+`ROBOMINER_COVERAGE_FAIL_UNDER_LINES` (currently 92 in CI).
 
 Set the threshold locally:
 
 ```sh
-ROBOMINER_COVERAGE_FAIL_UNDER_LINES=89 resources/scripts/run-coverage-with-db.sh
+ROBOMINER_COVERAGE_FAIL_UNDER_LINES=92 resources/scripts/run-coverage-with-db.sh
 ```
 
 ## Splitting a web page module

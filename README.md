@@ -74,7 +74,7 @@ Generate an LLVM coverage report (requires `[cargo-llvm-cov](https://github.com/
 ```sh
 resources/scripts/run-coverage-with-db.sh
 resources/scripts/run-coverage-with-db.sh --lcov --output-path lcov.info
-ROBOMINER_COVERAGE_FAIL_UNDER_LINES=89 resources/scripts/run-coverage-with-db.sh
+ROBOMINER_COVERAGE_FAIL_UNDER_LINES=92 resources/scripts/run-coverage-with-db.sh
 ```
 
 CI enforces the line-coverage floor via `ROBOMINER_COVERAGE_FAIL_UNDER_LINES` and uploads LCOV to

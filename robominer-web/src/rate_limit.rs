@@ -176,6 +176,15 @@ pub(crate) fn reset_auth_rate_limiter_for_tests() {
     limiter.last_sweep = None;
 }
 
+/// Serializes tests that mutate the process-wide auth rate limiter.
+#[cfg(test)]
+pub(crate) fn lock_auth_rate_limiter_for_tests() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -228,6 +237,7 @@ mod tests {
 
     #[test]
     fn auth_rate_limiter_trips_on_ip_and_login_windows() {
+        let _guard = lock_auth_rate_limiter_for_tests();
         reset_auth_rate_limiter_for_tests();
         let ip = "198.51.100.20";
         for index in 0..MAX_ATTEMPTS_PER_IP {
@@ -249,6 +259,7 @@ mod tests {
 
     #[test]
     fn auth_rate_limiter_drops_empty_keys_after_prune() {
+        let _guard = lock_auth_rate_limiter_for_tests();
         reset_auth_rate_limiter_for_tests();
         let now = Instant::now();
         let expired = now - AUTH_WINDOW - Duration::from_secs(1);

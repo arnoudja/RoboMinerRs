@@ -3,7 +3,8 @@ use std::path::PathBuf;
 
 use crate::csrf::csrf_token_from_cookie;
 use crate::rate_limit::{
-    MAX_ATTEMPTS_PER_LOGIN, record_auth_attempt, reset_auth_rate_limiter_for_tests,
+    MAX_ATTEMPTS_PER_LOGIN, lock_auth_rate_limiter_for_tests, record_auth_attempt,
+    reset_auth_rate_limiter_for_tests,
 };
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
@@ -70,6 +71,7 @@ async fn account_requires_database_configuration() {
 
 #[tokio::test(flavor = "current_thread")]
 async fn account_update_is_rate_limited_before_database_work() {
+    let _guard = lock_auth_rate_limiter_for_tests();
     reset_auth_rate_limiter_for_tests();
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
