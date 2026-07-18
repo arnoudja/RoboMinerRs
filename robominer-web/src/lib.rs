@@ -27,6 +27,7 @@ mod server;
 mod session;
 mod settings;
 mod shop_page;
+pub mod startup;
 
 pub use server::serve;
 pub use settings::{WebSettings, web_settings};
