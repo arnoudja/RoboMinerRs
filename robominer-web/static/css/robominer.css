@@ -14,7 +14,24 @@
     --shell-link-active: #1e3a5f;
     --select-option-bg: #0f1728;
     --select-option-text: #e2e8f0;
+    /* Classic vh fallback; overridden to dvh when supported (iOS Safari URL bar). */
+    --app-vh: 1vh;
+    --app-svh: 1vh;
+    --app-viewport-height: 100vh;
     color-scheme: dark;
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --app-vh: 1dvh;
+        --app-viewport-height: 100dvh;
+    }
+}
+
+@supports (height: 100svh) {
+    :root {
+        --app-svh: 1svh;
+    }
 }
 
 html {
@@ -56,7 +73,7 @@ body {
 }
 
 div.main {
-    min-height: 100vh;
+    min-height: var(--app-viewport-height);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -75,6 +92,7 @@ div.interface {
     border-bottom: 1px solid var(--shell-border);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
     flex-shrink: 0;
+    padding-top: env(safe-area-inset-top, 0px);
 }
 
 .app-shell-inner {
@@ -356,6 +374,7 @@ div.interface {
     border-top: 1px solid var(--shell-border);
     color: var(--shell-text-muted);
     flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .app-shell-footer-inner {
@@ -403,6 +422,11 @@ body.robominer-dialog-open {
 
 .robominer-dialog {
     inset: 0;
+    padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
     position: fixed;
     z-index: 1400;
 }
@@ -623,6 +647,8 @@ p.success {
 
 .main:has(.auth-page) {
     background: #070b12;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .main:has(.auth-page) .interface {
@@ -632,7 +658,7 @@ p.success {
         linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
     color: #d7e0f0;
     margin: 0;
-    min-height: calc(100vh - 60px);
+    min-height: calc(var(--app-viewport-height) - 60px);
     padding: 24px 16px 76px;
 }
 
@@ -856,7 +882,7 @@ p.success {
 }
 
 .auth-logoff-page .auth-shell {
-    margin-top: 12vh;
+    margin-top: calc(12 * var(--app-vh));
 }
 
 .auth-logoff-card {
@@ -895,7 +921,7 @@ p.success {
         radial-gradient(circle at top right, rgba(0, 229, 255, 0.08), transparent 24%),
         linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
     color: #d7e0f0;
-    min-height: calc(100vh - 120px);
+    min-height: calc(var(--app-viewport-height) - 120px);
     padding: 24px 16px 76px;
 }
 
@@ -1312,7 +1338,7 @@ p.success {
         radial-gradient(circle at top right, rgba(124, 77, 255, 0.08), transparent 24%),
         linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
     color: #d7e0f0;
-    min-height: calc(100vh - 120px);
+    min-height: calc(var(--app-viewport-height) - 120px);
     padding: 24px 16px 76px;
 }
 
@@ -2223,6 +2249,11 @@ body.mining-area-atlas-drawer-open {
 
 .mining-area-atlas-drawer {
     inset: 0;
+    padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
     position: fixed;
     z-index: 1200;
 }
@@ -4055,7 +4086,8 @@ body.mining-area-atlas-drawer-open {
     font-size: 0.72rem;
     line-height: 1.45;
     margin: 0;
-    max-height: 280px;
+    /* Cap to the small viewport so iOS Safari chrome doesn't clip the panel. */
+    max-height: min(280px, calc(40 * var(--app-svh)));
     overflow: auto;
     padding: 8px 0;
     /* Avoid <pre> + white-space:pre: iOS Safari collapses block children onto one line. */
@@ -4476,7 +4508,8 @@ tbody.miningresults {
     font-family: Consolas, "Courier New", monospace;
     font-size: 0.92rem;
     line-height: 1.45;
-    min-height: 420px;
+    /* Prefer the small viewport on phones so Safari chrome doesn't push controls off-screen. */
+    min-height: min(420px, calc(55 * var(--app-svh)));
     padding: 10px 12px;
     resize: vertical;
     width: 100%;

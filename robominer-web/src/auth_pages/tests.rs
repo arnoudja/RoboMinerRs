@@ -86,6 +86,9 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
     });
 
     assert!(html.contains(r#"class="auth-page""#));
+    assert!(html.contains(
+        r#"name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover""#
+    ));
     assert!(html.contains(r#"id="loginmenuitem" class="auth-tab""#));
     assert!(html.contains(r#"id="signupmenuitem" class="auth-tab auth-tab-active""#));
     assert!(html.contains(
