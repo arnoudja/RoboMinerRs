@@ -4,7 +4,10 @@
 
 use robominer_program::{ExecutableAction, ExecutionContext, ProgramStep};
 
-use crate::action_mapping::{map_awaiting_executable, robot_action_from_executable};
+use crate::action_mapping::{
+    map_awaiting_executable, robot_action_from_executable, status_for_wait_from_executable,
+};
+use crate::animation::RobotCycleStatus;
 use crate::ground::{ScanResult, ScanState};
 use crate::physics::ActionResult;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
@@ -115,7 +118,10 @@ impl Simulation {
         context
     }
 
-    pub(super) fn run_program_cpu_loop(&mut self, robot_index: usize) -> RobotAction {
+    pub(super) fn run_program_cpu_loop(
+        &mut self,
+        robot_index: usize,
+    ) -> (RobotAction, Option<RobotCycleStatus>) {
         let cpu_speed = self.robots[robot_index].spec.cpu_speed;
         let mut cpu_used = 0;
 
@@ -123,14 +129,14 @@ impl Simulation {
             let extend_budget = {
                 let ActionSource::Program { runner, .. } = &self.action_sources[robot_index] else {
                     self.action_result_expected[robot_index] = false;
-                    return RobotAction::Wait;
+                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
                 };
                 runner.awaits_scan_result() || runner.has_pending_scan_completion()
             };
 
             if cpu_used >= cpu_speed && !extend_budget {
                 self.action_result_expected[robot_index] = false;
-                return RobotAction::Wait;
+                return (RobotAction::Wait, Some(RobotCycleStatus::Cpu));
             }
 
             let mut context = self.build_execution_context(robot_index);
@@ -141,7 +147,7 @@ impl Simulation {
                 } = &mut self.action_sources[robot_index]
                 else {
                     self.action_result_expected[robot_index] = false;
-                    return RobotAction::Wait;
+                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
                 };
                 runner.step(&mut context)
             };
@@ -157,7 +163,7 @@ impl Simulation {
                         program, runner, ..
                     } = &mut self.action_sources[robot_index]
                     else {
-                        return RobotAction::Wait;
+                        return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
                     };
                     **runner = program.runner();
                     self.action_results[robot_index] = None;
@@ -180,7 +186,7 @@ impl Simulation {
                         let ActionSource::Program { runner, .. } =
                             &self.action_sources[robot_index]
                         else {
-                            return RobotAction::Wait;
+                            return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
                         };
                         runner.awaits_action_result()
                             && robominer_program::await_kind(action).expects_physics_result()
@@ -192,10 +198,22 @@ impl Simulation {
                         let (pending, robot_action) =
                             map_awaiting_executable(action, self.robots[robot_index].spec());
                         self.pending_expression_actions[robot_index] = pending;
-                        return robot_action;
+                        let status = if matches!(robot_action, RobotAction::Wait) {
+                            Some(status_for_wait_from_executable(action))
+                        } else {
+                            None
+                        };
+                        return (robot_action, status);
                     }
 
-                    return robot_action_from_executable(action, &self.robots[robot_index].spec);
+                    let robot_action =
+                        robot_action_from_executable(action, &self.robots[robot_index].spec);
+                    let status = if matches!(robot_action, RobotAction::Wait) {
+                        Some(status_for_wait_from_executable(action))
+                    } else {
+                        None
+                    };
+                    return (robot_action, status);
                 }
             }
         }

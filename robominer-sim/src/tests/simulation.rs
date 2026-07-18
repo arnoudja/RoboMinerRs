@@ -131,6 +131,10 @@ fn animation_data_records_wait_action_index_on_idle_cycles() {
         data.contains(r#""a":1"#),
         "wait cycles should emit action index 1: {data}"
     );
+    assert!(
+        data.contains(r#""s":"wait""#),
+        "wait cycles should emit stuck status wait: {data}"
+    );
 }
 
 #[test]
@@ -162,6 +166,99 @@ fn animation_data_records_scan_action_index_while_scanning() {
     assert!(
         scan_marks >= 2,
         "expected multiple scan-busy cycles, found {scan_marks} in {data}"
+    );
+    assert!(
+        data.contains(r#""s":"scan""#),
+        "scan-busy cycles should emit stuck status scan: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_zero_motion_status() {
+    let program = seeded_program("move(0); rotate(0);");
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 3;
+    spec.cpu_speed = 72;
+
+    let mut simulation = Simulation::new(
+        Ground::new(4, 4),
+        3,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"zero""#),
+        "move(0)/rotate(0) should emit stuck status zero: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_cpu_status_when_budget_exhausted() {
+    let program = seeded_program("int x = 1; int y = 2; mine();");
+    let mut ground = Ground::new(5, 5);
+    ground.at_mut(0, 0).add_ore(0, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.cpu_speed = 2;
+    spec.mining_speed = 8;
+    spec.max_turns = 2;
+
+    let mut simulation = Simulation::new(
+        ground,
+        2,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"cpu""#),
+        "exhausted CPU budget should emit stuck status cpu: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_battery_status_after_max_turns() {
+    let ground = Ground::new(4, 4);
+    let mut short = RobotSpec::test_robot();
+    short.max_turns = 1;
+    let mut long = RobotSpec::test_robot();
+    long.max_turns = 3;
+
+    let mut simulation = Simulation::new(
+        ground,
+        3,
+        vec![
+            ScriptedRobot::new(short, vec![RobotAction::Wait; 3]),
+            ScriptedRobot::new(long, vec![RobotAction::Wait; 3]),
+        ],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"battery""#),
+        "robots past max_turns should emit stuck status battery: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_motion_status_when_speed_is_zero() {
+    let program = seeded_program("move(1);");
+    let mut spec = RobotSpec::test_robot();
+    spec.forward_speed = 0.0;
+    spec.max_turns = 2;
+    spec.cpu_speed = 72;
+
+    let mut simulation = Simulation::new(
+        Ground::new(4, 4),
+        2,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+
+    assert!(
+        data.contains(r#""s":"motion""#),
+        "zero-speed move should emit stuck status motion: {data}"
     );
 }
 

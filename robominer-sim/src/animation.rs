@@ -17,6 +17,37 @@ pub struct OreAnimationData {
     pub max_amount: i32,
 }
 
+/// Compact per-cycle status for stuck/idle diagnosis in the replay viewer.
+/// Omitted from JSON when the robot is making normal progress.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RobotCycleStatus {
+    /// Individual battery / max_turns exhausted; no action this cycle.
+    Battery,
+    /// Waiting while a scan completes (paired with action index 0).
+    Scan,
+    /// CPU budget exhausted before an action was chosen.
+    Cpu,
+    /// `move(0)` / `rotate(0)` (or epsilon-equivalent) mapped to Wait.
+    Zero,
+    /// Non-zero motion requested but no chunk could be issued (e.g. zero speed).
+    Motion,
+    /// Explicit or residual Wait with no more specific cause.
+    Wait,
+}
+
+impl RobotCycleStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Battery => "battery",
+            Self::Scan => "scan",
+            Self::Cpu => "cpu",
+            Self::Zero => "zero",
+            Self::Motion => "motion",
+            Self::Wait => "wait",
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct RobotAnimationStep {
     position: Position,
@@ -28,6 +59,8 @@ struct RobotAnimationStep {
     /// Optional 1-based source line of the statement executing this cycle.
     /// Absent on the initial step, scripted action lists, and legacy replays.
     source_line: Option<u16>,
+    /// Optional stuck/idle reason for this cycle.
+    status: Option<RobotCycleStatus>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -80,6 +113,7 @@ impl AnimationRecorder {
         robot: &Robot,
         action_index: Option<u8>,
         source_line: Option<u16>,
+        status: Option<RobotCycleStatus>,
     ) {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
@@ -87,6 +121,7 @@ impl AnimationRecorder {
             time_fraction: robot.time_fraction,
             action_index,
             source_line,
+            status,
         });
     }
 
@@ -184,6 +219,11 @@ fn robot_step_array_value(steps: &[RobotAnimationStep]) -> Value {
         // Always emit when present so the viewer can highlight the active statement.
         if let Some(source_line) = step.source_line {
             object.insert("l".to_string(), json!(source_line));
+        }
+
+        // Always emit when present so stuck reasons survive delta compression.
+        if let Some(status) = step.status {
+            object.insert("s".to_string(), json!(status.as_str()));
         }
 
         if step.time_fraction < 0.9 || object.is_empty() {

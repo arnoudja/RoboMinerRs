@@ -8,7 +8,8 @@ use robominer_program::ExecutableRunner;
 
 use crate::OreAnimationData;
 use crate::action_mapping::PendingExpressionAction;
-use crate::animation::AnimationRecorder;
+use crate::action_mapping::status_for_pending_wait;
+use crate::animation::{AnimationRecorder, RobotCycleStatus};
 use crate::ground::{Ground, ScanState};
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
@@ -173,18 +174,27 @@ impl Simulation {
         let mut pending_results = vec![ActionResult::None; self.robots.len()];
         let mut cycle_actions = vec![None; self.robots.len()];
         let mut cycle_source_lines = vec![None; self.robots.len()];
+        let mut cycle_statuses = vec![None; self.robots.len()];
 
         if self.time > 0 {
             for (index, pending_result) in pending_results.iter_mut().enumerate() {
                 if self.robots[index].spec.max_turns >= self.time {
                     let scan_before = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
-                    let action = self.next_robot_action(index);
+                    let (action, status) = self.next_robot_action(index);
                     let scan_after = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
-                    cycle_actions[index] = Some(animation_action_index(
+                    let action_index = animation_action_index(
                         action,
                         &self.robots[index],
                         scan_after > scan_before,
-                    ));
+                    );
+                    cycle_actions[index] = Some(action_index);
+                    cycle_statuses[index] = if action_index == ROBOT_ACTION_TYPE_SCAN as u8 {
+                        Some(RobotCycleStatus::Scan)
+                    } else if matches!(action, RobotAction::Wait) {
+                        status.or(Some(RobotCycleStatus::Wait))
+                    } else {
+                        status
+                    };
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
@@ -193,6 +203,7 @@ impl Simulation {
                     self.action_results[index] = None;
                     self.action_result_expected[index] = false;
                     self.pending_expression_actions[index] = None;
+                    cycle_statuses[index] = Some(RobotCycleStatus::Battery);
                 }
             }
 
@@ -233,6 +244,7 @@ impl Simulation {
                     robot,
                     cycle_actions[index],
                     cycle_source_lines[index],
+                    cycle_statuses[index],
                 );
             }
         }
@@ -242,19 +254,31 @@ impl Simulation {
         }
     }
 
-    fn next_robot_action(&mut self, robot_index: usize) -> RobotAction {
+    fn next_robot_action(&mut self, robot_index: usize) -> (RobotAction, Option<RobotCycleStatus>) {
         if let Some(pending) = &self.pending_expression_actions[robot_index] {
             self.action_result_expected[robot_index] = true;
-            return pending.next_robot_action(self.robots[robot_index].spec());
+            let action = pending.next_robot_action(self.robots[robot_index].spec());
+            let status = if matches!(action, RobotAction::Wait) {
+                Some(status_for_pending_wait(pending))
+            } else {
+                None
+            };
+            return (action, status);
         }
 
         match &mut self.action_sources[robot_index] {
             ActionSource::Actions(actions) => {
                 self.action_result_expected[robot_index] = false;
-                actions
+                let action = actions
                     .get((self.time - 1) as usize)
                     .copied()
-                    .unwrap_or(RobotAction::Wait)
+                    .unwrap_or(RobotAction::Wait);
+                let status = if matches!(action, RobotAction::Wait) {
+                    Some(RobotCycleStatus::Wait)
+                } else {
+                    None
+                };
+                (action, status)
             }
             ActionSource::Program { .. } => self.run_program_cpu_loop(robot_index),
         }

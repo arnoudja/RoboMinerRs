@@ -283,8 +283,39 @@ function rallyActionName(actionIndex)
 }
 
 
+function rallyStatusLabel(status)
+{
+    switch (status)
+    {
+        case 'battery':
+            return 'Battery depleted';
+        case 'scan':
+            return 'Scanning';
+        case 'cpu':
+            return 'Waiting for CPU';
+        case 'zero':
+            return 'Zero-distance move';
+        case 'motion':
+            return 'Cannot move';
+        case 'wait':
+            return 'Wait';
+        default:
+            return null;
+    }
+}
+
+
 function robotLooksIdle(robot, step)
 {
+    if (robot.s === 'cpu' || robot.s === 'zero' || robot.s === 'motion' || robot.s === 'wait')
+    {
+        return true;
+    }
+    if (robot.s === 'scan' || robot.s === 'battery')
+    {
+        return false;
+    }
+
     if (typeof robot.a === 'number')
     {
         // Wait only — Scan (0) is productive work, not idle.
@@ -396,11 +427,16 @@ function updateRobotDebugPanel(robot, step)
     }
 
     var actionEl = document.getElementById('robotAction' + robot.robotnr);
+    var statusLabel = rallyStatusLabel(robot.s);
     var actionName = rallyActionName(robot.a);
     if (actionEl)
     {
         var label = null;
-        if (actionName)
+        if (statusLabel)
+        {
+            label = statusLabel;
+        }
+        else if (actionName)
         {
             label = actionName;
         }
@@ -681,6 +717,7 @@ function updateRobotTo(robotNr, step)
         {
             current.l = previous.l;
         }
+        // Do not fill-forward `s`: productive cycles omit it intentionally.
 
         robot.updatedTo = s;
     }
@@ -705,6 +742,7 @@ function updateRobotPosition(robotNr, time, stepTime)
         myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t1].C;
         myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
         myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t1].l;
+        myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t1].s;
     }
     else
     {
@@ -721,6 +759,7 @@ function updateRobotPosition(robotNr, time, stepTime)
             myRobots.robot[robotNr].C = myRobots.robot[robotNr].locations[t2].C;
             myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
             myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t2].l;
+            myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t2].s;
         }
         else
         {
@@ -737,17 +776,20 @@ function updateRobotPosition(robotNr, time, stepTime)
             {
                 myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
                 myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t1].l;
+                myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t1].s;
             }
             else if (dt <= 0 && t1 === 0)
             {
                 // Legacy replays omit locations[0].l — still show program entry.
                 myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t1].a;
                 myRobots.robot[robotNr].l = 1;
+                myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t1].s;
             }
             else
             {
                 myRobots.robot[robotNr].a = myRobots.robot[robotNr].locations[t2].a;
                 myRobots.robot[robotNr].l = myRobots.robot[robotNr].locations[t2].l;
+                myRobots.robot[robotNr].s = myRobots.robot[robotNr].locations[t2].s;
             }
         }
     }

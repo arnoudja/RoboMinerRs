@@ -10,7 +10,35 @@
 use robominer_program::ExecutableAction;
 use robominer_program::motion::{is_zero_motion, motion_chunk, record_motion_step};
 
+use crate::animation::RobotCycleStatus;
 use crate::robot::{RobotAction, RobotSpec};
+
+/// Why a motion request collapsed to [`RobotAction::Wait`].
+pub(crate) fn status_for_wait_from_executable(action: ExecutableAction) -> RobotCycleStatus {
+    match action {
+        ExecutableAction::Move(amount) | ExecutableAction::Rotate(amount) => {
+            if is_zero_motion(amount) {
+                RobotCycleStatus::Zero
+            } else {
+                RobotCycleStatus::Motion
+            }
+        }
+        _ => RobotCycleStatus::Wait,
+    }
+}
+
+pub(crate) fn status_for_pending_wait(pending: &PendingExpressionAction) -> RobotCycleStatus {
+    match *pending {
+        PendingExpressionAction::Move { remaining, .. }
+        | PendingExpressionAction::Rotate { remaining, .. } => {
+            if is_zero_motion(remaining) {
+                RobotCycleStatus::Zero
+            } else {
+                RobotCycleStatus::Motion
+            }
+        }
+    }
+}
 
 pub(crate) fn move_speed(spec: &RobotSpec, signed_distance: f64) -> f64 {
     if signed_distance >= 0.0 {

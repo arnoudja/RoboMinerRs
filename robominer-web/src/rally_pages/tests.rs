@@ -581,7 +581,10 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("rally-view-player-battery-fill"));
     assert!(html.contains("rally-view-player-depleted"));
     assert!(html.contains("var RALLY_ACTION_NAMES = {"));
+    assert!(html.contains("function rallyStatusLabel(status)"));
     assert!(html.contains("return robot.a === 1;"));
+    assert!(html.contains("case 'zero':"));
+    assert!(html.contains("Zero-distance move"));
     assert!(html.contains(r#"id="progressCanvas""#));
     assert!(html.contains(r#"id="rallyPlayPause">Play</button>"#));
     assert!(html.contains(r#"data-speed="0.1">0.1×</button>"#));
