@@ -57,6 +57,7 @@ pub(crate) fn schedule_expression(
         ExecutableExpression::Time => {
             work.push(ExpressionWork::PushTime);
         }
+        // Deprecated: prefer RobotProperty::OreStored*.
         ExecutableExpression::Ore(ore_type) => {
             schedule_expression(work, ore_type);
             work.push(ExpressionWork::PushOre);

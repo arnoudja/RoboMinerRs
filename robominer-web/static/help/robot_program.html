@@ -79,32 +79,6 @@
                 <li>The mining unit installed in the robot. The total amount of ore mined in one cycle can never exceed the mining speed of the mining unit.</li>
                 <li>The ore amount available on the robot location. For each type of ore, the amount of ore mined in one cycle can never exceed half the amount of ore available, rounded up.</li>
             </ul>
-            <h3>ore()</h3>
-            <p class="helptext">Retrieve the amount of ore stored in the robot ore container.</p>
-            <table class="helptable">
-                <tr>
-                    <td class="helptable">Syntax:</td>
-                    <td class="helptable">ore(&lt;value&gt;)</td>
-                    <td class="helptable"></td>
-                </tr>
-                <tr>
-                    <td class="helptable">Parameter:</td>
-                    <td class="helptable">int</td>
-                    <td class="helptable">The ore type to retrieve the amount for.</td>
-                </tr>
-                <tr>
-                    <td class="helptable">Return value:</td>
-                    <td class="helptable">int</td>
-                    <td class="helptable">The amount of the specified type of ore stored inside the robot ore container.</td>
-                </tr>
-            </table>
-            <p class="helptext">The ore type can be one of the following values:</p>
-            <ul>
-                <li>0 for the total amount of ore.</li>
-                <li>1 for the high quality ore.</li>
-                <li>2 for the medium quality ore. Will always return 0 when only 1 type of ore is available in the mining area.</li>
-                <li>3 for the low quality ore. Will always return 0 when only 1 or 2 types of ore are available in the mining area.</li>
-            </ul>
             <h3>dump()</h3>
             <p class="helptext">Dumps the specified type of ore from the robot ore container.
                 Away from your spawn corner, dumped ore is placed on the ground under the robot and can be mined again.
@@ -185,6 +159,26 @@
                     <td class="helptable">Maximum ore the robot can carry.</td>
                 </tr>
                 <tr>
+                    <td class="helptable">robot.oreStored</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Total ore currently stored in the container.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.oreStoredA</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Highest-quality ore currently stored in the container.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.oreStoredB</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Medium-quality ore currently stored in the container. Always 0 when the area has only one ore type.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">robot.oreStoredC</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Lowest-quality ore currently stored in the container. Always 0 when the area has fewer than three ore types.</td>
+                </tr>
+                <tr>
                     <td class="helptable">robot.maxCycles</td>
                     <td class="helptable">int</td>
                     <td class="helptable">Maximum mining cycles available per rally.</td>
@@ -261,7 +255,7 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The ore quality index used by ore() and dump(): 1 for the highest quality ore type, 2 for the next quality, and so on. Returns 0 when scan() was never called or no ore was found. When multiple ore types are visible at the same distance, the richer ore type is returned.</td>
+                    <td class="helptable">The ore quality index used by dump(): 1 for the highest quality ore type, 2 for the next quality, and so on. Returns 0 when scan() was never called or no ore was found. When multiple ore types are visible at the same distance, the richer ore type is returned.</td>
                 </tr>
             </table>
             <h2>Flow control</h2>

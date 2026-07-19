@@ -107,6 +107,39 @@ fn expression_ore_reads_amount_after_scan_context() {
 }
 
 #[test]
+fn expression_ore_stored_properties_match_deprecated_ore_query() {
+    let program = compile_executable_source(
+        "dump(robot.oreStored); dump(robot.oreStoredA); dump(robot.oreStoredB); dump(robot.oreStoredC);",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(8, None);
+    context.ore[0] = 5;
+    context.ore[1] = 2;
+    context.ore[2] = 1;
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(8))
+    );
+    context.action_result = Some(8.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(5))
+    );
+    context.action_result = Some(5.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(2))
+    );
+    context.action_result = Some(2.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(1))
+    );
+}
+
+#[test]
 fn expression_unary_not_in_while_condition() {
     let program = compile_executable_source("int done = 0; while (!done) { done = 1; mine(); }")
         .expect("program should compile");

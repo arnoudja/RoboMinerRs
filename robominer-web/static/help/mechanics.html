@@ -14,8 +14,8 @@
                 Also, it is able to dump the ore it contains, either one specific type of ore or all of it.
             </p>
             <p class="helptext">
-                The ore() command can be used to measure the amount of ore it contains, per type if needed.
-                The dump() command can be used to dump the ore it contains, also per type if requested to do so.
+                Use robot.oreStored and robot.oreStoredA / robot.oreStoredB / robot.oreStoredC to read how much
+                ore is in the container (total or per type). The dump() command can dump one type or all of it.
             </p>
             <h2>Depot</h2>
             <p class="helptext">
@@ -135,8 +135,8 @@
                 So move() is a physical action, as is rotate(), mine() and dump().
             </p>
             <p class="helptext">
-                CPU actions are flow control, calculations, variable assignment, ore(), time(),
-                and robot property reads. They do not change the robot pose or cargo by themselves.
+                CPU actions are flow control, calculations, variable assignment, time(),
+                and robot property reads (including robot.oreStored*). They do not change the robot pose or cargo by themselves.
             </p>
             <p class="helptext">
                 Scanning is special. scan() starts a scanner job and counts as initiating work

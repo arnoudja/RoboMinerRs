@@ -78,6 +78,9 @@ fn robot_property_program_verifies() {
     assert_valid_any_size("move(robot.forwardSpeed);");
     assert_valid_any_size("if (robot.orientation == 135) { move(1); }");
     assert_valid_any_size("if (robot.xPos == 0 && robot.yPos == 0) { move(1); }");
+    assert_valid_any_size("if (robot.oreStored < robot.oreCap) { mine(); }");
+    assert_valid_any_size("dump(robot.oreStoredA);");
+    assert_valid_any_size("if (robot.oreStoredB + robot.oreStoredC > 0) { dump(0); }");
 }
 
 #[test]

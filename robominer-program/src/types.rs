@@ -127,6 +127,8 @@ pub(crate) enum ExecutableExpression {
         right: Box<ExecutableExpression>,
     },
     Time,
+    /// Deprecated cargo query (`ore(n)`). Prefer `robot.oreStored` / `robot.oreStoredA|B|C`.
+    /// Kept so existing robot programs keep compiling and running.
     Ore(Box<ExecutableExpression>),
     Scan(Option<Box<ExecutableExpression>>),
     OreDistance,
@@ -146,6 +148,14 @@ pub(crate) enum RobotProperty {
     ScanTime,
     ScanDistance,
     OreCap,
+    /// Total ore currently in the container (`ore(0)`).
+    OreStored,
+    /// Highest-quality ore currently in the container (`ore(1)`).
+    OreStoredA,
+    /// Medium-quality ore currently in the container (`ore(2)`).
+    OreStoredB,
+    /// Lowest-quality ore currently in the container (`ore(3)`).
+    OreStoredC,
     MaxCycles,
     MiningSpeed,
     CpuSpeed,
@@ -163,6 +173,10 @@ impl RobotProperty {
             "scanTime" => Ok(Self::ScanTime),
             "scanDistance" => Ok(Self::ScanDistance),
             "oreCap" => Ok(Self::OreCap),
+            "oreStored" => Ok(Self::OreStored),
+            "oreStoredA" => Ok(Self::OreStoredA),
+            "oreStoredB" => Ok(Self::OreStoredB),
+            "oreStoredC" => Ok(Self::OreStoredC),
             "maxCycles" => Ok(Self::MaxCycles),
             "miningSpeed" => Ok(Self::MiningSpeed),
             "cpuSpeed" => Ok(Self::CpuSpeed),
@@ -175,8 +189,8 @@ impl RobotProperty {
         }
     }
 
-    pub(crate) fn value(self, robot: &RobotProperties) -> f64 {
-        match self {
+    pub(crate) fn value(self, robot: &RobotProperties) -> Option<f64> {
+        Some(match self {
             Self::ForwardSpeed => robot.forward_speed,
             Self::BackwardSpeed => robot.backward_speed,
             Self::RotateSpeed => robot.rotate_speed,
@@ -189,7 +203,20 @@ impl RobotProperty {
             Self::Orientation => robot.orientation,
             Self::XPos => robot.x_pos,
             Self::YPos => robot.y_pos,
-        }
+            Self::OreStored | Self::OreStoredA | Self::OreStoredB | Self::OreStoredC => {
+                return None;
+            }
+        })
+    }
+
+    pub(crate) fn stored_ore_value(self, ore: &[i32; 10]) -> Option<f64> {
+        Some(match self {
+            Self::OreStored => ore.iter().sum::<i32>() as f64,
+            Self::OreStoredA => ore.first().copied().unwrap_or(0) as f64,
+            Self::OreStoredB => ore.get(1).copied().unwrap_or(0) as f64,
+            Self::OreStoredC => ore.get(2).copied().unwrap_or(0) as f64,
+            _ => return None,
+        })
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Default)]

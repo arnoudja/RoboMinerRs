@@ -124,6 +124,7 @@ pub(super) fn parse_executable_single_expression(
         return Ok(Some(ExecutableExpression::OreType));
     }
 
+    // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C. Kept for existing programs.
     if input.use_next_word("ore") {
         expect_char(input, '(', "'(' expected")?;
         let ore_type = parse_executable_expression(input)?.ok_or_else(|| {

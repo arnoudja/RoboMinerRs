@@ -149,22 +149,22 @@ if (move(1) &lt; 0.9)
             </p>
             <p class="helptext">
                 The mining unit can't tell the difference between two types of ore, but the ore container can.
-                The 'ore(..)' command will tell you how much ore there is in the container:
+                Read how much is stored with robot properties:
             </p>
             <ul>
-                <li>'ore(0)' will tell the total amount of ore in the container.</li>
-                <li>'ore(1)' will tell the amount of the highest quality ore in the container.</li>
-                <li>'ore(2)' will tell the amount of the medium quality ore in the container.</li>
-                <li>'ore(3)' will tell the amount of the lowest quality ore in the container.</li>
+                <li>robot.oreStored — total ore in the container.</li>
+                <li>robot.oreStoredA — highest-quality ore in the container.</li>
+                <li>robot.oreStoredB — medium-quality ore in the container.</li>
+                <li>robot.oreStoredC — lowest-quality ore in the container.</li>
             </ul>
             <p class="helptext">
-                We can use the 'ore(1)' value to keep track of the amount of high quality ore.
-                By comparing the result of 'ore(1)' before the 'mine()' action with the 'ore(1)' value after the 'mine()' action,
+                We can use robot.oreStoredA to keep track of the amount of high quality ore.
+                By comparing that value before the mine() action with the value after mine(),
                 we can tell whether we've mined the ore we want or not.
             </p>
             <p class="helptext">
-                Since the 'ore(1)' value will only tell us the current amount of high quality ore in the container and not the previous amount,
-                we'll need to store the 'ore(1)' value before we start mining.
+                Since robot.oreStoredA only tells the current amount of high quality ore in the container and not the previous amount,
+                we'll need to store it before we start mining.
             </p>
             <p class="helptext">
                 For this, we can use a variable:
@@ -173,9 +173,9 @@ if (move(1) &lt; 0.9)
 int amountBeforeMining;
 
 do {
-    amountBeforeMining = ore(1);
+    amountBeforeMining = robot.oreStoredA;
     mine();
-} while (ore(1) > amountBeforeMining);
+} while (robot.oreStoredA &gt; amountBeforeMining);
             </p>
             <p class="helptext">
                 This will repeat the mining process until there is no more high quality ore to mine at the current robot location.
@@ -438,7 +438,7 @@ if (oreType() == 1 &amp;&amp; oreDistance() &gt; 0)
                 back to spawn using robot.xPos and robot.yPos (both are 0 at the rally start corner), then dump:
             </p>
             <p class="codeexample">
-while (ore(0) &lt; robot.oreCap)
+while (robot.oreStored &lt; robot.oreCap)
 {
     // mine and seek as usual...
 }

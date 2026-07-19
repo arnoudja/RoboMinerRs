@@ -170,9 +170,14 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::PushRobotProperty(property) => {
-                eval.values.push(property.value(&context.robot));
+                let value = property
+                    .stored_ore_value(&context.ore)
+                    .or_else(|| property.value(&context.robot))
+                    .expect("robot property should resolve");
+                eval.values.push(value);
                 eval.index += 1;
             }
+            // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C.
             ExpressionWork::PushOre => {
                 let ore_type = eval.values.pop().unwrap_or(0.0) as i32;
                 let amount = if ore_type == 0 {
