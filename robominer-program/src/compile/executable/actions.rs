@@ -41,8 +41,18 @@ pub(super) fn parse_executable_action_statement(
         ));
     }
 
+    if let Some(ore_type) = parse_named_dump_action(input)? {
+        return Ok(ExecutableStatement::at(
+            source_line,
+            ExecutableStatementKind::Action(ExecutableAction::Dump(ore_type)),
+        ));
+    }
+
     if input.use_next_word("dump") {
-        let action = ExecutableActionExpression::Dump(parse_executable_call_expression(input)?);
+        let action = match parse_dump_call_expression(input)? {
+            DumpCall::All => ExecutableActionExpression::Dump(ExecutableExpression::Number(0.0)),
+            DumpCall::Typed(expression) => ExecutableActionExpression::Dump(expression),
+        };
         return Ok(ExecutableStatement::at(
             source_line,
             action
@@ -53,7 +63,7 @@ pub(super) fn parse_executable_action_statement(
     }
 
     Err(CompileError::new(format!(
-        "Executable program support currently handles move, rotate, mine, dump, if, while, and do-while at line {}",
+        "Executable program support currently handles move, rotate, mine, dump, dumpA, dumpB, dumpC, if, while, and do-while at line {}",
         input.current_line
     )))
 }
@@ -99,16 +109,65 @@ pub(super) fn parse_rotate_expression(
     }
 }
 
+/// Named dump helpers aligned with `robot.oreStoredA|B|C` (1-based quality slots).
+pub(super) fn parse_named_dump_action(
+    input: &mut CompileInput,
+) -> Result<Option<i32>, CompileError> {
+    let ore_type = if input.use_next_word("dumpA") {
+        1
+    } else if input.use_next_word("dumpB") {
+        2
+    } else if input.use_next_word("dumpC") {
+        3
+    } else {
+        return Ok(None);
+    };
+    expect_empty_call(input)?;
+    Ok(Some(ore_type))
+}
+
+pub(super) enum DumpCall {
+    All,
+    Typed(ExecutableExpression),
+}
+
+/// Parse `dump()`, `dump(expr)`.
+///
+/// - `dump()` dumps all ore types.
+/// - `dump(<value>)` is deprecated but kept for existing programs (0 = all, 1/2/3 = A/B/C).
+pub(super) fn parse_dump_call_expression(
+    input: &mut CompileInput,
+) -> Result<DumpCall, CompileError> {
+    expect_char(input, '(', "'(' expected")?;
+    if input.eat_char(')', false) {
+        return Ok(DumpCall::All);
+    }
+
+    let expression = parse_executable_expression(input)?.ok_or_else(|| {
+        CompileError::new(format!(
+            "Executable program support currently requires numeric arguments at line {}",
+            input.current_line
+        ))
+    })?;
+    expect_char(input, ')', "')' expected")?;
+    Ok(DumpCall::Typed(expression))
+}
+
 pub(super) fn parse_dump_expression(
     input: &mut CompileInput,
 ) -> Result<ExecutableExpression, CompileError> {
-    let expression = parse_executable_call_expression(input)?;
-    if let Some(ore_type) = expression.literal_number() {
-        Ok(ExecutableExpression::Action(ExecutableAction::Dump(
-            ore_type as i32,
-        )))
-    } else {
-        Ok(ExecutableExpression::Dump(Box::new(expression)))
+    match parse_dump_call_expression(input)? {
+        DumpCall::All => Ok(ExecutableExpression::Action(ExecutableAction::Dump(0))),
+        DumpCall::Typed(expression) => {
+            // Deprecated: prefer dump() / dumpA() / dumpB() / dumpC().
+            if let Some(ore_type) = expression.literal_number() {
+                Ok(ExecutableExpression::Action(ExecutableAction::Dump(
+                    ore_type as i32,
+                )))
+            } else {
+                Ok(ExecutableExpression::Dump(Box::new(expression)))
+            }
+        }
     }
 }
 

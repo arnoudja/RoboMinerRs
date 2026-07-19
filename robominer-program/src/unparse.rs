@@ -116,11 +116,7 @@ fn unparse_action(action: &ExecutableAction, out: &mut String) {
             out.push(')');
         }
         ExecutableAction::Mine => out.push_str("mine()"),
-        ExecutableAction::Dump(ore_type) => {
-            out.push_str("dump(");
-            out.push_str(&ore_type.to_string());
-            out.push(')');
-        }
+        ExecutableAction::Dump(ore_type) => unparse_dump_action(*ore_type, out),
         ExecutableAction::StartScan(direction) => {
             out.push_str("scan(");
             if *direction != 0.0 {
@@ -129,6 +125,21 @@ fn unparse_action(action: &ExecutableAction, out: &mut String) {
             out.push(')');
         }
         ExecutableAction::AwaitScanResult => out.push_str("scan()"),
+    }
+}
+
+fn unparse_dump_action(ore_type: i32, out: &mut String) {
+    match ore_type {
+        0 => out.push_str("dump()"),
+        1 => out.push_str("dumpA()"),
+        2 => out.push_str("dumpB()"),
+        3 => out.push_str("dumpC()"),
+        // Deprecated dump(<n>) form for uncommon type indices.
+        other => {
+            out.push_str("dump(");
+            out.push_str(&other.to_string());
+            out.push(')');
+        }
     }
 }
 

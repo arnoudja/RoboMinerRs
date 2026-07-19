@@ -171,7 +171,10 @@ fn parse_executable_expression_statement(
 ) -> Result<ExecutableStatement, CompileError> {
     let source_line = clamp_line(input.current_line);
     let upcoming = input.get_next_word();
-    if matches!(upcoming, "mine" | "move" | "rotate" | "dump") {
+    if matches!(
+        upcoming,
+        "mine" | "move" | "rotate" | "dump" | "dumpA" | "dumpB" | "dumpC"
+    ) {
         return parse_executable_action_statement(input);
     }
 

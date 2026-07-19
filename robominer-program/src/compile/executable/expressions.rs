@@ -7,7 +7,8 @@ use super::super::input::{
     robot_property_mutation_error,
 };
 use super::actions::{
-    parse_dump_expression, parse_move_expression, parse_rotate_expression, parse_scan_call,
+    parse_dump_expression, parse_move_expression, parse_named_dump_action, parse_rotate_expression,
+    parse_scan_call,
 };
 use super::expect_declared_variable;
 
@@ -99,6 +100,12 @@ pub(super) fn parse_executable_single_expression(
 
     if input.use_next_word("rotate") {
         return Ok(Some(parse_rotate_expression(input)?));
+    }
+
+    if let Some(ore_type) = parse_named_dump_action(input)? {
+        return Ok(Some(ExecutableExpression::Action(ExecutableAction::Dump(
+            ore_type,
+        ))));
     }
 
     if input.use_next_word("dump") {

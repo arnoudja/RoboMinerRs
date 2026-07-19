@@ -61,7 +61,7 @@
             <h3>mine()</h3>
             <p class="helptext">Try to mine minerals from the current robot location.
                 Mining always digs the ground cell under the robot center and collects every ore type present on that cell.
-                There is no way to mine only type 1 with mine() itself — use dump() afterward if you need to discard lower-value ore.</p>
+                There is no way to mine only type 1 with mine() itself — use dumpB() / dumpC() afterward if you need to discard lower-value ore.</p>
             <table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
@@ -80,7 +80,7 @@
                 <li>The ore amount available on the robot location. For each type of ore, the amount of ore mined in one cycle can never exceed half the amount of ore available, rounded up.</li>
             </ul>
             <h3>dump()</h3>
-            <p class="helptext">Dumps the specified type of ore from the robot ore container.
+            <p class="helptext">Dumps ore from the robot ore container.
                 Away from your spawn corner, dumped ore is placed on the ground under the robot and can be mined again.
                 At your spawn corner (where the rally started: robot.xPos and robot.yPos are both 0), ore fills your
                 personal depot up to the unlocked capacity for that ore type; any overflow is placed on the ground as usual.
@@ -89,13 +89,23 @@
             <table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
-                    <td class="helptable">dump(&lt;value&gt;)</td>
-                    <td class="helptable"></td>
+                    <td class="helptable">dump()</td>
+                    <td class="helptable">Dump every ore type in the container.</td>
                 </tr>
                 <tr>
-                    <td class="helptable">Parameter:</td>
-                    <td class="helptable">int</td>
-                    <td class="helptable">The ore type to dump.</td>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">dumpA()</td>
+                    <td class="helptable">Dump high-quality ore (same slot as robot.oreStoredA).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">dumpB()</td>
+                    <td class="helptable">Dump medium-quality ore (same slot as robot.oreStoredB).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">dumpC()</td>
+                    <td class="helptable">Dump low-quality ore (same slot as robot.oreStoredC).</td>
                 </tr>
                 <tr>
                     <td class="helptable">Return value:</td>
@@ -103,13 +113,7 @@
                     <td class="helptable">The actual amount of ore removed from the container (depot plus ground).</td>
                 </tr>
             </table>
-            <p class="helptext">The ore type can be one of the following values:</p>
-            <ul>
-                <li>0 for all the types of ore.</li>
-                <li>1 for the high quality ore.</li>
-                <li>2 for the medium quality ore. Will never dump anything when only 1 type of ore is available in the mining area.</li>
-                <li>3 for the low quality ore. Will never dump anything when only 1 or 2 types of ore are available in the mining area.</li>
-            </ul>
+            <p class="helptext">dumpB() and dumpC() never remove anything when the mining area only has fewer ore qualities available.</p>
             <h3>time()</h3>
             <p class="helptext">Retrieves the number of mining cycles left until either the battery is depleted or the mining event is over.</p>
             <table class="helptable">
@@ -255,7 +259,7 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The ore quality index used by dump(): 1 for the highest quality ore type, 2 for the next quality, and so on. Returns 0 when scan() was never called or no ore was found. When multiple ore types are visible at the same distance, the richer ore type is returned.</td>
+                    <td class="helptable">The ore quality index: 1 for the highest quality A ore type, 2 for the medium quality B and 3 for the low quality C. Returns 0 when scan() was never called or no ore was found. When multiple ore types are visible at the same distance, the richer ore type is returned.</td>
                 </tr>
             </table>
             <h2>Flow control</h2>

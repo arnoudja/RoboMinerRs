@@ -70,7 +70,7 @@ fn verifies_plus_equals_assignment() {
 #[test]
 fn verifies_not_equal_operator() {
     assert_valid_any_size("while (oreType() != 1) { scan(30); }");
-    assert_valid_any_size("if (mine() != 0) { dump(1); }");
+    assert_valid_any_size("if (mine() != 0) { dumpA(); }");
 }
 
 #[test]
@@ -80,7 +80,15 @@ fn robot_property_program_verifies() {
     assert_valid_any_size("if (robot.xPos == 0 && robot.yPos == 0) { move(1); }");
     assert_valid_any_size("if (robot.oreStored < robot.oreCap) { mine(); }");
     assert_valid_any_size("dump(robot.oreStoredA);");
-    assert_valid_any_size("if (robot.oreStoredB + robot.oreStoredC > 0) { dump(0); }");
+    assert_valid_any_size("if (robot.oreStoredB + robot.oreStoredC > 0) { dump(); }");
+}
+
+#[test]
+fn dump_helpers_compile_like_ore_stored_slots() {
+    assert_valid_any_size("dump();");
+    assert_valid_any_size("dumpA(); dumpB(); dumpC();");
+    // Deprecated dump(<n>) remains for existing programs.
+    assert_valid_any_size("dump(0); dump(1); dump(2); dump(3);");
 }
 
 #[test]
@@ -90,7 +98,7 @@ fn dynamic_move_in_assignment_compiles() {
 
 #[test]
 fn compiles_literal_action_sequence_for_simulation() {
-    let program = compile_executable_source("move(1.5); rotate(-45); mine(); dump(0);")
+    let program = compile_executable_source("move(1.5); rotate(-45); mine(); dump();")
         .expect("source should compile to executable actions");
 
     assert_eq!(
@@ -100,6 +108,17 @@ fn compiles_literal_action_sequence_for_simulation() {
             ExecutableAction::Rotate(-45.0),
             ExecutableAction::Mine,
             ExecutableAction::Dump(0),
+        ]
+    );
+
+    let typed = compile_executable_source("dumpA(); dumpB(); dumpC();")
+        .expect("named dumps should compile");
+    assert_eq!(
+        typed.actions(),
+        &[
+            ExecutableAction::Dump(1),
+            ExecutableAction::Dump(2),
+            ExecutableAction::Dump(3),
         ]
     );
 }

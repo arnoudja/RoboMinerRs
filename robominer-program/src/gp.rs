@@ -479,7 +479,7 @@ pub fn seed_program_sources() -> Vec<&'static str> {
         "if (move(1.5) >= 1) { while (mine()); } else { move(-1); rotate(20); }",
         "scan(); while (oreType() == 0) { move(1); scan(); } while (mine());",
         "while (true) { if (mine()) { while (mine()); } else if (move(1.42) < 0.1) { rotate(160); } else { move(1.42); } }",
-        "while (true) { if (robot.oreStored >= robot.oreCap) { dump(0); } else if (mine()) { while (mine()); } else { scan(); move(1); } }",
+        "while (true) { if (robot.oreStored >= robot.oreCap) { dump(); } else if (mine()) { while (mine()); } else { scan(); move(1); } }",
     ]
 }
 

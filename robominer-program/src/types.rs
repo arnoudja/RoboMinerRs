@@ -49,6 +49,8 @@ pub enum ExecutableAction {
     Move(f64),
     Rotate(f64),
     Mine,
+    /// Dump cargo: `0` = all types; `1`/`2`/`3` = A/B/C (same slots as `robot.oreStoredA|B|C`).
+    /// Prefer `dump()` / `dumpA()` / `dumpB()` / `dumpC()` in new programs; `dump(n)` remains for compatibility.
     Dump(i32),
     StartScan(f64),
     AwaitScanResult,

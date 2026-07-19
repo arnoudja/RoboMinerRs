@@ -216,8 +216,8 @@ if (oreType() == 1)
             <ul>
                 <li>scan() reports the nearest ore of any type, not "nearest type 1 only".</li>
                 <li>mine() collects every type on the cell under the robot.</li>
-                <li>dump(2) only drops medium ore; dump(3) drops low; dump(0) drops everything.</li>
-                <li>dump() drops ore on the ground. If you run mine() again without moving after executing dump(2) or dump(3), you'll mine the same ore again.</li>
+                <li>dumpB() drops only medium ore; dumpC() drops low; dump() dumps everything.</li>
+                <li>dump() / dumpA() / dumpB() / dumpC() place ore on the ground (or into the depot at spawn). If you run mine() again without moving after dumpB() or dumpC(), you'll mine the same ore again.</li>
             </ul>
             <p class="helptext">
                 More detail on scan, mine, and dump is in the Mechanics and Robot programming guides.
@@ -238,7 +238,7 @@ while (robot.oreStored &lt; robot.oreCap)
     // mine and seek as usual...
 }
 // Face and move until robot.xPos and robot.yPos are back near 0, then:
-dump(1);
+dump();
             </p>
             <p class="helptext">
                 Depot dumps only apply when you are on that spawn corner.

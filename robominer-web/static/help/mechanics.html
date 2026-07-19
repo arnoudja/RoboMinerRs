@@ -15,7 +15,8 @@
             </p>
             <p class="helptext">
                 Use robot.oreStored and robot.oreStoredA / robot.oreStoredB / robot.oreStoredC to read how much
-                ore is in the container (total or per type). The dump() command can dump one type or all of it.
+                ore is in the container (total or per type). Use dumpA() / dumpB() / dumpC() to dump one type,
+                or dump() for all of it.
             </p>
             <h2>Depot</h2>
             <p class="helptext">
@@ -25,8 +26,9 @@
                 depot maximum (shown on the Achievements page).
             </p>
             <p class="helptext">
-                During a rally, dump() at your spawn corner fills the depot up to the unlocked capacity for
-                that ore type. Any overflow is placed on the ground under the robot, the same as a normal dump.
+                During a rally, dump() / dumpA() / dumpB() / dumpC() at your spawn corner fills the depot up to
+                the unlocked capacity for that ore type. Any overflow is placed on the ground under the robot,
+                the same as a normal dump.
                 Away from spawn, dump() always puts ore on the ground — the depot is not used.
             </p>
             <p class="helptext">
@@ -263,9 +265,9 @@
             <p class="helptext">
                 mine() digs the cell under the robot center and pulls every ore type present there
                 into the container, up to mining speed and free cargo space.
-                dump(n) drops only that type (1 = high quality, 2 = medium, 3 = low);
-                dump(0) dumps everything.
-                See the Depot section for how dump() behaves at your spawn corner.
+                dumpB() drops only medium ore; dumpC() drops low;
+                dump() dumps everything.
+                See the Depot section for how dump behaves at your spawn corner.
             </p>
             <p class="helptext">
                 That combination is why nested heaps surprise players: you may scan type 1,
