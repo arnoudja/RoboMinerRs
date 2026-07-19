@@ -11,7 +11,8 @@ resources/scripts/run-tests-with-db.sh
 That script:
 
 1. Resolves `ROBOMINER_DATABASE_URL` via `ensure-test-mysql.sh` (existing URL, local MySQL, or persistent Docker).
-2. Runs `cargo nextest run --workspace --profile ci` when nextest is installed, otherwise `cargo test --workspace`.
+2. Runs rally animation JS tests (`resources/scripts/run-rally-animation-js-tests.sh`; requires Node).
+3. Runs `cargo nextest run --workspace --profile ci` when nextest is installed, otherwise `cargo test --workspace`.
 
 The `ci` profile uses a single test thread so DB integration binaries that share MySQL stay serialized via `#[serial]`.
 
@@ -35,6 +36,8 @@ For library unit tests and simulation goldens that do not need MySQL:
 ```sh
 resources/scripts/run-fast-tests.sh
 ```
+
+That also runs the rally animation JS tests (Node `node:test`, no npm packages).
 
 Install [`cargo-nextest`](https://nexte.st/) for faster runs. `run-fast-tests.sh` uses the `fast` profile; `run-tests-with-db.sh` uses the `ci` profile when nextest is present. Both scripts fall back to `cargo test` when nextest is absent.
 
@@ -106,6 +109,7 @@ follow this layout: handlers and state in `mod.rs`, HTML in `render.rs`, pure te
 | Engine CLI integration | `robominer-engine/tests/*_db_cli.rs` | Subprocess `robominer-engine` against MySQL |
 | DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_robots.rs`) |
 | Domain goldens | `robominer-domain/tests/*_golden.rs` | Deterministic simulation fixtures |
+| Rally animation JS | `robominer-web/static/js/rally_animation/tests/` | Headless Node tests of viewer payload/draw helpers |
 | Shared fixtures | `robominer-test-support/` | SQL setup reused by web and engine tests |
 
 New web pages should follow the `mod.rs` + `render.rs` + `tests.rs` split used by `shop_page/`,
@@ -134,7 +138,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/miningResults` | `mining_results_page/tests.rs` | `read_model_pages.rs` | `mining_area_read_model_db_cli.rs` | |
 | `/leaderboard` | `leaderboard_page/tests.rs` | `read_model_pages.rs` | `leaderboard_read_model_db_cli.rs` | |
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
-| `/activity` | `rally_pages/tests.rs` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI |
+| `/activity` | `rally_pages/tests.rs` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
 | `/help*` | `help_page/tests.rs` | — | — | Static help content in `static/help/` |
 | Rally worker / claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs` | Background engine, not a page POST |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |

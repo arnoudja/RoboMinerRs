@@ -12,7 +12,8 @@ resources/scripts/run-tests-with-db.sh
 ```
 
 That script reuses local MySQL or a persistent Docker test container when possible,
-so repeated runs avoid the ~30–40 s cold-start cost.
+so repeated runs avoid the ~30–40 s cold-start cost. It also runs the Node-based
+rally animation JS tests before Cargo.
 
 ## Sandbox: request full permissions for DB tests
 

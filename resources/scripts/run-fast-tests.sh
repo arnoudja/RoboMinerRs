@@ -6,6 +6,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 cd "${ROOT}"
 
+# Headless rally replay viewer logic (no MySQL).
+"${ROOT}/resources/scripts/run-rally-animation-js-tests.sh"
+
 if cargo nextest --version >/dev/null 2>&1; then
     cargo nextest run --workspace --profile fast "$@"
 else
