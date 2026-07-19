@@ -580,6 +580,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains(r#"id="rallyPlayer0""#));
     assert!(html.contains("function updateRobotDebugPanel(robot, step)"));
     assert!(html.contains("function drawRobotDepot(robot)"));
+    assert!(html.contains("function drawSideBySideDepotBar("));
     assert!(html.contains("function drawDepotHomes(scale, step)"));
     assert!(html.contains("function robotCargoFull(robot)"));
     assert!(html.contains("function robotHasDepot(robot)"));

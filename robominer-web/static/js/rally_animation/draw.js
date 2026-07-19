@@ -278,6 +278,71 @@ function drawStackedOreBar(context, canvas, robotnr, amountA, amountB, amountC, 
 }
 
 
+function drawSideBySideDepotBar(context, canvas, robotnr, amounts, capacities)
+{
+    var colors = ['red', 'green', 'blue'];
+    var slots = [];
+    for (var s = 0; s < 3; s++)
+    {
+        var capacity = capacities[s];
+        if (!(capacity > 0))
+        {
+            continue;
+        }
+        slots.push({
+            amount: amounts[s] > 0 ? amounts[s] : 0,
+            capacity: capacity,
+            color: colors[s]
+        });
+    }
+
+    var borderWidth = 3;
+    var innerWidth = canvas.width - 2 * borderWidth;
+    var innerHeight = canvas.height - 2 * borderWidth;
+
+    context.beginPath();
+    context.rect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = robotColor(robotnr);
+    context.fill();
+
+    context.beginPath();
+    context.rect(borderWidth, borderWidth, innerWidth, innerHeight);
+    context.fillStyle = 'black';
+    context.fill();
+
+    if (slots.length === 0)
+    {
+        return;
+    }
+
+    var gap = slots.length > 1 ? 2 : 0;
+    var columnWidth = Math.floor((innerWidth - gap * (slots.length - 1)) / slots.length);
+    var usedWidth = columnWidth * slots.length + gap * (slots.length - 1);
+    var startX = borderWidth + Math.floor((innerWidth - usedWidth) / 2);
+
+    for (var i = 0; i < slots.length; i++)
+    {
+        var slot = slots[i];
+        var fillHeight = Math.floor(slot.amount * innerHeight / slot.capacity);
+        if (fillHeight > innerHeight)
+        {
+            fillHeight = innerHeight;
+        }
+        var columnX = startX + i * (columnWidth + gap);
+
+        context.beginPath();
+        context.rect(
+            columnX,
+            borderWidth + innerHeight - fillHeight,
+            columnWidth,
+            fillHeight
+        );
+        context.fillStyle = slot.color;
+        context.fill();
+    }
+}
+
+
 function drawRobotOre(robot)
 {
     var i = robot.robotnr;
@@ -301,17 +366,18 @@ function drawRobotDepot(robot)
         return;
     }
 
-    var depotA = typeof robot.DA === 'number' ? robot.DA : Number(robot.DA) || 0;
-    var depotB = typeof robot.DB === 'number' ? robot.DB : Number(robot.DB) || 0;
-    var depotC = typeof robot.DC === 'number' ? robot.DC : Number(robot.DC) || 0;
-    drawStackedOreBar(
+    function amount(value)
+    {
+        var n = Number(value);
+        return isNaN(n) ? 0 : n;
+    }
+
+    drawSideBySideDepotBar(
         myDepotContext[i],
         myDepotCanvas[i],
         robot.robotnr,
-        depotA,
-        depotB,
-        depotC,
-        robotDepotMaxTotal(robot)
+        [amount(robot.DA), amount(robot.DB), amount(robot.DC)],
+        [amount(robot.depotMaxA), amount(robot.depotMaxB), amount(robot.depotMaxC)]
     );
 }
 
