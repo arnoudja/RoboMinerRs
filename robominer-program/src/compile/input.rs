@@ -240,23 +240,6 @@ impl CompileInput {
     }
 }
 
-impl Operator {
-    pub(super) fn priority(self) -> usize {
-        match self {
-            Operator::Multiply | Operator::Division | Operator::Mod => 4,
-            Operator::Addition | Operator::Subtraction => 3,
-            Operator::Larger
-            | Operator::Smaller
-            | Operator::LargerEqual
-            | Operator::SmallerEqual
-            | Operator::Equal
-            | Operator::NotEqual => 2,
-            Operator::And | Operator::Or => 1,
-            Operator::Undefined => 0,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 struct Variable {
     _value_type: ValueType,

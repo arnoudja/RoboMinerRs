@@ -1205,6 +1205,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "robominer-optimize"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "rand",
+ "robominer-db",
+ "robominer-domain",
+ "robominer-program",
+ "robominer-sim",
+ "tokio",
+]
+
+[[package]]
 name = "robominer-program"
 version = "0.1.0"
 

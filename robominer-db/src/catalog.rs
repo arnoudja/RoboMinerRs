@@ -103,3 +103,17 @@ pub async fn get_robot_part(
 
     row.map(robot_part_record).transpose()
 }
+
+pub async fn list_robot_parts(pool: &MySqlPool) -> Result<Vec<RobotPartRecord>, sqlx::Error> {
+    let rows = sqlx::query(
+        "SELECT id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \
+                batteryCapacity, memoryCapacity, cpuCapacity, forwardCapacity, backwardCapacity, \
+                rotateCapacity, rechargeTime, scanTime, scanDistance, weight, volume, powerUsage \
+         FROM RobotPart \
+         ORDER BY typeId, id",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    rows.into_iter().map(robot_part_record).collect()
+}

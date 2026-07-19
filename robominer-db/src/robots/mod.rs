@@ -34,30 +34,30 @@ struct ProgramSourceUpdateState {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct RequestedRobotParts {
-    ore_container: RobotPartRecord,
-    mining_unit: RobotPartRecord,
-    battery: RobotPartRecord,
-    memory_module: RobotPartRecord,
-    cpu: RobotPartRecord,
-    engine: RobotPartRecord,
-    ore_scanner: RobotPartRecord,
+pub struct RequestedRobotParts {
+    pub ore_container: RobotPartRecord,
+    pub mining_unit: RobotPartRecord,
+    pub battery: RobotPartRecord,
+    pub memory_module: RobotPartRecord,
+    pub cpu: RobotPartRecord,
+    pub engine: RobotPartRecord,
+    pub ore_scanner: RobotPartRecord,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct RobotParameters {
-    recharge_time: i32,
-    max_ore: i32,
-    mining_speed: i32,
-    max_turns: i32,
-    memory_size: i32,
-    cpu_speed: i32,
-    forward_speed: f64,
-    backward_speed: f64,
-    rotate_speed: i32,
-    robot_size: f64,
-    scan_time: i32,
-    scan_distance: i32,
+pub struct RobotParameters {
+    pub recharge_time: i32,
+    pub max_ore: i32,
+    pub mining_speed: i32,
+    pub max_turns: i32,
+    pub memory_size: i32,
+    pub cpu_speed: i32,
+    pub forward_speed: f64,
+    pub backward_speed: f64,
+    pub rotate_speed: i32,
+    pub robot_size: f64,
+    pub scan_time: i32,
+    pub scan_distance: i32,
 }
 
 mod parameters;
@@ -65,5 +65,6 @@ mod read;
 mod write;
 
 pub(crate) use parameters::robot_is_recharging;
+pub use parameters::robot_parameters_for_parts;
 pub use read::*;
 pub use write::*;

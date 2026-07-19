@@ -18,12 +18,16 @@ pub struct CompatibilityFixture {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutableProgram {
-    pub(crate) statements: Vec<ExecutableStatement>,
-    pub(crate) actions: Vec<ExecutableAction>,
-    pub(crate) requires_runtime: bool,
+    pub statements: Vec<ExecutableStatement>,
+    pub actions: Vec<ExecutableAction>,
+    pub requires_runtime: bool,
 }
 
 impl ExecutableProgram {
+    pub fn statements(&self) -> &[ExecutableStatement] {
+        &self.statements
+    }
+
     pub fn actions(&self) -> &[ExecutableAction] {
         &self.actions
     }
@@ -51,13 +55,13 @@ pub enum ExecutableAction {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct ExecutableStatement {
+pub struct ExecutableStatement {
     pub source_line: u16,
     pub kind: ExecutableStatementKind,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ExecutableStatementKind {
+pub enum ExecutableStatementKind {
     Action(ExecutableAction),
     DynamicAction(ExecutableActionExpression),
     Sequence(Vec<ExecutableStatement>),
@@ -83,11 +87,11 @@ pub(crate) enum ExecutableStatementKind {
 }
 
 impl ExecutableStatement {
-    pub(crate) fn at(source_line: u16, kind: ExecutableStatementKind) -> Self {
+    pub fn at(source_line: u16, kind: ExecutableStatementKind) -> Self {
         Self { source_line, kind }
     }
 
-    pub(crate) fn requires_runtime(&self) -> bool {
+    pub fn requires_runtime(&self) -> bool {
         match &self.kind {
             ExecutableStatementKind::Action(action) => matches!(
                 action,
@@ -106,14 +110,14 @@ impl ExecutableStatement {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ExecutableActionExpression {
+pub enum ExecutableActionExpression {
     Move(ExecutableExpression),
     Rotate(ExecutableExpression),
     Dump(ExecutableExpression),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum ExecutableExpression {
+pub enum ExecutableExpression {
     Number(f64),
     Variable(String),
     VariableUpdate {
@@ -141,7 +145,7 @@ pub(crate) enum ExecutableExpression {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RobotProperty {
+pub enum RobotProperty {
     ForwardSpeed,
     BackwardSpeed,
     RotateSpeed,
@@ -165,7 +169,7 @@ pub(crate) enum RobotProperty {
 }
 
 impl RobotProperty {
-    pub(crate) fn from_name(name: &str, line: usize) -> Result<Self, CompileError> {
+    pub fn from_name(name: &str, line: usize) -> Result<Self, CompileError> {
         match name {
             "forwardSpeed" => Ok(Self::ForwardSpeed),
             "backwardSpeed" => Ok(Self::BackwardSpeed),
@@ -189,7 +193,28 @@ impl RobotProperty {
         }
     }
 
-    pub(crate) fn value(self, robot: &RobotProperties) -> Option<f64> {
+    pub fn as_name(self) -> &'static str {
+        match self {
+            Self::ForwardSpeed => "forwardSpeed",
+            Self::BackwardSpeed => "backwardSpeed",
+            Self::RotateSpeed => "rotateSpeed",
+            Self::ScanTime => "scanTime",
+            Self::ScanDistance => "scanDistance",
+            Self::OreCap => "oreCap",
+            Self::OreStored => "oreStored",
+            Self::OreStoredA => "oreStoredA",
+            Self::OreStoredB => "oreStoredB",
+            Self::OreStoredC => "oreStoredC",
+            Self::MaxCycles => "maxCycles",
+            Self::MiningSpeed => "miningSpeed",
+            Self::CpuSpeed => "cpuSpeed",
+            Self::Orientation => "orientation",
+            Self::XPos => "xPos",
+            Self::YPos => "yPos",
+        }
+    }
+
+    pub fn value(self, robot: &RobotProperties) -> Option<f64> {
         Some(match self {
             Self::ForwardSpeed => robot.forward_speed,
             Self::BackwardSpeed => robot.backward_speed,
@@ -209,7 +234,7 @@ impl RobotProperty {
         })
     }
 
-    pub(crate) fn stored_ore_value(self, ore: &[i32; 10]) -> Option<f64> {
+    pub fn stored_ore_value(self, ore: &[i32; 10]) -> Option<f64> {
         Some(match self {
             Self::OreStored => ore.iter().sum::<i32>() as f64,
             Self::OreStoredA => ore.first().copied().unwrap_or(0) as f64,
@@ -292,14 +317,14 @@ impl Display for CompileError {
 
 impl Error for CompileError {}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ValueType {
+pub enum ValueType {
     Bool,
     Int,
     Double,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum VariableOperator {
+pub enum VariableOperator {
     None,
     PreIncrement,
     PreDecrement,
@@ -308,7 +333,7 @@ pub(crate) enum VariableOperator {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Operator {
+pub enum Operator {
     Undefined,
     Addition,
     Subtraction,
@@ -323,4 +348,40 @@ pub(crate) enum Operator {
     NotEqual,
     And,
     Or,
+}
+
+impl Operator {
+    pub fn as_token(self) -> &'static str {
+        match self {
+            Self::Undefined => "",
+            Self::Addition => "+",
+            Self::Subtraction => "-",
+            Self::Multiply => "*",
+            Self::Division => "/",
+            Self::Mod => "%",
+            Self::Larger => ">",
+            Self::Smaller => "<",
+            Self::LargerEqual => ">=",
+            Self::SmallerEqual => "<=",
+            Self::Equal => "==",
+            Self::NotEqual => "!=",
+            Self::And => "&&",
+            Self::Or => "||",
+        }
+    }
+
+    pub fn priority(self) -> usize {
+        match self {
+            Self::Multiply | Self::Division | Self::Mod => 4,
+            Self::Addition | Self::Subtraction => 3,
+            Self::Larger
+            | Self::Smaller
+            | Self::LargerEqual
+            | Self::SmallerEqual
+            | Self::Equal
+            | Self::NotEqual => 2,
+            Self::And | Self::Or => 1,
+            Self::Undefined => 0,
+        }
+    }
 }

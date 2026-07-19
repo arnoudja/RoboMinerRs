@@ -1,6 +1,6 @@
 use super::{RequestedRobotParts, RobotParameters};
 
-pub(crate) fn robot_parameters_for_parts(parts: &RequestedRobotParts) -> Option<RobotParameters> {
+pub fn robot_parameters_for_parts(parts: &RequestedRobotParts) -> Option<RobotParameters> {
     let robot_parts = [
         &parts.ore_container,
         &parts.mining_unit,

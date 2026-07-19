@@ -3,6 +3,7 @@ members = [
     "robominer-db",
     "robominer-domain",
     "robominer-engine",
+    "robominer-optimize",
     "robominer-program",
     "robominer-sim",
     "robominer-test-support",

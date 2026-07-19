@@ -29,15 +29,24 @@ pub(crate) fn process_move(robot: &mut Robot, speed: f64, time_fraction: f64) {
 
 pub(crate) fn process_requested_move(robot: &mut Robot, distance: f64) {
     if distance > 0.0 {
+        if robot.spec.forward_speed <= 0.0 {
+            return;
+        }
         let time_fraction = (distance / robot.spec.forward_speed).min(1.0);
         process_move(robot, robot.spec.forward_speed, time_fraction);
     } else if distance < 0.0 {
+        if robot.spec.backward_speed <= 0.0 {
+            return;
+        }
         let time_fraction = (-distance / robot.spec.backward_speed).min(1.0);
         process_move(robot, -robot.spec.backward_speed, time_fraction);
     }
 }
 
 pub(crate) fn process_requested_rotation(robot: &mut Robot, rotation: f64) {
+    if robot.spec.rotate_speed == 0 {
+        return;
+    }
     if rotation > 0.0 {
         robot.time_fraction = (rotation / robot.spec.rotate_speed as f64).min(1.0);
         robot.target_rotation = robot.spec.rotate_speed;
@@ -53,7 +62,13 @@ pub(crate) fn find_collision_time(
     min_collision_time: f64,
     max_collision_time: f64,
 ) -> f64 {
-    debug_assert!(min_collision_time <= max_collision_time);
+    // Float narrowing can invert the window; treat that as "no collision in range".
+    if min_collision_time
+        .partial_cmp(&max_collision_time)
+        .is_none_or(|ordering| ordering == std::cmp::Ordering::Greater)
+    {
+        return 1.0;
+    }
 
     let first_start = position_at_time(
         first_robot.position,
@@ -113,12 +128,13 @@ pub(crate) fn find_collision_time(
             {
                 // No collision.
             } else if min_collision_time_increase > 0.01 || max_collision_time_decrease > 0.1 {
-                return find_collision_time(
-                    first_robot,
-                    second_robot,
-                    min_collision_time + min_collision_time_increase,
-                    max_collision_time - max_collision_time_decrease,
-                );
+                let new_min = min_collision_time + min_collision_time_increase;
+                let new_max = max_collision_time - max_collision_time_decrease;
+                // Float rounding can collapse or invert the narrowed window.
+                if new_min >= new_max {
+                    return 1.0;
+                }
+                return find_collision_time(first_robot, second_robot, new_min, new_max);
             } else {
                 let first_test = position_at_time(
                     first_robot.position,

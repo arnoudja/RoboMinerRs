@@ -229,6 +229,35 @@ fn find_collision_time_returns_one_for_stationary_robots() {
 }
 
 #[test]
+fn find_collision_time_tolerates_inverted_time_window() {
+    let spec = RobotSpec::test_robot();
+    let first = Robot::new(spec.clone());
+    let second = Robot::new(spec);
+
+    // Float narrowing in the recursive path can invert bounds; must not panic.
+    assert_close(find_collision_time(&first, &second, 0.75, 0.5), 1.0);
+}
+
+#[test]
+fn find_collision_time_tolerates_collapsed_narrowing_window() {
+    let spec = RobotSpec::test_robot();
+    let mut first = Robot::new(spec.clone());
+    first.position = Position::new(0.0, 0.0, 0);
+    first.destination = Position::new(2.0, 0.0, 0);
+    first.time_fraction = 1.0;
+    first.current_speed = 2.0;
+
+    let mut second = Robot::new(spec);
+    second.position = Position::new(4.0, 0.0, 180);
+    second.destination = Position::new(2.0, 0.0, 180);
+    second.time_fraction = 1.0;
+    second.current_speed = 2.0;
+
+    // Equal bounds after narrowing must not panic.
+    let _ = find_collision_time(&first, &second, 0.5, 0.5);
+}
+
+#[test]
 fn apply_mining_transfers_ore_proportional_to_time_fraction() {
     let bounds = bounds_for_ground(5, 5, 1.0);
     let mut ground = Ground::new(5, 5);

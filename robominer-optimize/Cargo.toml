@@ -1,0 +1,19 @@
+[package]
+name = "robominer-optimize"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "robominer-optimize"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.102"
+clap = { version = "4.6.1", features = ["derive"] }
+rand = "0.8.5"
+robominer-db = { version = "0.1.0", path = "../robominer-db" }
+robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
+robominer-program = { version = "0.1.0", path = "../robominer-program" }
+robominer-sim = { version = "0.1.0", path = "../robominer-sim" }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
