@@ -357,6 +357,7 @@ mod tests {
     #[test]
     fn help_heading_slug_normalizes_titles() {
         assert_eq!(help_heading_slug("Ore Container"), "ore-container");
+        assert_eq!(help_heading_slug("Depot"), "depot");
         assert_eq!(help_heading_slug("Repeated mining"), "repeated-mining");
     }
 }

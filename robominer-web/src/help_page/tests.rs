@@ -115,6 +115,8 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     let mechanics_body = String::from_utf8(mechanics.body).expect("html should be utf-8");
     assert!(mechanics_body.contains(r#"class="help-article-toc""#));
     assert!(mechanics_body.contains(r#"<h2 id="ore-container">Ore Container</h2>"#));
+    assert!(mechanics_body.contains(r#"<h2 id="depot">Depot</h2>"#));
+    assert!(mechanics_body.contains("personal ore bank for each ore type"));
     assert!(
         mechanics_body.contains(r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#)
     );

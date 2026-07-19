@@ -427,3 +427,25 @@ if (oreType() == 1 &amp;&amp; oreDistance() &gt; 0)
             <p class="helptext">
                 More detail on scan, mine, and dump is in the Mechanics and Robot programming guides.
             </p>
+            <h2>Using the depot</h2>
+            <p class="helptext">
+                Once achievements unlock depot capacity for an ore type, dumping that ore at your spawn corner
+                banks it for the rest of the rally without taking container space.
+                Overflow still goes onto the ground, so a full depot behaves like a normal dump at home.
+            </p>
+            <p class="helptext">
+                A useful pattern is to mine until the container is full of the ore you want to keep, navigate
+                back to spawn using robot.xPos and robot.yPos (both are 0 at the rally start corner), then dump:
+            </p>
+            <p class="codeexample">
+while (ore(0) &lt; robot.oreCap)
+{
+    // mine and seek as usual...
+}
+// Face and move until robot.xPos and robot.yPos are back near 0, then:
+dump(1);
+            </p>
+            <p class="helptext">
+                Depot dumps only apply when you are on that spawn corner.
+                Mechanics explains capacity, scoring, and what the replay markers mean.
+            </p>

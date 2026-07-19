@@ -17,6 +17,26 @@
                 The ore() command can be used to measure the amount of ore it contains, per type if needed.
                 The dump() command can be used to dump the ore it contains, also per type if requested to do so.
             </p>
+            <h2>Depot</h2>
+            <p class="helptext">
+                The depot is a personal ore bank for each ore type, separate from the robot's ore container
+                and from your wallet on the account page.
+                Capacity starts at 0 for every ore type and is raised by achievement steps that award a
+                depot maximum (shown on the Achievements page).
+            </p>
+            <p class="helptext">
+                During a rally, dump() at your spawn corner fills the depot up to the unlocked capacity for
+                that ore type. Any overflow is placed on the ground under the robot, the same as a normal dump.
+                Away from spawn, dump() always puts ore on the ground — the depot is not used.
+            </p>
+            <p class="helptext">
+                At the end of the rally, ore still in the container and ore already in the depot are added
+                together for your mining result and score.
+            </p>
+            <p class="helptext">
+                On the rally replay, a translucent square in your player color marks the spawn corner where
+                depot dumps land, and the player card shows depot fill next to cargo when capacity is unlocked.
+            </p>
             <h2>Mining Unit</h2>
             <p class="helptext">
                 The Mining Unit is the part of the Robot that is put to work when executing the mine() command.
@@ -245,9 +265,7 @@
                 into the container, up to mining speed and free cargo space.
                 dump(n) drops only that type (1 = high quality, 2 = medium, 3 = low);
                 dump(0) dumps everything.
-                At your spawn cell, dump fills your unlocked depot capacity first; overflow goes
-                onto the ground. Away from spawn, all dumped ore goes onto the ground.
-                Rally results add depot and container together.
+                See the Depot section for how dump() behaves at your spawn corner.
             </p>
             <p class="helptext">
                 That combination is why nested heaps surprise players: you may scan type 1,
