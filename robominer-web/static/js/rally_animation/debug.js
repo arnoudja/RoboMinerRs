@@ -103,17 +103,6 @@ function robotHasDepot(robot)
 }
 
 
-function robotDepotMaxTotal(robot)
-{
-    function cap(value)
-    {
-        var n = Number(value);
-        return isNaN(n) ? 0 : n;
-    }
-    return cap(robot.depotMaxA) + cap(robot.depotMaxB) + cap(robot.depotMaxC);
-}
-
-
 function robotTurnsRemaining(robot, step)
 {
     if (typeof robot.maxturns !== 'number' || isNaN(robot.maxturns))
@@ -184,47 +173,15 @@ function updateRobotDebugPanel(robot, step)
         }
     }
 
-    var cargoEl = document.getElementById('robotCargo' + robot.robotnr);
-    var total = Math.round(robot.A) + Math.round(robot.B) + Math.round(robot.C);
     var full = robotCargoFull(robot);
-    if (cargoEl)
-    {
-        cargoEl.textContent = 'Cargo A ' + Math.round(robot.A)
-            + ' · B ' + Math.round(robot.B)
-            + ' · C ' + Math.round(robot.C)
-            + '  (' + total + '/' + robot.maxore + ')'
-            + (full ? ' FULL' : '');
-    }
-
-    var depotEl = document.getElementById('robotDepot' + robot.robotnr);
     var depotChartEl = document.getElementById('depotChart' + robot.robotnr);
-    if (robotHasDepot(robot))
+    if (depotChartEl)
     {
-        var depotA = typeof robot.DA === 'number' ? robot.DA : Number(robot.DA) || 0;
-        var depotB = typeof robot.DB === 'number' ? robot.DB : Number(robot.DB) || 0;
-        var depotC = typeof robot.DC === 'number' ? robot.DC : Number(robot.DC) || 0;
-        var depotTotal = Math.round(depotA) + Math.round(depotB) + Math.round(depotC);
-        if (depotEl)
-        {
-            depotEl.removeAttribute('hidden');
-            depotEl.textContent = 'Depot A ' + Math.round(depotA)
-                + ' · B ' + Math.round(depotB)
-                + ' · C ' + Math.round(depotC)
-                + '  (' + depotTotal + '/' + robotDepotMaxTotal(robot) + ')';
-        }
-        if (depotChartEl)
+        if (robotHasDepot(robot))
         {
             depotChartEl.removeAttribute('hidden');
         }
-    }
-    else
-    {
-        if (depotEl)
-        {
-            depotEl.setAttribute('hidden', '');
-            depotEl.textContent = 'Depot A 0 · B 0 · C 0';
-        }
-        if (depotChartEl)
+        else
         {
             depotChartEl.setAttribute('hidden', '');
         }

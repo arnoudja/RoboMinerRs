@@ -40,7 +40,6 @@ mod tests {
             "function updateRobotDebugPanel(",
             "function robotCargoFull(",
             "function robotHasDepot(",
-            "function robotDepotMaxTotal(",
             "function robotTurnsRemaining(",
             "function rallyActionName(",
             "function updateRallySourceHighlight(",

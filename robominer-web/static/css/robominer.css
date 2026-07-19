@@ -4056,8 +4056,6 @@ body.mining-area-atlas-drawer-open {
 
 .rally-view-player-battery-caption,
 .rally-view-player-turns,
-.rally-view-player-cargo,
-.rally-view-player-depot,
 .rally-view-player-action {
     color: #c5d4ea;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -4116,11 +4114,6 @@ body.mining-area-atlas-drawer-open {
 
 .rally-view-player-full {
     border-color: rgba(72, 200, 120, 0.75);
-}
-
-.rally-view-player-full .rally-view-player-cargo {
-    color: #48c878;
-    font-weight: bold;
 }
 
 .rally-view-player-depleted {
