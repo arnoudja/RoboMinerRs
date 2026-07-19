@@ -2,6 +2,7 @@ mod support;
 
 use std::collections::HashMap;
 
+use robominer_test_support::insert_row_id;
 use robominer_web::test_support::route;
 use serial_test::serial;
 use support::{
@@ -217,4 +218,91 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
         .bind(user_id)
         .execute(&pool)
         .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn edit_code_delete_post_rejects_foreign_program_source() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!("skipping edit code IDOR web test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    }
+
+    ensure_session_configured();
+
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-edit-idor");
+    let owner_username = format!("{prefix}-owner");
+    let attacker_username = format!("{prefix}-attacker");
+    let password = "test-password-1".to_string();
+    let owner_id = create_user_via_engine(
+        &owner_username,
+        &format!("{prefix}-owner@example.invalid"),
+        &password,
+    );
+    let attacker_id = create_user_via_engine(
+        &attacker_username,
+        &format!("{prefix}-attacker@example.invalid"),
+        &password,
+    );
+
+    let program_name = format!("{prefix}-secret");
+    let program_source_id = insert_row_id(
+        &pool,
+        sqlx::query(
+            "INSERT INTO ProgramSource \
+             (userId, sourceName, sourceCode, compiledSize, errorDescription, verified) \
+             VALUES (?, ?, 'move(1);', 1, '', 1)",
+        )
+        .bind(owner_id)
+        .bind(&program_name),
+    )
+    .await;
+
+    let config = server_config(pool.clone());
+    let cookie = cookie_header(
+        &login_with_credentials(&config, &attacker_username, &password).await,
+    );
+
+    let mut delete_form = HashMap::new();
+    delete_form.insert("requestType".to_string(), "erase".to_string());
+    delete_form.insert("programSourceId".to_string(), program_source_id.to_string());
+
+    let response = route(
+        &post_request("/editCode", delete_form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "edit code page should render");
+    assert!(
+        body.contains("Unknown program source."),
+        "expected IDOR rejection for foreign program source:\n{body}"
+    );
+
+    let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ProgramSource WHERE id = ?")
+        .bind(program_source_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count owner program source");
+    assert_eq!(remaining, 1, "foreign erase must not delete the owner program");
+
+    for user_id in [owner_id, attacker_id] {
+        let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+    }
 }

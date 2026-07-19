@@ -7,7 +7,7 @@ use robominer_web::test_support::route;
 use serial_test::serial;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, login_with_credentials,
-    post_request, response_body, server_config, unique_prefix,
+    post_request, post_request_without_csrf, response_body, server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -203,6 +203,76 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
         queue_count >= 2,
         "expected fill to enqueue multiple runs, got {queue_count}"
     );
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn mining_queue_remove_post_without_csrf_is_rejected() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!("skipping mining queue CSRF web test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    }
+
+    ensure_session_configured();
+
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-queue-csrf");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut form = HashMap::new();
+    form.insert("submitType".to_string(), "remove".to_string());
+    form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
+    form.insert(
+        "selectedQueueItemId".to_string(),
+        fixture.queued_queue_id.to_string(),
+    );
+    form.insert(
+        format!("miningArea{}", fixture.inner.robot_id),
+        fixture.inner.mining_area_id.to_string(),
+    );
+    form.insert(
+        "infoMiningAreaId".to_string(),
+        fixture.inner.mining_area_id.to_string(),
+    );
+
+    let missing = route(
+        &post_request_without_csrf("/miningQueue", form.clone(), Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_eq!(missing.status, 403);
+    assert!(
+        response_body(&missing).contains("CSRF"),
+        "expected CSRF rejection message"
+    );
+
+    form.insert("csrfToken".to_string(), "not-a-valid-token".to_string());
+    let forged = route(
+        &post_request("/miningQueue", form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_eq!(forged.status, 403);
+
+    let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(fixture.queued_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count mining queue rows");
+    assert_eq!(remaining, 1, "CSRF failure must not cancel the queued run");
 
     fixture.inner.cleanup(&pool, true).await;
 }
