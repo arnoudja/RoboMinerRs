@@ -635,13 +635,13 @@ insert into User (id, username, email, password) values (1, 'AI', '', '') ON DUP
 -- AI player robots
 insert into Robot (id, userId, robotName, sourceCode,
  rechargeTime, maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, robotSize)
-values (1, 1, 'AI-1', 'move(1.5); while (mine());',
- 0,            50,     2,           1500,     99,       2,            2,             25,          1.5) ON DUPLICATE KEY UPDATE userId = VALUES(userId), robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), rechargeTime = VALUES(rechargeTime), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), robotSize = VALUES(robotSize);
+values (1002, 1, 'AI-1', 'move(1.5); while (mine());',
+ 0,            7,     2,           25,        2,        1.6,          0.7,           44,          1.6) ON DUPLICATE KEY UPDATE userId = VALUES(userId), robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), rechargeTime = VALUES(rechargeTime), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), robotSize = VALUES(robotSize);
 
 insert into Robot (id, userId, robotName, sourceCode,
  rechargeTime, maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, robotSize)
-values (2, 1, 'AI-2', 'if (move(1.5) >= 1) { while (mine()); } else { move(-1); rotate(20); }',
- 0,            50,     2,           3000,     99,       2,            2,             25,          1.5) ON DUPLICATE KEY UPDATE userId = VALUES(userId), robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), rechargeTime = VALUES(rechargeTime), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), robotSize = VALUES(robotSize);
+values (2002, 1, 'AI-2', 'if (move(1.5) >= 1) { while (mine()); } else { move(-1); rotate(41); }',
+ 0,            14,     2,           100,      3,        1.2,          0.5,           31,          1.76) ON DUPLICATE KEY UPDATE userId = VALUES(userId), robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), rechargeTime = VALUES(rechargeTime), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), robotSize = VALUES(robotSize);
 
 insert into Robot (id, userId, robotName,
  sourceCode,
@@ -656,14 +656,14 @@ values (3, 1, 'AI-3',
 insert into OrePrice (id, description) values (10001, 'Mining Area Cerbonium-mini price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 -- No OrePriceAmount values, Cerbonium-mini mining is deliberately free
 insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1001, 'Cerbonium-mini', 10001,      10,    10,    20,       5,          25,      1) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
+                values (1001, 'Cerbonium-mini', 10001,      10,    10,    20,       5,          25,      1002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1001,         1,     4,      4);
 
 insert into OrePrice (id, description) values (10002, 'Mining Area Cerbonium-Starter price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 -- No OrePriceAmount values, Cerbonium-Starter mining is deliberately free
 insert into MiningArea (id,   areaName,            orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1002, 'Cerbonium-Starter', 10002,      15,    15,    40,       10,         20,      2) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
+                values (1002, 'Cerbonium-Starter', 10002,      15,    15,    40,       10,         20,      1002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1002,         1,     6,     6),
                                 (1002,         1,     6,     4);
@@ -672,7 +672,7 @@ insert into OrePrice (id, description) values (10003, 'Mining Area Cerbonium-Adv
 insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (10003,      1,     1);
 insert into MiningArea (id,   areaName,             orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1003, 'Cerbonium-Advanced', 10003,      20,    20,    100,      15,         0,       3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
+                values (1003, 'Cerbonium-Advanced', 10003,      20,    20,    100,      15,         0,       2002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1003,         1,     8,      7),
                                 (1003,         1,     6,      5);
@@ -682,7 +682,7 @@ insert into OrePrice (id, description) values (11001, 'Mining Area Oxaria-Light 
 insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (11001,      1,     1);
 insert into MiningArea (id,   areaName,       orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1101, 'Oxaria-Light', 11001,      20,    20,    60,       20,         25,      2) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
+                values (1101, 'Oxaria-Light', 11001,      20,    20,    60,       20,         25,      2002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1101,         1,     12,     6),
                                 (1101,         2,     6,      4),
@@ -1481,7 +1481,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (9,             3,    10,                7,     500,          10);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
-                                           values (9,             3,    7,     4000);
+                                           values (9,             3,    7,     3500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (9,             4,    10,                1602);
