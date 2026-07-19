@@ -180,250 +180,45 @@ do {
             <p class="helptext">
                 This will repeat the mining process until there is no more high quality ore to mine at the current robot location.
             </p>
-            <h2>Ore heaps</h2>
+            <h2>Ore Scanner</h2>
             <p class="helptext">
-                Ore is concentrated in heaps.
-                In the first mining areas, just searching for ore and picking it up will work fine.
-                As the mining areas get more difficult, however, the number of times your robot runs into an ore heap of the right type will decrease.
-            </p>
-            <p class="helptext">
-                When your robot does run into the right type of ore, you want it to pick up as much of its ore as possible.
-            </p>
-            <p class="helptext">
-                This can be achieved with three steps:
-            </p>
-            <ul>
-                <li>Detect when the robot enters an ore heap.</li>
-                <li>Detect when the robot leaves an ore heap.</li>
-                <li>Move back into the ore heap.</li>
-            </ul>
-            <p class="helptext">
-                For the first step, we'll use a variable which we will set to true when we've mined something.
-                For example:
-            </p>
-            <p class="codeexample">
-bool inOreHeap = false;
-&lsaquo;other initialisation code&gt;
-
-while (true)
-{
-    // Check whether ore is found.
-    if (mine())
-    {
-        // Ore found, so we are in an ore heap.
-        inOreHeap = true;
-
-        // Mine the rest of the ore at the current location.
-        while (mine());
-    }
-
-    &lsaquo;Movement, collision detection etc.&gt;
-}
-            </p>
-            <p class="helptext">
-                This way, when the robot mines something, it will remember it did so.
-                For this example, the robot accepts any type of ore.
-                But of course you can change the code in such a way that the inOreHeap variable is only set to true when the right type of ore is found.
-            </p>
-            <p class="helptext">
-                As a second step, we want to detect when the robot leaves an ore heap.
-                Ore heaps are round, so when the robot mines in a straight line we know the robot leaves the heap when:
-            </p>
-            <ul>
-                <li>The robot detected an ore heap.</li>
-                <li>The robot didn't find ore in the new location.</li>
-            </ul>
-            <p class="helptext">
-                The tricky part here is the 'new location'.
-                When the robot mines all the ore in one location and then makes a move of 0.5, for example, changes are the robot is still in the same location.
-            </p>
-            <p class="helptext">
-                To avoid this, make sure your move is about 1.42.
-                The squares are one by one, so the distance between two opposite corners is just under 1.42.
-                By moving at least 1.42, we can make sure the robot is in a new location after the move.
-            </p>
-            <p class="helptext">
-                Again, we'll use a variable to store the information.
-                After adding this, it will look something like this:
-            </p>
-            <p class="codeexample">
-bool inOeHeap = false;
-bool leftOreHeap = false;
-&lsaquo;other initialisation code&gt;
-
-while (true)
-{
-    // Check whether ore is found.
-    if (mine())
-    {
-        // Ore found, so we are in an ore heap.
-        inOreHeap = true;
-
-        // Mine the rest of the ore at the current location.
-        while (mine());
-    }
-    else if (inOreHeap)
-    {
-        // No ore found, but we're in an ore heap, so we just left it.
-        leftOreHeap = true;
-    }
-
-    &lsaquo;Movement, collision detection etc.&gt;
-}
-            </p>
-            <p class="helptext">
-                Now the robot knows when it detected an ore heap and it knows when it left it.
-                The next step is to take action when the robot leaves the ore heap.
-            </p>
-            <p class="helptext">
-                Depending on the 'leftOreHeap' variable, the robot can move normally or try to head back into the ore heap.
-            </p>
-            <p class="helptext">
-                There are a lot of ways to try to get back into the ore heap.
-                We don't know whether the robot entered it through the middle, right part or left part.
-                For this example we pick an easy way: The robot makes a large turn and we hope it enters the heap again.
-            </p>
-            <p class="helptext">
-                Making a complete 180 degree turn won't be a good idea.
-                The robot will end up exactly on the path it just mined clear.
-                So we'll make a 160 degree turn.
-                Feel free to try other values between 90 and 180.
-            </p>
-            <p class="helptext">
-                The code now looks something like this:
-            </p>
-            <p class="codeexample">
-bool inOreHeap = false;
-bool leftOreHeap = false;
-&lsaquo;other initialisation code&gt;
-
-while (true)
-{
-    // Check whether ore is found.
-    if (mine())
-    {
-        // Ore found, so we are in an ore heap.
-        inOreHeap = true;
-
-        // Mine the rest of the ore at the current location.
-        while (mine());
-    }
-    else if (inOreHeap)
-    {
-        // No ore found, but we're in an ore heap, so we just left it.
-        leftOreHeap = true;
-    }
-
-    if (leftOreHeap)
-    {
-        // Try to head back into the ore heap.
-        rotate(160);
-    }
-
-    &lsaquo;Movement, collision detection etc.&gt;
-}
-            </p>
-            <p class="helptext">
-                Now there is one more change to make.
-                The code will work fine when the robot is lucky enough to re-enter the ore heap right after the turn.
-                But when it doesn't, it will keep moving in a circle!
-            </p>
-            <p class="helptext">
-                After the robot has done the 160 degree turn, we want the variables to be reset to their original values.
-                When the robot does run back into the heap, it will detect it in the same way again.
-                When it doesn't, the original search for ore will continue.
-            </p>
-            <p class="helptext">
-                The final code will look something like this:
-            </p>
-            <p class="codeexample">
-bool inOreHeap = false;
-bool leftOreHeap = false;
-&lsaquo;other initialisation code&gt;
-
-while (true)
-{
-    // Check whether ore is found.
-    if (mine())
-    {
-        // Ore found, so we are in an ore heap.
-        inOreHeap = true;
-
-        // Mine the rest of the ore at the current location.
-        while (mine());
-    }
-    else if (inOreHeap)
-    {
-        // No ore found, but we're in an ore heap, so we just left it.
-        leftOreHeap = true;
-    }
-
-    if (leftOreHeap)
-    {
-        // Try to head back into the ore heap.
-        rotate(160);
-        
-        // Reset the variables to their original state.
-        inOreHeap = false;
-        leftOreHeap = false;
-    }
-
-    &lsaquo;Movement, collision detection etc.&gt;
-}
-            </p>
-            <h2>Moving toward scanned ore</h2>
-            <p class="helptext">
-                After scan() finds the ore you want, a common next step is move(oreDistance()).
-                That works when the ore is ahead of you. It does not help when you are already
-                standing on the ore: oreDistance() is then 0, and move(0) leaves the robot still.
-            </p>
-            <p class="helptext">
-                Guard the move so you only travel when there is a positive distance:
+                The ore scanner allows the robot to scan the area for ore and return the type and distance of the ore.
+                A scan can be initiated with the scan() command, optionally with a direction parameter.
+                After a scan, the oreType() and oreDistance() commands can be used to get the type and distance of the ore found, if any.
+                If the ore is of the type you want, you can move to the ore with the move(oreDistance()) command.
             </p>
             <p class="codeexample">
 scan();
 if (oreType() == 1)
 {
-    if (oreDistance() &gt; 0)
-    {
-        move(oreDistance());
-    }
+    move(oreDistance());
     while (mine());
 }
             </p>
             <p class="helptext">
-                The same guard belongs in any seeker loop that rescans after mining and then
-                calls move(oreDistance()) again.
+                Scanning in a direction will return the ore type and distance in that direction, relative to the robot's position and orientation.
+                If the ore is of the type you want, you can rotate into the direction of the ore and move to the ore with the move(oreDistance()) command.
+            </p>
+            <p class="codeexample">
+scan(90);
+if (oreType() == 1)
+{
+    rotate(90);
+    move(oreDistance());
+    while (mine());
+}
             </p>
             <h2>Nested heaps and mixed cells</h2>
             <p class="helptext">
                 Later areas often place a small high-value heap inside a larger lower-value heap.
-                Three rules interact badly if you ignore them:
+                To handle this correctly, keep the following in mind:
             </p>
             <ul>
                 <li>scan() reports the nearest ore of any type, not "nearest type 1 only".</li>
                 <li>mine() collects every type on the cell under the robot.</li>
                 <li>dump(2) only drops medium ore; dump(3) drops low; dump(0) drops everything.</li>
+                <li>dump() drops ore on the ground. If you run mine() again without moving after executing dump(2) or dump(3), you'll mine the same ore again.</li>
             </ul>
-            <p class="helptext">
-                A typical failure mode looks frozen in the replay: the robot stands on type 1,
-                mine() returns 0 because the container is full of mixed ore, dump(2) frees nothing
-                useful, and move(oreDistance()) is move(0). Battery still drains while nothing moves.
-            </p>
-            <p class="helptext">
-                Dump the types you do not want to keep, and treat mine() returning 0 while ore is
-                still underfoot as a cargo or empty-cell problem — not as a reason to keep calling
-                move(oreDistance()) blindly:
-            </p>
-            <p class="codeexample">
-while (mine());
-dump(2);
-dump(3);
-if (oreType() == 1 &amp;&amp; oreDistance() &gt; 0)
-{
-    move(oreDistance());
-}
-            </p>
             <p class="helptext">
                 More detail on scan, mine, and dump is in the Mechanics and Robot programming guides.
             </p>
