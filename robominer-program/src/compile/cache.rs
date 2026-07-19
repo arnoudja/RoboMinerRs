@@ -4,11 +4,11 @@
 //! process; caching by source text avoids repeated parse work without changing
 //! simulation behavior.
 
+#[cfg(test)]
+use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 #[cfg(not(test))]
 use std::sync::{LazyLock, Mutex};
-#[cfg(test)]
-use std::cell::RefCell;
 
 use crate::types::{CompileError, ExecutableProgram};
 
@@ -51,10 +51,10 @@ impl CompileCache {
     }
 
     fn touch(&mut self, source: &str) {
-        if let Some(index) = self.order.iter().position(|entry| entry == source) {
-            if let Some(key) = self.order.remove(index) {
-                self.order.push_back(key);
-            }
+        if let Some(index) = self.order.iter().position(|entry| entry == source)
+            && let Some(key) = self.order.remove(index)
+        {
+            self.order.push_back(key);
         }
     }
 
@@ -94,10 +94,7 @@ thread_local! {
     static COMPILE_CACHE: RefCell<CompileCache> = RefCell::new(CompileCache::new());
 }
 
-pub(super) fn get_or_insert_with(
-    source: &str,
-    compile: impl FnOnce() -> CacheValue,
-) -> CacheValue {
+pub(super) fn get_or_insert_with(source: &str, compile: impl FnOnce() -> CacheValue) -> CacheValue {
     #[cfg(not(test))]
     {
         COMPILE_CACHE

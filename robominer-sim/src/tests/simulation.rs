@@ -127,9 +127,7 @@ fn animation_data_includes_depot_when_capacity_is_unlocked() {
     let mut simulation = Simulation::new(
         ground,
         2,
-        vec![
-            ScriptedRobot::from_executable_program(spec, &program).with_depot_capacity(capacity),
-        ],
+        vec![ScriptedRobot::from_executable_program(spec, &program).with_depot_capacity(capacity)],
     );
     let data = simulation.run_with_animation(&[OreAnimationData {
         ore_id: 1,

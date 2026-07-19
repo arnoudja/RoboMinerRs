@@ -260,11 +260,7 @@ async fn mining_queue_remove_post_without_csrf_is_rejected() {
     );
 
     form.insert("csrfToken".to_string(), "not-a-valid-token".to_string());
-    let forged = route(
-        &post_request("/miningQueue", form, Some(&cookie)),
-        &config,
-    )
-    .await;
+    let forged = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
     assert_eq!(forged.status, 403);
 
     let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")

@@ -236,8 +236,7 @@ impl Simulation {
                         .position
                         .distance(&self.robots[index].destination);
                     if is_zero_motion(distance) {
-                        let wall_blocked = pre_collision_travel[index]
-                            .is_some_and(is_zero_motion);
+                        let wall_blocked = pre_collision_travel[index].is_some_and(is_zero_motion);
                         cycle_statuses[index] = Some(if wall_blocked {
                             RobotCycleStatus::Wall
                         } else {

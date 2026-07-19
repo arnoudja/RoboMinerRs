@@ -162,7 +162,7 @@ fn app_shell_header_renders_hud_markup() {
             ore_name: "Iron".to_string(),
             amount: 4,
             max_allowed: 20,
-        depot_max_allowed: 0,
+            depot_max_allowed: 0,
         }],
         queue_used: 1,
         queue_capacity: 4,

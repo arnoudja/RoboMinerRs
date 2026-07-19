@@ -2,8 +2,9 @@ use crate::Request;
 use crate::session::{self, session_clear_cookie_header};
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, health,
-    help_page, http, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
-    mining_results_page, query_i64, rally_pages, request_user_id, robot_page, shop_page,
+    help_page, http, leaderboard_page, login_redirect, mining_area_overview_page,
+    mining_queue_page, mining_results_page, query_i64, rally_pages, request_user_id, robot_page,
+    shop_page,
 };
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
@@ -26,10 +27,7 @@ pub async fn route(request: &Request, config: &ServerConfig) -> Response {
     response
 }
 
-async fn strip_stale_session_cookie(
-    request: &mut Request,
-    pool: &robominer_db::MySqlPool,
-) -> bool {
+async fn strip_stale_session_cookie(request: &mut Request, pool: &robominer_db::MySqlPool) -> bool {
     let Some(session) = session::session_from_request(request) else {
         return false;
     };

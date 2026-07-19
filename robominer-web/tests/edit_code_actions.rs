@@ -263,9 +263,8 @@ async fn edit_code_delete_post_rejects_foreign_program_source() {
     .await;
 
     let config = server_config(pool.clone());
-    let cookie = cookie_header(
-        &login_with_credentials(&config, &attacker_username, &password).await,
-    );
+    let cookie =
+        cookie_header(&login_with_credentials(&config, &attacker_username, &password).await);
 
     let mut delete_form = HashMap::new();
     delete_form.insert("requestType".to_string(), "erase".to_string());
@@ -289,7 +288,10 @@ async fn edit_code_delete_post_rejects_foreign_program_source() {
         .fetch_one(&pool)
         .await
         .expect("failed to count owner program source");
-    assert_eq!(remaining, 1, "foreign erase must not delete the owner program");
+    assert_eq!(
+        remaining, 1,
+        "foreign erase must not delete the owner program"
+    );
 
     for user_id in [owner_id, attacker_id] {
         let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")

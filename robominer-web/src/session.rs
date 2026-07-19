@@ -209,12 +209,7 @@ pub(crate) fn cookie_value(cookies: &str, name: &str) -> Option<String> {
     })
 }
 
-fn create_session_token(
-    user_id: i64,
-    expires_at: u64,
-    nonce: u64,
-    session_version: i32,
-) -> String {
+fn create_session_token(user_id: i64, expires_at: u64, nonce: u64, session_version: i32) -> String {
     let payload = format!("{user_id}.{expires_at}.{nonce}.{session_version}");
     let signature = sign_payload(&payload);
     format!("{payload}.{signature}")

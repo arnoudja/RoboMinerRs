@@ -33,9 +33,10 @@ pub(crate) async fn mark_program_source_verification(
     source: &str,
 ) -> Result<()> {
     let source = source.to_owned();
-    let verification = tokio::task::spawn_blocking(move || robominer_program::verify_source(&source))
-        .await
-        .context("program verification task failed")?;
+    let verification =
+        tokio::task::spawn_blocking(move || robominer_program::verify_source(&source))
+            .await
+            .context("program verification task failed")?;
 
     if verification.verified {
         robominer_db::set_valid_program_source(pool, program_source_id, verification.compiled_size)

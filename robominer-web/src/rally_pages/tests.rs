@@ -498,8 +498,9 @@ fn rally_view_rendering_refuses_incomplete_versioned_result_data() {
         "Player".to_string(),
         None,
         &RallyViewPageState {
-            result_data: r#"{"v":1,"robots":{"robot":[{"robotnr":0}]},"ground":{"sizeX":1,"sizeY":1}}"#
-                .to_string(),
+            result_data:
+                r#"{"v":1,"robots":{"robot":[{"robotnr":0}]},"ground":{"sizeX":1,"sizeY":1}}"#
+                    .to_string(),
             ores: vec![],
             slots: [
                 ("Bot 0".to_string(), "User 0".to_string()),
@@ -739,9 +740,7 @@ fn rally_view_shows_snapshot_unavailable_without_executed_source() {
     assert!(html.contains(
         "This rally did not store a private program snapshot, so line highlighting is not shown."
     ));
-    assert!(html.contains(
-        r#"href="editCode?nextProgramSourceId=11">Edit linked program</a>"#
-    ));
+    assert!(html.contains(r#"href="editCode?nextProgramSourceId=11">Edit linked program</a>"#));
     assert!(!html.contains(r#"id="rallyEditCodeLink""#));
     assert!(!html.contains(r#"id="rallySourceCode""#));
     assert!(!html.contains(r#"id="rallySourceLine1""#));

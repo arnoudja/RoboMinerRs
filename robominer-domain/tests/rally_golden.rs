@@ -98,8 +98,7 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
         r#""robots":{"robot":["#.to_string(),
         format!(
             r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,
-            scenario.loadout.mining_area.area.size_x,
-            scenario.loadout.mining_area.area.size_y,
+            scenario.loadout.mining_area.area.size_x, scenario.loadout.mining_area.area.size_y,
         ),
         r#""oreTypes":{"#.to_string(),
     ];

@@ -80,7 +80,11 @@ fn run_rally_loadout_with_animation_returns_versioned_json_result_data() {
     let payload: serde_json::Value =
         serde_json::from_str(&run.result_data).expect("result data should be JSON");
     assert_eq!(payload["v"], 1);
-    assert!(payload["robots"]["robot"].as_array().is_some_and(|r| !r.is_empty()));
+    assert!(
+        payload["robots"]["robot"]
+            .as_array()
+            .is_some_and(|r| !r.is_empty())
+    );
     assert_eq!(payload["ground"]["sizeX"], 4);
     assert_eq!(payload["ground"]["sizeY"], 4);
     assert_eq!(payload["oreTypes"]["A"]["id"], 1);

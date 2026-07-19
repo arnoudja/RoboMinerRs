@@ -110,8 +110,11 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
     form.insert("newpassword".to_string(), new_password.clone());
     form.insert("confirmpassword".to_string(), new_password.clone());
 
-    let change_response =
-        route(&post_request("/account", form, Some(&changing_cookie)), &config).await;
+    let change_response = route(
+        &post_request("/account", form, Some(&changing_cookie)),
+        &config,
+    )
+    .await;
     let change_body = response_body(&change_response);
     assert_eq!(change_response.status, 200);
     assert!(
@@ -159,9 +162,11 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
         "stale session should redirect to login"
     );
     assert!(
-        stale_response.headers.iter().any(|(name, value)| *name
-            == "Set-Cookie"
-            && value.starts_with("robominer_session=; Max-Age=0;")),
+        stale_response
+            .headers
+            .iter()
+            .any(|(name, value)| *name == "Set-Cookie"
+                && value.starts_with("robominer_session=; Max-Age=0;")),
         "stale session should clear the session cookie"
     );
 
@@ -173,7 +178,10 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
 
     let old_login = login_with_credentials(&config, &username, &password).await;
     let old_login_body = response_body(&old_login);
-    assert_eq!(old_login.status, 200, "old password should no longer log in");
+    assert_eq!(
+        old_login.status, 200,
+        "old password should no longer log in"
+    );
     assert!(
         old_login_body.contains("Invalid login name or password"),
         "expected login failure for old password:\n{old_login_body}"

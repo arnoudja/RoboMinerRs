@@ -219,11 +219,10 @@ pub async fn update_user_account(
             .await?;
     }
 
-    let session_version: i32 =
-        sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
-            .bind(request.user_id)
-            .fetch_one(&mut *transaction)
-            .await?;
+    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(request.user_id)
+        .fetch_one(&mut *transaction)
+        .await?;
 
     touch_user_last_login_time(&mut transaction, request.user_id).await?;
 
@@ -251,14 +250,13 @@ pub async fn verify_login(
     pool: &MySqlPool,
     request: VerifyLoginRequest,
 ) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
-    let Some((user_id, password_hash, session_version)) =
-        sqlx::query_as::<_, (i64, String, i32)>(
-            "SELECT id, password, sessionVersion FROM User WHERE username = ? OR email = ?",
-        )
-        .bind(&request.login_name)
-        .bind(&request.login_name)
-        .fetch_optional(pool)
-        .await?
+    let Some((user_id, password_hash, session_version)) = sqlx::query_as::<_, (i64, String, i32)>(
+        "SELECT id, password, sessionVersion FROM User WHERE username = ? OR email = ?",
+    )
+    .bind(&request.login_name)
+    .bind(&request.login_name)
+    .fetch_optional(pool)
+    .await?
     else {
         return Ok(Err(VerifyLoginRejection::UnknownUser));
     };
@@ -286,11 +284,12 @@ pub async fn verify_user_password(
     pool: &MySqlPool,
     request: VerifyUserPasswordRequest,
 ) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
-    let Some((password_hash, session_version)) =
-        sqlx::query_as::<_, (String, i32)>("SELECT password, sessionVersion FROM User WHERE id = ?")
-            .bind(request.user_id)
-            .fetch_optional(pool)
-            .await?
+    let Some((password_hash, session_version)) = sqlx::query_as::<_, (String, i32)>(
+        "SELECT password, sessionVersion FROM User WHERE id = ?",
+    )
+    .bind(request.user_id)
+    .fetch_optional(pool)
+    .await?
     else {
         return Ok(Err(VerifyLoginRejection::UnknownUser));
     };

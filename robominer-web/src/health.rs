@@ -8,14 +8,14 @@ use crate::http::Response;
 ///   applied → otherwise 503.
 pub async fn health_response(config: &ServerConfig) -> Response {
     match config.database_pool.as_ref() {
-        None => plain(
-            200,
-            "OK",
-            "ok\ndatabase=unconfigured\nmigrations=skipped\n",
-        ),
+        None => plain(200, "OK", "ok\ndatabase=unconfigured\nmigrations=skipped\n"),
         Some(pool) => match check_database(pool).await {
             Ok(()) => plain(200, "OK", "ok\ndatabase=ok\nmigrations=ok\n"),
-            Err(detail) => plain(503, "Service Unavailable", &format!("unavailable\n{detail}\n")),
+            Err(detail) => plain(
+                503,
+                "Service Unavailable",
+                &format!("unavailable\n{detail}\n"),
+            ),
         },
     }
 }

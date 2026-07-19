@@ -293,8 +293,7 @@ async fn update_user_account_bumps_session_version_only_when_password_changes() 
     let prefix = unique_prefix("rust-db-session-version");
     let username = format!("{prefix}-user");
     let email = format!("{prefix}@example.invalid");
-    let user_id =
-        insert_user_with_credentials(&pool, &username, &email, "test-password-1").await;
+    let user_id = insert_user_with_credentials(&pool, &username, &email, "test-password-1").await;
 
     let profile_only = update_user_account(
         &pool,

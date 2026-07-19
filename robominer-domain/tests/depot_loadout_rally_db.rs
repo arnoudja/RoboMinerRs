@@ -88,10 +88,7 @@ async fn load_next_rally_loadout_applies_depot_capacity_and_banks_home_dump() {
         .filter_map(|step| step["DA"].as_i64())
         .max()
         .unwrap_or(0);
-    assert!(
-        max_depot_a > 0,
-        "animation should show depot fill"
-    );
+    assert!(max_depot_a > 0, "animation should show depot fill");
 
     persist_rally_outcome(&pool, &loadout, &run.outcome, &run.result_data)
         .await
@@ -113,12 +110,11 @@ async fn load_next_rally_loadout_applies_depot_capacity_and_banks_home_dump() {
             .fetch_one(&pool)
             .await
             .expect("queue should reference rally result");
-    let result_data: String =
-        sqlx::query_scalar("SELECT resultData FROM RallyResult WHERE id = ?")
-            .bind(rally_result_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to load persisted animation");
+    let result_data: String = sqlx::query_scalar("SELECT resultData FROM RallyResult WHERE id = ?")
+        .bind(rally_result_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load persisted animation");
     assert!(result_data.contains(r#""depotMaxA":10"#));
 
     let _ = sqlx::query("DELETE FROM UserOreAsset WHERE userId = ? AND oreId = ?")

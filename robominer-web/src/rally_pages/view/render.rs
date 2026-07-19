@@ -42,7 +42,11 @@ fn is_valid_v1_rally_payload(value: &serde_json::Value) -> bool {
     };
 
     for robot in robots {
-        if !robot.get("locations").and_then(|locations| locations.as_array()).is_some() {
+        if !robot
+            .get("locations")
+            .and_then(|locations| locations.as_array())
+            .is_some()
+        {
             return false;
         }
     }
@@ -296,9 +300,7 @@ fn render_rally_view_replay_unavailable(body: &mut String, payload_kind: RallyRe
         RallyResultPayloadKind::Unsupported => {
             "This rally replay payload is missing, corrupt, or uses an unsupported version."
         }
-        RallyResultPayloadKind::VersionedJson => {
-            "This rally replay is unavailable."
-        }
+        RallyResultPayloadKind::VersionedJson => "This rally replay is unavailable.",
     };
     body.push_str(r#"<div class="rally-view-replay-unavailable" role="status">"#);
     body.push_str(r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#);

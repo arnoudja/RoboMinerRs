@@ -395,7 +395,9 @@ mod tests {
 
     #[test]
     fn detects_legacy_javascript_payloads() {
-        assert!(is_legacy_javascript_result_data("var myRobots = {robot: []};"));
+        assert!(is_legacy_javascript_result_data(
+            "var myRobots = {robot: []};"
+        ));
         assert!(!is_legacy_javascript_result_data(
             r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#
         ));

@@ -24,15 +24,12 @@ pub fn connect_database(
     config: Option<PathBuf>,
     legacy_config: &HashMap<String, String>,
 ) -> io::Result<Option<robominer_db::MySqlPool>> {
-    let database_url = match robominer_db::resolve_database_url(
-        database_url,
-        config,
-        "robominer-web",
-    ) {
-        Ok(url) => url,
-        Err(robominer_db::ConfigError::MissingConfigFile) => return Ok(None),
-        Err(error) => return Err(io::Error::other(error.to_string())),
-    };
+    let database_url =
+        match robominer_db::resolve_database_url(database_url, config, "robominer-web") {
+            Ok(url) => url,
+            Err(robominer_db::ConfigError::MissingConfigFile) => return Ok(None),
+            Err(error) => return Err(io::Error::other(error.to_string())),
+        };
 
     let max_connections = robominer_db::resolve_max_connections(
         env::var("ROBOMINER_DB_MAX_CONNECTIONS").ok().as_deref(),
@@ -115,10 +112,8 @@ mod tests {
 
     #[test]
     fn load_legacy_config_reads_temp_file() {
-        let path = std::env::temp_dir().join(format!(
-            "robominer-web-startup-{}.conf",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("robominer-web-startup-{}.conf", std::process::id()));
         std::fs::write(&path, "host 127.0.0.1\nport 18080\n").expect("write config");
         let (loaded_path, config) =
             load_legacy_config(Some(path.clone())).expect("temp config should load");
@@ -130,7 +125,9 @@ mod tests {
 
     #[test]
     fn connect_database_returns_none_without_url_or_config() {
-        let _guard = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = ENV_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let previous = env::var("ROBOMINER_DATABASE_URL").ok();
         unsafe {
             env::remove_var("ROBOMINER_DATABASE_URL");
@@ -151,7 +148,9 @@ mod tests {
 
     #[test]
     fn prepare_server_config_uses_localhost_defaults() {
-        let _guard = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let _guard = ENV_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         // Clear signup/proxy overrides so defaults are deterministic.
         let previous_signup = env::var("ROBOMINER_ALLOW_SIGNUP").ok();
         let previous_proxy = env::var("ROBOMINER_TRUST_PROXY").ok();

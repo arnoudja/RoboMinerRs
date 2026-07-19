@@ -65,12 +65,11 @@ async fn update_user_account_updates_profile_and_password() {
     );
     assert_ne!(user.2, "new-password");
 
-    let session_version: i32 =
-        sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
-            .bind(user_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to load session version");
+    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load session version");
     assert_eq!(session_version, 1);
 
     cleanup_created_user(&pool, user_id).await;
@@ -128,12 +127,11 @@ async fn update_user_account_leaves_password_when_hash_is_absent() {
         (new_username, new_email, "old-password-hash".to_string())
     );
 
-    let session_version: i32 =
-        sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
-            .bind(user_id)
-            .fetch_one(&pool)
-            .await
-            .expect("failed to load session version");
+    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load session version");
     assert_eq!(session_version, 0);
 
     cleanup_created_user(&pool, user_id).await;

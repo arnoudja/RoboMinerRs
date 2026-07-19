@@ -58,7 +58,12 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
                 ),
             );
             if let Some(session_version) = reissue_session_version {
-                response = reissue_session_cookies(response, user_id, session_version, &username_for_cookie);
+                response = reissue_session_cookies(
+                    response,
+                    user_id,
+                    session_version,
+                    &username_for_cookie,
+                );
             }
             response
         }
@@ -72,9 +77,9 @@ fn reissue_session_cookies(
     session_version: i32,
     username: &str,
 ) -> Response {
-    response
-        .headers
-        .retain(|(name, value)| !(*name == "Set-Cookie" && value.starts_with("robominer_session=")));
+    response.headers.retain(|(name, value)| {
+        !(*name == "Set-Cookie" && value.starts_with("robominer_session="))
+    });
     response
         .with_header(
             "Set-Cookie",

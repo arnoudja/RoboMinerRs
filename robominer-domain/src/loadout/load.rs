@@ -75,10 +75,8 @@ pub async fn load_next_rally_loadout(
 
         let user_caps =
             robominer_db::list_user_depot_max_allowed(pool, robot.robot.user_id).await?;
-        let robot = robot.with_depot_capacity(depot_capacity_for_ore_types(
-            &ore_type_ids,
-            &user_caps,
-        ));
+        let robot =
+            robot.with_depot_capacity(depot_capacity_for_ore_types(&ore_type_ids, &user_caps));
 
         queue_entries.push(RallyQueueEntry::new(queue, robot));
     }
@@ -228,7 +226,10 @@ fn area_ore_type_ids(ore_supplies: &[robominer_db::MiningAreaOreSupplyRecord]) -
     ids
 }
 
-fn depot_capacity_for_ore_types(ore_type_ids: &[i64], user_caps: &[(i64, i32)]) -> [i32; MAX_ORE_TYPES] {
+fn depot_capacity_for_ore_types(
+    ore_type_ids: &[i64],
+    user_caps: &[(i64, i32)],
+) -> [i32; MAX_ORE_TYPES] {
     let mut capacity = [0; MAX_ORE_TYPES];
     for (slot, ore_id) in ore_type_ids.iter().enumerate().take(MAX_ORE_TYPES) {
         capacity[slot] = user_caps

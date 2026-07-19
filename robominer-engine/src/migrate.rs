@@ -87,13 +87,7 @@ mod tests {
 
     #[test]
     fn format_status_marks_applied_and_pending() {
-        let status = vec![
-            ("001_a".into(), true),
-            ("002_b".into(), false),
-        ];
-        assert_eq!(
-            format_status(&status),
-            "001_a\tapplied\n002_b\tpending\n"
-        );
+        let status = vec![("001_a".into(), true), ("002_b".into(), false)];
+        assert_eq!(format_status(&status), "001_a\tapplied\n002_b\tpending\n");
     }
 }

@@ -65,7 +65,10 @@ async fn migrate_is_idempotent_on_current_schema() {
         "expected migrate to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
-        stdout.contains("already-applied") || stdout.contains("no-migrations") || stdout.contains("baselined") || stdout.contains("applied"),
+        stdout.contains("already-applied")
+            || stdout.contains("no-migrations")
+            || stdout.contains("baselined")
+            || stdout.contains("applied"),
         "unexpected stdout:\n{stdout}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");

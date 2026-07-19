@@ -47,10 +47,7 @@ fn do_while_condition_recheck_uses_do_source_line() {
     let mut runner = program.runner();
 
     let mut start = test_context(10, None);
-    assert_eq!(
-        runner.next_action(&mut start),
-        Some(ExecutableAction::Mine)
-    );
+    assert_eq!(runner.next_action(&mut start), Some(ExecutableAction::Mine));
     assert_eq!(runner.current_source_line(), Some(2));
 
     let mut after_mine = test_context(10, Some(4.0));
