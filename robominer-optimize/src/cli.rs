@@ -51,4 +51,22 @@ pub struct Cli {
     /// RNG seed for reproducibility
     #[arg(long, default_value_t = 1)]
     pub seed: u64,
+
+    /// Program source to include in the initial population (repeatable)
+    #[arg(long = "program")]
+    pub programs: Vec<String>,
+
+    /// Program source file to include in the initial population (repeatable)
+    #[arg(long = "program-file")]
+    pub program_files: Vec<PathBuf>,
+
+    /// Evolve robot parts for a fixed injected program (does not mutate the program).
+    /// Requires exactly one --program or --program-file.
+    #[arg(long)]
+    pub evaluate_only: bool,
+
+    /// Fixed part ids for slots 1-7 (ore container, mining unit, battery, memory, CPU, engine, scanner).
+    /// When set, parts are not evolved. Combine with --evaluate-only to score one program on this loadout.
+    #[arg(long, value_delimiter = ',')]
+    pub parts: Vec<i64>,
 }

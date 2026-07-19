@@ -18,6 +18,22 @@ impl Genome {
         Self { part_ids, program }
     }
 
+    /// Random parts with a fixed (already compiled) program.
+    pub fn with_program(
+        catalog: &PartCatalog,
+        program: ExecutableProgram,
+        rng: &mut impl Rng,
+    ) -> Self {
+        Self {
+            part_ids: random_part_ids(catalog, rng),
+            program,
+        }
+    }
+
+    pub fn with_parts(part_ids: [i64; 7], program: ExecutableProgram) -> Self {
+        Self { part_ids, program }
+    }
+
     pub fn source_code(&self) -> String {
         unparse_program(&self.program)
     }
@@ -48,6 +64,27 @@ impl Genome {
         )
     }
 
+    /// Crossover part slots only; both children keep `self.program`.
+    pub fn crossover_parts(&self, other: &Self, rng: &mut impl Rng) -> (Self, Self) {
+        let mut left_parts = self.part_ids;
+        let mut right_parts = other.part_ids;
+        for slot in 0..7 {
+            if rng.gen_bool(0.5) {
+                std::mem::swap(&mut left_parts[slot], &mut right_parts[slot]);
+            }
+        }
+        (
+            Self {
+                part_ids: left_parts,
+                program: self.program.clone(),
+            },
+            Self {
+                part_ids: right_parts,
+                program: self.program.clone(),
+            },
+        )
+    }
+
     pub fn mutate(&self, catalog: &PartCatalog, rng: &mut impl Rng) -> Self {
         let mut part_ids = self.part_ids;
         let slot = rng.gen_range(0..7);
@@ -61,6 +98,50 @@ impl Genome {
         let mut adapter = RandAdapter(rng);
         let program = mutate_program(&self.program, &mut adapter);
         Self { part_ids, program }
+    }
+
+    /// Mutate one part slot; keep the program unchanged.
+    pub fn mutate_parts(&self, catalog: &PartCatalog, rng: &mut impl Rng) -> Self {
+        let mut part_ids = self.part_ids;
+        let slot = rng.gen_range(0..7);
+        let type_id = (slot as i64) + 1;
+        if let Some(parts) = catalog.parts_for_type(type_id)
+            && !parts.is_empty()
+        {
+            part_ids[slot] = parts[rng.gen_range(0..parts.len())].id;
+        }
+        Self {
+            part_ids,
+            program: self.program.clone(),
+        }
+    }
+
+    /// Mutate the program only; keep part ids unchanged.
+    pub fn mutate_program_only(&self, rng: &mut impl Rng) -> Self {
+        let mut adapter = RandAdapter(rng);
+        let program = mutate_program(&self.program, &mut adapter);
+        Self {
+            part_ids: self.part_ids,
+            program,
+        }
+    }
+
+    /// Crossover programs only; both children keep `self.part_ids`.
+    pub fn crossover_programs_only(&self, other: &Self, rng: &mut impl Rng) -> (Self, Self) {
+        let mut adapter = RandAdapter(rng);
+        let (left_program, right_program) =
+            crossover_programs(&self.program, &other.program, &mut adapter)
+                .unwrap_or_else(|| (self.program.clone(), other.program.clone()));
+        (
+            Self {
+                part_ids: self.part_ids,
+                program: left_program,
+            },
+            Self {
+                part_ids: self.part_ids,
+                program: right_program,
+            },
+        )
     }
 }
 
