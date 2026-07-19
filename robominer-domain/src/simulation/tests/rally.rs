@@ -88,6 +88,79 @@ fn run_rally_loadout_with_animation_returns_versioned_json_result_data() {
 }
 
 #[test]
+fn run_rally_loadout_with_depot_capacity_banks_home_dump_in_haul_and_animation() {
+    let mut area = unit_test_mining_area_record(1001);
+    area.max_moves = 8;
+    let mining_area = MiningAreaLoadout::new(
+        area,
+        vec![ore_supply_record(1, 1001, 1, 10, 2)],
+        RobotLoadout::new(
+            unit_test_robot_record(1, "rotate(90);"),
+            RobotLoadoutParts::empty(),
+        ),
+    );
+
+    let mut depot_capacity = [0; MAX_ORE_TYPES];
+    depot_capacity[0] = 10;
+    let with_depot = RallyLoadout::new(
+        mining_area.clone(),
+        vec![RallyQueueEntry::new(
+            mining_rally_queue_record(10, 1001, 11, 9),
+            RobotLoadout::new(
+                unit_test_robot_record(11, "mine(); dump(0);"),
+                RobotLoadoutParts::empty(),
+            )
+            .with_depot_capacity(depot_capacity),
+        )],
+    );
+    let without_depot = RallyLoadout::new(
+        mining_area,
+        vec![RallyQueueEntry::new(
+            mining_rally_queue_record(10, 1001, 11, 9),
+            RobotLoadout::new(
+                unit_test_robot_record(11, "mine(); dump(0);"),
+                RobotLoadoutParts::empty(),
+            ),
+        )],
+    );
+
+    let banked = run_rally_loadout_with_animation_seed(&with_depot, 0).expect("rally should run");
+    let spilled = run_rally_loadout_with_seed(&without_depot, 0).expect("rally should run");
+
+    assert!(
+        banked.outcome.participants[0].ore[0] > 0,
+        "home dump should bank ore in the depot haul"
+    );
+    assert!(banked.outcome.participants[0].score > 0.0);
+    assert_eq!(
+        spilled.participants[0].ore[0], 0,
+        "without depot capacity, home dump should spill cargo onto the ground"
+    );
+
+    let payload: serde_json::Value =
+        serde_json::from_str(&banked.result_data).expect("result data should be JSON");
+    let player = &payload["robots"]["robot"][0];
+    assert_eq!(player["depotMaxA"], 10);
+    assert_eq!(player["depotMaxB"], 0);
+    assert_eq!(player["depotMaxC"], 0);
+    assert!(player.get("homeSize").is_some());
+    let locations = player["locations"].as_array().expect("locations");
+    let max_depot_a = locations
+        .iter()
+        .filter_map(|step| step["DA"].as_i64())
+        .max()
+        .unwrap_or(0);
+    assert!(
+        max_depot_a > 0,
+        "animation should record depot fill after home dump"
+    );
+    assert!(
+        payload["robots"]["robot"][1].get("depotMaxA").is_none(),
+        "AI fill robots should not record depot capacity"
+    );
+}
+
+#[test]
 fn run_rally_loadout_rejects_empty_or_oversized_queue_entries() {
     let mining_area = MiningAreaLoadout::new(
         unit_test_mining_area_record(1001),

@@ -1183,6 +1183,7 @@ dependencies = [
  "robominer-test-support",
  "serde",
  "serde_json",
+ "serial_test",
  "sqlx",
  "tokio",
 ]

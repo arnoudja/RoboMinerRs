@@ -239,3 +239,26 @@ fn depot_capacity_for_ore_types(ore_type_ids: &[i64], user_caps: &[(i64, i32)]) 
     }
     capacity
 }
+
+#[cfg(test)]
+mod tests {
+    use super::depot_capacity_for_ore_types;
+    use robominer_sim::MAX_ORE_TYPES;
+
+    #[test]
+    fn depot_capacity_maps_user_caps_onto_area_ore_type_slots() {
+        let mut expected = [0; MAX_ORE_TYPES];
+        expected[0] = 40;
+        expected[1] = 10;
+        expected[2] = 5;
+
+        assert_eq!(
+            depot_capacity_for_ore_types(&[30, 20, 10], &[(10, 5), (20, 10), (30, 40)]),
+            expected
+        );
+        assert_eq!(
+            depot_capacity_for_ore_types(&[30, 20], &[(99, 7)]),
+            [0; MAX_ORE_TYPES]
+        );
+    }
+}
