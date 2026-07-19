@@ -2,7 +2,7 @@ mod support;
 
 use robominer_domain::{completed_rally_record, run_rally_loadout_with_animation_seed};
 use robominer_test_support::{
-    load_fixture, round_golden_score, update_golden_enabled, write_fixture,
+    load_fixture, round_golden_coord, round_golden_score, update_golden_enabled, write_fixture,
 };
 use serde::{Deserialize, Serialize};
 use support::RallyScenario;
@@ -24,6 +24,7 @@ const SCENARIOS: &[&str] = &[
     "quad_queue_seed33",
     "dual_ore_seed11",
     "ore_seeker_80x80_seed0",
+    "depot_dump_cerbonium_advanced_seed0",
 ];
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -92,6 +93,26 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
     let record = completed_rally_record(&scenario.loadout, outcome, &run.result_data)
         .expect("golden scenario completed rally record should map");
 
+    let mut animation_contains = vec![
+        r#""v":1"#.to_string(),
+        r#""robots":{"robot":["#.to_string(),
+        format!(
+            r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,
+            scenario.loadout.mining_area.area.size_x,
+            scenario.loadout.mining_area.area.size_y,
+        ),
+        r#""oreTypes":{"#.to_string(),
+    ];
+    if scenario
+        .loadout
+        .queue_entries
+        .iter()
+        .any(|entry| entry.robot.depot_capacity.iter().any(|&cap| cap > 0))
+    {
+        animation_contains.push(r#""depotMaxA":"#.to_string());
+        animation_contains.push(r#""DA":"#.to_string());
+    }
+
     BuiltRallyFixture {
         fixture: GoldenRallyFixture {
             scenario: scenario.name.to_string(),
@@ -107,8 +128,8 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
                     robot_id: participant.robot_id,
                     is_ai: participant.is_ai,
                     position: GoldenPosition {
-                        x: participant.position.x,
-                        y: participant.position.y,
+                        x: round_golden_coord(participant.position.x),
+                        y: round_golden_coord(participant.position.y),
                         orientation: participant.position.orientation,
                     },
                     ore: participant.ore.to_vec(),
@@ -144,16 +165,7 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
                         .collect(),
                 })
                 .collect(),
-            animation_contains: vec![
-                r#""v":1"#.to_string(),
-                r#""robots":{"robot":["#.to_string(),
-                format!(
-                    r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,
-                    scenario.loadout.mining_area.area.size_x,
-                    scenario.loadout.mining_area.area.size_y,
-                ),
-                r#""oreTypes":{"#.to_string(),
-            ],
+            animation_contains,
         },
         animation_data: run.result_data,
     }

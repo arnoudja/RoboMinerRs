@@ -4,9 +4,10 @@ use robominer_domain::{
     MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
 };
 use robominer_program::compatibility_fixture_source;
+use robominer_sim::MAX_ORE_TYPES;
 use robominer_test_support::{
-    golden_mining_area_record, golden_robot_record, mining_rally_queue_record,
-    ore_seeker_robot_record, ore_supply_record,
+    RobotStats, golden_mining_area_record, golden_robot_record, mining_rally_queue_record,
+    ore_seeker_robot_record, ore_supply_record, robot_record_with_stats,
 };
 
 pub struct RallyScenario {
@@ -29,6 +30,7 @@ pub fn scenario(name: &str) -> RallyScenario {
         "quad_queue_seed33" => quad_queue_seed33(),
         "dual_ore_seed11" => dual_ore_seed11(),
         "ore_seeker_80x80_seed0" => ore_seeker_80x80_seed0(),
+        "depot_dump_cerbonium_advanced_seed0" => depot_dump_cerbonium_advanced_seed0(),
         other => panic!("unknown rally golden scenario: {other}"),
     }
 }
@@ -254,6 +256,116 @@ fn ore_seeker_80x80_seed0() -> RallyScenario {
         loadout: RallyLoadout::new(mining_area, queue_entries),
     }
 }
+
+/// Cerbonium-Advanced (gameData area 1003) with unlocked depot capacity.
+/// Seed 0 fills cargo and banks at least one home dump into the depot.
+fn depot_dump_cerbonium_advanced_seed0() -> RallyScenario {
+    let mining_area_id = 1003;
+    let mut area = golden_mining_area_record(mining_area_id);
+    area.area_name = "Cerbonium-Advanced".to_string();
+    area.ore_price_id = 10003;
+    area.size_x = 20;
+    area.size_y = 20;
+    area.max_moves = 100;
+    area.mining_time = 15;
+    area.tax_rate = 0;
+    area.ai_robot_id = 3;
+
+    let mut depot_capacity = [0; MAX_ORE_TYPES];
+    depot_capacity[0] = 20;
+
+    let mining_area = MiningAreaLoadout::new(
+        area,
+        vec![
+            ore_supply_record(1, mining_area_id, 1, 8, 7),
+            ore_supply_record(2, mining_area_id, 1, 6, 5),
+        ],
+        RobotLoadout::new(
+            golden_robot_record(1, "rotate(90);"),
+            RobotLoadoutParts::empty(),
+        ),
+    );
+    let queue_entries = vec![RallyQueueEntry::new(
+        mining_rally_queue_record(120, mining_area_id, 121, 9),
+        RobotLoadout::new(
+            robot_record_with_stats(
+                121,
+                "Depot dump probe",
+                DEPOT_DUMP_PROGRAM,
+                RobotStats {
+                    recharge_time: 20,
+                    max_ore: 5,
+                    mining_speed: 3,
+                    max_turns: 120,
+                    memory_size: 128,
+                    cpu_speed: 15,
+                    forward_speed: 2.0,
+                    backward_speed: 0.75,
+                    rotate_speed: 28,
+                    robot_size: 1.5,
+                    scan_time: 4,
+                    scan_distance: 8,
+                    total_mining_runs: 0,
+                },
+            ),
+            RobotLoadoutParts::empty(),
+        )
+        .with_depot_capacity(depot_capacity),
+    )];
+
+    RallyScenario {
+        name: "depot_dump_cerbonium_advanced_seed0",
+        seed: 0,
+        loadout: RallyLoadout::new(mining_area, queue_entries),
+    }
+}
+
+const DEPOT_DUMP_PROGRAM: &str = r#"scan();
+bool found = false;
+if (oreType() == 1)
+{
+    move(oreDistance());
+    found = true;
+    while (mine());
+}
+
+scan(60);
+if (oreType() == 1)
+{
+    rotate(60);
+    move(oreDistance());
+    found = true;
+    while (mine());
+}
+
+scan(-60);
+if (oreType() == 1)
+{
+    rotate(-60);
+    move(oreDistance());
+    found = true;
+    while (mine());
+}
+
+if (!found) {
+    while (move(robot.forwardSpeed) < 0.1) {
+        rotate(robot.rotateSpeed);
+    }
+}
+
+if (robot.oreStored >= robot.oreCap) {
+    rotate(315 - robot.orientation);
+    move(999);
+    if (robot.xPos > 0) {
+        rotate(-45);
+    } else {
+        rotate(45);
+    }
+    move(999);
+    dump(0);
+    while (mine());
+    rotate(180);
+}"#;
 
 fn seeded_rally(
     name: &'static str,

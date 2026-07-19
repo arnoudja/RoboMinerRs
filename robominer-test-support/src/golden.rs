@@ -9,6 +9,10 @@ pub fn round_golden_score(score: f64) -> f64 {
     (score * 1_000_000.0).round() / 1_000_000.0
 }
 
+pub fn round_golden_coord(value: f64) -> f64 {
+    (value * 1_000_000_000.0).round() / 1_000_000_000.0
+}
+
 pub fn fixture_path(manifest_dir: &str, subdir: &str, name: &str) -> PathBuf {
     Path::new(manifest_dir).join(format!("tests/fixtures/{subdir}/{name}.json"))
 }

@@ -1,21 +1,21 @@
 {
-  "scenario": "seed_ai_1_seed42",
-  "seed": 42,
-  "mining_area_id": 4004,
-  "final_time": 25,
+  "scenario": "depot_dump_cerbonium_advanced_seed0",
+  "seed": 0,
+  "mining_area_id": 1003,
+  "final_time": 100,
   "participants": [
     {
       "player_number": 0,
-      "queue_id": 40,
-      "robot_id": 41,
+      "queue_id": 120,
+      "robot_id": 121,
       "is_ai": false,
       "position": {
-        "x": 1.689339828,
-        "y": 1.689339828,
-        "orientation": 45
+        "x": 1.982050808,
+        "y": 6.25,
+        "orientation": 30
       },
       "ore": [
-        12,
+        13,
         0,
         0,
         0,
@@ -26,16 +26,16 @@
         0,
         0
       ],
-      "score": 360.0,
+      "score": 390.0,
       "actions_done": [
+        12,
+        3,
+        21,
         0,
-        0,
-        11,
-        0,
-        0,
-        0,
-        14,
-        0
+        38,
+        12,
+        24,
+        2
       ]
     },
     {
@@ -45,7 +45,75 @@
       "is_ai": true,
       "position": {
         "x": 0.25,
-        "y": 2.75,
+        "y": 18.75,
+        "orientation": 75
+      },
+      "ore": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 0.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        100,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "player_number": 2,
+      "queue_id": null,
+      "robot_id": 1,
+      "is_ai": true,
+      "position": {
+        "x": 18.75,
+        "y": 0.25,
+        "orientation": 255
+      },
+      "ore": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 0.0,
+      "actions_done": [
+        0,
+        0,
+        0,
+        0,
+        100,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "player_number": 3,
+      "queue_id": null,
+      "robot_id": 1,
+      "is_ai": true,
+      "position": {
+        "x": 18.75,
+        "y": 18.75,
         "orientation": 345
       },
       "ore": [
@@ -66,75 +134,7 @@
         0,
         0,
         0,
-        25,
-        0,
-        0,
-        0
-      ]
-    },
-    {
-      "player_number": 2,
-      "queue_id": null,
-      "robot_id": 1,
-      "is_ai": true,
-      "position": {
-        "x": 2.75,
-        "y": 0.25,
-        "orientation": 165
-      },
-      "ore": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "score": 0.0,
-      "actions_done": [
-        0,
-        0,
-        0,
-        0,
-        25,
-        0,
-        0,
-        0
-      ]
-    },
-    {
-      "player_number": 3,
-      "queue_id": null,
-      "robot_id": 1,
-      "is_ai": true,
-      "position": {
-        "x": 2.75,
-        "y": 2.75,
-        "orientation": 357
-      },
-      "ore": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "score": 0.0,
-      "actions_done": [
-        0,
-        0,
-        0,
-        0,
-        25,
+        100,
         0,
         0,
         0
@@ -143,26 +143,46 @@
   ],
   "completed_participants": [
     {
-      "mining_queue_id": 40,
-      "robot_id": 41,
-      "mining_area_id": 4004,
+      "mining_queue_id": 120,
+      "robot_id": 121,
+      "mining_area_id": 1003,
       "player_number": 0,
       "mining_end_seconds_from_now": 9,
-      "score": 360.0,
+      "score": 390.0,
       "ore_results": [
         {
           "ore_id": 1,
-          "amount": 12
+          "amount": 13
         }
       ],
       "action_results": [
         {
+          "action_type": 0,
+          "amount": 12
+        },
+        {
+          "action_type": 1,
+          "amount": 3
+        },
+        {
           "action_type": 2,
-          "amount": 11
+          "amount": 21
+        },
+        {
+          "action_type": 4,
+          "amount": 38
+        },
+        {
+          "action_type": 5,
+          "amount": 12
         },
         {
           "action_type": 6,
-          "amount": 14
+          "amount": 24
+        },
+        {
+          "action_type": 7,
+          "amount": 2
         }
       ]
     }
@@ -170,7 +190,9 @@
   "animation_contains": [
     "\"v\":1",
     "\"robots\":{\"robot\":[",
-    "\"ground\":{\"sizeX\":4,\"sizeY\":4,\"positions\":[",
-    "\"oreTypes\":{"
+    "\"ground\":{\"sizeX\":20,\"sizeY\":20,\"positions\":[",
+    "\"oreTypes\":{",
+    "\"depotMaxA\":",
+    "\"DA\":"
   ]
 }
