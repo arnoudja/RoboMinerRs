@@ -34,6 +34,7 @@ mod tests {
             "function drawRobotDepot(",
             "function drawDepotHomes(",
             "function drawDepotHome(",
+            "function robotColorRgba(",
             "function robotColor(",
             "function updateRobotDebugPanel(",
             "function robotCargoFull(",

@@ -28,6 +28,25 @@ function robotColor(robotNr)
 }
 
 
+function robotColorRgba(robotNr, alpha)
+{
+    switch (robotNr)
+    {
+        case 0:
+            return 'rgba(0, 160, 0, ' + alpha + ')';
+
+        case 1:
+            return 'rgba(0, 0, 255, ' + alpha + ')';
+
+        case 2:
+            return 'rgba(255, 0, 0, ' + alpha + ')';
+
+        case 3:
+            return 'rgba(255, 255, 0, ' + alpha + ')';
+    }
+}
+
+
 function depletedRobotColor(robotNr)
 {
     switch (robotNr)
@@ -150,7 +169,7 @@ function depotHomeSquare(robot)
 }
 
 
-function drawDepotHome(robot, scale)
+function drawDepotHome(robot, scale, step)
 {
     var home = depotHomeSquare(robot);
     if (!home)
@@ -158,26 +177,19 @@ function drawDepotHome(robot, scale)
         return;
     }
 
+    // Redraw opaque ground first so translucent tint never stacks across frames.
+    drawGroundAt(step, scale, home.x, home.y, home.x + home.side, home.y + home.side);
+
     var x = home.x * scale;
     var y = home.y * scale;
     var size = home.side * scale;
-    var lineWidth = Math.max(2, Math.floor(scale * 0.08));
 
-    myRallyContext.save();
-    myRallyContext.strokeStyle = robotColor(robot.robotnr);
-    myRallyContext.lineWidth = lineWidth;
-    myRallyContext.setLineDash([Math.max(3, Math.floor(scale * 0.18)), Math.max(2, Math.floor(scale * 0.12))]);
-    myRallyContext.strokeRect(
-        x + lineWidth / 2,
-        y + lineWidth / 2,
-        size - lineWidth,
-        size - lineWidth
-    );
-    myRallyContext.restore();
+    myRallyContext.fillStyle = robotColorRgba(robot.robotnr, 0.28);
+    myRallyContext.fillRect(x, y, size, size);
 }
 
 
-function drawDepotHomes(scale)
+function drawDepotHomes(scale, step)
 {
     if (!rallyHasAnimationData())
     {
@@ -186,7 +198,7 @@ function drawDepotHomes(scale)
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {
-        drawDepotHome(myRobots.robot[i], scale);
+        drawDepotHome(myRobots.robot[i], scale, step);
     }
 }
 

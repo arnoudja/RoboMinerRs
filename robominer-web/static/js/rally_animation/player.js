@@ -305,7 +305,7 @@ function renderRallyFrame()
         eraseRobot(myRobots.robot[i], scale, cycle);
     }
 
-    drawDepotHomes(scale);
+    drawDepotHomes(scale, cycle);
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {
@@ -345,7 +345,7 @@ function redrawRallyScene()
 
     var scale = myRallyPlayer.scale;
     drawFullGroundAt(cycle, scale);
-    drawDepotHomes(scale);
+    drawDepotHomes(scale, cycle);
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {
