@@ -333,12 +333,12 @@ function findGroundChangeIndex(position, step)
     var changes = position.c;
     if (!changes || changes.length === 0)
     {
-        return 0;
+        return -1;
     }
 
     var low = 0;
     var high = changes.length - 1;
-    var best = 0;
+    var best = -1;
     while (low <= high)
     {
         var mid = (low + high) >> 1;
@@ -389,6 +389,10 @@ function drawGroundAt(step, scale, fromX, fromY, tillX, tillY)
             var y = myGround.positions[i].y;
             var j = findGroundChangeIndex(myGround.positions[i], step);
             myGround.positions[i].lastDrawn = j;
+            if (j < 0)
+            {
+                continue;
+            }
 
             var changes = myGround.positions[i].c[j];
             var oreA = typeof changes.A !== 'undefined' ? changes.A : 0;

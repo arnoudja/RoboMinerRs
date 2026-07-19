@@ -615,6 +615,8 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("function redrawRallyScene()"));
     assert!(html.contains("function expandAllRobotLocationDeltas()"));
     assert!(html.contains("function findGroundChangeIndex(position, step)"));
+    assert!(html.contains("var best = -1;"));
+    assert!(html.contains("if (j < 0)"));
     assert!(html.contains("function robotDrawRadiusPixels(robot, scale)"));
     assert!(
         html.contains("myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY)")
