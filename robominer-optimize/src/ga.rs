@@ -442,7 +442,11 @@ mod tests {
             &mut rng,
         );
         assert!(!ranked.is_empty());
-        assert!(ranked.iter().all(|individual| individual.genome.part_ids == part_ids));
+        assert!(
+            ranked
+                .iter()
+                .all(|individual| individual.genome.part_ids == part_ids)
+        );
         assert!(ranked[0].fitness.fitness.is_finite());
     }
 

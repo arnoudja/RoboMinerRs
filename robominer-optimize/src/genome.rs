@@ -280,7 +280,12 @@ mod tests {
         assert_eq!(program_only.part_ids, left.part_ids);
 
         let with_program = Genome::with_program(&catalog, left_program, &mut rng);
-        assert!(with_program.part_ids.iter().all(|&id| catalog.get(id).is_some()));
+        assert!(
+            with_program
+                .part_ids
+                .iter()
+                .all(|&id| catalog.get(id).is_some())
+        );
     }
 
     #[test]

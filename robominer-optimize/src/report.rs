@@ -204,12 +204,7 @@ mod tests {
     #[test]
     fn format_top_results_uses_question_mark_for_unknown_part() {
         let catalog = sample_catalog();
-        let ranked = vec![ranked(
-            [999, 20, 30, 40, 50, 60, 70],
-            "mine();",
-            1.0,
-            false,
-        )];
+        let ranked = vec![ranked([999, 20, 30, 40, 50, 60, 70], "mine();", 1.0, false)];
         let report = format_top_results(&ranked, &catalog, 1, 1);
         assert!(report.contains("Ore container: ? (id=999)"));
     }

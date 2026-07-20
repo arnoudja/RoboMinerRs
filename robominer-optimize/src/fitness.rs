@@ -23,7 +23,10 @@ pub struct FitnessContext<'a> {
 }
 
 /// Rally seeds used for one generation's fitness evaluations.
-pub fn rally_seeds_for_generation(ctx: &FitnessContext<'_>, generation: u64) -> std::ops::Range<u64> {
+pub fn rally_seeds_for_generation(
+    ctx: &FitnessContext<'_>,
+    generation: u64,
+) -> std::ops::Range<u64> {
     let count = ctx.seed_count.max(1);
     let base = if ctx.fixed_seeds {
         0
@@ -216,7 +219,9 @@ mod tests {
     use robominer_db::RobotPartRecord;
     use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
     use robominer_program::compile_executable_source;
-    use robominer_test_support::{ore_supply_record, unit_test_mining_area_record, unit_test_robot_record};
+    use robominer_test_support::{
+        ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
+    };
 
     fn sample_part(id: i64, type_id: i64, memory: i32) -> RobotPartRecord {
         part_with_caps(id, type_id, memory, 2, 8, 1, 6, 3, 2)
