@@ -214,9 +214,25 @@ mod tests {
     use super::*;
     use crate::catalog::PartCatalog;
     use robominer_db::RobotPartRecord;
+    use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
     use robominer_program::compile_executable_source;
+    use robominer_test_support::{ore_supply_record, unit_test_mining_area_record, unit_test_robot_record};
 
     fn sample_part(id: i64, type_id: i64, memory: i32) -> RobotPartRecord {
+        part_with_caps(id, type_id, memory, 2, 8, 1, 6, 3, 2)
+    }
+
+    fn part_with_caps(
+        id: i64,
+        type_id: i64,
+        memory: i32,
+        weight: i32,
+        volume: i32,
+        power_usage: i32,
+        forward: i32,
+        backward: i32,
+        rotate: i32,
+    ) -> RobotPartRecord {
         RobotPartRecord {
             id,
             type_id,
@@ -228,27 +244,43 @@ mod tests {
             battery_capacity: 20,
             memory_capacity: memory,
             cpu_capacity: 5,
-            forward_capacity: 6,
-            backward_capacity: 3,
-            rotate_capacity: 2,
+            forward_capacity: forward,
+            backward_capacity: backward,
+            rotate_capacity: rotate,
             recharge_time: 1,
             scan_time: 1,
             scan_distance: 1,
-            weight: 2,
-            volume: 8,
-            power_usage: 1,
+            weight,
+            volume,
+            power_usage,
         }
+    }
+
+    fn complete_catalog(memory: i32) -> PartCatalog {
+        PartCatalog::from_parts(
+            (1..=7)
+                .map(|type_id| sample_part(type_id * 10, type_id, memory))
+                .collect(),
+            9999,
+        )
+    }
+
+    fn tiny_area() -> MiningAreaLoadout {
+        let mut area = unit_test_mining_area_record(1001);
+        area.max_moves = 3;
+        MiningAreaLoadout::new(
+            area,
+            vec![ore_supply_record(1, 1001, 1, 10, 2)],
+            RobotLoadout::new(
+                unit_test_robot_record(1, "rotate(90);"),
+                RobotLoadoutParts::empty(),
+            ),
+        )
     }
 
     #[test]
     fn fitness_rejects_program_larger_than_memory() {
-        let parts = (1..=7)
-            .map(|type_id| {
-                let memory = if type_id == 4 { 1 } else { 50 };
-                sample_part(type_id * 10, type_id, memory)
-            })
-            .collect();
-        let catalog = PartCatalog::from_parts(parts, 9999);
+        let catalog = complete_catalog(1);
         let program = compile_executable_source("move(1); mine();").expect("compile");
         let genome = Genome {
             part_ids: [10, 20, 30, 40, 50, 60, 70],
@@ -263,14 +295,125 @@ mod tests {
         };
         let result = evaluate_genome(&genome, &ctx, 0);
         assert!(!result.fitness.is_finite());
+        assert!(result.parameters.is_none());
+    }
+
+    #[test]
+    fn fitness_rejects_unknown_parts_and_zero_power() {
+        let catalog = complete_catalog(50);
+        let program = compile_executable_source("mine();").expect("compile");
+
+        let unknown = Genome {
+            part_ids: [999, 20, 30, 40, 50, 60, 70],
+            program: program.clone(),
+        };
+        let ctx = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 0,
+            seed_count: 1,
+            fixed_seeds: true,
+        };
+        assert!(!evaluate_genome(&unknown, &ctx, 0).fitness.is_finite());
+
+        let zero_power = PartCatalog::from_parts(
+            (1..=7)
+                .map(|type_id| part_with_caps(type_id * 10, type_id, 50, 2, 8, 0, 6, 3, 2))
+                .collect(),
+            9,
+        );
+        let genome = Genome {
+            part_ids: [10, 20, 30, 40, 50, 60, 70],
+            program,
+        };
+        let ctx = FitnessContext {
+            areas: &[],
+            catalog: &zero_power,
+            depot_capacity: 0,
+            seed_count: 1,
+            fixed_seeds: true,
+        };
+        assert!(!evaluate_genome(&genome, &ctx, 0).fitness.is_finite());
+    }
+
+    #[test]
+    fn fitness_rejects_non_positive_move_speeds() {
+        let catalog = PartCatalog::from_parts(
+            (1..=7)
+                .map(|type_id| part_with_caps(type_id * 10, type_id, 50, 2, 8, 1, 0, 0, 0))
+                .collect(),
+            9,
+        );
+        let program = compile_executable_source("mine();").expect("compile");
+        let genome = Genome {
+            part_ids: [10, 20, 30, 40, 50, 60, 70],
+            program,
+        };
+        let ctx = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 0,
+            seed_count: 1,
+            fixed_seeds: true,
+        };
+        assert!(!evaluate_genome(&genome, &ctx, 0).fitness.is_finite());
+    }
+
+    #[test]
+    fn fitness_empty_areas_yields_negative_infinity_with_parameters() {
+        let catalog = complete_catalog(50);
+        let program = compile_executable_source("mine();").expect("compile");
+        let genome = Genome {
+            part_ids: [10, 20, 30, 40, 50, 60, 70],
+            program,
+        };
+        let ctx = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 40,
+            seed_count: 2,
+            fixed_seeds: true,
+        };
+        let result = evaluate_genome(&genome, &ctx, 0);
+        assert!(!result.fitness.is_finite());
+        assert!(result.parameters.is_some());
+        assert!(result.compiled_size.is_some());
+        assert!(result.per_area.is_empty());
+    }
+
+    #[test]
+    fn fitness_scores_tiny_rally_area() {
+        let catalog = complete_catalog(50);
+        let program = compile_executable_source("mine();").expect("compile");
+        let genome = Genome {
+            part_ids: [10, 20, 30, 40, 50, 60, 70],
+            program,
+        };
+        let area = tiny_area();
+        let ctx = FitnessContext {
+            areas: std::slice::from_ref(&area),
+            catalog: &catalog,
+            depot_capacity: 10,
+            seed_count: 2,
+            fixed_seeds: true,
+        };
+        let result = evaluate_genome(&genome, &ctx, 0);
+        assert!(result.fitness.is_finite(), "fitness={}", result.fitness);
+        assert_eq!(result.per_area.len(), 1);
+        assert_eq!(result.per_area[0].0, 1001);
+        assert!(result.parameters.is_some());
+        assert_eq!(result.source_code, "mine();");
+    }
+
+    #[test]
+    fn taxed_score_applies_tax_rate() {
+        assert!((taxed_score(100.0, 25) - 75.0).abs() < f64::EPSILON);
+        assert!((taxed_score(40.0, 0) - 40.0).abs() < f64::EPSILON);
     }
 
     #[test]
     fn rotating_seeds_advance_each_generation() {
-        let parts = (1..=7)
-            .map(|type_id| sample_part(type_id * 10, type_id, 50))
-            .collect();
-        let catalog = PartCatalog::from_parts(parts, 9999);
+        let catalog = complete_catalog(50);
         let rotating = FitnessContext {
             areas: &[],
             catalog: &catalog,
@@ -291,5 +434,14 @@ mod tests {
         };
         assert_eq!(rally_seeds_for_generation(&fixed, 0), 0..5);
         assert_eq!(rally_seeds_for_generation(&fixed, 3), 0..5);
+
+        let zero_seeds = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 0,
+            seed_count: 0,
+            fixed_seeds: false,
+        };
+        assert_eq!(rally_seeds_for_generation(&zero_seeds, 2), 2..3);
     }
 }

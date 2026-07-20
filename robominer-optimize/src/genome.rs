@@ -187,6 +187,7 @@ impl<R: Rng> RngLike for RandAdapter<'_, R> {
 mod tests {
     use super::*;
     use robominer_db::RobotPartRecord;
+    use robominer_program::RngLike;
 
     fn sample_part(id: i64, type_id: i64, tier_id: i64) -> RobotPartRecord {
         RobotPartRecord {
@@ -210,6 +211,18 @@ mod tests {
             volume: 8,
             power_usage: 1,
         }
+    }
+
+    fn dual_catalog() -> PartCatalog {
+        let parts = (1..=7)
+            .flat_map(|type_id| {
+                [
+                    sample_part(type_id * 10, type_id, 1),
+                    sample_part(type_id * 10 + 1, type_id, 1),
+                ]
+            })
+            .collect();
+        PartCatalog::from_parts(parts, 9)
     }
 
     #[test]
@@ -240,5 +253,42 @@ mod tests {
             let part = catalog.get(part_id).expect("part in catalog");
             assert!(part.tier_id.is_some_and(|tier| tier <= 2));
         }
+    }
+
+    #[test]
+    fn with_parts_source_code_and_operators() {
+        let catalog = dual_catalog();
+        let left_program = compile_executable_source("mine();").expect("compile");
+        let right_program = compile_executable_source("dump();").expect("compile");
+        let left = Genome::with_parts([10, 20, 30, 40, 50, 60, 70], left_program.clone());
+        let right = Genome::with_parts([11, 21, 31, 41, 51, 61, 71], right_program);
+        assert_eq!(left.source_code(), "mine();");
+
+        let mut rng = rand::thread_rng();
+        let (c_a, c_b) = left.crossover(&right, &mut rng);
+        assert_eq!(c_a.part_ids.len(), 7);
+        assert_eq!(c_b.part_ids.len(), 7);
+
+        let (p_a, p_b) = left.crossover_programs_only(&right, &mut rng);
+        assert_eq!(p_a.part_ids, left.part_ids);
+        assert_eq!(p_b.part_ids, left.part_ids);
+
+        let mutated = left.mutate(&catalog, &mut rng);
+        assert!(catalog.get(mutated.part_ids[0]).is_some());
+
+        let program_only = left.mutate_program_only(&mut rng);
+        assert_eq!(program_only.part_ids, left.part_ids);
+
+        let with_program = Genome::with_program(&catalog, left_program, &mut rng);
+        assert!(with_program.part_ids.iter().all(|&id| catalog.get(id).is_some()));
+    }
+
+    #[test]
+    fn rand_adapter_handles_empty_range() {
+        let mut rng = rand::thread_rng();
+        let mut adapter = RandAdapter(&mut rng);
+        assert_eq!(adapter.gen_range(5, 5), 5);
+        assert_eq!(adapter.gen_range(3, 1), 3);
+        let _ = adapter.gen_f64();
     }
 }

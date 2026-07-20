@@ -220,10 +220,36 @@ mod tests {
         );
         assert!(parse_fixed_parts(&catalog, &[]).unwrap().is_none());
         assert!(parse_fixed_parts(&catalog, &[10, 20, 30]).is_err());
+        assert!(parse_fixed_parts(&catalog, &[999, 20, 30, 40, 50, 60, 70]).is_err());
         let ids = parse_fixed_parts(&catalog, &[10, 20, 30, 40, 50, 60, 70])
             .expect("valid parts")
             .expect("some");
         assert_eq!(ids, [10, 20, 30, 40, 50, 60, 70]);
+    }
+
+    #[test]
+    fn compile_program_source_rejects_empty() {
+        let error = compile_program_source("   ").expect_err("empty");
+        assert!(error.to_string().contains("empty"));
+    }
+
+    #[test]
+    fn cli_parses_seeds_and_parts() {
+        let cli = Cli::try_parse_from([
+            "robominer-optimize",
+            "--seeds",
+            "3",
+            "--parts",
+            "10,20,30,40,50,60,70",
+            "--program",
+            "mine();",
+            "--evaluate-only",
+        ])
+        .expect("cli should parse");
+        assert_eq!(cli.seeds, Some(3));
+        assert_eq!(cli.parts, vec![10, 20, 30, 40, 50, 60, 70]);
+        assert!(cli.evaluate_only);
+        assert_eq!(cli.programs, vec!["mine();"]);
     }
 
     #[test]

@@ -1215,6 +1215,7 @@ dependencies = [
  "robominer-domain",
  "robominer-program",
  "robominer-sim",
+ "robominer-test-support",
  "tokio",
 ]
 

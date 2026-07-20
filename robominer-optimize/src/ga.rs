@@ -392,4 +392,137 @@ mod tests {
         assert_eq!(ranked[0].genome.part_ids, part_ids);
         assert_eq!(ranked[0].fitness.source_code, "mine();");
     }
+
+    #[test]
+    fn fixed_parts_mode_evolves_programs_only() {
+        use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
+        use robominer_test_support::{
+            ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
+        };
+
+        let parts = (1..=7)
+            .map(|type_id| sample_part(type_id * 10, type_id))
+            .collect();
+        let catalog = PartCatalog::from_parts(parts, 9);
+        let program = compile_executable_source("mine();").expect("compile");
+        let part_ids = [10, 20, 30, 40, 50, 60, 70];
+
+        let mut area = unit_test_mining_area_record(1001);
+        area.max_moves = 3;
+        let area = MiningAreaLoadout::new(
+            area,
+            vec![ore_supply_record(1, 1001, 1, 10, 2)],
+            RobotLoadout::new(
+                unit_test_robot_record(1, "rotate(90);"),
+                RobotLoadoutParts::empty(),
+            ),
+        );
+        let fitness_ctx = FitnessContext {
+            areas: std::slice::from_ref(&area),
+            catalog: &catalog,
+            depot_capacity: 10,
+            seed_count: 1,
+            fixed_seeds: true,
+        };
+        let config = GaConfig {
+            population: 4,
+            generations: 2,
+            elite: 1,
+            mutation_rate: 1.0,
+            crossover_rate: 1.0,
+            tournament_size: 2,
+        };
+        let mut rng = rand::thread_rng();
+        let ranked = run_ga(
+            &config,
+            &fitness_ctx,
+            &[program],
+            false,
+            Some(part_ids),
+            &mut rng,
+        );
+        assert!(!ranked.is_empty());
+        assert!(ranked.iter().all(|individual| individual.genome.part_ids == part_ids));
+        assert!(ranked[0].fitness.fitness.is_finite());
+    }
+
+    #[test]
+    fn free_evolution_runs_and_keeps_hall_of_fame() {
+        use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
+        use robominer_test_support::{
+            ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
+        };
+
+        let parts = (1..=7)
+            .flat_map(|type_id| {
+                [
+                    sample_part(type_id * 10, type_id),
+                    sample_part(type_id * 10 + 1, type_id),
+                ]
+            })
+            .collect();
+        let catalog = PartCatalog::from_parts(parts, 9);
+        let program = compile_executable_source("mine();").expect("compile");
+
+        let mut area = unit_test_mining_area_record(1001);
+        area.max_moves = 2;
+        let area = MiningAreaLoadout::new(
+            area,
+            vec![ore_supply_record(1, 1001, 1, 10, 2)],
+            RobotLoadout::new(
+                unit_test_robot_record(1, "rotate(90);"),
+                RobotLoadoutParts::empty(),
+            ),
+        );
+        let fitness_ctx = FitnessContext {
+            areas: std::slice::from_ref(&area),
+            catalog: &catalog,
+            depot_capacity: 5,
+            seed_count: 1,
+            fixed_seeds: false,
+        };
+        let config = GaConfig {
+            population: 4,
+            generations: 2,
+            elite: 1,
+            mutation_rate: 0.5,
+            crossover_rate: 0.5,
+            tournament_size: 2,
+        };
+        let mut rng = rand::thread_rng();
+        let ranked = run_ga(&config, &fitness_ctx, &[program], false, None, &mut rng);
+        assert!(!ranked.is_empty());
+        assert!(ranked[0].fitness.fitness.is_finite());
+    }
+
+    #[test]
+    fn merge_best_skips_non_finite_and_duplicates() {
+        let program = compile_executable_source("mine();").expect("compile");
+        let genome = Genome::with_parts([10, 20, 30, 40, 50, 60, 70], program);
+        let finite = RankedIndividual {
+            genome: genome.clone(),
+            fitness: crate::fitness::FitnessResult {
+                fitness: 1.5,
+                per_area: vec![],
+                parameters: None,
+                source_code: "mine();".to_string(),
+                compiled_size: Some(1),
+            },
+        };
+        let duplicate = finite.clone();
+        let invalid = RankedIndividual {
+            genome,
+            fitness: crate::fitness::FitnessResult {
+                fitness: f64::NEG_INFINITY,
+                per_area: vec![],
+                parameters: None,
+                source_code: "mine();".to_string(),
+                compiled_size: None,
+            },
+        };
+        let mut best = Vec::new();
+        merge_best(&mut best, &[invalid, finite, duplicate]);
+        assert_eq!(best.len(), 1);
+        assert!((best[0].fitness.fitness - 1.5).abs() < f64::EPSILON);
+    }
 }

@@ -17,3 +17,6 @@ robominer-domain = { version = "0.1.0", path = "../robominer-domain" }
 robominer-program = { version = "0.1.0", path = "../robominer-program" }
 robominer-sim = { version = "0.1.0", path = "../robominer-sim" }
 tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }

@@ -66,3 +66,151 @@ pub fn format_top_results(
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::catalog::PartCatalog;
+    use crate::fitness::FitnessResult;
+    use crate::ga::RankedIndividual;
+    use crate::genome::Genome;
+    use robominer_db::{RobotParameters, RobotPartRecord};
+    use robominer_program::compile_executable_source;
+
+    fn sample_part(id: i64, type_id: i64) -> RobotPartRecord {
+        RobotPartRecord {
+            id,
+            type_id,
+            tier_id: Some(1),
+            part_name: format!("part-{id}"),
+            ore_price_id: 1,
+            ore_capacity: 2,
+            mining_capacity: 2,
+            battery_capacity: 20,
+            memory_capacity: 50,
+            cpu_capacity: 5,
+            forward_capacity: 6,
+            backward_capacity: 3,
+            rotate_capacity: 2,
+            recharge_time: 1,
+            scan_time: 1,
+            scan_distance: 1,
+            weight: 2,
+            volume: 8,
+            power_usage: 1,
+        }
+    }
+
+    fn sample_catalog() -> PartCatalog {
+        PartCatalog::from_parts(
+            (1..=7)
+                .map(|type_id| sample_part(type_id * 10, type_id))
+                .collect(),
+            9,
+        )
+    }
+
+    fn sample_parameters() -> RobotParameters {
+        RobotParameters {
+            recharge_time: 1,
+            max_ore: 10,
+            mining_speed: 4,
+            max_turns: 20,
+            memory_size: 50,
+            cpu_speed: 5,
+            forward_speed: 1.5,
+            backward_speed: 0.75,
+            rotate_speed: 10,
+            robot_size: 0.5,
+            scan_time: 1,
+            scan_distance: 3,
+        }
+    }
+
+    fn ranked(
+        part_ids: [i64; 7],
+        source: &str,
+        fitness: f64,
+        with_details: bool,
+    ) -> RankedIndividual {
+        let program = compile_executable_source(source).expect("compile");
+        RankedIndividual {
+            genome: Genome::with_parts(part_ids, program),
+            fitness: FitnessResult {
+                fitness,
+                per_area: if with_details {
+                    vec![(1001, 1.25), (1002, 0.5)]
+                } else {
+                    Vec::new()
+                },
+                parameters: if with_details {
+                    Some(sample_parameters())
+                } else {
+                    None
+                },
+                source_code: source.to_string(),
+                compiled_size: Some(8),
+            },
+        }
+    }
+
+    #[test]
+    fn format_top_results_reports_no_valid_individuals() {
+        let catalog = sample_catalog();
+        let ranked = vec![ranked(
+            [10, 20, 30, 40, 50, 60, 70],
+            "mine();",
+            f64::NEG_INFINITY,
+            false,
+        )];
+        let report = format_top_results(&ranked, &catalog, 40, 3);
+        assert_eq!(report, "No valid individuals found.\n");
+    }
+
+    #[test]
+    fn format_top_results_includes_parts_stats_areas_and_program() {
+        let catalog = sample_catalog();
+        let ranked = vec![
+            ranked([10, 20, 30, 40, 50, 60, 70], "mine(); dump();", 3.5, true),
+            ranked([10, 20, 30, 40, 50, 60, 70], "rotate(90);", 2.0, false),
+        ];
+        let report = format_top_results(&ranked, &catalog, 40, 2);
+        assert!(report.contains("=== #1 fitness=3.5000 (avg after tax) ==="));
+        assert!(report.contains("Ore container: part-10 (id=10)"));
+        assert!(report.contains("Ore scanner: part-70 (id=70)"));
+        assert!(report.contains("Depot A capacity: 40 (fixed for this run)"));
+        assert!(report.contains("Stats: maxOre=10 miningSpeed=4"));
+        assert!(report.contains("Per-area: 1001=1.2500 1002=0.5000"));
+        assert!(report.contains("----- program (paste into Edit code) -----"));
+        assert!(report.contains("mine(); dump();"));
+        assert!(report.contains("----- end program -----"));
+        assert!(report.contains("=== #2 fitness=2.0000"));
+        assert!(report.contains("rotate(90);"));
+    }
+
+    #[test]
+    fn format_top_results_skips_non_finite_before_valid() {
+        let catalog = sample_catalog();
+        let ranked = vec![
+            ranked([10, 20, 30, 40, 50, 60, 70], "mine();", f64::NAN, false),
+            ranked([10, 20, 30, 40, 50, 60, 70], "dump();", 1.0, false),
+        ];
+        let report = format_top_results(&ranked, &catalog, 10, 5);
+        assert!(report.contains("=== #2 fitness=1.0000"));
+        assert!(!report.contains("=== #1"));
+        assert!(report.contains("dump();"));
+    }
+
+    #[test]
+    fn format_top_results_uses_question_mark_for_unknown_part() {
+        let catalog = sample_catalog();
+        let ranked = vec![ranked(
+            [999, 20, 30, 40, 50, 60, 70],
+            "mine();",
+            1.0,
+            false,
+        )];
+        let report = format_top_results(&ranked, &catalog, 1, 1);
+        assert!(report.contains("Ore container: ? (id=999)"));
+    }
+}
