@@ -15,7 +15,22 @@ pub struct FitnessContext<'a> {
     pub areas: &'a [MiningAreaLoadout],
     pub catalog: &'a PartCatalog,
     pub depot_capacity: i32,
-    pub seeds: u64,
+    /// How many rally seeds to average per area evaluation.
+    pub seed_count: u64,
+    /// When true, always use seeds `0..seed_count`. When false, use
+    /// `generation * seed_count .. (generation + 1) * seed_count`.
+    pub fixed_seeds: bool,
+}
+
+/// Rally seeds used for one generation's fitness evaluations.
+pub fn rally_seeds_for_generation(ctx: &FitnessContext<'_>, generation: u64) -> std::ops::Range<u64> {
+    let count = ctx.seed_count.max(1);
+    let base = if ctx.fixed_seeds {
+        0
+    } else {
+        generation.saturating_mul(count)
+    };
+    base..base + count
 }
 
 #[derive(Debug, Clone)]
@@ -27,7 +42,11 @@ pub struct FitnessResult {
     pub compiled_size: Option<usize>,
 }
 
-pub fn evaluate_genome(genome: &Genome, ctx: &FitnessContext<'_>) -> FitnessResult {
+pub fn evaluate_genome(
+    genome: &Genome,
+    ctx: &FitnessContext<'_>,
+    generation: u64,
+) -> FitnessResult {
     let source_code = unparse_program(&genome.program);
     let Ok(compiled_size) = compile_source(&source_code) else {
         return invalid_result(source_code);
@@ -64,11 +83,12 @@ pub fn evaluate_genome(genome: &Genome, ctx: &FitnessContext<'_>) -> FitnessResu
     let mut per_area = Vec::with_capacity(ctx.areas.len());
     let mut total = 0.0;
     let mut counted = 0usize;
+    let seeds = rally_seeds_for_generation(ctx, generation);
+    let seed_count = seeds.end - seeds.start;
 
     for area in ctx.areas {
         let mut area_total = 0.0;
-        let seed_count = ctx.seeds.max(1);
-        for seed in 0..seed_count {
+        for seed in seeds.clone() {
             let loadout = build_rally_loadout(area, &robot, depot);
             let outcome = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 run_rally_loadout_with_seed(&loadout, seed)
@@ -238,9 +258,38 @@ mod tests {
             areas: &[],
             catalog: &catalog,
             depot_capacity: 40,
-            seeds: 1,
+            seed_count: 1,
+            fixed_seeds: true,
         };
-        let result = evaluate_genome(&genome, &ctx);
+        let result = evaluate_genome(&genome, &ctx, 0);
         assert!(!result.fitness.is_finite());
+    }
+
+    #[test]
+    fn rotating_seeds_advance_each_generation() {
+        let parts = (1..=7)
+            .map(|type_id| sample_part(type_id * 10, type_id, 50))
+            .collect();
+        let catalog = PartCatalog::from_parts(parts, 9999);
+        let rotating = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 0,
+            seed_count: 5,
+            fixed_seeds: false,
+        };
+        assert_eq!(rally_seeds_for_generation(&rotating, 0), 0..5);
+        assert_eq!(rally_seeds_for_generation(&rotating, 1), 5..10);
+        assert_eq!(rally_seeds_for_generation(&rotating, 3), 15..20);
+
+        let fixed = FitnessContext {
+            areas: &[],
+            catalog: &catalog,
+            depot_capacity: 0,
+            seed_count: 5,
+            fixed_seeds: true,
+        };
+        assert_eq!(rally_seeds_for_generation(&fixed, 0), 0..5);
+        assert_eq!(rally_seeds_for_generation(&fixed, 3), 0..5);
     }
 }

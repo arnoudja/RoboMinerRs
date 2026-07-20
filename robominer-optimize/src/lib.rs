@@ -7,7 +7,7 @@ mod report;
 
 pub use catalog::PartCatalog;
 pub use cli::Cli;
-pub use fitness::{FitnessContext, FitnessResult, evaluate_genome};
+pub use fitness::{FitnessContext, FitnessResult, evaluate_genome, rally_seeds_for_generation};
 pub use ga::{GaConfig, RankedIndividual, initial_population, run_ga};
 pub use genome::Genome;
 pub use report::format_top_results;
@@ -59,12 +59,27 @@ pub async fn run() -> Result<()> {
 
     let fixed_parts = parse_fixed_parts(&catalog, &cli.parts)?;
 
+    // Default: rotate 5 seeds per generation. Explicit --seeds N keeps 0..N-1 fixed.
+    const DEFAULT_SEED_COUNT: u64 = 5;
+    let (seed_count, fixed_seeds) = match cli.seeds {
+        Some(seeds) => (seeds.max(1), true),
+        None => (DEFAULT_SEED_COUNT, false),
+    };
+    if fixed_seeds {
+        eprintln!("using fixed rally seeds 0..{seed_count} every generation");
+    } else {
+        eprintln!(
+            "rotating {seed_count} rally seeds each generation (pass --seeds N to keep 0..N-1 fixed)"
+        );
+    }
+
     let mut rng = StdRng::seed_from_u64(cli.seed);
     let fitness_ctx = FitnessContext {
         areas: &areas,
         catalog: &catalog,
         depot_capacity: cli.depot_capacity,
-        seeds: cli.seeds,
+        seed_count,
+        fixed_seeds,
     };
     let ga_config = GaConfig {
         population: cli.population,

@@ -29,9 +29,11 @@ pub struct Cli {
     #[arg(long, default_value_t = 50)]
     pub generations: usize,
 
-    /// Number of rally seeds (0..seeds-1) averaged per area
-    #[arg(long, default_value_t = 5)]
-    pub seeds: u64,
+    /// Number of rally seeds averaged per area. When set, always uses fixed seeds
+    /// `0..N-1` every generation. When omitted, averages 5 seeds and advances the
+    /// seed range each generation (`g*5 .. (g+1)*5`).
+    #[arg(long)]
+    pub seeds: Option<u64>,
 
     #[arg(long, default_value_t = 2)]
     pub elite: usize,

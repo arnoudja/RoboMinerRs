@@ -1,4 +1,4 @@
-use crate::fitness::{FitnessContext, evaluate_genome};
+use crate::fitness::{FitnessContext, evaluate_genome, rally_seeds_for_generation};
 use crate::genome::Genome;
 use rand::Rng;
 use robominer_program::ExecutableProgram;
@@ -34,7 +34,7 @@ pub fn run_ga(
             .clone();
         let genome = Genome::with_parts(part_ids, program);
         let individual = RankedIndividual {
-            fitness: evaluate_genome(&genome, fitness_ctx),
+            fitness: evaluate_genome(&genome, fitness_ctx, 0),
             genome,
         };
         return vec![individual];
@@ -53,10 +53,12 @@ pub fn run_ga(
     let mut best_ever: Vec<RankedIndividual> = Vec::new();
 
     for generation in 0..config.generations {
+        let generation = generation as u64;
+        let seeds = rally_seeds_for_generation(fitness_ctx, generation);
         let mut ranked: Vec<RankedIndividual> = population
             .iter()
             .map(|genome| RankedIndividual {
-                fitness: evaluate_genome(genome, fitness_ctx),
+                fitness: evaluate_genome(genome, fitness_ctx, generation),
                 genome: genome.clone(),
             })
             .collect();
@@ -72,8 +74,10 @@ pub fn run_ga(
         let best = ranked[0].fitness.fitness;
         let _ = writeln!(
             io::stderr(),
-            "generation {generation}: best_fitness={best:.4} pop={}",
-            ranked.len()
+            "generation {generation}: best_fitness={best:.4} pop={} seeds={}..{}",
+            ranked.len(),
+            seeds.start,
+            seeds.end
         );
 
         let elite_count = config.elite.min(ranked.len());
@@ -112,11 +116,13 @@ pub fn run_ga(
         population = next;
     }
 
-    // Final evaluation
+    // Final evaluation on the next seed window (or the same fixed seeds).
+    let final_generation = config.generations as u64;
+    let seeds = rally_seeds_for_generation(fitness_ctx, final_generation);
     let mut ranked: Vec<RankedIndividual> = population
         .iter()
         .map(|genome| RankedIndividual {
-            fitness: evaluate_genome(genome, fitness_ctx),
+            fitness: evaluate_genome(genome, fitness_ctx, final_generation),
             genome: genome.clone(),
         })
         .collect();
@@ -126,6 +132,14 @@ pub fn run_ga(
             .partial_cmp(&a.fitness.fitness)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
+    let _ = writeln!(
+        io::stderr(),
+        "final: best_fitness={:.4} pop={} seeds={}..{}",
+        ranked[0].fitness.fitness,
+        ranked.len(),
+        seeds.start,
+        seeds.end
+    );
     merge_best(&mut best_ever, &ranked);
     best_ever.sort_by(|a, b| {
         b.fitness
@@ -326,7 +340,8 @@ mod tests {
             areas: &[],
             catalog: &catalog,
             depot_capacity: 0,
-            seeds: 1,
+            seed_count: 1,
+            fixed_seeds: true,
         };
         let config = GaConfig {
             population: 6,
@@ -353,7 +368,8 @@ mod tests {
             areas: &[],
             catalog: &catalog,
             depot_capacity: 0,
-            seeds: 1,
+            seed_count: 1,
+            fixed_seeds: true,
         };
         let config = GaConfig {
             population: 6,
