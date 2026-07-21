@@ -105,7 +105,7 @@ fn app_shell_footer_includes_help_link() {
 
     assert!(html.contains(r#"class="app-shell-footer""#));
     assert!(html.contains(r#"class="app-shell-footer-link" href="help">Help</a>"#));
-    assert!(html.contains(r#"href="miningQueue">Mining queue</a>"#));
+    assert!(!html.contains(r#"class="app-shell-footer-link" href="miningQueue""#));
     assert!(html.contains(r#"href="https://opensource.org/license/mit""#));
     assert!(html.contains(r#"href="https://www.apache.org/licenses/LICENSE-2.0""#));
 }
