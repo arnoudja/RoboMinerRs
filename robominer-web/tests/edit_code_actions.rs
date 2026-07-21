@@ -218,7 +218,9 @@ async fn edit_code_save_post_warns_when_verified_program_exceeds_linked_robot_me
     assert!(
         body.contains("Program saved.")
             && body.contains("Unable to update linked robots.")
-            && body.contains(&format!("Unable to update {robot_name}: Not enough memory.")),
+            && body.contains(&format!(
+                "Unable to update {robot_name}: Not enough memory."
+            )),
         "expected save+memory warning in edit code body:\n{body}"
     );
 

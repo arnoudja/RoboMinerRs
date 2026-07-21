@@ -100,13 +100,12 @@ async fn load_edit_code_page_state(
                             program_source_write_rejection_message(rejection)
                         ));
                     } else {
-                        let applied =
-                            robominer_db::apply_verified_program_source_to_idle_robots(
-                                pool,
-                                user_id,
-                                program_source_id,
-                            )
-                            .await?;
+                        let applied = robominer_db::apply_verified_program_source_to_idle_robots(
+                            pool,
+                            user_id,
+                            program_source_id,
+                        )
+                        .await?;
                         message = Some(format_save_with_optional_apply_message(
                             "Program saved.",
                             &applied,
@@ -203,9 +202,7 @@ pub(super) fn edit_code_save_block_reason(
     None
 }
 
-fn format_program_source_apply_message(
-    applied: &robominer_db::AppliedProgramSource,
-) -> String {
+fn format_program_source_apply_message(applied: &robominer_db::AppliedProgramSource) -> String {
     robominer_domain::format_program_source_apply_player_message(applied)
 }
 
@@ -217,7 +214,10 @@ pub(super) fn format_save_with_optional_apply_message(
     if applied.applied_robots == 0 && applied.warnings.is_empty() {
         saved_label.to_string()
     } else {
-        format!("{saved_label} {}", format_program_source_apply_message(applied))
+        format!(
+            "{saved_label} {}",
+            format_program_source_apply_message(applied)
+        )
     }
 }
 
