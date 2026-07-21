@@ -201,6 +201,23 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
 }
 
 #[test]
+fn achievements_hide_ore_and_depot_maximum_when_reward_does_not_increase() {
+    let mut state = sample_achievement_state(None);
+    state.achievements[0].current_ore_maximum = 100;
+    state.achievements[0].max_ore_reward = 50;
+    state.achievements[0].current_depot_maximum = 40;
+    state.achievements[0].max_depot_reward = 25;
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert!(!html.contains("ore maximum"));
+    assert!(!html.contains("depot maximum"));
+    assert!(!html.contains("100 → 100"));
+    assert!(!html.contains("40 → 40"));
+    assert!(html.contains("Queue increase"));
+}
+
+#[test]
 fn achievement_rejection_messages_match_engine_output() {
     assert_eq!(
         claim_achievement_step_rejection_message(

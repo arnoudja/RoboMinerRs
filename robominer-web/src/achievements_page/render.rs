@@ -202,16 +202,18 @@ fn render_achievement_card(
         let new_ore_maximum = achievement
             .current_ore_maximum
             .max(achievement.max_ore_reward);
-        body.push_str(&format!(
-            r#"<li><span class="achievement-reward-label">{} ore maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
-            escape_html(ore_name),
-            achievement.current_ore_maximum,
-            new_ore_maximum
-        ));
-        if achievement.max_depot_reward > 0 || achievement.current_depot_maximum > 0 {
-            let new_depot_maximum = achievement
-                .current_depot_maximum
-                .max(achievement.max_depot_reward);
+        if new_ore_maximum > achievement.current_ore_maximum {
+            body.push_str(&format!(
+                r#"<li><span class="achievement-reward-label">{} ore maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
+                escape_html(ore_name),
+                achievement.current_ore_maximum,
+                new_ore_maximum
+            ));
+        }
+        let new_depot_maximum = achievement
+            .current_depot_maximum
+            .max(achievement.max_depot_reward);
+        if new_depot_maximum > achievement.current_depot_maximum {
             body.push_str(&format!(
                 r#"<li><span class="achievement-reward-label">{} depot maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
                 escape_html(ore_name),
