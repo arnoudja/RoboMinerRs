@@ -9,7 +9,7 @@ use super::{
 
 use std::path::PathBuf;
 
-fn default_leaderboard_query() -> LeaderboardQuery {
+fn areas_leaderboard_query() -> LeaderboardQuery {
     LeaderboardQuery {
         tab: LeaderboardTab::Areas,
         area_id: Some(1),
@@ -87,7 +87,7 @@ fn leaderboard_rendering_escapes_dynamic_fields() {
     let html = render_leaderboard_page(
         "User <One>".to_string(),
         None,
-        default_leaderboard_query(),
+        areas_leaderboard_query(),
         &sample_leaderboard_state(
             vec![robominer_db::LeaderboardMiningAreaRecord {
                 id: 1,
@@ -127,7 +127,7 @@ fn leaderboard_rendering_shows_themed_shell_and_rank_rows() {
     let html = render_leaderboard_page(
         "Player".to_string(),
         None,
-        default_leaderboard_query(),
+        areas_leaderboard_query(),
         &sample_leaderboard_state(
             vec![robominer_db::LeaderboardMiningAreaRecord {
                 id: 1,
@@ -166,7 +166,7 @@ fn leaderboard_rendering_shows_themed_shell_and_rank_rows() {
     assert!(html.contains(r#"class="leaderboard-title">Leaderboard</h1>"#));
     assert!(html.contains(r#"class="leaderboard-stats""#));
     assert!(html.contains(r#"class="leaderboard-tab-filter""#));
-    assert!(html.contains(r#"href="leaderboard?tab=robots">Top robots</a>"#));
+    assert!(html.contains(r#">Top players</a><a class="leaderboard-tab-link" href="leaderboard?tab=robots">Top robots</a><a class="leaderboard-tab-link leaderboard-tab-link-active" href="leaderboard?tab=areas&amp;areaId=1">By area</a>"#));
     assert!(html.contains(r#"for="leaderboardAreaFilter""#));
     assert!(html.contains(r#"id="leaderboardAreaFilter""#));
     assert!(html.contains(r#"class="tableitem leaderboard-area-filter-select""#));
@@ -249,7 +249,7 @@ fn leaderboard_sidebar_shows_rank_one_for_area_leader() {
     let html = render_leaderboard_page(
         "Player".to_string(),
         None,
-        default_leaderboard_query(),
+        areas_leaderboard_query(),
         &sample_leaderboard_state(
             vec![robominer_db::LeaderboardMiningAreaRecord {
                 id: 1,
@@ -304,7 +304,7 @@ fn leaderboard_rendering_shows_players_tab() {
         ),
     );
 
-    assert!(html.contains(r#"href="leaderboard?tab=players">Top players</a>"#));
+    assert!(html.contains(r#"href="leaderboard">Top players</a>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Top players</h2>"#));
     assert!(html.contains("leaderboard-name-self"));
 }
@@ -345,7 +345,9 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
     );
 
     assert!(html.contains(r#"href="activity?areaId=1">View area rallies</a>"#));
-    assert!(html.contains(r#"href="leaderboard?areaId=1&amp;limit=20">Load more entries</a>"#));
+    assert!(html.contains(
+        r#"href="leaderboard?tab=areas&amp;areaId=1&amp;limit=20">Load more entries</a>"#
+    ));
     assert!(html.contains(r#"title="Best single-run score recorded in this mining area.""#));
 
     let robots_html = render_leaderboard_page(
@@ -411,7 +413,7 @@ fn leaderboard_rendering_shows_climb_hints_and_metric_glossary() {
     let html = render_leaderboard_page(
         "Player".to_string(),
         None,
-        default_leaderboard_query(),
+        areas_leaderboard_query(),
         &sample_leaderboard_state(
             vec![robominer_db::LeaderboardMiningAreaRecord {
                 id: 1,

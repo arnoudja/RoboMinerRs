@@ -127,9 +127,9 @@ fn render_leaderboard_stats(
 fn render_leaderboard_tab_filter(body: &mut String, query: LeaderboardQuery) {
     body.push_str(r#"<nav class="leaderboard-tab-filter" aria-label="Leaderboard views">"#);
     for tab in [
-        LeaderboardTab::Areas,
-        LeaderboardTab::Robots,
         LeaderboardTab::Players,
+        LeaderboardTab::Robots,
+        LeaderboardTab::Areas,
     ] {
         let class_name = if tab == query.tab {
             "leaderboard-tab-link leaderboard-tab-link-active"

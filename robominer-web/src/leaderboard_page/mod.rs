@@ -22,16 +22,17 @@ impl LeaderboardTab {
     fn from_request(request: &Request) -> Self {
         match request.query.get("tab").map(String::as_str) {
             Some("robots") => Self::Robots,
-            Some("players") => Self::Players,
-            _ => Self::Areas,
+            Some("areas") => Self::Areas,
+            // Default (and legacy `tab=players`) is Top players.
+            _ => Self::Players,
         }
     }
 
     fn label(self) -> &'static str {
         match self {
-            Self::Areas => "By area",
-            Self::Robots => "Top robots",
             Self::Players => "Top players",
+            Self::Robots => "Top robots",
+            Self::Areas => "By area",
         }
     }
 }
@@ -50,11 +51,11 @@ impl LeaderboardQuery {
 
     fn path_with_query(self, tab: LeaderboardTab, area_id: Option<i64>, limit: i64) -> String {
         let mut parts = Vec::new();
-        if tab != LeaderboardTab::Areas {
+        if tab != LeaderboardTab::Players {
             parts.push(match tab {
                 LeaderboardTab::Robots => "tab=robots".to_string(),
-                LeaderboardTab::Players => "tab=players".to_string(),
-                LeaderboardTab::Areas => unreachable!(),
+                LeaderboardTab::Areas => "tab=areas".to_string(),
+                LeaderboardTab::Players => unreachable!(),
             });
         }
         if tab == LeaderboardTab::Areas
