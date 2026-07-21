@@ -159,6 +159,133 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
         syncLineNumbersForTextarea(textarea);
     }
 
+    var EDIT_CODE_INDENT = '    ';
+
+    function emitEditCodeInput(textarea) {
+        if (typeof InputEvent === 'function') {
+            textarea.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        } else {
+            var event = document.createEvent('Event');
+            event.initEvent('input', true, true);
+            textarea.dispatchEvent(event);
+        }
+    }
+
+    function lineStartIndex(value, index) {
+        var start = value.lastIndexOf('\n', Math.max(0, index - 1));
+        return start < 0 ? 0 : start + 1;
+    }
+
+    function lineEndIndex(value, index) {
+        var end = value.indexOf('\n', index);
+        return end < 0 ? value.length : end;
+    }
+
+    function outdentLine(line) {
+        if (line.charAt(0) === '\t') {
+            return line.substring(1);
+        }
+        var remove = 0;
+        while (remove < EDIT_CODE_INDENT.length && line.charAt(remove) === ' ') {
+            remove += 1;
+        }
+        return remove > 0 ? line.substring(remove) : line;
+    }
+
+    function adjustSelectedLines(textarea, indent) {
+        var value = textarea.value;
+        var selectionStart = textarea.selectionStart;
+        var selectionEnd = textarea.selectionEnd;
+        var rangeStart = lineStartIndex(value, selectionStart);
+        var rangeEnd = selectionEnd > selectionStart
+            ? lineEndIndex(value, Math.max(selectionStart, selectionEnd - 1))
+            : lineEndIndex(value, selectionStart);
+        var block = value.substring(rangeStart, rangeEnd);
+        var lines = block.split('\n');
+        var nextLines = [];
+        var lineDeltas = [];
+        var totalDelta = 0;
+        for (var index = 0; index < lines.length; index += 1) {
+            var line = lines[index];
+            var nextLine = indent ? EDIT_CODE_INDENT + line : outdentLine(line);
+            var delta = nextLine.length - line.length;
+            lineDeltas.push(delta);
+            totalDelta += delta;
+            nextLines.push(nextLine);
+        }
+        if (totalDelta === 0) {
+            return;
+        }
+        var nextBlock = nextLines.join('\n');
+        textarea.value = value.substring(0, rangeStart) + nextBlock + value.substring(rangeEnd);
+
+        function mapOffset(offset) {
+            var relative = offset - rangeStart;
+            if (relative <= 0) {
+                return offset;
+            }
+            var pos = 0;
+            var deltaBefore = 0;
+            for (var lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+                var lineLength = lines[lineIndex].length;
+                var lineEndRel = pos + lineLength;
+                if (relative <= lineEndRel || lineIndex === lines.length - 1) {
+                    var offsetInLine = relative - pos;
+                    var lineDelta = lineDeltas[lineIndex];
+                    if (lineDelta < 0) {
+                        var removed = -lineDelta;
+                        if (offsetInLine <= removed) {
+                            return rangeStart + pos + deltaBefore;
+                        }
+                        return rangeStart + pos + deltaBefore + offsetInLine + lineDelta;
+                    }
+                    return rangeStart + pos + deltaBefore + offsetInLine + lineDelta;
+                }
+                pos = lineEndRel + 1;
+                deltaBefore += lineDeltas[lineIndex];
+            }
+            return offset + totalDelta;
+        }
+
+        if (typeof textarea.setSelectionRange === 'function') {
+            textarea.setSelectionRange(mapOffset(selectionStart), mapOffset(selectionEnd));
+        }
+        emitEditCodeInput(textarea);
+    }
+
+    function insertEditCodeIndent(textarea) {
+        var value = textarea.value;
+        var selectionStart = textarea.selectionStart;
+        var selectionEnd = textarea.selectionEnd;
+        textarea.value = value.substring(0, selectionStart)
+            + EDIT_CODE_INDENT
+            + value.substring(selectionEnd);
+        var cursor = selectionStart + EDIT_CODE_INDENT.length;
+        if (typeof textarea.setSelectionRange === 'function') {
+            textarea.setSelectionRange(cursor, cursor);
+        }
+        emitEditCodeInput(textarea);
+    }
+
+    function handleEditCodeTabKey(event, textarea) {
+        if (event.key !== 'Tab' && event.keyCode !== 9) {
+            return;
+        }
+        event.preventDefault();
+        var selectionStart = textarea.selectionStart;
+        var selectionEnd = textarea.selectionEnd;
+        var selected = textarea.value.substring(selectionStart, selectionEnd);
+        if (event.shiftKey) {
+            adjustSelectedLines(textarea, false);
+            return;
+        }
+        if (selectionStart !== selectionEnd && selected.indexOf('\n') >= 0) {
+            adjustSelectedLines(textarea, true);
+            return;
+        }
+        insertEditCodeIndent(textarea);
+    }
+
     function updateEditCodeSummary(sourceId) {
         var summary = document.getElementById('editCodeSummarySelected');
         var linkedSummary = document.getElementById('editCodeSummaryLinkedRobots');
@@ -316,6 +443,9 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
             attachLineNumberListeners(sourceInput);
             sourceInput.addEventListener('input', function() {
                 updateEditCodeSaveState(panel);
+            });
+            sourceInput.addEventListener('keydown', function(event) {
+                handleEditCodeTabKey(event, sourceInput);
             });
         }
     }

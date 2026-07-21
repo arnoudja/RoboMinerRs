@@ -136,6 +136,8 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(html.contains(">12<"));
     assert!(html.contains("function syncLineNumbersForTextarea(textarea)"));
     assert!(html.contains("function attachLineNumberListeners(textarea)"));
+    assert!(html.contains("function handleEditCodeTabKey(event, textarea)"));
+    assert!(html.contains("var EDIT_CODE_INDENT = '    ';"));
     assert!(html.contains("function selectProgramSource(sourceId, updateUrl)"));
     assert!(html.contains("function isPanelDirty(panel)"));
     assert!(html.contains("function editCodeUrlParam(name)"));
