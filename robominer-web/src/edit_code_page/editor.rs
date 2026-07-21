@@ -1,7 +1,7 @@
 use crate::edit_code_page::EditCodeProgramSource;
 use crate::html::escape_html;
 
-use super::{edit_code_apply_server_block_reason, edit_code_save_block_reason};
+use super::edit_code_save_block_reason;
 
 pub(super) fn edit_code_line_count(source_code: &str) -> usize {
     source_code.lines().count().max(1)
@@ -99,14 +99,6 @@ pub(super) fn render_edit_code_panel(
     ));
     body.push_str("</form>");
 
-    if program_source_id > 0 && program.linked_robot_count > 0 {
-        body.push_str(&render_edit_code_apply_action(
-            program_source_id,
-            program,
-            disabled_attr,
-        ));
-    }
-
     if program_source_id > 0 {
         body.push_str(&render_edit_code_delete_action(
             program_source_id,
@@ -136,7 +128,7 @@ pub(super) fn render_edit_code_save_action(
         html.push_str(r#"<p class="edit-code-action-hint edit-code-save-hint" hidden></p>"#);
     }
     html.push_str(
-        r#"<p class="edit-code-save-helper">Save compiles and stores your program source.</p>"#,
+        r#"<p class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#,
     );
     html
 }
@@ -153,46 +145,6 @@ pub(super) fn edit_code_save_button(block_reason: Option<&str>, disabled_attr: &
         r#"<button type="submit" class="edit-code-btn edit-code-btn-primary">Save program</button>"#
             .to_string()
     }
-}
-
-pub(super) fn render_edit_code_apply_action(
-    program_source_id: i64,
-    program: &EditCodeProgramSource,
-    disabled_attr: &str,
-) -> String {
-    let server_block = edit_code_apply_server_block_reason(program);
-    let server_block_attr = server_block
-        .map(|reason| format!(r#" data-server-block="{}""#, escape_html(reason)))
-        .unwrap_or_default();
-    let title_attr = server_block
-        .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
-        .unwrap_or_default();
-    let button_disabled = server_block.is_some() || !disabled_attr.is_empty();
-
-    let mut html = format!(
-        r#"<div class="edit-code-apply"><form id="editCodeApplyForm{program_source_id}" action="editCode" method="post" class="edit-code-apply-form"><input type="hidden" name="requestType" value="applyRobots"{disabled_attr}/><input type="hidden" name="nextProgramSourceId" value="{program_source_id}"{disabled_attr}/><input type="hidden" name="programSourceId" value="{program_source_id}"{disabled_attr}/><div class="edit-code-actions">"#
-    );
-    if button_disabled {
-        html.push_str(&format!(
-            r#"<button type="submit" class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled{title_attr}{server_block_attr}{disabled_attr}>Update linked robots</button>"#
-        ));
-    } else {
-        html.push_str(&format!(
-            r#"<button type="submit" class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn"{server_block_attr}>Update linked robots</button>"#
-        ));
-    }
-    html.push_str("</div>");
-    html.push_str(r#"<p class="edit-code-action-hint edit-code-apply-hint" hidden></p>"#);
-    if let Some(reason) = server_block {
-        html.push_str(&format!(
-            r#"<p class="edit-code-action-hint edit-code-apply-server-hint">{}</p>"#,
-            escape_html(reason)
-        ));
-    }
-    html.push_str(
-        r#"<p class="edit-code-apply-helper">Idle robots with enough memory are updated immediately. Queued robots receive a pending source update that applies when they finish their current run.</p></form></div>"#,
-    );
-    html
 }
 
 pub(super) fn render_edit_code_delete_action(

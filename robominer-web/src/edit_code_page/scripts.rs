@@ -218,7 +218,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
                 attachEditCodeFieldListeners(panel);
                 syncEditCodeFormState(panel);
                 updateEditCodeSaveState(panel);
-                updateEditCodeApplyState(panel);
             }
         }
         updateEditCodeSummary(sourceId);
@@ -300,46 +299,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
         updateEditCodeDirtyState(panel);
     }
 
-    function editCodeApplyBlockReason(panel) {
-        if (isPanelDirty(panel)) {
-            return 'Save program before updating linked robots.';
-        }
-        return null;
-    }
-
-    function updateEditCodeApplyState(panel) {
-        if (!panel) {
-            return;
-        }
-        var applyButton = panel.querySelector('.edit-code-apply-btn');
-        if (!applyButton) {
-            return;
-        }
-        var serverBlock = applyButton.getAttribute('data-server-block');
-        var reason = serverBlock || editCodeApplyBlockReason(panel);
-        var hint = panel.querySelector('.edit-code-apply-hint');
-        if (serverBlock) {
-            applyButton.disabled = true;
-            applyButton.setAttribute('title', serverBlock);
-        } else {
-            applyButton.disabled = !!reason;
-            if (reason) {
-                applyButton.setAttribute('title', reason);
-            } else {
-                applyButton.removeAttribute('title');
-            }
-        }
-        if (hint) {
-            if (reason && !serverBlock) {
-                hint.textContent = reason;
-                hint.hidden = false;
-            } else {
-                hint.textContent = '';
-                hint.hidden = true;
-            }
-        }
-    }
-
     function attachEditCodeFieldListeners(panel) {
         if (panel.getAttribute('data-field-listeners') === 'true') {
             return;
@@ -350,7 +309,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
         if (nameInput) {
             nameInput.addEventListener('input', function() {
                 updateEditCodeSaveState(panel);
-                updateEditCodeApplyState(panel);
                 updateEditCodeSummaryFromPanel(panel);
             });
         }
@@ -358,7 +316,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
             attachLineNumberListeners(sourceInput);
             sourceInput.addEventListener('input', function() {
                 updateEditCodeSaveState(panel);
-                updateEditCodeApplyState(panel);
             });
         }
     }
@@ -412,7 +369,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
                     }
                     restorePanelBaseline(activePanel);
                     updateEditCodeSaveState(activePanel);
-                    updateEditCodeApplyState(activePanel);
                     updateEditCodeSummaryFromPanel(activePanel);
                     selectProgramSource(sourceId);
                 });
@@ -431,7 +387,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
             }
             restorePanelBaseline(panel);
             updateEditCodeSaveState(panel);
-            updateEditCodeApplyState(panel);
             updateEditCodeSummaryFromPanel(panel);
         });
     }
@@ -449,43 +404,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
             }
         }
     });
-
-    function confirmEditCodeApply(event) {
-        var panel = event.target.closest('.edit-code-panel');
-        if (!panel) {
-            return;
-        }
-        var form = event.target.closest('.edit-code-apply-form');
-        if (!form) {
-            return;
-        }
-        var applyButton = panel.querySelector('.edit-code-apply-btn');
-        if (applyButton && applyButton.disabled) {
-            event.preventDefault();
-            return;
-        }
-        if (form.getAttribute('data-robominer-confirmed') === '1') {
-            form.removeAttribute('data-robominer-confirmed');
-            return;
-        }
-        event.preventDefault();
-        robominerConfirm('Update linked robots using the saved program?', function(confirmed) {
-            if (!confirmed) {
-                return;
-            }
-            allowPageUnload = true;
-            var sourceId = panel.getAttribute('data-source-id');
-            if (sourceId) {
-                form.action = 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId);
-            }
-            form.setAttribute('data-robominer-confirmed', '1');
-            if (typeof form.requestSubmit === 'function') {
-                form.requestSubmit(event.submitter || undefined);
-            } else {
-                form.submit();
-            }
-        });
-    }
 
     function confirmEditCodeSave(event) {
         var panel = event.target.closest('.edit-code-panel');
@@ -560,11 +478,6 @@ pub(super) const EDIT_CODE_PAGE_SCRIPT: &str = r#"<script>
     var saveForms = document.querySelectorAll('.edit-code-save-form');
     for (var saveIndex = 0; saveIndex < saveForms.length; saveIndex += 1) {
         saveForms[saveIndex].addEventListener('submit', confirmEditCodeSave);
-    }
-
-    var applyForms = document.querySelectorAll('.edit-code-apply-form');
-    for (var applyIndex = 0; applyIndex < applyForms.length; applyIndex += 1) {
-        applyForms[applyIndex].addEventListener('submit', confirmEditCodeApply);
     }
 
     var deleteForms = document.querySelectorAll('.edit-code-delete-form');

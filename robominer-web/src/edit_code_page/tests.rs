@@ -9,12 +9,10 @@ use super::render::{
     render_edit_code_source_field,
 };
 use super::{
-    EditCodePageState, EditCodeProgramSource, default_edit_code_program_source,
-    edit_code_apply_server_block_reason, edit_code_page, edit_code_save_block_reason,
-    format_program_source_apply_message, program_source_write_rejection_message,
-    selected_edit_code_source,
+    EditCodePageState, EditCodeProgramSource, default_edit_code_program_source, edit_code_page,
+    edit_code_save_block_reason, format_save_with_optional_apply_message,
+    program_source_write_rejection_message, selected_edit_code_source,
 };
-use robominer_domain::program_source_apply_warning_message;
 
 fn authenticated_request(path: &str) -> Request {
     Request {
@@ -129,7 +127,7 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     ));
     assert!(html.contains(r#"class="edit-code-btn edit-code-btn-secondary edit-code-reset-btn" hidden>Reset changes</button>"#));
     assert!(html.contains(
-        r#"class="edit-code-save-helper">Save compiles and stores your program source.</p>"#
+        r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#
     ));
     assert!(html.contains(
         r#"class="edit-code-delete-helper">Delete removes this program from your library.</p>"#
@@ -150,9 +148,9 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(html.contains("addEventListener('beforeunload'"));
     assert!(html.contains("form.action = 'editCode?nextProgramSourceId='"));
     assert!(html.contains("function confirmEditCodeSave(event)"));
-    assert!(html.contains("function confirmEditCodeApply(event)"));
+    assert!(!html.contains("function confirmEditCodeApply(event)"));
     assert!(html.contains("function confirmEditCodeDelete(event)"));
-    assert!(html.contains("function updateEditCodeApplyState(panel)"));
+    assert!(!html.contains("function updateEditCodeApplyState(panel)"));
     assert!(html.contains(
         "if (form.getAttribute('data-robominer-confirmed') === '1') {\n            form.removeAttribute('data-robominer-confirmed');\n            return;\n        }\n        var nameInput = panel.querySelector('input[name=\"sourceName\"]');"
     ));
@@ -354,154 +352,84 @@ fn edit_code_save_block_reason_matches_server_rejections() {
     assert_eq!(edit_code_save_block_reason("Miner", "mine();"), None);
 }
 
-fn linked_verified_edit_code_state() -> EditCodePageState {
-    EditCodePageState {
-        selected_program_source_id: 11,
-        selected_program_source: EditCodeProgramSource {
-            source_name: "Linked".to_string(),
-            source_code: "mine();".to_string(),
-            compiled_size: 4,
-            error_description: String::new(),
-            linked_robot_count: 2,
-            verified: true,
-        },
-        program_sources: vec![robominer_db::ProgramSourceStateRecord {
-            source: robominer_db::ProgramSourceRecord {
-                id: 11,
-                user_id: 1,
-                source_name: "Linked".to_string(),
-                source_code: Some("mine();".to_string()),
-                verified: true,
-                compiled_size: 4,
-                error_description: String::new(),
-            },
-            linked_robot_count: 2,
-        }],
-        message: None,
-        claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
-    }
-}
-
 #[test]
-fn edit_code_shows_update_linked_robots_when_verified_and_linked() {
+fn edit_code_omits_manual_update_linked_robots_controls() {
     let html = render_edit_code_page(
         "Player".to_string(),
         None,
-        &linked_verified_edit_code_state(),
+        &EditCodePageState {
+            selected_program_source_id: 11,
+            selected_program_source: EditCodeProgramSource {
+                source_name: "Linked".to_string(),
+                source_code: "mine();".to_string(),
+                compiled_size: 4,
+                error_description: String::new(),
+                linked_robot_count: 2,
+                verified: true,
+            },
+            program_sources: vec![robominer_db::ProgramSourceStateRecord {
+                source: robominer_db::ProgramSourceRecord {
+                    id: 11,
+                    user_id: 1,
+                    source_name: "Linked".to_string(),
+                    source_code: Some("mine();".to_string()),
+                    verified: true,
+                    compiled_size: 4,
+                    error_description: String::new(),
+                },
+                linked_robot_count: 2,
+            }],
+            message: None,
+            claimed_results: robominer_db::ClaimedUserResults {
+                claimed_queues: 0,
+                ore_rewards: vec![],
+            },
+        },
     );
-
-    assert!(html.contains(r#"id="editCodeApplyForm11""#));
-    assert!(html.contains(r#"class="edit-code-apply-form""#));
-    assert!(html.contains(">Update linked robots</button>"));
-    assert!(
-        !html.contains(
-            r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#
-        )
-    );
-    assert!(html.contains("Idle robots with enough memory are updated immediately"));
-    assert!(html.contains(r#"name="requestType" value="applyRobots""#));
-}
-
-#[test]
-fn edit_code_hides_update_linked_robots_when_no_linked_robots() {
-    let mut state = linked_verified_edit_code_state();
-    state.selected_program_source.linked_robot_count = 0;
-    state.program_sources[0].linked_robot_count = 0;
-
-    let html = render_edit_code_page("Player".to_string(), None, &state);
 
     assert!(!html.contains(r#"id="editCodeApplyForm11""#));
+    assert!(!html.contains(r#"class="edit-code-apply-form""#));
+    assert!(!html.contains(">Update linked robots</button>"));
     assert!(!html.contains(r#"name="requestType" value="applyRobots""#));
+    assert!(html.contains(
+        r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#
+    ));
 }
 
 #[test]
-fn edit_code_disables_update_linked_robots_when_compile_error() {
-    let mut state = linked_verified_edit_code_state();
-    state.selected_program_source.verified = false;
-    state.selected_program_source.error_description = "Syntax error".to_string();
-    state.program_sources[0].source.verified = false;
-    state.program_sources[0].source.error_description = "Syntax error".to_string();
-
-    let html = render_edit_code_page("Player".to_string(), None, &state);
-
-    assert!(
-        html.contains(
-            r#"class="edit-code-btn edit-code-btn-secondary edit-code-apply-btn" disabled"#
-        )
-    );
-    assert!(html.contains("Save and fix compile errors before updating linked robots."));
-}
-
-#[test]
-fn format_program_source_apply_message_reports_success_and_warnings() {
+fn format_save_with_optional_apply_message_keeps_plain_save_when_nothing_applied() {
     assert_eq!(
-        format_program_source_apply_message(&robominer_db::AppliedProgramSource {
-            applied_robots: 2,
-            warnings: vec![],
-        }),
-        "Updated 2 robot(s)."
-    );
-    assert_eq!(
-        format_program_source_apply_message(&robominer_db::AppliedProgramSource {
-            applied_robots: 1,
-            warnings: vec![robominer_db::ProgramSourceApplyWarning {
-                robot_name: "BusyBot".to_string(),
-                reason: robominer_db::ProgramSourceApplyWarningReason::RobotBusy,
-            }],
-        }),
-        "Updated 1 robot(s). Unable to update BusyBot: The robot is busy."
-    );
-    assert_eq!(
-        format_program_source_apply_message(&robominer_db::AppliedProgramSource {
-            applied_robots: 0,
-            warnings: vec![robominer_db::ProgramSourceApplyWarning {
-                robot_name: "TinyBot".to_string(),
-                reason: robominer_db::ProgramSourceApplyWarningReason::NotEnoughMemory,
-            }],
-        }),
-        "Unable to update linked robots. Unable to update TinyBot: Not enough memory."
-    );
-    assert_eq!(
-        format_program_source_apply_message(&robominer_db::AppliedProgramSource {
-            applied_robots: 0,
-            warnings: vec![],
-        }),
-        "Unable to update robots: program has a compile error."
-    );
-}
-
-#[test]
-fn edit_code_apply_server_block_reason_requires_verified_program() {
-    assert_eq!(
-        edit_code_apply_server_block_reason(&EditCodeProgramSource {
-            source_name: "Broken".to_string(),
-            source_code: "bad(".to_string(),
-            compiled_size: -1,
-            error_description: "Syntax error".to_string(),
-            linked_robot_count: 1,
-            verified: false,
-        }),
-        Some("Save and fix compile errors before updating linked robots.")
-    );
-    assert_eq!(
-        edit_code_apply_server_block_reason(&EditCodeProgramSource {
-            source_name: "Ready".to_string(),
-            source_code: "mine();".to_string(),
-            compiled_size: 4,
-            error_description: String::new(),
-            linked_robot_count: 1,
-            verified: true,
-        }),
-        None
-    );
-    assert_eq!(
-        program_source_apply_warning_message(
-            robominer_db::ProgramSourceApplyWarningReason::NotEnoughMemory
+        format_save_with_optional_apply_message(
+            "Program saved.",
+            &robominer_db::AppliedProgramSource {
+                applied_robots: 0,
+                warnings: vec![],
+            }
         ),
-        "Not enough memory."
+        "Program saved."
+    );
+    assert_eq!(
+        format_save_with_optional_apply_message(
+            "Program saved.",
+            &robominer_db::AppliedProgramSource {
+                applied_robots: 1,
+                warnings: vec![],
+            }
+        ),
+        "Program saved. Updated 1 robot(s)."
+    );
+    assert_eq!(
+        format_save_with_optional_apply_message(
+            "Program saved.",
+            &robominer_db::AppliedProgramSource {
+                applied_robots: 1,
+                warnings: vec![robominer_db::ProgramSourceApplyWarning {
+                    robot_name: "BusyBot".to_string(),
+                    reason: robominer_db::ProgramSourceApplyWarningReason::RobotBusy,
+                }],
+            }
+        ),
+        "Program saved. Updated 1 robot(s). Unable to update BusyBot: The robot is busy."
     );
 }
 

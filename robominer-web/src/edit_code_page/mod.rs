@@ -80,15 +80,6 @@ async fn load_edit_code_page_state(
                     message = Some("Program deleted.".to_string());
                 }
             }
-            Some("applyRobots") if program_source_id > 0 => {
-                let applied = robominer_db::apply_verified_program_source_to_idle_robots(
-                    pool,
-                    user_id,
-                    program_source_id,
-                )
-                .await?;
-                message = Some(format_program_source_apply_message(&applied));
-            }
             Some("update") => {
                 let source_name = request.form.get("sourceName").cloned().unwrap_or_default();
                 let source_code = request.form.get("sourceCode").cloned().unwrap_or_default();
@@ -109,7 +100,17 @@ async fn load_edit_code_page_state(
                             program_source_write_rejection_message(rejection)
                         ));
                     } else {
-                        message = Some("Program saved.".to_string());
+                        let applied =
+                            robominer_db::apply_verified_program_source_to_idle_robots(
+                                pool,
+                                user_id,
+                                program_source_id,
+                            )
+                            .await?;
+                        message = Some(format_save_with_optional_apply_message(
+                            "Program saved.",
+                            &applied,
+                        ));
                     }
                 } else if !source_name.is_empty() || !source_code.is_empty() {
                     match robominer_domain::create_program_source(
@@ -126,7 +127,17 @@ async fn load_edit_code_page_state(
                             if next_program_source_id.is_none_or(|source_id| source_id <= 0) {
                                 next_program_source_id = Some(created.program_source_id);
                             }
-                            message = Some("Program created.".to_string());
+                            let applied =
+                                robominer_db::apply_verified_program_source_to_idle_robots(
+                                    pool,
+                                    user_id,
+                                    created.program_source_id,
+                                )
+                                .await?;
+                            message = Some(format_save_with_optional_apply_message(
+                                "Program created.",
+                                &applied,
+                            ));
                         }
                         Err(rejection) => {
                             message = Some(format!(
@@ -192,20 +203,22 @@ pub(super) fn edit_code_save_block_reason(
     None
 }
 
-pub(super) fn edit_code_apply_server_block_reason(
-    program: &EditCodeProgramSource,
-) -> Option<&'static str> {
-    if !program.error_description.is_empty() || !program.verified {
-        Some("Save and fix compile errors before updating linked robots.")
-    } else {
-        None
-    }
-}
-
-pub(super) fn format_program_source_apply_message(
+fn format_program_source_apply_message(
     applied: &robominer_db::AppliedProgramSource,
 ) -> String {
     robominer_domain::format_program_source_apply_player_message(applied)
+}
+
+/// Combine a save/create banner with linked-robot apply results when anything was updated.
+pub(super) fn format_save_with_optional_apply_message(
+    saved_label: &str,
+    applied: &robominer_db::AppliedProgramSource,
+) -> String {
+    if applied.applied_robots == 0 && applied.warnings.is_empty() {
+        saved_label.to_string()
+    } else {
+        format!("{saved_label} {}", format_program_source_apply_message(applied))
+    }
 }
 
 pub(super) fn edit_code_program_source_from_state(

@@ -4641,8 +4641,7 @@ tbody.miningresults {
 }
 
 .edit-code-actions,
-.edit-code-delete,
-.edit-code-apply {
+.edit-code-delete {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -4691,8 +4690,7 @@ tbody.miningresults {
 }
 
 .edit-code-save-helper,
-.edit-code-delete-helper,
-.edit-code-apply-helper {
+.edit-code-delete-helper {
     color: var(--code-text-muted);
     font-size: 0.88rem;
     margin: 8px 0 0;

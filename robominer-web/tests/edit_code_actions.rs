@@ -75,9 +75,9 @@ async fn edit_code_create_post_inserts_program_source() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
-async fn edit_code_apply_post_updates_linked_robots() {
+async fn edit_code_save_post_applies_verified_program_to_linked_robots() {
     if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping edit code apply web test: ROBOMINER_DATABASE_URL is not set");
+        eprintln!("skipping edit code save-apply web test: ROBOMINER_DATABASE_URL is not set");
         return;
     }
 
@@ -87,7 +87,7 @@ async fn edit_code_apply_post_updates_linked_robots() {
         robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
             .await
             .expect("failed to connect to test database");
-    let prefix = unique_prefix("rust-web-edit-apply");
+    let prefix = unique_prefix("rust-web-edit-save-apply");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
     let user_id =
@@ -95,30 +95,150 @@ async fn edit_code_apply_post_updates_linked_robots() {
     let config = server_config(pool.clone());
     let cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
 
-    let program_source_id: i64 = sqlx::query_scalar(
-        "SELECT programSourceId FROM Robot WHERE userId = ? ORDER BY id LIMIT 1",
+    let (robot_id, program_source_id): (i64, i64) = sqlx::query_as(
+        "SELECT id, programSourceId FROM Robot WHERE userId = ? ORDER BY id LIMIT 1",
     )
     .bind(user_id)
     .fetch_one(&pool)
     .await
-    .expect("failed to load linked program source id");
+    .expect("failed to load linked robot and program source");
 
+    let source_name: String =
+        sqlx::query_scalar("SELECT sourceName FROM ProgramSource WHERE id = ?")
+            .bind(program_source_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load program source name");
+
+    let updated_code = "move(2); mine();";
     let mut form = HashMap::new();
-    form.insert("requestType".to_string(), "applyRobots".to_string());
+    form.insert("requestType".to_string(), "update".to_string());
     form.insert("programSourceId".to_string(), program_source_id.to_string());
     form.insert(
         "nextProgramSourceId".to_string(),
         program_source_id.to_string(),
     );
+    form.insert("sourceName".to_string(), source_name);
+    form.insert("sourceCode".to_string(), updated_code.to_string());
 
     let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
     let body = response_body(&response);
 
     assert_eq!(response.status, 200, "edit code page should render");
     assert!(
-        body.contains("Updated 1 robot(s)."),
-        "expected apply success message in edit code body:\n{body}"
+        body.contains("Program saved.") && body.contains("Updated 1 robot(s)."),
+        "expected save+apply success message in edit code body:\n{body}"
     );
+
+    let robot_source: String = sqlx::query_scalar("SELECT sourceCode FROM Robot WHERE id = ?")
+        .bind(robot_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load robot source code");
+    assert_eq!(robot_source, updated_code);
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn edit_code_save_post_warns_when_verified_program_exceeds_linked_robot_memory() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!(
+            "skipping edit code save memory-overflow web test: ROBOMINER_DATABASE_URL is not set"
+        );
+        return;
+    }
+
+    ensure_session_configured();
+
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-edit-save-mem");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+    let cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
+
+    let (robot_id, robot_name, program_source_id, original_source): (i64, String, i64, String) =
+        sqlx::query_as(
+            "SELECT id, robotName, programSourceId, sourceCode \
+             FROM Robot WHERE userId = ? ORDER BY id LIMIT 1",
+        )
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load linked robot and program source");
+
+    let source_name: String =
+        sqlx::query_scalar("SELECT sourceName FROM ProgramSource WHERE id = ?")
+            .bind(program_source_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load program source name");
+
+    // Larger than a 3-byte memory budget, but still a valid program (compiled size 4).
+    let oversized_code = "move(2); mine();";
+
+    sqlx::query("UPDATE Robot SET memorySize = 3 WHERE id = ?")
+        .bind(robot_id)
+        .execute(&pool)
+        .await
+        .expect("failed to shrink linked robot memory");
+
+    let mut form = HashMap::new();
+    form.insert("requestType".to_string(), "update".to_string());
+    form.insert("programSourceId".to_string(), program_source_id.to_string());
+    form.insert(
+        "nextProgramSourceId".to_string(),
+        program_source_id.to_string(),
+    );
+    form.insert("sourceName".to_string(), source_name);
+    form.insert("sourceCode".to_string(), oversized_code.to_string());
+
+    let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "edit code page should render");
+    assert!(
+        body.contains("Program saved.")
+            && body.contains("Unable to update linked robots.")
+            && body.contains(&format!("Unable to update {robot_name}: Not enough memory.")),
+        "expected save+memory warning in edit code body:\n{body}"
+    );
+
+    let robot_source: String = sqlx::query_scalar("SELECT sourceCode FROM Robot WHERE id = ?")
+        .bind(robot_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to load robot source code");
+    assert_eq!(
+        robot_source, original_source,
+        "oversized program must not replace the linked robot source"
+    );
+
+    let program_verified: bool =
+        sqlx::query_scalar("SELECT verified FROM ProgramSource WHERE id = ?")
+            .bind(program_source_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load program verification");
+    assert!(program_verified, "oversized program should still verify");
 
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)
