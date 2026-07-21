@@ -1,0 +1,25 @@
+---
+description: Run rustfmt check before creating git commits
+alwaysApply: true
+---
+
+# Format Before Commit
+
+Before creating any git commit that includes Rust sources (`.rs` files), verify
+workspace formatting so CI `cargo fmt --check` does not fail:
+
+```sh
+cargo fmt --all -- --check
+```
+
+If the check reports diffs:
+
+1. Run `cargo fmt --all`
+2. Stage the reformatted files with the commit
+3. Re-run `cargo fmt --all -- --check` and confirm it passes
+
+Do this **before** `git commit`, as part of the commit prep (alongside status/diff/log),
+not as a follow-up CI fix commit when it could have been caught locally.
+
+Skip only when the commit contains no `.rs` files (for example docs-only or
+`.cursor/rules` changes).
