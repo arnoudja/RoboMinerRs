@@ -171,7 +171,7 @@ fn leaderboard_rendering_shows_themed_shell_and_rank_rows() {
     assert!(html.contains(r#"id="leaderboardAreaFilter""#));
     assert!(html.contains(r#"class="tableitem leaderboard-area-filter-select""#));
     assert!(html.contains(r#"class="leaderboard-sidebar""#));
-    assert!(html.contains(r#"class="leaderboard-table""#));
+    assert!(html.contains(r#"class="leaderboard-table leaderboard-table-split""#));
     assert!(html.contains("leaderboard-row-rank-1"));
     assert!(html.contains(r#">#1</td>"#));
     assert!(html.contains(r#">#2</td>"#));
@@ -233,6 +233,7 @@ fn leaderboard_rendering_shows_robots_tab_and_viewer_highlights() {
     assert!(html.contains("leaderboard-tab-link-active"));
     assert!(html.contains(r#"href="leaderboard?tab=robots">Top robots</a>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Top robots</h2>"#));
+    assert!(html.contains(r#"class="leaderboard-table leaderboard-table-split""#));
     assert!(html.contains("leaderboard-row-self"));
     assert!(html.contains(r#"class="leaderboard-you-badge">You</span>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Your standings</h2>"#));
@@ -306,6 +307,8 @@ fn leaderboard_rendering_shows_players_tab() {
 
     assert!(html.contains(r#"href="leaderboard">Top players</a>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Top players</h2>"#));
+    assert!(html.contains(r#"class="leaderboard-table""#));
+    assert!(!html.contains("leaderboard-table-split"));
     assert!(html.contains("leaderboard-name-self"));
 }
 

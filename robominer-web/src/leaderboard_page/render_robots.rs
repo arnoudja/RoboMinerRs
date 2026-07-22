@@ -37,7 +37,7 @@ pub(super) fn render_leaderboard_top_robots_section(
             ],
         );
     } else {
-        body.push_str(r#"<table class="leaderboard-table">"#);
+        body.push_str(r#"<table class="leaderboard-table leaderboard-table-split">"#);
         body.push_str(r#"<thead><tr>"#);
         body.push_str(r#"<th scope="col" class="leaderboard-col-rank">Rank</th>"#);
         body.push_str(r#"<th scope="col">Robot</th>"#);

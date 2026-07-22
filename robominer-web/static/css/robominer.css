@@ -7018,7 +7018,25 @@ td.helptable {
         grid-template-columns: 1fr;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody tr {
+    /*
+     * Four-column robot/area boards use a card grid on narrow viewports.
+     * WebKit keeps <td> as table-cell inside display:grid <tr>, which stacks
+     * every cell into the first column — force block so grid-area works on iOS.
+     */
+    .leaderboard-page .leaderboard-table-split {
+        display: block;
+        width: 100%;
+    }
+
+    .leaderboard-page .leaderboard-table-split thead {
+        display: none;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody {
+        display: block;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr {
         display: grid;
         gap: 4px 10px;
         grid-template-areas:
@@ -7028,24 +7046,26 @@ td.helptable {
         padding: 10px 12px;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody td {
+    .leaderboard-page .leaderboard-table-split tbody td {
         border: 0;
+        display: block;
+        min-width: 0;
         padding: 0;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody tr td:first-child {
+    .leaderboard-page .leaderboard-table-split tbody tr td:first-child {
         grid-area: rank;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody tr td:nth-child(2) {
+    .leaderboard-page .leaderboard-table-split tbody tr td:nth-child(2) {
         grid-area: name;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody tr td:nth-child(3) {
+    .leaderboard-page .leaderboard-table-split tbody tr td:nth-child(3) {
         grid-area: owner;
     }
 
-    .leaderboard-page .leaderboard-table:has(th:nth-child(4)) tbody tr td:last-child {
+    .leaderboard-page .leaderboard-table-split tbody tr td:last-child {
         grid-area: score;
         text-align: right;
     }
