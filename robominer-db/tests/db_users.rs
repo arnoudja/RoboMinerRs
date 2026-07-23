@@ -1,7 +1,7 @@
 use robominer_db::{
     CreateUserRejection, CreateUserRequest, UpdateUserAccountRejection, UpdateUserAccountRequest,
-    VerifyLoginRejection, VerifyLoginRequest, create_user, get_user_by_id, update_user_account,
-    verify_login,
+    VerifyLoginRejection, VerifyLoginRequest, create_user, get_user_by_id, get_user_id_by_username,
+    list_achievement_overview_tracks_for_user, update_user_account, verify_login,
 };
 use robominer_test_support::{
     ensure_default_robot_parts, insert_user_with_credentials, unique_prefix,
@@ -86,6 +86,27 @@ async fn create_user_inserts_user_and_claims_initial_achievement() {
     .await
     .expect("failed to load initial achievement");
     assert_eq!(steps_claimed, 1);
+
+    let looked_up = get_user_id_by_username(&pool, &username)
+        .await
+        .expect("username lookup should not fail");
+    assert_eq!(looked_up, Some(created.user_id));
+    assert_eq!(
+        get_user_id_by_username(&pool, "missing-user-name-xyz")
+            .await
+            .expect("missing username lookup should not fail"),
+        None
+    );
+
+    let overview = list_achievement_overview_tracks_for_user(&pool, created.user_id)
+        .await
+        .expect("overview tracks should load");
+    assert!(
+        overview
+            .iter()
+            .any(|track| track.achievement_id == 1 && track.steps_claimed >= 1),
+        "overview should include the initial claimed achievement track: {overview:?}"
+    );
 
     cleanup_created_user(&pool, created.user_id).await;
 }

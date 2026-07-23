@@ -45,6 +45,17 @@ pub async fn get_user_by_id(
     })
 }
 
+/// Resolve a public username to a user id without loading credentials.
+pub async fn get_user_id_by_username(
+    pool: &MySqlPool,
+    username: &str,
+) -> Result<Option<i64>, sqlx::Error> {
+    sqlx::query_scalar("SELECT id FROM User WHERE username = ? LIMIT 1")
+        .bind(username)
+        .fetch_optional(pool)
+        .await
+}
+
 /// Returns the current session version for a user, if the user exists.
 pub async fn get_user_session_version(
     pool: &MySqlPool,

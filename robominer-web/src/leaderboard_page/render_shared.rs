@@ -89,13 +89,22 @@ pub(super) fn render_leaderboard_player_cell(
     } else {
         ""
     };
+    let href = if is_viewer {
+        "achievements".to_string()
+    } else {
+        format!(
+            "achievements?user={}",
+            crate::request_helpers::encode_query_component(username)
+        )
+    };
     body.push_str(&format!(
-        r#"<td class="leaderboard-name{}"><a class="leaderboard-row-link" href="achievements">{}</a>{}</td>"#,
+        r#"<td class="leaderboard-name{}"><a class="leaderboard-row-link" href="{}">{}</a>{}</td>"#,
         if is_viewer {
             " leaderboard-name-self"
         } else {
             ""
         },
+        escape_html(&href),
         escape_html(username),
         you_badge,
     ));

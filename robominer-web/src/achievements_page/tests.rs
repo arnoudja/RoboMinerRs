@@ -36,6 +36,9 @@ fn form_request(path: &str, body: &str) -> Request {
 
 fn sample_achievement_state(claim_message: Option<String>) -> AchievementsPageState {
     AchievementsPageState {
+        viewed_username: None,
+        player_not_found: false,
+        overview_tracks: Vec::new(),
         robot_count: 1,
         claim_message,
         achievements: vec![sample_achievement_record(5, true, "Title <A>")],
@@ -106,6 +109,9 @@ fn achievement_card_position(html: &str, achievement_id: i64) -> usize {
 #[test]
 fn achievements_sort_non_claimable_by_descending_id() {
     let state = AchievementsPageState {
+        viewed_username: None,
+        player_not_found: false,
+        overview_tracks: Vec::new(),
         robot_count: 1,
         claim_message: None,
         achievements: vec![
@@ -215,6 +221,93 @@ fn achievements_hide_ore_and_depot_maximum_when_reward_does_not_increase() {
     assert!(!html.contains("100 → 100"));
     assert!(!html.contains("40 → 40"));
     assert!(html.contains("Queue increase"));
+}
+
+#[test]
+fn achievements_overview_renders_other_player_tracks_without_claim_ui() {
+    let state = AchievementsPageState {
+        viewed_username: Some("Champion <X>".to_string()),
+        player_not_found: false,
+        overview_tracks: vec![
+            robominer_db::AchievementOverviewTrackRecord {
+                achievement_id: 2,
+                title: "Track <Done>".to_string(),
+                description: "Finished & sealed".to_string(),
+                steps_claimed: 2,
+                number_of_steps: 2,
+                points_earned: 30,
+                total_points: 30,
+            },
+            robominer_db::AchievementOverviewTrackRecord {
+                achievement_id: 5,
+                title: "Track <Open>".to_string(),
+                description: "Still going".to_string(),
+                steps_claimed: 1,
+                number_of_steps: 3,
+                points_earned: 10,
+                total_points: 40,
+            },
+        ],
+        robot_count: 0,
+        achievements: Vec::new(),
+        total_requirements: Vec::new(),
+        score_requirements: Vec::new(),
+        points_summary: robominer_db::AchievementPagePointsSummaryRecord {
+            points_earned: 40,
+            points_achievable: 150,
+        },
+        claim_message: None,
+    };
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert!(html.contains(r#"class="achievements-page achievements-page-overview""#));
+    assert!(html.contains("Champion &lt;X&gt;&#39;s achievements"));
+    assert!(html.contains("Track &lt;Done&gt;"));
+    assert!(html.contains("Finished &amp; sealed"));
+    assert!(html.contains("Track &lt;Open&gt;"));
+    assert!(html.contains(r#"achievement-status-complete">Completed</span>"#));
+    assert!(html.contains(r#"achievement-status-progress">In progress</span>"#));
+    assert!(html.contains(
+        r#">Points earned</span><span class="achievements-summary-value">40/150</span>"#
+    ));
+    assert!(html.contains(r#">Tracks</span><span class="achievements-summary-value">2</span>"#));
+    assert!(!html.contains("Ready to claim"));
+    assert!(!html.contains("Claim"));
+    assert!(!html.contains("Next reward"));
+    assert!(!html.contains("Requirements"));
+    assert!(html.contains(r#"href="leaderboard">Back to Top players</a>"#));
+    let done = achievement_card_position(&html, 2);
+    let open = achievement_card_position(&html, 5);
+    assert!(
+        done < open,
+        "completed tracks should sort before in-progress"
+    );
+}
+
+#[test]
+fn achievements_overview_shows_not_found_for_missing_player() {
+    let state = AchievementsPageState {
+        viewed_username: Some("Missing <Player>".to_string()),
+        player_not_found: true,
+        overview_tracks: Vec::new(),
+        robot_count: 0,
+        achievements: Vec::new(),
+        total_requirements: Vec::new(),
+        score_requirements: Vec::new(),
+        points_summary: robominer_db::AchievementPagePointsSummaryRecord {
+            points_earned: 0,
+            points_achievable: 0,
+        },
+        claim_message: None,
+    };
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert!(html.contains("Missing &lt;Player&gt;"));
+    assert!(html.contains("Player not found."));
+    assert!(html.contains(r#"href="leaderboard">Back to Top players</a>"#));
+    assert!(!html.contains("Claim"));
 }
 
 #[test]

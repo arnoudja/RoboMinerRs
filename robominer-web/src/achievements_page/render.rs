@@ -8,6 +8,26 @@ pub(super) fn render_achievements_page(
     hud: Option<&str>,
     state: &AchievementsPageState,
 ) -> String {
+    let body = if let Some(viewed_username) = &state.viewed_username {
+        if state.player_not_found {
+            render_achievements_not_found(viewed_username)
+        } else {
+            render_achievements_overview(viewed_username, state)
+        }
+    } else {
+        render_own_achievements(state)
+    };
+
+    layout(
+        "RoboMiner - Achievements",
+        "achievements",
+        &username,
+        hud,
+        &body,
+    )
+}
+
+fn render_own_achievements(state: &AchievementsPageState) -> String {
     let mut total_requirement_map: HashMap<
         i64,
         Vec<&robominer_db::AchievementPageTotalRequirementRecord>,
@@ -49,9 +69,10 @@ pub(super) fn render_achievements_page(
     let mut body = String::from(r#"<div class="achievements-page">"#);
     render_achievements_summary(
         &mut body,
+        "Achievements",
         state.points_summary.points_earned,
         state.points_summary.points_achievable,
-        claimable_count,
+        Some(claimable_count),
         achievements.len(),
     );
     render_achievements_message(&mut body, state);
@@ -77,36 +98,87 @@ pub(super) fn render_achievements_page(
         }
     }
     body.push_str("</div></div>");
+    body
+}
 
-    layout(
-        "RoboMiner - Achievements",
-        "achievements",
-        &username,
-        hud,
-        &body,
-    )
+fn render_achievements_overview(viewed_username: &str, state: &AchievementsPageState) -> String {
+    let mut tracks = state.overview_tracks.clone();
+    tracks.sort_by(|left, right| {
+        overview_track_completed(right)
+            .cmp(&overview_track_completed(left))
+            .then(right.achievement_id.cmp(&left.achievement_id))
+    });
+
+    let mut body = String::from(r#"<div class="achievements-page achievements-page-overview">"#);
+    render_achievements_summary(
+        &mut body,
+        &format!("{}'s achievements", viewed_username),
+        state.points_summary.points_earned,
+        state.points_summary.points_achievable,
+        None,
+        tracks.len(),
+    );
+    body.push_str(
+        r#"<p class="achievements-overview-back"><a class="achievements-overview-back-link" href="leaderboard">Back to Top players</a></p>"#,
+    );
+
+    body.push_str(r#"<div class="achievements-list">"#);
+    if tracks.is_empty() {
+        body.push_str(
+            r#"<p class="achievements-empty">This player has not unlocked any achievements yet.</p>"#,
+        );
+    } else {
+        for track in &tracks {
+            render_overview_track_card(&mut body, track);
+        }
+    }
+    body.push_str("</div></div>");
+    body
+}
+
+fn render_achievements_not_found(viewed_username: &str) -> String {
+    let mut body = String::from(r#"<div class="achievements-page achievements-page-overview">"#);
+    body.push_str(r#"<section class="achievements-summary" aria-label="Achievement progress">"#);
+    body.push_str(r#"<div class="achievements-summary-heading">"#);
+    body.push_str(&format!(
+        r#"<h1 class="achievements-page-title">{}'s achievements</h1>"#,
+        escape_html(viewed_username)
+    ));
+    body.push_str("</div></section>");
+    body.push_str(r#"<p class="achievements-empty">Player not found.</p>"#);
+    body.push_str(
+        r#"<p class="achievements-overview-back"><a class="achievements-overview-back-link" href="leaderboard">Back to Top players</a></p>"#,
+    );
+    body.push_str("</div>");
+    body
 }
 
 fn render_achievements_summary(
     body: &mut String,
+    title: &str,
     points_earned: i64,
     points_available: i64,
-    claimable_count: usize,
+    claimable_count: Option<usize>,
     achievement_count: usize,
 ) {
     body.push_str(r#"<section class="achievements-summary" aria-label="Achievement progress">"#);
     body.push_str(r#"<div class="achievements-summary-heading">"#);
-    body.push_str(r#"<h1 class="achievements-page-title">Achievements</h1>"#);
+    body.push_str(&format!(
+        r#"<h1 class="achievements-page-title">{}</h1>"#,
+        escape_html(title)
+    ));
     body.push_str("</div>");
     body.push_str(r#"<ul class="achievements-summary-list">"#);
     body.push_str(&format!(
         r#"<li class="achievements-summary-item"><span class="achievements-summary-label">Points earned</span><span class="achievements-summary-value">{}/{}</span></li>"#,
         points_earned, points_available
     ));
-    body.push_str(&format!(
-        r#"<li class="achievements-summary-item"><span class="achievements-summary-label">Ready to claim</span><span class="achievements-summary-value">{}</span></li>"#,
-        claimable_count
-    ));
+    if let Some(claimable_count) = claimable_count {
+        body.push_str(&format!(
+            r#"<li class="achievements-summary-item"><span class="achievements-summary-label">Ready to claim</span><span class="achievements-summary-value">{}</span></li>"#,
+            claimable_count
+        ));
+    }
     body.push_str(&format!(
         r#"<li class="achievements-summary-item"><span class="achievements-summary-label">Tracks</span><span class="achievements-summary-value">{}</span></li>"#,
         achievement_count
@@ -127,6 +199,55 @@ fn render_achievements_message(body: &mut String, state: &AchievementsPageState)
         r#"<p class="{banner_class}">{}</p>"#,
         escape_html(message)
     ));
+}
+
+fn render_overview_track_card(
+    body: &mut String,
+    track: &robominer_db::AchievementOverviewTrackRecord,
+) {
+    let completed = overview_track_completed(track);
+    let card_class = if completed {
+        " achievement-card-complete"
+    } else {
+        ""
+    };
+    let steps_percent =
+        achievement_progress_percent(i64::from(track.steps_claimed), track.number_of_steps);
+    let points_percent = achievement_progress_percent(track.points_earned, track.total_points);
+
+    body.push_str(&format!(
+        r#"<article class="achievement-card{card_class}" id="achievement{}">"#,
+        track.achievement_id
+    ));
+    body.push_str(r#"<header class="achievement-card-header">"#);
+    body.push_str(&format!(
+        r#"<div><h2 class="achievement-card-title">{}</h2><p class="achievement-card-description">{}</p></div>"#,
+        escape_html(&track.title),
+        escape_html(&track.description)
+    ));
+    if completed {
+        body.push_str(r#"<span class="achievement-status-badge achievement-status-complete">Completed</span>"#);
+    } else {
+        body.push_str(r#"<span class="achievement-status-badge achievement-status-progress">In progress</span>"#);
+    }
+    body.push_str("</header>");
+
+    render_achievement_progress(
+        body,
+        "Steps completed",
+        i64::from(track.steps_claimed),
+        track.number_of_steps,
+        steps_percent,
+    );
+    render_achievement_progress(
+        body,
+        "Achievement points",
+        track.points_earned,
+        track.total_points,
+        points_percent,
+    );
+
+    body.push_str("</article>");
 }
 
 fn render_achievement_card(
@@ -294,6 +415,10 @@ fn render_achievement_claim_badge(achievement_id: i64) -> String {
 
 fn achievement_completed(achievement: &robominer_db::AchievementPageStateRecord) -> bool {
     i64::from(achievement.steps_claimed) >= achievement.number_of_steps
+}
+
+fn overview_track_completed(track: &robominer_db::AchievementOverviewTrackRecord) -> bool {
+    i64::from(track.steps_claimed) >= track.number_of_steps
 }
 
 fn achievement_progress_percent(current: i64, total: i64) -> f64 {

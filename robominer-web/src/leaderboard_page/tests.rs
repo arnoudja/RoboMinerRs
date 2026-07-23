@@ -310,6 +310,40 @@ fn leaderboard_rendering_shows_players_tab() {
     assert!(html.contains(r#"class="leaderboard-table""#));
     assert!(!html.contains("leaderboard-table-split"));
     assert!(html.contains("leaderboard-name-self"));
+    assert!(html.contains(r#"href="achievements">Champion</a>"#));
+}
+
+#[test]
+fn leaderboard_top_players_link_to_other_player_achievements_overview() {
+    let html = render_leaderboard_page(
+        "Viewer".to_string(),
+        None,
+        LeaderboardQuery {
+            tab: LeaderboardTab::Players,
+            area_id: None,
+            limit: LEADERBOARD_PAGE_SIZE,
+        },
+        &sample_leaderboard_state(
+            vec![],
+            vec![],
+            vec![],
+            vec![
+                robominer_db::LeaderboardTopUserRecord {
+                    username: "Champion".to_string(),
+                    achievement_points: 100,
+                },
+                robominer_db::LeaderboardTopUserRecord {
+                    username: "Player <X>".to_string(),
+                    achievement_points: 80,
+                },
+            ],
+            None,
+        ),
+    );
+
+    assert!(html.contains(r#"href="achievements?user=Champion">Champion</a>"#));
+    assert!(html.contains(r#"href="achievements?user=Player%20%3CX%3E">Player &lt;X&gt;</a>"#));
+    assert!(!html.contains(r#"href="achievements">Champion</a>"#));
 }
 
 #[test]
@@ -404,7 +438,7 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         ),
     );
 
-    assert!(players_html.contains(r#"href="achievements">Champion</a>"#));
+    assert!(players_html.contains(r#"href="achievements?user=Champion">Champion</a>"#));
     assert!(players_html.contains(r#"href="achievements">View achievements</a>"#));
     assert!(
         players_html.contains(r#"title="Total achievement points claimed across all tracks.""#)

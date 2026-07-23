@@ -250,6 +250,17 @@ pub struct AchievementPagePointsSummaryRecord {
     pub points_achievable: i64,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AchievementOverviewTrackRecord {
+    pub achievement_id: i64,
+    pub title: String,
+    pub description: String,
+    pub steps_claimed: i32,
+    pub number_of_steps: i64,
+    pub points_earned: i64,
+    pub total_points: i64,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct AchievementPageStateRecord {
     pub achievement_id: i64,

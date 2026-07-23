@@ -2,6 +2,10 @@ use crate::{Request, Response, ServerConfig, login_redirect, mutation_i64, sessi
 
 #[derive(Debug)]
 pub(super) struct AchievementsPageState {
+    /// When set, the page is a read-only overview of this player (or not-found).
+    pub(super) viewed_username: Option<String>,
+    pub(super) player_not_found: bool,
+    pub(super) overview_tracks: Vec<robominer_db::AchievementOverviewTrackRecord>,
     pub(super) robot_count: i64,
     pub(super) achievements: Vec<robominer_db::AchievementPageStateRecord>,
     pub(super) total_requirements: Vec<robominer_db::AchievementPageTotalRequirementRecord>,
@@ -22,9 +26,24 @@ pub(super) async fn achievements_page(request: &Request, config: &ServerConfig) 
             "Achievements require ROBOMINER_DATABASE_URL to be configured",
         );
     };
-    let achievement_id = mutation_i64(request, "achievementId");
 
-    let result = load_achievements_state(pool, user_id, achievement_id).await;
+    let session_name = session_username(request);
+    let requested_user = request
+        .query
+        .get("user")
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
+
+    let result = match requested_user {
+        Some(username) if username != session_name => {
+            load_achievements_overview(pool, username).await
+        }
+        _ => {
+            let achievement_id = mutation_i64(request, "achievementId");
+            load_achievements_state(pool, user_id, achievement_id).await
+        }
+    };
 
     match result {
         Ok(state) => crate::csrf::html_with_csrf(
@@ -72,6 +91,9 @@ async fn load_achievements_state(
     };
 
     Ok(AchievementsPageState {
+        viewed_username: None,
+        player_not_found: false,
+        overview_tracks: Vec::new(),
         robot_count: robominer_db::count_user_robots(pool, user_id).await?,
         achievements: robominer_db::list_achievement_page_states_for_user(pool, user_id).await?,
         total_requirements: robominer_db::list_achievement_page_total_requirements_for_user(
@@ -85,6 +107,48 @@ async fn load_achievements_state(
         points_summary: robominer_db::load_achievement_page_points_summary_for_user(pool, user_id)
             .await?,
         claim_message,
+    })
+}
+
+async fn load_achievements_overview(
+    pool: &robominer_db::MySqlPool,
+    username: String,
+) -> Result<AchievementsPageState, robominer_domain::DomainError> {
+    let Some(target_user_id) = robominer_db::get_user_id_by_username(pool, &username).await? else {
+        return Ok(AchievementsPageState {
+            viewed_username: Some(username),
+            player_not_found: true,
+            overview_tracks: Vec::new(),
+            robot_count: 0,
+            achievements: Vec::new(),
+            total_requirements: Vec::new(),
+            score_requirements: Vec::new(),
+            points_summary: robominer_db::AchievementPagePointsSummaryRecord {
+                points_earned: 0,
+                points_achievable: 0,
+            },
+            claim_message: None,
+        });
+    };
+
+    Ok(AchievementsPageState {
+        viewed_username: Some(username),
+        player_not_found: false,
+        overview_tracks: robominer_db::list_achievement_overview_tracks_for_user(
+            pool,
+            target_user_id,
+        )
+        .await?,
+        robot_count: 0,
+        achievements: Vec::new(),
+        total_requirements: Vec::new(),
+        score_requirements: Vec::new(),
+        points_summary: robominer_db::load_achievement_page_points_summary_for_user(
+            pool,
+            target_user_id,
+        )
+        .await?,
+        claim_message: None,
     })
 }
 

@@ -5548,6 +5548,19 @@ tbody.miningresults {
     text-transform: uppercase;
 }
 
+.achievements-overview-back {
+    margin: 0 0 16px;
+}
+
+.achievements-overview-back-link {
+    color: var(--ach-accent-secondary);
+    text-decoration: none;
+}
+
+.achievements-overview-back-link:hover {
+    text-decoration: underline;
+}
+
 .achievements-summary-list {
     display: flex;
     flex-wrap: wrap;
