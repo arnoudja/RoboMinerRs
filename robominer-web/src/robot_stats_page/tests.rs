@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
-use super::render::render_robot_stats_page;
+use super::render::{render_robot_stats_page, render_robot_stats_page_at};
 use super::{RobotStatsPageState, robot_stats_page};
 
 fn authenticated_request(path: &str) -> Request {
@@ -50,6 +50,32 @@ fn sample_robot_stats_state() -> RobotStatsPageState {
             total_runs: 4,
             score: 12.34,
         }],
+        recent_runs: vec![
+            robominer_db::MiningResultStateRecord {
+                robot_id: 7,
+                mining_queue_id: 101,
+                mining_area_name: "Area <One>".to_string(),
+                rally_result_id: Some(55),
+                score: 18.5,
+                total_ore_mined: 30,
+                total_tax: 5,
+                total_reward: 25,
+                creation_time_millis: 1_000,
+                mining_end_time_millis: 3_540_000,
+            },
+            robominer_db::MiningResultStateRecord {
+                robot_id: 7,
+                mining_queue_id: 100,
+                mining_area_name: "Older Area".to_string(),
+                rally_result_id: None,
+                score: 9.0,
+                total_ore_mined: 12,
+                total_tax: 2,
+                total_reward: 10,
+                creation_time_millis: 500,
+                mining_end_time_millis: 1_800_000,
+            },
+        ],
     }
 }
 
@@ -71,7 +97,12 @@ async fn robot_stats_requires_database_configuration() {
 
 #[test]
 fn robot_stats_rendering_escapes_fields_and_shows_tables() {
-    let html = render_robot_stats_page("Player".to_string(), None, &sample_robot_stats_state());
+    let html = render_robot_stats_page_at(
+        "Player".to_string(),
+        None,
+        &sample_robot_stats_state(),
+        3_600_000,
+    );
 
     assert!(html.contains(r#"class="robot-stats-page""#));
     assert!(html.contains("Bot &lt;Alpha&gt;"));
@@ -90,6 +121,12 @@ fn robot_stats_rendering_escapes_fields_and_shows_tables() {
     assert!(html.contains(">12.3<"));
     assert!(html.contains("Ore &lt;Iron&gt;"));
     assert!(html.contains(">80<"));
+    assert!(html.contains(r#"id="robot-stats-runs-title""#));
+    assert!(html.contains("Area &lt;One&gt;"));
+    assert!(html.contains(">18.5<"));
+    assert!(html.contains(r#"href="activity?rallyResultId=55">View rally</a>"#));
+    assert!(html.contains("1 minute ago") || html.contains("just now"));
+    assert!(html.contains(r#"class="robot-stats-muted">—</td>"#));
     assert!(html.contains(r#"href="leaderboard?tab=robots">Back to Top robots</a>"#));
     assert!(!html.contains("Robot not found."));
 }
@@ -106,10 +143,12 @@ fn robot_stats_rendering_shows_empty_sections_and_not_found() {
         }),
         ore_stats: Vec::new(),
         area_stats: Vec::new(),
+        recent_runs: Vec::new(),
     };
     let empty_html = render_robot_stats_page("Player".to_string(), None, &empty);
     assert!(empty_html.contains("No mining area history yet."));
     assert!(empty_html.contains("No claimed ore totals yet."));
+    assert!(empty_html.contains("No claimed runs yet."));
     assert!(
         empty_html
             .contains(r#">Ore per run</span><span class="robot-stats-summary-value">—</span>"#)
@@ -120,6 +159,7 @@ fn robot_stats_rendering_shows_empty_sections_and_not_found() {
         header: None,
         ore_stats: Vec::new(),
         area_stats: Vec::new(),
+        recent_runs: Vec::new(),
     };
     let missing_html = render_robot_stats_page("Player".to_string(), None, &missing);
     assert!(missing_html.contains("Robot not found."));

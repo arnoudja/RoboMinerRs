@@ -1,11 +1,14 @@
 use crate::{Request, Response, ServerConfig, login_redirect, query_i64, session_username};
 
+pub(super) const ROBOT_STATS_RECENT_RUNS_LIMIT: i64 = 10;
+
 #[derive(Debug)]
 pub(super) struct RobotStatsPageState {
     pub(super) robot_not_found: bool,
     pub(super) header: Option<robominer_db::RobotStatsHeaderRecord>,
     pub(super) ore_stats: Vec<robominer_db::RobotLifetimeOreStatRecord>,
     pub(super) area_stats: Vec<robominer_db::RobotMiningAreaStatRecord>,
+    pub(super) recent_runs: Vec<robominer_db::MiningResultStateRecord>,
 }
 
 impl RobotStatsPageState {
@@ -63,29 +66,35 @@ async fn load_robot_stats_state(
     robot_id: Option<i64>,
 ) -> Result<RobotStatsPageState, robominer_domain::DomainError> {
     let Some(robot_id) = robot_id else {
-        return Ok(RobotStatsPageState {
-            robot_not_found: true,
-            header: None,
-            ore_stats: Vec::new(),
-            area_stats: Vec::new(),
-        });
+        return Ok(empty_not_found_state());
     };
 
     let Some(header) = robominer_db::load_robot_stats_header(pool, robot_id).await? else {
-        return Ok(RobotStatsPageState {
-            robot_not_found: true,
-            header: None,
-            ore_stats: Vec::new(),
-            area_stats: Vec::new(),
-        });
+        return Ok(empty_not_found_state());
     };
 
     Ok(RobotStatsPageState {
         robot_not_found: false,
         ore_stats: robominer_db::list_robot_lifetime_ore_stats(pool, robot_id).await?,
         area_stats: robominer_db::list_robot_mining_area_stats(pool, robot_id).await?,
+        recent_runs: robominer_db::list_mining_result_states_for_robot(
+            pool,
+            robot_id,
+            ROBOT_STATS_RECENT_RUNS_LIMIT,
+        )
+        .await?,
         header: Some(header),
     })
+}
+
+fn empty_not_found_state() -> RobotStatsPageState {
+    RobotStatsPageState {
+        robot_not_found: true,
+        header: None,
+        ore_stats: Vec::new(),
+        area_stats: Vec::new(),
+        recent_runs: Vec::new(),
+    }
 }
 
 mod render;

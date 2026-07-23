@@ -1,4 +1,6 @@
-use crate::html::{escape_html, layout};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use crate::html::{escape_html, format_relative_time_millis, format_utc_millis, layout};
 use crate::robot_stats_page::RobotStatsPageState;
 
 pub(super) fn render_robot_stats_page(
@@ -6,10 +8,26 @@ pub(super) fn render_robot_stats_page(
     hud: Option<&str>,
     state: &RobotStatsPageState,
 ) -> String {
+    render_robot_stats_page_at(username, hud, state, robot_stats_now_millis())
+}
+
+fn robot_stats_now_millis() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| i64::try_from(duration.as_millis()).unwrap_or(0))
+        .unwrap_or(0)
+}
+
+pub(super) fn render_robot_stats_page_at(
+    username: String,
+    hud: Option<&str>,
+    state: &RobotStatsPageState,
+    now_millis: i64,
+) -> String {
     let body = if state.robot_not_found {
         render_robot_stats_not_found()
     } else {
-        render_robot_stats_overview(state)
+        render_robot_stats_overview(state, now_millis)
     };
 
     layout(
@@ -35,7 +53,7 @@ fn render_robot_stats_not_found() -> String {
     body
 }
 
-fn render_robot_stats_overview(state: &RobotStatsPageState) -> String {
+fn render_robot_stats_overview(state: &RobotStatsPageState, now_millis: i64) -> String {
     let header = state
         .header
         .as_ref()
@@ -84,9 +102,82 @@ fn render_robot_stats_overview(state: &RobotStatsPageState) -> String {
 
     render_area_stats_section(&mut body, &state.area_stats);
     render_ore_stats_section(&mut body, &state.ore_stats);
+    render_recent_runs_section(&mut body, &state.recent_runs, now_millis);
 
     body.push_str("</div>");
     body
+}
+
+fn render_recent_runs_section(
+    body: &mut String,
+    recent_runs: &[robominer_db::MiningResultStateRecord],
+    now_millis: i64,
+) {
+    body.push_str(
+        r#"<section class="robot-stats-panel" aria-labelledby="robot-stats-runs-title">"#,
+    );
+    body.push_str(
+        r#"<h2 id="robot-stats-runs-title" class="robot-stats-section-title">Latest runs</h2>"#,
+    );
+    body.push_str(
+        r#"<p class="robot-stats-section-hint">Most recent claimed mining runs for this robot.</p>"#,
+    );
+    if recent_runs.is_empty() {
+        body.push_str(r#"<p class="robot-stats-empty">No claimed runs yet.</p>"#);
+    } else {
+        body.push_str(r#"<table class="robot-stats-table">"#);
+        body.push_str(r#"<thead><tr>"#);
+        body.push_str(r#"<th scope="col">Area</th>"#);
+        body.push_str(r#"<th scope="col" class="robot-stats-col-numeric">Score</th>"#);
+        body.push_str(r#"<th scope="col" class="robot-stats-col-numeric">Mined</th>"#);
+        body.push_str(r#"<th scope="col" class="robot-stats-col-numeric">Tax</th>"#);
+        body.push_str(r#"<th scope="col" class="robot-stats-col-numeric">Net</th>"#);
+        body.push_str(r#"<th scope="col">Ended</th>"#);
+        body.push_str(r#"<th scope="col">Replay</th>"#);
+        body.push_str("</tr></thead><tbody>");
+        for run in recent_runs {
+            let ended_relative =
+                format_relative_time_millis(run.mining_end_time_millis, now_millis);
+            let ended_absolute = format_utc_millis(run.mining_end_time_millis);
+            body.push_str("<tr>");
+            body.push_str(&format!(
+                r#"<td>{}</td>"#,
+                escape_html(&run.mining_area_name)
+            ));
+            body.push_str(&format!(
+                r#"<td class="robot-stats-col-numeric">{:.1}</td>"#,
+                run.score
+            ));
+            body.push_str(&format!(
+                r#"<td class="robot-stats-col-numeric">{}</td>"#,
+                run.total_ore_mined
+            ));
+            body.push_str(&format!(
+                r#"<td class="robot-stats-col-numeric">{}</td>"#,
+                run.total_tax
+            ));
+            body.push_str(&format!(
+                r#"<td class="robot-stats-col-numeric">{}</td>"#,
+                run.total_reward
+            ));
+            body.push_str(&format!(
+                r#"<td><time datetime="{}" title="{}">{}</time></td>"#,
+                escape_html(&ended_absolute),
+                escape_html(&ended_absolute),
+                escape_html(&ended_relative)
+            ));
+            if let Some(rally_result_id) = run.rally_result_id {
+                body.push_str(&format!(
+                    r#"<td><a class="robot-stats-run-link" href="activity?rallyResultId={rally_result_id}">View rally</a></td>"#
+                ));
+            } else {
+                body.push_str(r#"<td class="robot-stats-muted">—</td>"#);
+            }
+            body.push_str("</tr>");
+        }
+        body.push_str("</tbody></table>");
+    }
+    body.push_str("</section>");
 }
 
 fn render_area_stats_section(

@@ -7256,3 +7256,16 @@ td.helptable {
     text-align: right;
     font-family: Consolas, "Courier New", monospace;
 }
+
+.robot-stats-page .robot-stats-run-link {
+    color: var(--rs-accent-secondary);
+    text-decoration: none;
+}
+
+.robot-stats-page .robot-stats-run-link:hover {
+    text-decoration: underline;
+}
+
+.robot-stats-page .robot-stats-muted {
+    color: var(--rs-text-muted);
+}
