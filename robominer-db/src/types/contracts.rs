@@ -320,9 +320,34 @@ pub struct LeaderboardMiningAreaScoreRecord {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LeaderboardTopRobotRecord {
+    pub robot_id: i64,
     pub robot_name: String,
     pub username: String,
     pub ore_per_run: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RobotStatsHeaderRecord {
+    pub robot_id: i64,
+    pub robot_name: String,
+    pub username: String,
+    pub total_mining_runs: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RobotLifetimeOreStatRecord {
+    pub ore_id: i64,
+    pub ore_name: String,
+    pub amount: i32,
+    pub tax: i32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RobotMiningAreaStatRecord {
+    pub mining_area_id: i64,
+    pub area_name: String,
+    pub total_runs: i32,
+    pub score: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

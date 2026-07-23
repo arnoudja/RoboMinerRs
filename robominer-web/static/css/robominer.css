@@ -7092,3 +7092,167 @@ td.helptable {
         font-size: 0.84rem;
     }
 }
+
+/******************************************************
+ * Robot stats overview
+ ******************************************************/
+
+.main:has(.robot-stats-page) {
+    background:
+        radial-gradient(ellipse at top, rgba(42, 58, 92, 0.35), transparent 55%),
+        linear-gradient(180deg, #0a101a 0%, #121a2b 100%);
+}
+
+.main:has(.robot-stats-page) .interface {
+    background: transparent;
+}
+
+.robot-stats-page {
+    --rs-border: #2a3a5c;
+    --rs-text: #d7e0f0;
+    --rs-text-muted: #8b9bb8;
+    --rs-accent: #ffd166;
+    --rs-accent-secondary: #00d4aa;
+    color: var(--rs-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 960px;
+}
+
+.robot-stats-summary {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--rs-border);
+    border-radius: 8px;
+    box-shadow:
+        0 10px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.robot-stats-summary-heading {
+    margin-bottom: 12px;
+}
+
+.robot-stats-page-title {
+    color: #fff4d6;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-shadow: 0 0 18px rgba(255, 209, 102, 0.28);
+}
+
+.robot-stats-owner {
+    color: var(--rs-text-muted);
+    margin: 6px 0 0;
+}
+
+.robot-stats-summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.robot-stats-summary-item {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid var(--rs-border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 7.5rem;
+    padding: 10px 12px;
+}
+
+.robot-stats-summary-label {
+    color: var(--rs-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.robot-stats-summary-value {
+    color: #fff4d6;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.robot-stats-back {
+    margin: 0 0 16px;
+}
+
+.robot-stats-back-link {
+    color: var(--rs-accent-secondary);
+    text-decoration: none;
+}
+
+.robot-stats-back-link:hover {
+    text-decoration: underline;
+}
+
+.robot-stats-panel {
+    background: rgba(18, 26, 43, 0.92);
+    border: 1px solid var(--rs-border);
+    border-radius: 8px;
+    margin: 0 0 16px;
+    padding: 16px 18px;
+}
+
+.robot-stats-section-title {
+    color: #fff4d6;
+    font-size: 1.1rem;
+    margin: 0 0 4px;
+}
+
+.robot-stats-section-hint {
+    color: var(--rs-text-muted);
+    font-size: 0.88rem;
+    margin: 0 0 12px;
+}
+
+.robot-stats-empty {
+    color: var(--rs-text-muted);
+    margin: 0;
+}
+
+.robot-stats-page .robot-stats-table {
+    background: transparent;
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-collapse: collapse;
+    margin: 0;
+    width: 100%;
+}
+
+.robot-stats-page .robot-stats-table th,
+.robot-stats-page .robot-stats-table td {
+    border: 1px solid rgba(42, 58, 92, 0.65);
+    color: var(--rs-text);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.robot-stats-page .robot-stats-table th {
+    background: rgba(10, 16, 26, 0.9);
+    color: var(--rs-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.robot-stats-page .robot-stats-table tbody tr {
+    background: rgba(10, 16, 26, 0.55);
+}
+
+.robot-stats-page .robot-stats-table tbody tr:hover {
+    background: rgba(16, 24, 39, 0.95);
+}
+
+.robot-stats-page .robot-stats-col-numeric {
+    text-align: right;
+    font-family: Consolas, "Courier New", monospace;
+}

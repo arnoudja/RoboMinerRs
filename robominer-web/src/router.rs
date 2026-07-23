@@ -4,7 +4,7 @@ use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, health,
     help_page, http, leaderboard_page, login_redirect, mining_area_overview_page,
     mining_queue_page, mining_results_page, query_i64, rally_pages, request_user_id, robot_page,
-    shop_page,
+    robot_stats_page, shop_page,
 };
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
@@ -131,6 +131,7 @@ async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
             mining_area_overview_page::mining_area_overview_page(request, config).await
         }
         "/robot" | "/Robot" => robot_page::robot_page(request, config).await,
+        "/robotStats" | "/RobotStats" => robot_stats_page::robot_stats_page(request, config).await,
         "/shop" | "/Shop" => shop_page::shop_page(request, config).await,
         _ => http::static_response(&request.path, &config.static_root, request).await,
     }
@@ -247,6 +248,7 @@ mod tests {
             "/miningQueue",
             "/miningResults",
             "/robot",
+            "/robotStats",
             "/shop",
         ] {
             let response = route(&request(path), &config).await;

@@ -2,8 +2,8 @@ use sqlx::MySqlPool;
 
 use crate::mappers::{robot_config_state_record, robot_record};
 use crate::{
-    RobotConfigPartAssetStateRecord, RobotConfigStateRecord, RobotMiningAreaScoreRecord,
-    RobotRecord,
+    RobotConfigPartAssetStateRecord, RobotConfigStateRecord, RobotLifetimeOreStatRecord,
+    RobotMiningAreaScoreRecord, RobotMiningAreaStatRecord, RobotRecord, RobotStatsHeaderRecord,
 };
 pub async fn list_robot_config_states(
     pool: &MySqlPool,
@@ -140,6 +140,88 @@ pub async fn get_robot(
     .await?;
 
     row.map(robot_record).transpose()
+}
+
+pub async fn load_robot_stats_header(
+    pool: &MySqlPool,
+    robot_id: i64,
+) -> Result<Option<RobotStatsHeaderRecord>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, String, String, i32)>(
+        "SELECT Robot.id, Robot.robotName, User.username, Robot.totalMiningRuns \
+         FROM Robot \
+         INNER JOIN User ON User.id = Robot.userId \
+         WHERE Robot.id = ?",
+    )
+    .bind(robot_id)
+    .fetch_optional(pool)
+    .await
+    .map(|row| {
+        row.map(
+            |(robot_id, robot_name, username, total_mining_runs)| RobotStatsHeaderRecord {
+                robot_id,
+                robot_name,
+                username,
+                total_mining_runs,
+            },
+        )
+    })
+}
+
+pub async fn list_robot_lifetime_ore_stats(
+    pool: &MySqlPool,
+    robot_id: i64,
+) -> Result<Vec<RobotLifetimeOreStatRecord>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, String, i32, i32)>(
+        "SELECT Ore.id, Ore.oreName, RobotLifetimeResult.amount, RobotLifetimeResult.tax \
+         FROM RobotLifetimeResult \
+         INNER JOIN Ore ON Ore.id = RobotLifetimeResult.oreId \
+         WHERE RobotLifetimeResult.robotId = ? \
+         ORDER BY Ore.id",
+    )
+    .bind(robot_id)
+    .fetch_all(pool)
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(
+                |(ore_id, ore_name, amount, tax)| RobotLifetimeOreStatRecord {
+                    ore_id,
+                    ore_name,
+                    amount,
+                    tax,
+                },
+            )
+            .collect()
+    })
+}
+
+pub async fn list_robot_mining_area_stats(
+    pool: &MySqlPool,
+    robot_id: i64,
+) -> Result<Vec<RobotMiningAreaStatRecord>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, String, i32, f64)>(
+        "SELECT MiningArea.id, MiningArea.areaName, RobotMiningAreaScore.totalRuns, \
+                RobotMiningAreaScore.score \
+         FROM RobotMiningAreaScore \
+         INNER JOIN MiningArea ON MiningArea.id = RobotMiningAreaScore.miningAreaId \
+         WHERE RobotMiningAreaScore.robotId = ? \
+         ORDER BY MiningArea.id",
+    )
+    .bind(robot_id)
+    .fetch_all(pool)
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(
+                |(mining_area_id, area_name, total_runs, score)| RobotMiningAreaStatRecord {
+                    mining_area_id,
+                    area_name,
+                    total_runs,
+                    score,
+                },
+            )
+            .collect()
+    })
 }
 
 pub async fn list_robot_mining_area_scores_for_user(

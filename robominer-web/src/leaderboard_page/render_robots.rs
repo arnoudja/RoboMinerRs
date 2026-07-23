@@ -58,7 +58,8 @@ pub(super) fn render_leaderboard_top_robots_section(
                 rank,
             ));
             body.push_str(&format!(
-                r#"<td class="leaderboard-name">{}</td>"#,
+                r#"<td class="leaderboard-name"><a class="leaderboard-row-link" href="robotStats?robotId={}">{}</a></td>"#,
+                robot.robot_id,
                 escape_html(&robot.robot_name),
             ));
             render_leaderboard_owner_cell(body, &robot.username, viewer_username);

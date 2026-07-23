@@ -101,6 +101,7 @@ fn leaderboard_rendering_escapes_dynamic_fields() {
                 total_runs: 5,
             }],
             vec![robominer_db::LeaderboardTopRobotRecord {
+                robot_id: 7,
                 robot_name: "Top \"Bot\"".to_string(),
                 username: "Top Owner".to_string(),
                 ore_per_run: 7.89,
@@ -150,6 +151,7 @@ fn leaderboard_rendering_shows_themed_shell_and_rank_rows() {
                 },
             ],
             vec![robominer_db::LeaderboardTopRobotRecord {
+                robot_id: 7,
                 robot_name: "Gamma".to_string(),
                 username: "Third".to_string(),
                 ore_per_run: 9.5,
@@ -211,6 +213,7 @@ fn leaderboard_rendering_shows_robots_tab_and_viewer_highlights() {
                 },
             ],
             vec![robominer_db::LeaderboardTopRobotRecord {
+                robot_id: 7,
                 robot_name: "My Bot".to_string(),
                 username: "Player".to_string(),
                 ore_per_run: 9.5,
@@ -234,6 +237,7 @@ fn leaderboard_rendering_shows_robots_tab_and_viewer_highlights() {
     assert!(html.contains(r#"href="leaderboard?tab=robots">Top robots</a>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Top robots</h2>"#));
     assert!(html.contains(r#"class="leaderboard-table leaderboard-table-split""#));
+    assert!(html.contains(r#"href="robotStats?robotId=7">My Bot</a>"#));
     assert!(html.contains("leaderboard-row-self"));
     assert!(html.contains(r#"class="leaderboard-you-badge">You</span>"#));
     assert!(html.contains(r#"class="leaderboard-section-title">Your standings</h2>"#));
@@ -399,6 +403,7 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
             vec![],
             vec![],
             vec![robominer_db::LeaderboardTopRobotRecord {
+                robot_id: 7,
                 robot_name: "Alpha".to_string(),
                 username: "Owner".to_string(),
                 ore_per_run: 8.0,

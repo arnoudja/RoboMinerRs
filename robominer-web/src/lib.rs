@@ -23,6 +23,7 @@ mod rally_pages;
 mod rate_limit;
 mod request_helpers;
 mod robot_page;
+mod robot_stats_page;
 mod router;
 mod server;
 mod session;

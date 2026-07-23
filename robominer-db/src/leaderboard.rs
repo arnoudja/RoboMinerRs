@@ -64,8 +64,8 @@ pub async fn list_leaderboard_top_robots(
     pool: &MySqlPool,
     maximum_results: i64,
 ) -> Result<Vec<LeaderboardTopRobotRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (String, String, f64)>(
-        "SELECT Robot.robotName, User.username, \
+    sqlx::query_as::<_, (i64, String, String, f64)>(
+        "SELECT Robot.id, Robot.robotName, User.username, \
                 CAST(COALESCE(SUM(RobotLifetimeResult.amount), 0) / Robot.totalMiningRuns AS DOUBLE) AS orePerRun \
          FROM Robot \
          INNER JOIN User ON User.id = Robot.userId \
@@ -81,7 +81,8 @@ pub async fn list_leaderboard_top_robots(
     .map(|rows| {
         rows.into_iter()
             .map(
-                |(robot_name, username, ore_per_run)| LeaderboardTopRobotRecord {
+                |(robot_id, robot_name, username, ore_per_run)| LeaderboardTopRobotRecord {
+                    robot_id,
                     robot_name,
                     username,
                     ore_per_run,
