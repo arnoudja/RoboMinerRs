@@ -280,8 +280,8 @@ fn achievements_overview_renders_other_player_tracks_without_claim_ui() {
     let done = achievement_card_position(&html, 2);
     let open = achievement_card_position(&html, 5);
     assert!(
-        done < open,
-        "completed tracks should sort before in-progress"
+        open < done,
+        "overview tracks should sort by achievement id descending"
     );
 }
 

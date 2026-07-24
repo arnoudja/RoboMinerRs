@@ -103,11 +103,7 @@ fn render_own_achievements(state: &AchievementsPageState) -> String {
 
 fn render_achievements_overview(viewed_username: &str, state: &AchievementsPageState) -> String {
     let mut tracks = state.overview_tracks.clone();
-    tracks.sort_by(|left, right| {
-        overview_track_completed(right)
-            .cmp(&overview_track_completed(left))
-            .then(right.achievement_id.cmp(&left.achievement_id))
-    });
+    tracks.sort_by(|left, right| right.achievement_id.cmp(&left.achievement_id));
 
     let mut body = String::from(r#"<div class="achievements-page achievements-page-overview">"#);
     render_achievements_summary(

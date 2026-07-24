@@ -247,7 +247,7 @@ pub async fn list_achievement_overview_tracks_for_user(
          FROM UserAchievement \
          INNER JOIN Achievement ON Achievement.id = UserAchievement.achievementId \
          WHERE UserAchievement.userId = ? \
-         ORDER BY UserAchievement.achievementId",
+         ORDER BY UserAchievement.achievementId DESC",
     )
     .bind(user_id)
     .fetch_all(pool)
