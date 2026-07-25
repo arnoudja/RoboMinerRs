@@ -2,9 +2,9 @@ use crate::Request;
 use crate::session::{self, session_clear_cookie_header};
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, health,
-    help_page, http, leaderboard_page, login_redirect, mining_area_overview_page,
-    mining_queue_page, mining_results_page, query_i64, rally_pages, request_user_id, robot_page,
-    robot_stats_page, shop_page,
+    help_page, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
+    mining_results_page, query_i64, rally_pages, request_user_id, robot_page, robot_stats_page,
+    shop_page, static_files,
 };
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
@@ -133,7 +133,7 @@ async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
         "/robot" | "/Robot" => robot_page::robot_page(request, config).await,
         "/robotStats" | "/RobotStats" => robot_stats_page::robot_stats_page(request, config).await,
         "/shop" | "/Shop" => shop_page::shop_page(request, config).await,
-        _ => http::static_response(&request.path, &config.static_root, request).await,
+        _ => static_files::static_response(&request.path, &config.static_root, request).await,
     }
 }
 
@@ -142,8 +142,9 @@ mod tests {
     use std::collections::HashMap;
     use std::path::{Path, PathBuf};
 
-    use crate::http::{split_target, static_file_path};
+    use crate::http::split_target;
     use crate::session::format_authenticated_cookie;
+    use crate::static_files::static_file_path;
     use crate::{Request, Response, ServerConfig};
 
     use super::route;

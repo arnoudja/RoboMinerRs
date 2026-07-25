@@ -32,6 +32,7 @@ mod settings;
 mod shop_page;
 pub mod startup;
 mod static_assets;
+mod static_files;
 
 pub use server::serve;
 pub use settings::{WebSettings, web_settings};
