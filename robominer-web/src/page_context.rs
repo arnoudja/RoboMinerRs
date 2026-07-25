@@ -24,14 +24,18 @@ impl From<sqlx::Error> for PageLoadError {
     }
 }
 
-/// Map a domain façade failure that is only expected to be SQL-backed (e.g. program
-/// create/update) into a page-load error. Non-database domain variants are rare on
-/// this path and surface as a configuration-style SQL error for HTTP mapping.
-impl From<robominer_domain::DomainError> for PageLoadError {
-    fn from(error: robominer_domain::DomainError) -> Self {
+impl PageLoadError {
+    /// Convert a domain façade failure that is only expected to be SQL-backed (e.g.
+    /// program create/update) into a page-load error. Only [`DomainError::Database`]
+    /// is accepted here; callers must handle other variants explicitly, since they
+    /// are not expected on page-load paths and shouldn't be silently reinterpreted
+    /// as SQL errors.
+    pub(crate) fn from_database(
+        error: robominer_domain::DomainError,
+    ) -> Result<Self, robominer_domain::DomainError> {
         match error {
-            robominer_domain::DomainError::Database(error) => Self(error),
-            other => Self(sqlx::Error::Configuration(other.to_string().into())),
+            robominer_domain::DomainError::Database(error) => Ok(Self(error)),
+            other => Err(other),
         }
     }
 }
