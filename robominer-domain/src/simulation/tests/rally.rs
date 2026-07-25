@@ -3,9 +3,9 @@ use robominer_sim::{MAX_ORE_TYPES, Position};
 
 use crate::error::DomainError;
 use crate::loadout::{
-    MiningAreaLoadout, RallyLoadout, RallyOutcome, RallyParticipantOutcome, RallyQueueEntry,
-    RobotLoadout, RobotLoadoutParts,
+    MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
 };
+use crate::simulation::{RallyOutcome, RallyParticipantOutcome};
 use crate::simulation::{
     completed_rally_record, run_rally_loadout_with_animation_seed, run_rally_loadout_with_seed,
 };

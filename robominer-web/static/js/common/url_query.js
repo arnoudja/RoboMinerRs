@@ -70,6 +70,7 @@
     global.RoboMinerUrlQuery = {
         getParam: getParam,
         hasAnyParam: hasAnyParam,
+        buildQueryString: buildQueryString,
         replaceQuery: replaceQuery,
         sync: sync
     };

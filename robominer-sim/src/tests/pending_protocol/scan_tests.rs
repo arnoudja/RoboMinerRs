@@ -184,7 +184,7 @@ fn scan_bridge_ore_distance_moves_toward_detected_ore() {
 #[test]
 fn scan_bridge_stand_on_ore_move_ore_distance_reaches_mine() {
     // Robot center starts in cell (0,0). Scanning while standing on ore yields
-    // oreDistance() == 0; that must not livelock pending move state.
+    // oreDistance() == 0; that must not livelock pending program motion state.
     let source = "scan(); move(oreDistance()); mine();";
     let program = robominer_program::compile_executable_source(source)
         .expect("stand-on-ore program should compile");

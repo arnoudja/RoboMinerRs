@@ -73,19 +73,19 @@
     }
 
     function collectQueueQueryParams() {
-        var params = [];
+        var params = {};
         var selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
         for (var index = 0; index < selects.length; index += 1) {
             var select = selects[index];
-            if (select.value) {
-                params.push(encodeURIComponent(select.name) + '=' + encodeURIComponent(select.value));
+            if (select.name && select.value) {
+                params[select.name] = select.value;
             }
         }
-        return params.join('&');
+        return params;
     }
 
     function refreshQueue() {
-        var query = collectQueueQueryParams();
+        var query = window.RoboMinerUrlQuery.buildQueryString(collectQueueQueryParams());
         window.location.replace(query ? 'miningQueue?' + query : 'miningQueue');
     }
 
@@ -179,7 +179,14 @@
         }
     }
 
-    window.miningQueueRemoveRun = removeQueuedRun;
+    document.addEventListener('click', function(event) {
+        var button = event.target.closest('.mining-queue-remove-btn');
+        if (!button) {
+            return;
+        }
+        event.preventDefault();
+        removeQueuedRun(button);
+    });
 
     function updateRobotEnqueueState(select) {
         var form = select.closest('.mining-queue-card');

@@ -16,6 +16,7 @@ const PAGE_SCRIPTS = [
     'shop/page.js',
     'mining_queue/page.js',
     'mining_results/page.js',
+    'mining_area_atlas/page.js',
 ];
 
 for (const relative of PAGE_SCRIPTS) {

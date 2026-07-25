@@ -2,7 +2,8 @@ use robominer_sim::Simulation;
 
 use crate::constants::RALLY_SIZE;
 use crate::error::DomainError;
-use crate::loadout::{RallyLoadout, RallyOutcome, RallyParticipantOutcome, RallyRun};
+use crate::loadout::RallyLoadout;
+use crate::simulation::{RallyOutcome, RallyParticipantOutcome, RallyRun};
 
 use super::legacy::{legacy_ore_animation_data, legacy_ore_ids};
 use super::robots::scripted_robot_from_loadout;

@@ -6,7 +6,8 @@ use robominer_db::{
 use robominer_sim::MAX_ORE_TYPES;
 
 use crate::error::DomainError;
-use crate::loadout::{PoolLoadout, PoolRallyOutcome, RallyLoadout, RallyOutcome};
+use crate::loadout::{PoolLoadout, RallyLoadout};
+use crate::simulation::{PoolRallyOutcome, RallyOutcome};
 
 use super::legacy::legacy_ore_ids;
 use super::pool::validate_pool_outcome;

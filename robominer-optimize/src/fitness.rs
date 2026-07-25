@@ -5,7 +5,7 @@ use robominer_db::{
     robot_parameters_for_parts,
 };
 use robominer_domain::{
-    MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
+    loadout::{MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts},
     run_rally_loadout_with_seed,
 };
 use robominer_program::{compile_source, unparse_program};
@@ -217,7 +217,7 @@ mod tests {
     use super::*;
     use crate::catalog::PartCatalog;
     use robominer_db::RobotPartRecord;
-    use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
+    use robominer_domain::loadout::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
     use robominer_program::compile_executable_source;
     use robominer_test_support::{
         ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,

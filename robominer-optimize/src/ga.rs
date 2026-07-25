@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn fixed_parts_mode_evolves_programs_only() {
-        use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
+        use robominer_domain::loadout::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
         use robominer_test_support::{
             ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
         };
@@ -452,7 +452,7 @@ mod tests {
 
     #[test]
     fn free_evolution_runs_and_keeps_hall_of_fame() {
-        use robominer_domain::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
+        use robominer_domain::loadout::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
         use robominer_test_support::{
             ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
         };

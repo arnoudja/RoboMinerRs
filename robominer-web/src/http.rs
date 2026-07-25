@@ -3,8 +3,6 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use sha2::{Digest, Sha256};
-
 /// Upper bound for HTTP request bodies (program saves are the largest forms).
 pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
 const STATIC_CACHE_CONTROL: &str = "public, max-age=604800";
@@ -306,12 +304,7 @@ fn read_static_file_entry(file_path: PathBuf) -> std::io::Result<StaticFileEntry
 }
 
 fn static_etag(body: &[u8]) -> String {
-    let digest = Sha256::digest(body);
-    let mut hex = String::with_capacity(32);
-    for byte in digest.iter().take(16) {
-        hex.push_str(&format!("{byte:02x}"));
-    }
-    format!("\"{hex}\"")
+    format!("\"{}\"", crate::static_assets::content_hash_hex(body))
 }
 
 fn etag_matches(if_none_match: &str, etag: &str) -> bool {

@@ -1,41 +1,23 @@
 (function() {
-    function miningAreaAtlasUrlParam(name) {
-        var search = window.location.search;
-        if (!search) {
-            return null;
-        }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === name && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
-        }
-        return null;
-    }
-
     function collectMiningAreaAtlasQueryParams() {
-        var params = [];
+        var params = {};
         var sortSelect = document.getElementById('miningAreaAtlasSort');
         var oreSelect = document.getElementById('miningAreaAtlasOreSort');
         var affordableOnly = document.getElementById('miningAreaAtlasAffordableOnly');
         if (sortSelect && sortSelect.value) {
-            params.push(encodeURIComponent('sort') + '=' + encodeURIComponent(sortSelect.value));
+            params.sort = sortSelect.value;
         }
         if (sortSelect && sortSelect.value === 'ore' && oreSelect && oreSelect.value) {
-            params.push(encodeURIComponent('oreId') + '=' + encodeURIComponent(oreSelect.value));
+            params.oreId = oreSelect.value;
         }
         if (affordableOnly && affordableOnly.checked) {
-            params.push(encodeURIComponent('affordable') + '=1');
+            params.affordable = '1';
         }
-        return params.join('&');
+        return params;
     }
 
     function syncMiningAreaAtlasUrl() {
-        var query = collectMiningAreaAtlasQueryParams();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', query ? 'miningAreaOverview?' + query : 'miningAreaOverview');
-        }
+        window.RoboMinerUrlQuery.sync('miningAreaOverview', collectMiningAreaAtlasQueryParams());
     }
 
     function compareAtlasRows(left, right, sortBy, oreId) {
@@ -99,7 +81,7 @@
     var oreSelect = document.getElementById('miningAreaAtlasOreSort');
     var affordableOnly = document.getElementById('miningAreaAtlasAffordableOnly');
     if (sortSelect) {
-        var preferredSort = miningAreaAtlasUrlParam('sort');
+        var preferredSort = window.RoboMinerUrlQuery.getParam('sort');
         if (preferredSort) {
             for (var sortIndex = 0; sortIndex < sortSelect.options.length; sortIndex += 1) {
                 if (sortSelect.options[sortIndex].value === preferredSort) {
@@ -110,7 +92,7 @@
         }
     }
     if (oreSelect) {
-        var preferredOreId = miningAreaAtlasUrlParam('oreId');
+        var preferredOreId = window.RoboMinerUrlQuery.getParam('oreId');
         if (preferredOreId) {
             for (var oreIndex = 0; oreIndex < oreSelect.options.length; oreIndex += 1) {
                 if (oreSelect.options[oreIndex].value === preferredOreId) {
@@ -121,7 +103,7 @@
         }
     }
     if (affordableOnly) {
-        affordableOnly.checked = miningAreaAtlasUrlParam('affordable') === '1';
+        affordableOnly.checked = window.RoboMinerUrlQuery.getParam('affordable') === '1';
     }
     applyMiningAreaAtlasControls();
     if (sortSelect) {

@@ -159,7 +159,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/leaderboard` | `leaderboard_page/tests.rs` | `read_model_pages.rs` | `leaderboard_read_model_db_cli.rs` | |
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
 | `/activity` | `rally_pages/tests.rs` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
-| `/help*` | `help_page/tests.rs` | — | — | Static help content in `static/help/` |
+| `/help*` | `help_page/tests.rs`, `help_pages/render.rs` | — | — | Route handler in `help_page/`; content/rendering in `help_pages/`; bodies in `static/help/` |
 | Rally worker / claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs` | Background engine, not a page POST |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |
 | Simulation goldens | — | — | — | `robominer-domain/tests/rally_golden.rs`, `pool_golden.rs` |

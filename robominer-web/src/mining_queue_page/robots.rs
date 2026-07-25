@@ -176,7 +176,7 @@ pub(super) fn render_queue_run_row(
     body.push_str(r#"<div class="mining-queue-run-row">"#);
     if show_remove_button {
         body.push_str(&format!(
-            r#"<button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" aria-label="Remove queued run in {}" onclick="if(window.miningQueueRemoveRun){{window.miningQueueRemoveRun(this);}} return false;">{MINING_QUEUE_TRASH_ICON}</button>"#,
+            r#"<button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
             item.mining_queue_id,
             escape_html(&item.area_name)
         ));

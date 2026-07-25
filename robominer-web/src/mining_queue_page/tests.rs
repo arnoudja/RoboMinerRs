@@ -149,7 +149,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
     assert!(html.contains("Area &amp; Two"));
     assert!(html.contains("Area &lt;Queued&gt;"));
     assert!(html.contains(r#"mining-queue-status-queued">Waiting for rally</span>"#));
-    assert!(html.contains(r#"onclick="if(window.miningQueueRemoveRun){window.miningQueueRemoveRun(this);} return false;""#));
+    assert!(!html.contains(r#"onclick="if(window.miningQueueRemoveRun)"#));
     assert!(
         html.contains(r#"type="button" class="mining-queue-remove-btn" data-queue-item-id="101""#)
     );

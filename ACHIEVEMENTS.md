@@ -6,7 +6,7 @@ mining areas, wallet caps, achievement points) and can unlock successor
 achievements.
 
 Seed data lives in `resources/database/gameData.sql` (achievement section from line
-~882). Runtime logic is in `robominer-db/src/achievements.rs`, exposed through
+~882). Runtime logic is in `robominer-db/src/achievements/`, exposed through
 `robominer-domain` and `robominer-web`.
 
 ## Database model
@@ -202,9 +202,9 @@ Unlocked after Cerbonium Mastery step 10.
 | Initial wallet cap | `robominer-db/src/initial_ore_wallet_max.rs` |
 | Schema | `resources/database/createDatabase.sql` |
 | Seed data | `resources/database/gameData.sql` |
-| Claim + queries | `robominer-db/src/achievements.rs` |
+| Claim + queries | `robominer-db/src/achievements/` |
 | Rejection copy | `robominer-domain/src/rejection_messages.rs` |
-| Web page | `robominer-web/src/achievements_page.rs` |
+| Web page | `robominer-web/src/achievements_page/` |
 | Signup auto-claim | `robominer-db/src/users.rs` (`create_user`) |
 | Engine CLI | `robominer-engine` achievement commands |
 

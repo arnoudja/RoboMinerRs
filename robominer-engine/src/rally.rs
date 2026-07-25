@@ -339,8 +339,8 @@ fn shutdown_signal() -> ShutdownSignal {
 }
 
 fn print_rally_summary(
-    loadout: &robominer_domain::RallyLoadout,
-    outcome: &robominer_domain::RallyOutcome,
+    loadout: &robominer_domain::loadout::RallyLoadout,
+    outcome: &robominer_domain::simulation::RallyOutcome,
 ) {
     println!("Rally complete");
     println!("mining area: {}", outcome.mining_area_id);
@@ -382,8 +382,8 @@ fn print_rally_summary(
 }
 
 fn print_pool_summary(
-    loadout: &robominer_domain::PoolLoadout,
-    outcome: &robominer_domain::PoolRallyOutcome,
+    loadout: &robominer_domain::loadout::PoolLoadout,
+    outcome: &robominer_domain::simulation::PoolRallyOutcome,
 ) {
     println!("Pool rally complete");
     println!("pool: {}", outcome.pool_id);
@@ -412,7 +412,7 @@ fn print_pool_summary(
     }
 }
 
-fn pool_ore_summary(ore_results: &[robominer_domain::PoolItemOreOutcome]) -> String {
+fn pool_ore_summary(ore_results: &[robominer_domain::simulation::PoolItemOreOutcome]) -> String {
     if ore_results.is_empty() {
         return "none".to_string();
     }

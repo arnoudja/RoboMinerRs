@@ -1,10 +1,8 @@
 mod support;
 
-use robominer_domain::{completed_rally_record, run_rally_loadout_with_animation_seed};
+use robominer_domain::{run_rally_loadout_with_animation_seed, simulation::completed_rally_record};
 use robominer_sim::{ANIMATION_PAYLOAD_VERSION, AnimationPayload};
-use robominer_test_support::{
-    load_fixture, round_golden_coord, round_golden_score, update_golden_enabled, write_fixture,
-};
+use robominer_test_support::{assert_or_update_golden, round_golden_coord, round_golden_score};
 use serde::{Deserialize, Serialize};
 use support::{RallyScenario, RallyScenarioId};
 
@@ -196,34 +194,28 @@ fn assert_animation_payload(scenario: &RallyScenario, animation_data: &str) {
 
 #[test]
 fn rally_outcomes_match_golden_fixtures() {
-    if update_golden_enabled(UPDATE_ENV_VAR) {
-        for id in RallyScenarioId::ALL {
+    assert_or_update_golden(
+        UPDATE_ENV_VAR,
+        MANIFEST_DIR,
+        FIXTURE_SUBDIR,
+        RallyScenarioId::ALL,
+        |id| id.as_str(),
+        |id| {
             let scenario = id.build();
-            write_fixture(
-                MANIFEST_DIR,
-                FIXTURE_SUBDIR,
-                id.as_str(),
-                &build_fixture(&scenario).fixture,
+            let built = build_fixture(&scenario);
+            (built.fixture, (scenario, built.animation_data))
+        },
+        |_id, expected, actual, (scenario, animation_data)| {
+            assert_eq!(expected.scenario, actual.scenario);
+            assert_eq!(expected.seed, actual.seed);
+            assert_eq!(expected.mining_area_id, actual.mining_area_id);
+            assert_eq!(expected.final_time, actual.final_time);
+            assert_eq!(expected.participants, actual.participants);
+            assert_eq!(
+                expected.completed_participants,
+                actual.completed_participants
             );
-        }
-        return;
-    }
-
-    for id in RallyScenarioId::ALL {
-        let scenario = id.build();
-        let expected: GoldenRallyFixture = load_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, id.as_str());
-        let built = build_fixture(&scenario);
-        let actual = built.fixture;
-
-        assert_eq!(expected.scenario, actual.scenario);
-        assert_eq!(expected.seed, actual.seed);
-        assert_eq!(expected.mining_area_id, actual.mining_area_id);
-        assert_eq!(expected.final_time, actual.final_time);
-        assert_eq!(expected.participants, actual.participants);
-        assert_eq!(
-            expected.completed_participants,
-            actual.completed_participants
-        );
-        assert_animation_payload(&scenario, &built.animation_data);
-    }
+            assert_animation_payload(&scenario, &animation_data);
+        },
+    );
 }

@@ -149,6 +149,7 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
     ));
     assert!(html.contains("Apply queues part and program changes for this robot."));
     assert!(html.contains(r#"src="js/common/panel_state.js?v="#));
+    assert!(html.contains(r#"src="js/common/url_query.js?v="#));
     assert!(html.contains(r#"src="js/robot/page.js?v="#));
     assert!(html.contains(r#"href="miningQueue?robotId=7""#));
     assert!(html.contains(r#"data-compiled-size="12""#));

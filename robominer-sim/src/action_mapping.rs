@@ -264,7 +264,7 @@ mod tests {
     }
 
     #[test]
-    fn map_awaiting_executable_starts_pending_move() {
+    fn map_awaiting_executable_starts_pending_sim_motion() {
         let spec = test_spec();
         let (pending, robot_action) = map_awaiting_executable(ExecutableAction::Move(2.0), &spec);
 

@@ -11,7 +11,7 @@ pub fn is_zero_motion(amount: f64) -> bool {
     amount.abs() <= MOTION_EPSILON
 }
 
-/// Result of applying one cycle's worth of travel to a pending move/rotate.
+/// Result of applying one cycle's worth of travel to pending program/sim motion.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MotionStepOutcome {
     /// The chunk finished normally and more signed distance remains.
@@ -55,7 +55,7 @@ pub fn expand_motion_steps(mut signed_amount: f64, speed: f64) -> Vec<f64> {
     steps
 }
 
-/// Record actual travel against pending move/rotate state.
+/// Record actual travel against pending program/sim motion state.
 pub fn record_motion_step(
     remaining: &mut f64,
     accumulated: &mut f64,

@@ -1,4 +1,4 @@
-use robominer_domain::{
+use robominer_domain::loadout::{
     MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RobotLoadout, RobotLoadoutParts,
 };
 use robominer_test_support::{
@@ -12,12 +12,37 @@ pub struct PoolScenario {
     pub loadout: PoolLoadout,
 }
 
-pub fn scenario(name: &str) -> PoolScenario {
-    match name {
-        "single_miner_pool_seed0" => single_miner_pool_seed0(),
-        "dual_item_pool_seed17" => dual_item_pool_seed17(),
-        other => panic!("unknown pool golden scenario: {other}"),
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PoolScenarioId {
+    SingleMinerPoolSeed0,
+    DualItemPoolSeed17,
+}
+
+impl PoolScenarioId {
+    pub const ALL: &'static [Self] = &[Self::SingleMinerPoolSeed0, Self::DualItemPoolSeed17];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SingleMinerPoolSeed0 => "single_miner_pool_seed0",
+            Self::DualItemPoolSeed17 => "dual_item_pool_seed17",
+        }
     }
+
+    pub fn build(self) -> PoolScenario {
+        match self {
+            Self::SingleMinerPoolSeed0 => single_miner_pool_seed0(),
+            Self::DualItemPoolSeed17 => dual_item_pool_seed17(),
+        }
+    }
+}
+
+pub fn scenario(name: &str) -> PoolScenario {
+    PoolScenarioId::ALL
+        .iter()
+        .copied()
+        .find(|id| id.as_str() == name)
+        .unwrap_or_else(|| panic!("unknown pool golden scenario: {name}"))
+        .build()
 }
 
 fn single_miner_pool_seed0() -> PoolScenario {

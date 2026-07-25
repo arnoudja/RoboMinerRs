@@ -48,20 +48,20 @@
     }
 
     function collectShopQueryParams() {
-        var params = [];
+        var params = {};
         var typeSelect = document.getElementById('robotPartTypeId');
         var tierSelect = document.getElementById('tierId');
         if (typeSelect && typeSelect.value) {
-            params.push(encodeURIComponent('selectedRobotPartTypeId') + '=' + encodeURIComponent(typeSelect.value));
+            params.selectedRobotPartTypeId = typeSelect.value;
         }
         if (tierSelect && tierSelect.value) {
-            params.push(encodeURIComponent('selectedTierId') + '=' + encodeURIComponent(tierSelect.value));
+            params.selectedTierId = tierSelect.value;
         }
         var activePanel = document.querySelector('.shop-detail-panel-active');
         if (activePanel) {
-            params.push(encodeURIComponent('selectedRobotPartId') + '=' + encodeURIComponent(activePanel.getAttribute('data-part-id')));
+            params.selectedRobotPartId = activePanel.getAttribute('data-part-id');
         }
-        return params.join('&');
+        return params;
     }
 
     function syncShopUrl() {

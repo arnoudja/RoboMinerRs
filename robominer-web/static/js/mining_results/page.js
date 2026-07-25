@@ -1,45 +1,27 @@
 (function() {
     function collectMiningResultsQueryParams() {
-        var params = [];
+        var params = {};
         var robotFilter = document.getElementById('miningResultsRobotFilter');
         var areaFilter = document.getElementById('miningResultsAreaFilter');
         var sortFilter = document.getElementById('miningResultsSortFilter');
         var activePanel = document.querySelector('.mining-results-detail-panel-active:not(.mining-results-filter-hidden)');
         if (robotFilter && robotFilter.value) {
-            params.push(encodeURIComponent('robotId') + '=' + encodeURIComponent(robotFilter.value));
+            params.robotId = robotFilter.value;
         }
         if (areaFilter && areaFilter.value) {
-            params.push(encodeURIComponent('area') + '=' + encodeURIComponent(areaFilter.value));
+            params.area = areaFilter.value;
         }
         if (sortFilter && sortFilter.value && sortFilter.value !== 'newest') {
-            params.push(encodeURIComponent('sort') + '=' + encodeURIComponent(sortFilter.value));
+            params.sort = sortFilter.value;
         }
         if (activePanel) {
-            params.push(encodeURIComponent('runId') + '=' + encodeURIComponent(activePanel.getAttribute('data-run-id')));
+            params.runId = activePanel.getAttribute('data-run-id');
         }
-        return params.join('&');
+        return params;
     }
 
     function syncMiningResultsUrl() {
-        var query = collectMiningResultsQueryParams();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', query ? 'miningResults?' + query : 'miningResults');
-        }
-    }
-
-    function miningResultsUrlParam(name) {
-        var search = window.location.search;
-        if (!search) {
-            return null;
-        }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === name && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
-        }
-        return null;
+        window.RoboMinerUrlQuery.sync('miningResults', collectMiningResultsQueryParams());
     }
 
     function selectMiningResultRun(runId, updateUrl) {
@@ -104,7 +86,7 @@
     }
 
     function syncReplayReturnLinks() {
-        var query = collectMiningResultsQueryParams();
+        var query = window.RoboMinerUrlQuery.buildQueryString(collectMiningResultsQueryParams());
         var links = document.querySelectorAll('.mining-results-replay-link-primary[data-rally-result-id]');
         for (var linkIndex = 0; linkIndex < links.length; linkIndex += 1) {
             var link = links[linkIndex];
@@ -193,7 +175,7 @@
     var areaFilter = document.getElementById('miningResultsAreaFilter');
     var sortFilter = document.getElementById('miningResultsSortFilter');
     if (robotFilter) {
-        var preferredRobotId = miningResultsUrlParam('robotId');
+        var preferredRobotId = window.RoboMinerUrlQuery.getParam('robotId');
         if (preferredRobotId) {
             for (var robotIndex = 0; robotIndex < robotFilter.options.length; robotIndex += 1) {
                 if (robotFilter.options[robotIndex].value === preferredRobotId) {
@@ -204,7 +186,7 @@
         }
     }
     if (areaFilter) {
-        var preferredArea = miningResultsUrlParam('area');
+        var preferredArea = window.RoboMinerUrlQuery.getParam('area');
         if (preferredArea) {
             for (var areaIndex = 0; areaIndex < areaFilter.options.length; areaIndex += 1) {
                 if (areaFilter.options[areaIndex].value === preferredArea) {
@@ -215,7 +197,7 @@
         }
     }
     if (sortFilter) {
-        var preferredSort = miningResultsUrlParam('sort');
+        var preferredSort = window.RoboMinerUrlQuery.getParam('sort');
         if (preferredSort) {
             for (var sortIndex = 0; sortIndex < sortFilter.options.length; sortIndex += 1) {
                 if (sortFilter.options[sortIndex].value === preferredSort) {
@@ -226,7 +208,7 @@
         }
     }
     applyMiningResultsSort();
-    applyMiningResultsFilters(miningResultsUrlParam('runId'));
+    applyMiningResultsFilters(window.RoboMinerUrlQuery.getParam('runId'));
 
     if (robotFilter) {
         robotFilter.addEventListener('change', function() {

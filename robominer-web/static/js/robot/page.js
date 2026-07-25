@@ -20,9 +20,7 @@
     }
 
     function syncRobotUrl(robotId) {
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', 'robot?robotId=' + encodeURIComponent(robotId));
-        }
+        window.RoboMinerUrlQuery.sync('robot', { robotId: robotId });
     }
 
     function updateRobotQuickLinks(panel) {
@@ -205,22 +203,7 @@
         }
     }
 
-    function robotUrlId() {
-        var search = window.location.search;
-        if (!search) {
-            return null;
-        }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === 'robotId' && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
-        }
-        return null;
-    }
-
-    var preferredRobotId = robotUrlId();
+    var preferredRobotId = window.RoboMinerUrlQuery.getParam('robotId');
     if (preferredRobotId && document.querySelector('.robot-config-panel[data-robot-id="' + preferredRobotId + '"]')) {
         selectRobot(preferredRobotId, false);
     } else {

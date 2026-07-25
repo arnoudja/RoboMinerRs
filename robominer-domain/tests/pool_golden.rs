@@ -1,18 +1,14 @@
 #[path = "support/pool.rs"]
 mod pool;
 
-use pool::{PoolScenario, scenario as pool_scenario};
-use robominer_domain::{completed_pool_rally_record, run_pool_loadout_with_seed};
-use robominer_test_support::{
-    load_fixture, round_golden_score, update_golden_enabled, write_fixture,
-};
+use pool::{PoolScenario, PoolScenarioId};
+use robominer_domain::{run_pool_loadout_with_seed, simulation::completed_pool_rally_record};
+use robominer_test_support::{assert_or_update_golden, round_golden_score};
 use serde::{Deserialize, Serialize};
 
 const MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const FIXTURE_SUBDIR: &str = "pool";
 const UPDATE_ENV_VAR: &str = "UPDATE_POOL_GOLDEN";
-
-const SCENARIOS: &[&str] = &["single_miner_pool_seed0", "dual_item_pool_seed17"];
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct GoldenPoolOreResult {
@@ -98,24 +94,20 @@ fn build_fixture(scenario: &PoolScenario) -> GoldenPoolFixture {
 
 #[test]
 fn pool_outcomes_match_golden_fixtures() {
-    if update_golden_enabled(UPDATE_ENV_VAR) {
-        for name in SCENARIOS {
-            let scenario = pool_scenario(name);
-            write_fixture(
-                MANIFEST_DIR,
-                FIXTURE_SUBDIR,
-                name,
-                &build_fixture(&scenario),
+    assert_or_update_golden(
+        UPDATE_ENV_VAR,
+        MANIFEST_DIR,
+        FIXTURE_SUBDIR,
+        PoolScenarioId::ALL,
+        |id| id.as_str(),
+        |id| (build_fixture(&id.build()), ()),
+        |id, expected, actual, ()| {
+            assert_eq!(
+                expected,
+                actual,
+                "scenario {} pool outcome mismatch",
+                id.as_str()
             );
-        }
-        return;
-    }
-
-    for name in SCENARIOS {
-        let scenario = pool_scenario(name);
-        let expected: GoldenPoolFixture = load_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, name);
-        let actual = build_fixture(&scenario);
-
-        assert_eq!(expected, actual, "scenario {name} pool outcome mismatch");
-    }
+        },
+    );
 }

@@ -12,11 +12,8 @@ pub mod simulation;
 pub use error::{DomainError, RobotPartSlot};
 
 pub use loadout::{
-    MiningAreaLoadout, PoolItemLoadout, PoolItemOreOutcome, PoolItemOutcome, PoolLoadout,
-    PoolRallyOutcome, RallyLoadout, RallyOutcome, RallyParticipantOutcome, RallyQueueEntry,
-    RallyRun, RobotLoadout, RobotLoadoutParts, load_mining_area_loadout,
-    load_next_pool_rally_loadout, load_next_rally_loadout, load_pool_loadout, load_robot_loadout,
-    mining_rally_queue_is_ready,
+    load_mining_area_loadout, load_next_pool_rally_loadout, load_next_rally_loadout,
+    load_pool_loadout, load_robot_loadout, mining_rally_queue_is_ready,
 };
 
 pub use rejection_messages::{
@@ -34,7 +31,6 @@ pub use rejection_messages::{
 pub use robot_config::{create_program_source, update_program_source};
 
 pub use simulation::{
-    completed_pool_rally_record, completed_rally_record, persist_pool_rally_outcome,
-    persist_rally_outcome, run_pool_loadout_with_seed, run_rally_loadout_with_animation_seed,
-    run_rally_loadout_with_seed,
+    persist_pool_rally_outcome, persist_rally_outcome, run_pool_loadout_with_seed,
+    run_rally_loadout_with_animation_seed, run_rally_loadout_with_seed,
 };

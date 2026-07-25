@@ -23,30 +23,12 @@
     }
 
     function syncEditCodeUrl(sourceId) {
-        if (!(window.history && window.history.replaceState)) {
-            return;
-        }
-        var url = 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId);
-        var line = editCodeUrlParam('line');
+        var params = { nextProgramSourceId: sourceId };
+        var line = window.RoboMinerUrlQuery.getParam('line');
         if (line) {
-            url += '&line=' + encodeURIComponent(line);
+            params.line = line;
         }
-        window.history.replaceState(null, '', url);
-    }
-
-    function editCodeUrlParam(name) {
-        var search = window.location.search;
-        if (!search) {
-            return null;
-        }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === name && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
-        }
-        return null;
+        window.RoboMinerUrlQuery.sync('editCode', params);
     }
 
     function focusSourceLine(panel, lineNumber) {
@@ -421,11 +403,11 @@
     }
 
     function editCodeUrlSourceId() {
-        return editCodeUrlParam('nextProgramSourceId');
+        return window.RoboMinerUrlQuery.getParam('nextProgramSourceId');
     }
 
     function editCodeUrlLine() {
-        var raw = editCodeUrlParam('line');
+        var raw = window.RoboMinerUrlQuery.getParam('line');
         if (!raw) {
             return null;
         }

@@ -1,8 +1,8 @@
 use crate::error::DomainError;
 use crate::loadout::{
-    MiningAreaLoadout, PoolItemLoadout, PoolItemOreOutcome, PoolItemOutcome, PoolLoadout,
-    PoolRallyOutcome, RobotLoadout, RobotLoadoutParts,
+    MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RobotLoadout, RobotLoadoutParts,
 };
+use crate::simulation::{PoolItemOreOutcome, PoolItemOutcome, PoolRallyOutcome};
 use crate::simulation::{completed_pool_rally_record, run_pool_loadout_with_seed};
 use robominer_db::CompletedPoolItemOreRecord;
 use robominer_test_support::{

@@ -2,7 +2,8 @@ use robominer_sim::{MAX_ORE_TYPES, Simulation};
 
 use crate::constants::RALLY_SIZE;
 use crate::error::DomainError;
-use crate::loadout::{PoolItemOreOutcome, PoolItemOutcome, PoolLoadout, PoolRallyOutcome};
+use crate::loadout::PoolLoadout;
+use crate::simulation::{PoolItemOreOutcome, PoolItemOutcome, PoolRallyOutcome};
 
 use super::legacy::legacy_ore_ids;
 use super::robots::{scripted_robot_from_loadout, scripted_robot_from_loadout_source};

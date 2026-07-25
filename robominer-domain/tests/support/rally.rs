@@ -1,6 +1,6 @@
 use robominer_db::MiningAreaOreSupplyRecord;
 
-use robominer_domain::{
+use robominer_domain::loadout::{
     MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
 };
 use robominer_program::compatibility_fixture_source;

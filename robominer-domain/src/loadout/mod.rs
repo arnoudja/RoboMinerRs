@@ -15,7 +15,6 @@ pub use load::{
     load_pool_loadout, load_robot_loadout, mining_rally_queue_is_ready,
 };
 pub use types::{
-    MiningAreaLoadout, PoolItemLoadout, PoolItemOreOutcome, PoolItemOutcome, PoolLoadout,
-    PoolRallyOutcome, RallyLoadout, RallyOutcome, RallyParticipantOutcome, RallyQueueEntry,
-    RallyRun, RobotLoadout, RobotLoadoutParts,
+    MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout,
+    RobotLoadoutParts,
 };

@@ -1,6 +1,6 @@
 use super::format::escape_html;
 use super::shell::{app_shell_header, page_footer};
-use crate::static_assets::script_src_tag;
+use crate::static_assets::{robominer_stylesheet_tag, script_src_tag};
 
 const APP_DIALOG_JS: &str = include_str!("../../static/js/common/app_dialog.js");
 
@@ -17,7 +17,7 @@ pub(crate) fn layout(
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <link rel="stylesheet" type="text/css" href="css/robominer.css">
+        {}
         <title>{}</title>
     </head>
     <body>
@@ -33,6 +33,7 @@ pub(crate) fn layout(
         {}
     </body>
 </html>"##,
+        robominer_stylesheet_tag(),
         escape_html(title),
         app_shell_header(current_form, username, hud_markup),
         body,

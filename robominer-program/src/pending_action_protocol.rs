@@ -208,5 +208,5 @@
 //! - Motion chunking: [`motion`]
 //! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`, `complete_scan_now`,
 //!   `build_execution_context`
-//! - Sim pending move/rotate: `map_awaiting_executable`, `pending_sim_motion_chunks`,
+//! - Sim pending motion: `map_awaiting_executable`, `pending_sim_motion_chunks`,
 //!   `record_action_result`, `should_preserve_program_action_result`, `next_robot_action`

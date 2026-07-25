@@ -15,7 +15,7 @@ use robominer_db::{
     MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord, RobotRecord,
 };
 use robominer_domain::{
-    MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts,
+    loadout::{MiningAreaLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout, RobotLoadoutParts},
     run_rally_loadout_with_seed,
 };
 use robominer_program::compatibility_fixture_source;

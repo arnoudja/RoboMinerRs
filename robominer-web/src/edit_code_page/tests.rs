@@ -135,6 +135,7 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     assert!(html.contains("Compiled size"));
     assert!(html.contains(">12<"));
     assert!(html.contains(r#"src="js/common/panel_state.js?v="#));
+    assert!(html.contains(r#"src="js/common/url_query.js?v="#));
     assert!(html.contains(r#"src="js/edit_code/page.js?v="#));
     assert!(html.contains(r#"class="edit-code-quick-link" href="robot""#));
     assert!(html.contains(r#"class="edit-code-quick-link" href="helpRobotProgram""#));

@@ -178,6 +178,7 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
     );
     assert!(html.contains(r#"data-sort-reward="27""#));
     assert!(html.contains(r#"data-rally-result-id="99""#));
+    assert!(html.contains(r#"src="js/common/url_query.js?v="#));
     assert!(html.contains(r#"src="js/mining_results/page.js?v="#));
     assert!(!html.contains("function applyMiningResultsSort()"));
     assert!(html.contains(r#"data-robot-id="1" data-area-name="Area &amp; One""#));
