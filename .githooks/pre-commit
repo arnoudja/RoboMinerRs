@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Match CI: refuse commits that would fail `cargo fmt --check` or Clippy.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -E '\.rs$' >/dev/null; then
+  exit 0
+fi
+
+echo "pre-commit: cargo fmt --all -- --check"
+cargo fmt --all -- --check
+
+echo "pre-commit: cargo clippy --workspace -- -D warnings"
+cargo clippy --workspace -- -D warnings

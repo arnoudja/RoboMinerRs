@@ -1,5 +1,25 @@
 # Contributing
 
+## Git hooks
+
+This repo ships a pre-commit hook that runs the same rustfmt and Clippy checks as
+CI when staged files include Rust sources:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+That sets a repo-local `core.hooksPath` (not global). After that, commits that
+stage `.rs` files run:
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace -- -D warnings
+```
+
+Bypass with `git commit --no-verify` only when you intentionally need to (CI will
+still enforce both checks).
+
 ## Running tests
 
 Use the same entry point locally and in CI:

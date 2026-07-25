@@ -1,25 +1,31 @@
 ---
-description: Run rustfmt check before creating git commits
+description: Run rustfmt and clippy before creating git commits
 alwaysApply: true
 ---
 
-# Format Before Commit
+# Format And Clippy Before Commit
 
 Before creating any git commit that includes Rust sources (`.rs` files), verify
-workspace formatting so CI `cargo fmt --check` does not fail:
+workspace formatting and Clippy so CI does not fail:
 
 ```sh
 cargo fmt --all -- --check
+cargo clippy --workspace -- -D warnings
 ```
 
-If the check reports diffs:
+If `cargo fmt` reports diffs:
 
 1. Run `cargo fmt --all`
 2. Stage the reformatted files with the commit
-3. Re-run `cargo fmt --all -- --check` and confirm it passes
+3. Re-run both checks and confirm they pass
 
 Do this **before** `git commit`, as part of the commit prep (alongside status/diff/log),
 not as a follow-up CI fix commit when it could have been caught locally.
+
+The repo also ships `.githooks/pre-commit` (enable with
+`git config core.hooksPath .githooks`) which runs the same checks when `.rs`
+files are staged. Still run the checks yourself when preparing a commit; do not
+rely only on the hook (for example when using environments that skip hooks).
 
 Skip only when the commit contains no `.rs` files (for example docs-only or
 `.cursor/rules` changes).

@@ -92,6 +92,12 @@ Run Clippy with warnings denied (same as CI):
 cargo clippy --workspace -- -D warnings
 ```
 
+Enable the repo pre-commit hook (rustfmt + Clippy when `.rs` files are staged):
+
+```sh
+git config core.hooksPath .githooks
+```
+
 Run a compile check without producing final binaries:
 
 ```sh
