@@ -1,3 +1,4 @@
+mod password;
 mod read;
 mod write;
 
