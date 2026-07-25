@@ -1,4 +1,4 @@
-use crate::html::assert_contains_all;
+use crate::html::{assert_contains_all, assert_html_contains};
 
 use super::super::render::render_shop_page;
 use super::super::robot_part_transaction_rejection_message;
@@ -115,8 +115,9 @@ fn shop_inventory_sorts_sellable_parts_first() {
         part_a_pos < part_z_pos,
         "sellable inventory rows should appear before assigned-only rows (A at {part_a_pos}, Z at {part_z_pos})"
     );
-    assert!(
-        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="2""#)
+    assert_html_contains(
+        &html,
+        r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="2""#,
     );
 }
 
@@ -134,9 +135,12 @@ fn shop_sell_all_unassigned_is_disabled_without_stock() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-danger" disabled title="No unassigned robot parts to sell.">Sell all unassigned</button>"#));
-    assert!(
-        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="0""#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"<button type="submit" class="shop-btn shop-btn-danger" disabled title="No unassigned robot parts to sell.">Sell all unassigned</button>"#,
+            r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="0""#,
+        ],
     );
 }
 

@@ -1,4 +1,4 @@
-use crate::html::{assert_contains_all, assert_html_not_contains};
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
 use super::super::default_shop_tier_id;
 use super::super::render::render_shop_page;
@@ -87,8 +87,11 @@ fn shop_quality_filter_lists_only_mineable_ores() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"<option value="1" selected>Cerbonium quality</option>"#));
-    assert!(!html.contains("Ore &amp; Two quality</option>"));
+    assert_html_contains(
+        &html,
+        r#"<option value="1" selected>Cerbonium quality</option>"#,
+    );
+    assert_html_not_contains(&html, "Ore &amp; Two quality</option>");
 }
 
 #[test]
@@ -207,10 +210,13 @@ fn shop_engine_catalog_cards_show_forward_power() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(
-        r#"<span class="shop-part-highlight-label">Forward</span><span class="shop-part-highlight-value">18</span>"#
-    ));
-    assert!(html.contains("Engine power</dt><dd>18 forward, 8 backward, 75 rotate</dd>"));
+    assert_contains_all(
+        &html,
+        &[
+            r#"<span class="shop-part-highlight-label">Forward</span><span class="shop-part-highlight-value">18</span>"#,
+            "Engine power</dt><dd>18 forward, 8 backward, 75 rotate</dd>",
+        ],
+    );
 }
 
 #[test]
@@ -261,10 +267,13 @@ fn shop_memory_module_catalog_cards_show_memory_size() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(
-        r#"<span class="shop-part-highlight-label">Memory</span><span class="shop-part-highlight-value">16</span>"#
-    ));
-    assert!(html.contains("Memory size:</dt><dd>16</dd>"));
+    assert_contains_all(
+        &html,
+        &[
+            r#"<span class="shop-part-highlight-label">Memory</span><span class="shop-part-highlight-value">16</span>"#,
+            "Memory size:</dt><dd>16</dd>",
+        ],
+    );
 }
 
 #[test]
@@ -315,9 +324,15 @@ fn shop_scanner_catalog_cards_show_scan_distance() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(
-        r#"<span class="shop-part-highlight-label">Scan</span><span class="shop-part-highlight-value">50</span>"#
-    ));
-    assert!(html.contains("Scan time:</dt><dd>6 cycles"));
-    assert!(!html.contains(r#"<span class="shop-part-highlight-value">6 cyc</span>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"<span class="shop-part-highlight-label">Scan</span><span class="shop-part-highlight-value">50</span>"#,
+            "Scan time:</dt><dd>6 cycles",
+        ],
+    );
+    assert_html_not_contains(
+        &html,
+        r#"<span class="shop-part-highlight-value">6 cyc</span>"#,
+    );
 }

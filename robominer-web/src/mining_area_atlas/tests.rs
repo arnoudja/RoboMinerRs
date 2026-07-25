@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
+
 use super::costs::{area_costs_affordable, render_area_entry_costs};
 use super::links::{
     MiningAreaAtlasLinkTarget, mining_area_atlas_url, mining_area_atlas_url_for_ore,
@@ -27,16 +29,17 @@ fn area_entry_cost_label_reports_affordability() {
     let affordable = HashMap::from([(2, 40)]);
 
     assert!(area_costs_affordable(&costs, &affordable));
-    assert!(
-        render_area_entry_costs(&costs, &affordable)
-            .contains(r#"<span class="mining-area-atlas-cost-affordable">30 Iron ✓</span>"#)
+    assert_html_contains(
+        &render_area_entry_costs(&costs, &affordable),
+        r#"<span class="mining-area-atlas-cost-affordable">30 Iron ✓</span>"#,
     );
 
     let unaffordable = HashMap::from([(2, 10)]);
     assert!(!area_costs_affordable(&costs, &unaffordable));
-    assert!(render_area_entry_costs(&costs, &unaffordable).contains(
-        r#"<span class="mining-area-atlas-cost-unaffordable">Need 20 more Iron.</span>"#
-    ));
+    assert_html_contains(
+        &render_area_entry_costs(&costs, &unaffordable),
+        r#"<span class="mining-area-atlas-cost-unaffordable">Need 20 more Iron.</span>"#,
+    );
 }
 
 #[test]
@@ -58,9 +61,10 @@ fn render_area_entry_costs_colors_each_line_by_affordability() {
     let cost_refs: Vec<_> = costs.iter().collect();
     let ore_amounts = HashMap::from([(1, 15), (2, 5)]);
 
-    assert!(render_area_entry_costs(&cost_refs, &ore_amounts).contains(
-        r#"<span class="mining-area-atlas-cost-affordable">10 Iron ✓</span><br><span class="mining-area-atlas-cost-unaffordable">Need 15 more Gold.</span>"#
-    ));
+    assert_html_contains(
+        &render_area_entry_costs(&cost_refs, &ore_amounts),
+        r#"<span class="mining-area-atlas-cost-affordable">10 Iron ✓</span><br><span class="mining-area-atlas-cost-unaffordable">Need 15 more Gold.</span>"#,
+    );
 }
 
 #[test]
@@ -84,8 +88,13 @@ fn render_mining_area_atlas_ore_link_escapes_fields() {
         "shop-atlas-link",
     );
 
-    assert!(link.contains(r#"href="miningAreaOverview?sort=ore&amp;oreId=2""#));
-    assert!(link.contains("Areas rich in Ore &amp; Two"));
+    assert_contains_all(
+        &link,
+        &[
+            r#"href="miningAreaOverview?sort=ore&amp;oreId=2""#,
+            "Areas rich in Ore &amp; Two",
+        ],
+    );
 }
 
 #[test]
@@ -112,7 +121,12 @@ fn render_mining_area_atlas_uses_area_links() {
         &[],
     );
 
-    assert!(body.contains("mining-area-atlas-area-link"));
-    assert!(!body.contains("mining-area-atlas-area-select"));
-    assert!(body.contains(r#"href="miningQueue?infoMiningAreaId=10""#));
+    assert_contains_all(
+        &body,
+        &[
+            "mining-area-atlas-area-link",
+            r#"href="miningQueue?infoMiningAreaId=10""#,
+        ],
+    );
+    assert_html_not_contains(&body, "mining-area-atlas-area-select");
 }
