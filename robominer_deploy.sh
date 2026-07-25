@@ -10,7 +10,11 @@ sudo install -D -m 0755 "deploy/robominer-engine" "/opt/robominer/bin/robominer-
 sudo install -D -m 0755 "deploy/robominer-web" "/opt/robominer/bin/robominer-web"
 
 echo "### Placing static contents ###"
-sudo install -m 0644 "deploy/static/css/robominer.css" "/opt/robominer/static/css/robominer.css"
+sudo install -d -o robominer -g robominer -m 0755 "/opt/robominer/static/css"
+sudo install -m 0644 deploy/static/css/* "/opt/robominer/static/css/"
+
+sudo install -d -o robominer -g robominer -m 0755 "/opt/robominer/static/js"
+sudo rsync -a --delete --chown=robominer:robominer --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r "deploy/static/js/" "/opt/robominer/static/js/"
 
 echo "### Migrating database ###"
 sudo /opt/robominer/bin/robominer-engine migrate
