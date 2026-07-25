@@ -33,11 +33,11 @@ The install script does **not** migrate the database unless you pass `--migrate`
 After a plain install, apply pending schema changes before starting services:
 
 ```bash
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
 ```
 
-`migrate-status --check` exits non-zero while any embedded migration is still
+`migrate status --check` exits non-zero while any embedded migration is still
 pending. The engine unit runs that as `ExecStartPre` so a stale schema fails
 startup instead of looping on SQL errors.
 
@@ -107,8 +107,8 @@ sudo install -d -o root -g robominer -m 0750 /etc/robominer
 sudoedit /etc/robominer/robominer.conf
 sudo chown root:robominer /etc/robominer/robominer.conf
 sudo chmod 0640 /etc/robominer/robominer.conf
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
 sudo install -D -m 0644 deploy/systemd/robominer-engine.service \
   /etc/systemd/system/robominer-engine.service
 sudo systemctl daemon-reload
@@ -156,7 +156,7 @@ The engine unit runs:
 ```bash
 /opt/robominer/bin/robominer-engine \
   --config /etc/robominer/robominer.conf \
-  run-rallies --loop --sleep-seconds 5 --persist
+  rally rallies --loop --sleep-seconds 5 --persist
 ```
 
 Logs go to journald:
@@ -187,7 +187,7 @@ After installing or updating binaries, apply pending migrations before starting
 ```bash
 sudo /opt/robominer/bin/robominer-engine \
   --config /etc/robominer/robominer.conf \
-  migrate
+  migrate apply
 ```
 
 Fresh installs can combine this with the install script:
@@ -206,7 +206,7 @@ Confirm the Rust binary can connect to the production database:
 ```bash
 /opt/robominer/bin/robominer-engine \
   --config /etc/robominer/robominer.conf \
-  run-rallies --once
+  rally rallies --once
 ```
 
 This is a dry run. It should print how many mining areas were processed and
@@ -219,7 +219,7 @@ Run one persisted Rust pass manually before enabling the long-running service:
 ```bash
 /opt/robominer/bin/robominer-engine \
   --config /etc/robominer/robominer.conf \
-  run-rallies --once --persist
+  rally rallies --once --persist
 ```
 
 Verify recent rows in `MiningQueue`, `RallyResult`, `MiningOreResult`,

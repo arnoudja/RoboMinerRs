@@ -170,7 +170,8 @@ impl RobotConfigFixture {
         vec![
             "--database-url".to_string(),
             database_url.to_string(),
-            "update-robot-config".to_string(),
+            "robot".to_string(),
+            "update-config".to_string(),
             "--user-id".to_string(),
             self.user_id.to_string(),
             "--robot-id".to_string(),

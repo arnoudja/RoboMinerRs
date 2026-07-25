@@ -30,13 +30,14 @@ async fn mining_area_overview_states_report_lifetime_percentages() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "mining-area-overview-states".to_string(),
+        "mining".to_string(),
+        "area-overview-states".to_string(),
     ]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
         output.status.success(),
-        "expected mining-area-overview-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining area-overview-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

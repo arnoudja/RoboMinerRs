@@ -4,6 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::help_pages;
 use crate::html::layout;
 use crate::rally_pages::{ActivityFeedQuery, ActivityPageState};
+use crate::static_assets::PageStylesheet;
 
 use super::render_feed::render_activity_rallies;
 use super::render_sidebar::render_activity_sidebar;
@@ -56,7 +57,14 @@ pub fn render_activity_page_at(
     render_activity_sidebar(&mut body, state, now_millis);
     body.push_str("</div></div>");
 
-    layout("RoboMiner - Activity", "activity", &username, hud, &body)
+    layout(
+        "RoboMiner - Activity",
+        "activity",
+        &username,
+        hud,
+        &body,
+        &[PageStylesheet::Activity],
+    )
 }
 
 fn render_activity_header(body: &mut String) {

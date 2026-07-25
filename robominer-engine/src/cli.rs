@@ -17,6 +17,180 @@ pub(crate) struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub(crate) enum Command {
+    /// Mining queue and read model commands.
+    #[command(subcommand)]
+    Mining(MiningCommand),
+    /// Activity feed read model commands.
+    #[command(subcommand)]
+    Activity(ActivityCommand),
+    /// Shop catalog and purchase commands.
+    #[command(subcommand)]
+    Shop(ShopCommand),
+    /// Robot configuration commands.
+    #[command(subcommand)]
+    Robot(RobotCommand),
+    /// Program source and verification commands.
+    #[command(subcommand)]
+    Program(ProgramCommand),
+    /// User account commands.
+    #[command(subcommand)]
+    User(UserCommand),
+    /// Achievement progress commands.
+    #[command(subcommand)]
+    Achievement(AchievementCommand),
+    /// Rally simulation commands.
+    #[command(subcommand)]
+    Rally(RallyCommand),
+    /// Schema migration commands.
+    #[command(subcommand)]
+    Migrate(MigrateCommand),
+    /// Leaderboard read model commands.
+    #[command(subcommand)]
+    Leaderboard(LeaderboardCommand),
+    /// User asset read model commands.
+    #[command(subcommand)]
+    Assets(AssetsCommand),
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum MiningCommand {
+    ClaimResults {
+        #[arg(long)]
+        user_id: i64,
+    },
+    Enqueue {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        robot_id: i64,
+
+        #[arg(long)]
+        mining_area_id: i64,
+
+        #[arg(long)]
+        fill: bool,
+    },
+    CancelQueue {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        mining_queue_id: i64,
+    },
+    QueueStates {
+        #[arg(long)]
+        user_id: i64,
+    },
+    QueuePageStates {
+        #[arg(long)]
+        user_id: i64,
+    },
+    AreaScores {
+        #[arg(long)]
+        user_id: i64,
+    },
+    ResultStates {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long, default_value_t = 10)]
+        max_results: i64,
+    },
+    AreaOverviewStates,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum ActivityCommand {
+    States {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long, default_value_t = 5)]
+        max_users: i64,
+
+        #[arg(long, default_value_t = 10)]
+        max_rallies: i64,
+    },
+    RallyViewState {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        rally_result_id: i64,
+
+        #[arg(long)]
+        require_user_result: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum ShopCommand {
+    Buy {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        robot_part_id: i64,
+    },
+    Sell {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        robot_part_id: i64,
+    },
+    RobotPartStates {
+        #[arg(long)]
+        user_id: i64,
+    },
+    CatalogStates,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum RobotCommand {
+    ConfigStates {
+        #[arg(long)]
+        user_id: i64,
+    },
+    UpdateConfig {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        robot_id: i64,
+
+        #[arg(long)]
+        robot_name: String,
+
+        #[arg(long)]
+        program_source_id: i64,
+
+        #[arg(long)]
+        ore_container_id: i64,
+
+        #[arg(long)]
+        mining_unit_id: i64,
+
+        #[arg(long)]
+        battery_id: i64,
+
+        #[arg(long)]
+        memory_module_id: i64,
+
+        #[arg(long)]
+        cpu_id: i64,
+
+        #[arg(long)]
+        engine_id: i64,
+
+        #[arg(long)]
+        ore_scanner_id: i64,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum ProgramCommand {
     Verify {
         program_source_id: i64,
     },
@@ -62,132 +236,7 @@ pub(crate) enum Command {
         #[arg(long, default_value_t = 90)]
         rotate_speed: i32,
     },
-    ClaimResults {
-        #[arg(long)]
-        user_id: i64,
-    },
-    EnqueueMining {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        robot_id: i64,
-
-        #[arg(long)]
-        mining_area_id: i64,
-
-        #[arg(long)]
-        fill: bool,
-    },
-    CancelMiningQueue {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        mining_queue_id: i64,
-    },
-    MiningQueueStates {
-        #[arg(long)]
-        user_id: i64,
-    },
-    MiningQueuePageStates {
-        #[arg(long)]
-        user_id: i64,
-    },
-    ActivityStates {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long, default_value_t = 5)]
-        max_users: i64,
-
-        #[arg(long, default_value_t = 10)]
-        max_rallies: i64,
-    },
-    RallyViewState {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        rally_result_id: i64,
-
-        #[arg(long)]
-        require_user_result: bool,
-    },
-    UserOreAssetStates {
-        #[arg(long)]
-        user_id: i64,
-    },
-    MiningAreaScores {
-        #[arg(long)]
-        user_id: i64,
-    },
-    MiningResultStates {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long, default_value_t = 10)]
-        max_results: i64,
-    },
-    MiningAreaOverviewStates,
-    BuyRobotPart {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        robot_part_id: i64,
-    },
-    SellRobotPart {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        robot_part_id: i64,
-    },
-    ShopRobotPartStates {
-        #[arg(long)]
-        user_id: i64,
-    },
-    ShopCatalogStates,
-    RobotConfigStates {
-        #[arg(long)]
-        user_id: i64,
-    },
-    UpdateRobotConfig {
-        #[arg(long)]
-        user_id: i64,
-
-        #[arg(long)]
-        robot_id: i64,
-
-        #[arg(long)]
-        robot_name: String,
-
-        #[arg(long)]
-        program_source_id: i64,
-
-        #[arg(long)]
-        ore_container_id: i64,
-
-        #[arg(long)]
-        mining_unit_id: i64,
-
-        #[arg(long)]
-        battery_id: i64,
-
-        #[arg(long)]
-        memory_module_id: i64,
-
-        #[arg(long)]
-        cpu_id: i64,
-
-        #[arg(long)]
-        engine_id: i64,
-
-        #[arg(long)]
-        ore_scanner_id: i64,
-    },
-    CreateProgramSource {
+    CreateSource {
         #[arg(long)]
         user_id: i64,
 
@@ -197,7 +246,7 @@ pub(crate) enum Command {
         #[arg(long)]
         source_code: String,
     },
-    UpdateProgramSource {
+    UpdateSource {
         #[arg(long)]
         user_id: i64,
 
@@ -210,22 +259,26 @@ pub(crate) enum Command {
         #[arg(long)]
         source_code: String,
     },
-    DeleteProgramSource {
+    DeleteSource {
         #[arg(long)]
         user_id: i64,
 
         #[arg(long)]
         program_source_id: i64,
     },
-    ProgramSourceStates {
+    SourceStates {
         #[arg(long)]
         user_id: i64,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum UserCommand {
     AccountState {
         #[arg(long)]
         user_id: i64,
     },
-    CreateUser {
+    Create {
         #[arg(long)]
         username: String,
 
@@ -235,7 +288,7 @@ pub(crate) enum Command {
         #[arg(long)]
         password: String,
     },
-    UpdateUserAccount {
+    UpdateAccount {
         #[arg(long)]
         user_id: i64,
 
@@ -255,33 +308,37 @@ pub(crate) enum Command {
         #[arg(long)]
         password: String,
     },
-    VerifyUserPassword {
+    VerifyPassword {
         #[arg(long)]
         user_id: i64,
 
         #[arg(long)]
         password: String,
     },
-    ClaimAchievementStep {
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum AchievementCommand {
+    ClaimStep {
         #[arg(long)]
         user_id: i64,
 
         #[arg(long)]
         achievement_id: i64,
     },
-    AchievementStates {
+    States {
         #[arg(long)]
         user_id: i64,
     },
-    AchievementPageStates {
+    PageStates {
         #[arg(long)]
         user_id: i64,
     },
-    LeaderboardStates {
-        #[arg(long, default_value_t = 10)]
-        max_entries: i64,
-    },
-    RunRally {
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum RallyCommand {
+    Run {
         #[arg(long)]
         mining_area_id: i64,
 
@@ -294,7 +351,7 @@ pub(crate) enum Command {
         #[arg(long)]
         result_data_file: Option<PathBuf>,
     },
-    RunPool {
+    Pool {
         #[arg(long)]
         pool_id: i64,
 
@@ -310,7 +367,7 @@ pub(crate) enum Command {
         #[arg(long, default_value_t = 100)]
         max_rallies: u64,
     },
-    RunRallies {
+    Rallies {
         #[arg(long)]
         once: bool,
 
@@ -326,12 +383,32 @@ pub(crate) enum Command {
         #[arg(long)]
         persist: bool,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum MigrateCommand {
     /// Apply pending schema migrations (or baseline a current schema).
-    Migrate,
+    Apply,
     /// Show applied/pending schema migrations.
-    MigrateStatus {
+    Status {
         /// Exit non-zero when any embedded migration is still pending.
         #[arg(long)]
         check: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum LeaderboardCommand {
+    States {
+        #[arg(long, default_value_t = 10)]
+        max_entries: i64,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum AssetsCommand {
+    OreStates {
+        #[arg(long)]
+        user_id: i64,
     },
 }

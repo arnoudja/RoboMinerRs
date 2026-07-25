@@ -127,7 +127,7 @@ main() {
     fi
     if [[ "${INSTALL_ENGINE}" == true ]]; then
         echo "Engine preflight dry run:"
-        echo "  ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} run-rallies --once"
+        echo "  ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} rally rallies --once"
     fi
     if [[ "${INSTALL_WEB}" == true ]]; then
         echo "Web help page:"

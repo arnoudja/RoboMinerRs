@@ -56,7 +56,8 @@ async fn activity_states_report_recent_users_and_rallies() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "activity-states".to_string(),
+        "activity".to_string(),
+        "states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--max-users".to_string(),
@@ -68,7 +69,7 @@ async fn activity_states_report_recent_users_and_rallies() {
 
     assert!(
         output.status.success(),
-        "expected activity-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected activity states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

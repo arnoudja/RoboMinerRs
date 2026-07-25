@@ -78,7 +78,8 @@ async fn leaderboard_states_report_ranked_rows() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "leaderboard-states".to_string(),
+        "leaderboard".to_string(),
+        "states".to_string(),
         "--max-entries".to_string(),
         "100".to_string(),
     ]);
@@ -86,7 +87,7 @@ async fn leaderboard_states_report_ranked_rows() {
 
     assert!(
         output.status.success(),
-        "expected leaderboard-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected leaderboard states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
     assert!(

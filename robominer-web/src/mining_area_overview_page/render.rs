@@ -1,6 +1,7 @@
 use crate::html::layout;
 use crate::mining_area_atlas::{MiningAreaAtlasMode, render_mining_area_atlas};
 use crate::mining_area_overview_page::MiningAreaOverviewPageState;
+use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_mining_area_overview_page(
     username: String,
@@ -25,5 +26,6 @@ pub(super) fn render_mining_area_overview_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::MiningAreaAtlas],
     )
 }

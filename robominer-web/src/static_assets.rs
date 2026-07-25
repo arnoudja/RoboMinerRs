@@ -66,11 +66,6 @@ pub(crate) fn page_scripts_with_panel_and_url_query(page_src: &str, page_js: &st
     ])
 }
 
-// `robominer.css` was split into page-scoped files under `static/css/pages/`
-// (see git history for the original monolith). Each is served as its own
-// `/css/pages/<name>.css` static file and content-hashed independently, so
-// changing one page's styles doesn't bust the cache for every other page.
-// Order matches the original section order in the monolithic stylesheet.
 const LAYOUT_CSS: &str = include_str!("../static/css/pages/layout.css");
 const AUTH_CSS: &str = include_str!("../static/css/pages/auth.css");
 const ACCOUNT_CSS: &str = include_str!("../static/css/pages/account.css");
@@ -87,37 +82,64 @@ const HELP_CSS: &str = include_str!("../static/css/pages/help.css");
 const LEADERBOARD_CSS: &str = include_str!("../static/css/pages/leaderboard.css");
 const ROBOT_STATS_CSS: &str = include_str!("../static/css/pages/robot_stats.css");
 
-/// Page CSS files in original monolith section order, paired with their
-/// `static/` relative path so the served file and the hashed `<link>` stay coherent.
-const PAGE_STYLESHEETS: &[(&str, &str)] = &[
-    ("css/pages/layout.css", LAYOUT_CSS),
-    ("css/pages/auth.css", AUTH_CSS),
-    ("css/pages/account.css", ACCOUNT_CSS),
-    ("css/pages/mining_queue.css", MINING_QUEUE_CSS),
-    ("css/pages/mining_area_atlas.css", MINING_AREA_ATLAS_CSS),
-    ("css/pages/mining_results.css", MINING_RESULTS_CSS),
-    ("css/pages/activity.css", ACTIVITY_CSS),
-    ("css/pages/rally.css", RALLY_CSS),
-    ("css/pages/edit_code.css", EDIT_CODE_CSS),
-    ("css/pages/robot.css", ROBOT_CSS),
-    ("css/pages/achievements.css", ACHIEVEMENTS_CSS),
-    ("css/pages/shop.css", SHOP_CSS),
-    ("css/pages/help.css", HELP_CSS),
-    ("css/pages/leaderboard.css", LEADERBOARD_CSS),
-    ("css/pages/robot_stats.css", ROBOT_STATS_CSS),
-];
+/// Page-specific stylesheet beyond the shared layout shell.
+///
+/// Always paired with `layout.css` via [`robominer_stylesheet_tags`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum PageStylesheet {
+    Auth,
+    Account,
+    MiningQueue,
+    MiningAreaAtlas,
+    MiningResults,
+    Activity,
+    Rally,
+    EditCode,
+    Robot,
+    Achievements,
+    Shop,
+    Help,
+    Leaderboard,
+    RobotStats,
+}
 
-/// Canonical RoboMiner stylesheet links (one per page-scoped CSS file, in
-/// original section order), each with its own cache-busting content hash.
-pub(crate) fn robominer_stylesheet_tag() -> String {
-    let mut out = String::new();
-    for (href_path, contents) in PAGE_STYLESHEETS {
-        out.push_str(&stylesheet_href_tag(href_path, contents));
-        out.push('\n');
+impl PageStylesheet {
+    fn entry(self) -> (&'static str, &'static str) {
+        match self {
+            Self::Auth => ("css/pages/auth.css", AUTH_CSS),
+            Self::Account => ("css/pages/account.css", ACCOUNT_CSS),
+            Self::MiningQueue => ("css/pages/mining_queue.css", MINING_QUEUE_CSS),
+            Self::MiningAreaAtlas => ("css/pages/mining_area_atlas.css", MINING_AREA_ATLAS_CSS),
+            Self::MiningResults => ("css/pages/mining_results.css", MINING_RESULTS_CSS),
+            Self::Activity => ("css/pages/activity.css", ACTIVITY_CSS),
+            Self::Rally => ("css/pages/rally.css", RALLY_CSS),
+            Self::EditCode => ("css/pages/edit_code.css", EDIT_CODE_CSS),
+            Self::Robot => ("css/pages/robot.css", ROBOT_CSS),
+            Self::Achievements => ("css/pages/achievements.css", ACHIEVEMENTS_CSS),
+            Self::Shop => ("css/pages/shop.css", SHOP_CSS),
+            Self::Help => ("css/pages/help.css", HELP_CSS),
+            Self::Leaderboard => ("css/pages/leaderboard.css", LEADERBOARD_CSS),
+            Self::RobotStats => ("css/pages/robot_stats.css", ROBOT_STATS_CSS),
+        }
     }
-    // Drop the trailing newline so callers embedding this in a single
-    // `{}` slot don't accumulate stray blank lines.
-    out.pop();
+}
+
+/// Stylesheet links for a page: always `layout.css`, then each requested page file
+/// (deduped, stable enum order). Each link is content-hashed independently.
+pub(crate) fn robominer_stylesheet_tags(pages: &[PageStylesheet]) -> String {
+    let mut out = String::new();
+    out.push_str(&stylesheet_href_tag("css/pages/layout.css", LAYOUT_CSS));
+    let mut emitted = [false; 14];
+    for page in pages {
+        let index = *page as usize;
+        if emitted[index] {
+            continue;
+        }
+        emitted[index] = true;
+        let (href_path, contents) = page.entry();
+        out.push('\n');
+        out.push_str(&stylesheet_href_tag(href_path, contents));
+    }
     out
 }
 
@@ -146,28 +168,20 @@ mod tests {
     }
 
     #[test]
-    fn robominer_stylesheet_tag_emits_one_link_per_page_css_file_in_order() {
-        let tags = robominer_stylesheet_tag();
+    fn robominer_stylesheet_tags_always_include_layout_then_requested_pages() {
+        let tags = robominer_stylesheet_tags(&[PageStylesheet::Help]);
         let links: Vec<&str> = tags.lines().collect();
-        assert_eq!(links.len(), PAGE_STYLESHEETS.len());
-        for ((href_path, _), link) in PAGE_STYLESHEETS.iter().zip(links.iter()) {
-            assert!(
-                link.contains(&format!(r#"href="{href_path}?v="#)),
-                "expected link for {href_path}, got: {link}"
-            );
-        }
-        // Spot check original section order is preserved: layout first, auth
-        // before account, leaderboard before the trailing robot-stats page.
-        assert!(
-            tags.find("css/pages/layout.css").unwrap() < tags.find("css/pages/auth.css").unwrap()
-        );
-        assert!(
-            tags.find("css/pages/auth.css").unwrap() < tags.find("css/pages/account.css").unwrap()
-        );
-        assert!(
-            tags.find("css/pages/leaderboard.css").unwrap()
-                < tags.find("css/pages/robot_stats.css").unwrap()
-        );
+        assert_eq!(links.len(), 2);
+        assert!(links[0].contains(r#"href="css/pages/layout.css?v="#));
+        assert!(links[1].contains(r#"href="css/pages/help.css?v="#));
+        assert!(!tags.contains("css/pages/shop.css"));
+    }
+
+    #[test]
+    fn robominer_stylesheet_tags_dedupe_repeated_pages() {
+        let tags = robominer_stylesheet_tags(&[PageStylesheet::Shop, PageStylesheet::Shop]);
+        assert_eq!(tags.matches(r#"href="css/pages/shop.css?v="#).count(), 1);
+        assert_eq!(tags.lines().count(), 2);
     }
 
     #[test]

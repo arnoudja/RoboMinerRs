@@ -5,6 +5,7 @@ use super::render_sidebar::render_leaderboard_sidebar;
 use super::{LeaderboardPageState, LeaderboardQuery, LeaderboardTab};
 use crate::help_pages;
 use crate::html::{AreaFilterOption, escape_html, layout, render_area_filter_select};
+use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_leaderboard_page(
     username: String,
@@ -69,6 +70,7 @@ pub(super) fn render_leaderboard_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::Leaderboard],
     )
 }
 

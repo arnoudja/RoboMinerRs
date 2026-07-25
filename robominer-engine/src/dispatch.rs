@@ -1,9 +1,14 @@
+use std::path::PathBuf;
+
 use anyhow::{Result, ensure};
 
 use crate::achievement::{achievement_page_states, achievement_states, claim_achievement_step};
 use crate::activity::{activity_states, rally_view_state};
 use crate::assets::user_ore_asset_states;
-use crate::cli::{Cli, Command};
+use crate::cli::{
+    AchievementCommand, ActivityCommand, AssetsCommand, LeaderboardCommand, MigrateCommand,
+    MiningCommand, ProgramCommand, RallyCommand, RobotCommand, ShopCommand, UserCommand,
+};
 use crate::database::connect_database;
 use crate::leaderboard::leaderboard_states;
 use crate::migrate::{migrate, migrate_status};
@@ -32,20 +37,18 @@ fn ensure_positive_user_id(user_id: i64) -> Result<()> {
     Ok(())
 }
 
-pub(crate) async fn dispatch_mining(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_mining(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: MiningCommand,
+) -> Result<()> {
     match command {
-        Command::ClaimResults { user_id } => {
+        MiningCommand::ClaimResults { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             claim_results(&pool, user_id).await
         }
-        Command::EnqueueMining {
+        MiningCommand::Enqueue {
             user_id,
             robot_id,
             mining_area_id,
@@ -69,7 +72,7 @@ pub(crate) async fn dispatch_mining(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::CancelMiningQueue {
+        MiningCommand::CancelQueue {
             user_id,
             mining_queue_id,
         } => {
@@ -88,22 +91,22 @@ pub(crate) async fn dispatch_mining(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::MiningQueueStates { user_id } => {
+        MiningCommand::QueueStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             mining_queue_states(&pool, user_id).await
         }
-        Command::MiningQueuePageStates { user_id } => {
+        MiningCommand::QueuePageStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             mining_queue_page_states(&pool, user_id).await
         }
-        Command::MiningAreaScores { user_id } => {
+        MiningCommand::AreaScores { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             mining_area_scores(&pool, user_id).await
         }
-        Command::MiningResultStates {
+        MiningCommand::ResultStates {
             user_id,
             max_results,
         } => {
@@ -112,23 +115,20 @@ pub(crate) async fn dispatch_mining(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             mining_result_states(&pool, user_id, max_results).await
         }
-        Command::MiningAreaOverviewStates => {
+        MiningCommand::AreaOverviewStates => {
             let pool = connect_database(database_url, config).await?;
             mining_area_overview_states(&pool).await
         }
-        _ => unreachable!("dispatch_mining called with non-mining command"),
     }
 }
 
-pub(crate) async fn dispatch_activity(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_activity(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: ActivityCommand,
+) -> Result<()> {
     match command {
-        Command::ActivityStates {
+        ActivityCommand::States {
             user_id,
             max_users,
             max_rallies,
@@ -139,7 +139,7 @@ pub(crate) async fn dispatch_activity(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             activity_states(&pool, max_users, max_rallies).await
         }
-        Command::RallyViewState {
+        ActivityCommand::RallyViewState {
             user_id,
             rally_result_id,
             require_user_result,
@@ -152,19 +152,16 @@ pub(crate) async fn dispatch_activity(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             rally_view_state(&pool, user_id, rally_result_id, require_user_result).await
         }
-        _ => unreachable!("dispatch_activity called with non-activity command"),
     }
 }
 
-pub(crate) async fn dispatch_shop(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_shop(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: ShopCommand,
+) -> Result<()> {
     match command {
-        Command::BuyRobotPart {
+        ShopCommand::Buy {
             user_id,
             robot_part_id,
         } => {
@@ -183,7 +180,7 @@ pub(crate) async fn dispatch_shop(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::SellRobotPart {
+        ShopCommand::Sell {
             user_id,
             robot_part_id,
         } => {
@@ -202,33 +199,30 @@ pub(crate) async fn dispatch_shop(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::ShopRobotPartStates { user_id } => {
+        ShopCommand::RobotPartStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             shop_robot_part_states(&pool, user_id).await
         }
-        Command::ShopCatalogStates => {
+        ShopCommand::CatalogStates => {
             let pool = connect_database(database_url, config).await?;
             shop_catalog_states(&pool).await
         }
-        _ => unreachable!("dispatch_shop called with non-shop command"),
     }
 }
 
-pub(crate) async fn dispatch_robot(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_robot(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: RobotCommand,
+) -> Result<()> {
     match command {
-        Command::RobotConfigStates { user_id } => {
+        RobotCommand::ConfigStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             robot_config_states(&pool, user_id).await
         }
-        Command::UpdateRobotConfig {
+        RobotCommand::UpdateConfig {
             user_id,
             robot_id,
             robot_name,
@@ -285,24 +279,21 @@ pub(crate) async fn dispatch_robot(cli: Cli) -> Result<()> {
             )
             .await
         }
-        _ => unreachable!("dispatch_robot called with non-robot command"),
     }
 }
 
-pub(crate) async fn dispatch_program(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_program(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: ProgramCommand,
+) -> Result<()> {
     match command {
-        Command::Verify { program_source_id } => {
+        ProgramCommand::Verify { program_source_id } => {
             let pool = connect_database(database_url, config).await?;
             verify_program(&pool, program_source_id).await
         }
-        Command::VerifySource { source_file } => verify_source_file(&source_file),
-        Command::SimulateSource {
+        ProgramCommand::VerifySource { source_file } => verify_source_file(&source_file),
+        ProgramCommand::SimulateSource {
             source_file,
             robot,
             turns,
@@ -331,7 +322,7 @@ pub(crate) async fn dispatch_program(cli: Cli) -> Result<()> {
             backward_speed,
             rotate_speed,
         }),
-        Command::CreateProgramSource {
+        ProgramCommand::CreateSource {
             user_id,
             source_name,
             source_code,
@@ -348,7 +339,7 @@ pub(crate) async fn dispatch_program(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::UpdateProgramSource {
+        ProgramCommand::UpdateSource {
             user_id,
             program_source_id,
             source_name,
@@ -371,7 +362,7 @@ pub(crate) async fn dispatch_program(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::DeleteProgramSource {
+        ProgramCommand::DeleteSource {
             user_id,
             program_source_id,
         } => {
@@ -383,29 +374,26 @@ pub(crate) async fn dispatch_program(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             delete_program_source(&pool, user_id, program_source_id).await
         }
-        Command::ProgramSourceStates { user_id } => {
+        ProgramCommand::SourceStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             program_source_states(&pool, user_id).await
         }
-        _ => unreachable!("dispatch_program called with non-program command"),
     }
 }
 
-pub(crate) async fn dispatch_user(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_user(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: UserCommand,
+) -> Result<()> {
     match command {
-        Command::AccountState { user_id } => {
+        UserCommand::AccountState { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             account_state(&pool, user_id).await
         }
-        Command::CreateUser {
+        UserCommand::Create {
             username,
             email,
             password,
@@ -424,7 +412,7 @@ pub(crate) async fn dispatch_user(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::UpdateUserAccount {
+        UserCommand::UpdateAccount {
             user_id,
             username,
             email,
@@ -448,7 +436,7 @@ pub(crate) async fn dispatch_user(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::VerifyLogin {
+        UserCommand::VerifyLogin {
             login_name,
             password,
         } => {
@@ -464,7 +452,7 @@ pub(crate) async fn dispatch_user(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::VerifyUserPassword { user_id, password } => {
+        UserCommand::VerifyPassword { user_id, password } => {
             ensure_positive_user_id(user_id)?;
             ensure!(!password.is_empty(), "--password must not be empty");
             let pool = connect_database(database_url, config).await?;
@@ -474,19 +462,16 @@ pub(crate) async fn dispatch_user(cli: Cli) -> Result<()> {
             )
             .await
         }
-        _ => unreachable!("dispatch_user called with non-user command"),
     }
 }
 
-pub(crate) async fn dispatch_achievement(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_achievement(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: AchievementCommand,
+) -> Result<()> {
     match command {
-        Command::ClaimAchievementStep {
+        AchievementCommand::ClaimStep {
             user_id,
             achievement_id,
         } => {
@@ -505,29 +490,26 @@ pub(crate) async fn dispatch_achievement(cli: Cli) -> Result<()> {
             )
             .await
         }
-        Command::AchievementStates { user_id } => {
+        AchievementCommand::States { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             achievement_states(&pool, user_id).await
         }
-        Command::AchievementPageStates { user_id } => {
+        AchievementCommand::PageStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             achievement_page_states(&pool, user_id).await
         }
-        _ => unreachable!("dispatch_achievement called with non-achievement command"),
     }
 }
 
-pub(crate) async fn dispatch_rally(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_rally(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: RallyCommand,
+) -> Result<()> {
     match command {
-        Command::RunRally {
+        RallyCommand::Run {
             mining_area_id,
             seed,
             persist,
@@ -544,7 +526,7 @@ pub(crate) async fn dispatch_rally(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             run_rally(&pool, options).await.map(|_| ())
         }
-        Command::RunPool {
+        RallyCommand::Pool {
             pool_id,
             seed,
             persist,
@@ -563,7 +545,7 @@ pub(crate) async fn dispatch_rally(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             run_pool(&pool, options).await.map(|_| ())
         }
-        Command::RunRallies {
+        RallyCommand::Rallies {
             once,
             loop_mode,
             sleep_seconds,
@@ -582,60 +564,50 @@ pub(crate) async fn dispatch_rally(cli: Cli) -> Result<()> {
             let pool = connect_database(database_url, config).await?;
             run_rallies(&pool, options).await
         }
-        _ => unreachable!("dispatch_rally called with non-rally command"),
     }
 }
 
-pub(crate) async fn dispatch_migrate(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_migrate(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: MigrateCommand,
+) -> Result<()> {
     match command {
-        Command::Migrate => {
+        MigrateCommand::Apply => {
             let pool = connect_database(database_url, config).await?;
             migrate(&pool).await
         }
-        Command::MigrateStatus { check } => {
+        MigrateCommand::Status { check } => {
             let pool = connect_database(database_url, config).await?;
             migrate_status(&pool, check).await
         }
-        _ => unreachable!("dispatch_migrate called with non-migrate command"),
     }
 }
 
-pub(crate) async fn dispatch_leaderboard(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_leaderboard(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: LeaderboardCommand,
+) -> Result<()> {
     match command {
-        Command::LeaderboardStates { max_entries } => {
+        LeaderboardCommand::States { max_entries } => {
             ensure!(max_entries > 0, "--max-entries must be greater than zero");
             let pool = connect_database(database_url, config).await?;
             leaderboard_states(&pool, max_entries).await
         }
-        _ => unreachable!("dispatch_leaderboard called with non-leaderboard command"),
     }
 }
 
-pub(crate) async fn dispatch_assets(cli: Cli) -> Result<()> {
-    let Cli {
-        database_url,
-        config,
-        command,
-    } = cli;
-
+pub(crate) async fn dispatch_assets(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    command: AssetsCommand,
+) -> Result<()> {
     match command {
-        Command::UserOreAssetStates { user_id } => {
+        AssetsCommand::OreStates { user_id } => {
             ensure_positive_user_id(user_id)?;
             let pool = connect_database(database_url, config).await?;
             user_ore_asset_states(&pool, user_id).await
         }
-        _ => unreachable!("dispatch_assets called with non-assets command"),
     }
 }

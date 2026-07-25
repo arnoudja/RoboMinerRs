@@ -28,7 +28,8 @@ async fn update_user_account_updates_profile_and_password() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -42,7 +43,7 @@ async fn update_user_account_updates_profile_and_password() {
 
     assert!(
         output.status.success(),
-        "expected update-user-account to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user update-account to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Updated user account"),
@@ -100,7 +101,8 @@ async fn update_user_account_leaves_password_when_hash_is_absent() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -112,7 +114,7 @@ async fn update_user_account_leaves_password_when_hash_is_absent() {
 
     assert!(
         output.status.success(),
-        "expected update-user-account to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user update-account to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -156,6 +158,7 @@ async fn account_state_reports_profile_fields() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "user".to_string(),
         "account-state".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
@@ -164,7 +167,7 @@ async fn account_state_reports_profile_fields() {
 
     assert!(
         output.status.success(),
-        "expected account-state to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user account-state to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -204,7 +207,8 @@ async fn update_user_account_rejects_duplicate_username_and_email() {
     let duplicate_username = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -225,7 +229,8 @@ async fn update_user_account_rejects_duplicate_username_and_email() {
     let duplicate_email = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -285,7 +290,8 @@ async fn update_user_account_rejects_invalid_profile_fields() {
     let invalid_username = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -306,7 +312,8 @@ async fn update_user_account_rejects_invalid_profile_fields() {
     let invalid_email = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),
@@ -327,7 +334,8 @@ async fn update_user_account_rejects_invalid_profile_fields() {
     let invalid_password = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-user-account".to_string(),
+        "user".to_string(),
+        "update-account".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--username".to_string(),

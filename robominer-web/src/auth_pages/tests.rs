@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::{Request, ServerConfig};
 
 use super::render::render_login_page;
@@ -53,8 +54,13 @@ fn logoff_route_expires_session_cookies() {
     );
 
     let body = String::from_utf8(response.body).expect("body should be utf-8");
-    assert!(body.contains(r#"class="auth-page auth-logoff-page""#));
-    assert!(body.contains(r#"href="login">Log in again</a>"#));
+    assert_contains_all(
+        &body,
+        &[
+            r#"class="auth-page auth-logoff-page""#,
+            r#"href="login">Log in again</a>"#,
+        ],
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -70,7 +76,7 @@ async fn login_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -85,26 +91,25 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
         return_to: None,
     });
 
-    assert!(html.contains(r#"class="auth-page""#));
-    assert!(html.contains(
-        r#"name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover""#
-    ));
-    assert!(html.contains(r#"id="loginmenuitem" class="auth-tab""#));
-    assert!(html.contains(r#"id="signupmenuitem" class="auth-tab auth-tab-active""#));
-    assert!(html.contains(
-        r#"id="loginForm" class="auth-form" action="Login" method="post" hidden="hidden""#
-    ));
-    assert!(html.contains(r#"name="loginName" value="user@example.com""#));
-    assert!(html.contains(r#"name="remember" value="remember" checked"#));
-    assert!(html.contains(r#"id="signupForm" class="auth-form" action="Login" method="post">"#));
-    assert!(
-        html.contains(r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="auth-page""#,
+            r#"name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover""#,
+            r#"id="loginmenuitem" class="auth-tab""#,
+            r#"id="signupmenuitem" class="auth-tab auth-tab-active""#,
+            r#"id="loginForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+            r#"name="loginName" value="user@example.com""#,
+            r#"name="remember" value="remember" checked"#,
+            r#"id="signupForm" class="auth-form" action="Login" method="post">"#,
+            r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#,
+            r#"name="email" value="new&amp;user@example.com""#,
+            r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#,
+            r#"class="auth-password-toggle""#,
+            r#"src="js/common/password_toggle.js?v="#,
+        ],
     );
-    assert!(html.contains(r#"name="email" value="new&amp;user@example.com""#));
-    assert!(html.contains(r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#));
-    assert!(html.contains(r#"class="auth-password-toggle""#));
-    assert!(html.contains(r#"src="js/common/password_toggle.js?v="#));
-    assert!(!html.contains("Latest news"));
+    assert_html_not_contains(&html, "Latest news");
 }
 
 #[test]
@@ -119,8 +124,13 @@ fn login_rendering_shows_login_failure_banner() {
         return_to: None,
     });
 
-    assert!(html.contains(r#"<p class="auth-banner-error">Invalid login name or password.</p>"#));
-    assert!(html.contains(r#"name="loginName" value="user@example.com""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"<p class="auth-banner-error">Invalid login name or password.</p>"#,
+            r#"name="loginName" value="user@example.com""#,
+        ],
+    );
 }
 
 #[test]
@@ -135,12 +145,13 @@ fn login_rendering_shows_login_form_by_default() {
         return_to: None,
     });
 
-    assert!(html.contains(r#"id="loginmenuitem" class="auth-tab auth-tab-active""#));
-    assert!(html.contains(
-        r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#
-    ));
-    assert!(
-        html.contains(r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
+            r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+            r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#,
+        ],
     );
 }
 
@@ -156,11 +167,14 @@ fn login_rendering_preserves_return_to_in_form_and_links() {
         return_to: Some("shop?selectedRobotPartTypeId=3".to_string()),
     });
 
-    assert!(html.contains(r#"href="login?returnTo=shop%3FselectedRobotPartTypeId%3D3""#));
-    assert!(html.contains(r#"href="login?signup=1&returnTo=shop%3FselectedRobotPartTypeId%3D3""#));
-    assert!(html.contains(
-        r#"<input type="hidden" name="returnTo" value="shop?selectedRobotPartTypeId=3" />"#
-    ));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="login?returnTo=shop%3FselectedRobotPartTypeId%3D3""#,
+            r#"href="login?signup=1&returnTo=shop%3FselectedRobotPartTypeId%3D3""#,
+            r#"<input type="hidden" name="returnTo" value="shop?selectedRobotPartTypeId=3" />"#,
+        ],
+    );
 }
 
 #[test]
@@ -175,12 +189,16 @@ fn login_rendering_hides_signup_when_disabled() {
         return_to: None,
     });
 
-    assert!(html.contains(r#"id="loginmenuitem" class="auth-tab auth-tab-active""#));
-    assert!(!html.contains(r#"id="signupmenuitem""#));
-    assert!(!html.contains("Sign up</a> for free"));
-    assert!(html.contains(
-        r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#
-    ));
+    assert_contains_all(
+        &html,
+        &[
+            r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
+            r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+        ],
+    );
+    for absent in [r#"id="signupmenuitem""#, "Sign up</a> for free"] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]

@@ -2,6 +2,7 @@ use crate::animation_script;
 use crate::html::{escape_html, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
+use crate::static_assets::PageStylesheet;
 
 use super::payload::{RallyResultPayloadKind, classify_rally_result_payload};
 use super::render_deck::{rally_player_color_name, render_rally_view_deck};
@@ -35,6 +36,7 @@ pub fn render_rally_view_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::Rally],
     )
 }
 

@@ -4,7 +4,7 @@ use crate::rate_limit::{
 };
 use crate::request_helpers::valid_login_return_to;
 use crate::session::{self, cookie_value};
-use crate::static_assets::robominer_stylesheet_tag;
+use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags};
 use crate::{Request, Response, ServerConfig, is_post};
 
 #[derive(Debug)]
@@ -37,7 +37,7 @@ pub(super) fn logoff_page() -> Response {
         </div>
     </body>
 </html>"##,
-        robominer_stylesheet_tag(),
+        robominer_stylesheet_tags(&[PageStylesheet::Auth]),
         render::render_logoff_body(),
         page_footer()
     ))

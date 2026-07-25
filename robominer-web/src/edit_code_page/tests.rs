@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
@@ -69,7 +70,7 @@ async fn edit_code_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -91,57 +92,56 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
         ),
     );
 
-    assert!(!html.contains(r#"<script src="js/editcode.js"></script>"#));
-    assert!(html.contains(r#"class="edit-code-page""#));
-    assert!(html.contains(r#"class="edit-code-summary""#));
-    assert!(html.contains(r#"id="eraseProgramSourceForm11""#));
-    assert!(html.contains(r#"id="editCodeForm11""#));
-    assert!(!html.contains(r#"id="changeProgramSourceForm""#));
-    assert!(!html.contains(r#"<button type="submit">Open</button>"#));
-    assert!(html.contains(r#"class="edit-code-deck""#));
-    assert!(html.contains(
-        r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="11""#
-    ));
-    assert!(html.contains(r#"class="edit-code-program-card" data-source-id="-1""#));
-    assert!(html.contains(r#"id="editCodeSummarySelected""#));
-    assert!(html.contains(r#"id="editCodeSummaryLinkedRobots""#));
-    assert!(html.contains(r#"data-linked-robots="0""#));
-    assert!(html.contains(r#"name="nextProgramSourceId" value="11""#));
-    assert!(html.contains(r#"name="programSourceId" value="11""#));
-    assert!(html.contains(r#"id="sourceName11""#));
-    assert!(html.contains(r#"name="sourceName""#));
-    assert!(html.contains(r#"class="edit-code-source-editor""#));
-    assert!(html.contains(r#"id="sourceCodeLines11""#));
-    assert!(html.contains(r#"class="edit-code-line-numbers""#));
-    assert!(html.contains("1<br>2<br>3"));
-    assert!(html.contains(r#"value="Source &lt;One&gt;""#));
-    assert!(html.contains("// &lt;mine&gt;"));
-    assert!(html.contains(r#">Delete program</button>"#));
-    assert!(html.contains(r#">Save program</button>"#));
-    assert!(html.contains(
-        r#"class="edit-code-banner edit-code-banner-compile">Compile &lt;error&gt;</p>"#
-    ));
-    assert!(html.contains(r#"class="edit-code-banner edit-code-banner-error">Unable to save program: Save &lt;warning&gt;</p>"#));
-    assert!(html.contains(
-        r#"class="edit-code-status-badge edit-code-status-dirty" hidden>Unsaved changes</span>"#
-    ));
-    assert!(html.contains(r#"class="edit-code-btn edit-code-btn-secondary edit-code-reset-btn" hidden>Reset changes</button>"#));
-    assert!(html.contains(
-        r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#
-    ));
-    assert!(html.contains(
-        r#"class="edit-code-delete-helper">Delete removes this program from your library.</p>"#
-    ));
-    assert!(html.contains("Compiled size"));
-    assert!(html.contains(">12<"));
-    assert!(html.contains(r#"src="js/common/panel_state.js?v="#));
-    assert!(html.contains(r#"src="js/common/url_query.js?v="#));
-    assert!(html.contains(r#"src="js/edit_code/page.js?v="#));
-    assert!(html.contains(r#"class="edit-code-quick-link" href="robot""#));
-    assert!(html.contains(r#"class="edit-code-quick-link" href="helpRobotProgram""#));
-    assert!(html.contains(r#"class="edit-code-quick-link" href="helpProgramTips""#));
-    assert!(!html.contains("alert("));
-    assert!(!html.contains(r#"id="programSourceId" name="nextProgramSourceId""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="edit-code-page""#,
+            r#"class="edit-code-summary""#,
+            r#"id="eraseProgramSourceForm11""#,
+            r#"id="editCodeForm11""#,
+            r#"class="edit-code-deck""#,
+            r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="11""#,
+            r#"class="edit-code-program-card" data-source-id="-1""#,
+            r#"id="editCodeSummarySelected""#,
+            r#"id="editCodeSummaryLinkedRobots""#,
+            r#"data-linked-robots="0""#,
+            r#"name="nextProgramSourceId" value="11""#,
+            r#"name="programSourceId" value="11""#,
+            r#"id="sourceName11""#,
+            r#"name="sourceName""#,
+            r#"class="edit-code-source-editor""#,
+            r#"id="sourceCodeLines11""#,
+            r#"class="edit-code-line-numbers""#,
+            "1<br>2<br>3",
+            r#"value="Source &lt;One&gt;""#,
+            "// &lt;mine&gt;",
+            r#">Delete program</button>"#,
+            r#">Save program</button>"#,
+            r#"class="edit-code-banner edit-code-banner-compile">Compile &lt;error&gt;</p>"#,
+            r#"class="edit-code-banner edit-code-banner-error">Unable to save program: Save &lt;warning&gt;</p>"#,
+            r#"class="edit-code-status-badge edit-code-status-dirty" hidden>Unsaved changes</span>"#,
+            r#"class="edit-code-btn edit-code-btn-secondary edit-code-reset-btn" hidden>Reset changes</button>"#,
+            r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#,
+            r#"class="edit-code-delete-helper">Delete removes this program from your library.</p>"#,
+            "Compiled size",
+            ">12<",
+            r#"src="js/common/panel_state.js?v="#,
+            r#"src="js/common/url_query.js?v="#,
+            r#"src="js/edit_code/page.js?v="#,
+            r#"class="edit-code-quick-link" href="robot""#,
+            r#"class="edit-code-quick-link" href="helpRobotProgram""#,
+            r#"class="edit-code-quick-link" href="helpProgramTips""#,
+        ],
+    );
+    for absent in [
+        r#"<script src="js/editcode.js"></script>"#,
+        r#"id="changeProgramSourceForm""#,
+        r#"<button type="submit">Open</button>"#,
+        "alert(",
+        r#"id="programSourceId" name="nextProgramSourceId""#,
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]
@@ -172,14 +172,15 @@ fn edit_code_shows_success_banner_and_claim_feedback() {
         },
     );
 
-    assert!(
-        html.contains(r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#,
+            r#"class="edit-code-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
+            r#"class="claim-banner-reward-amount">+5</span>"#,
+            r#"href="miningResults">View results</a>"#,
+        ],
     );
-    assert!(html.contains(
-        r#"class="edit-code-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#
-    ));
-    assert!(html.contains(r#"class="claim-banner-reward-amount">+5</span>"#));
-    assert!(html.contains(r#"href="miningResults">View results</a>"#));
 }
 
 #[test]
@@ -199,14 +200,17 @@ fn edit_code_default_program_is_rendered_when_no_source_is_selected() {
         },
     );
 
-    assert!(html.contains(
-        r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="-1""#
-    ));
-    assert!(html.contains(r#"id="editCodePanel-1""#));
-    assert!(html.contains("move(1);"));
-    assert!(html.contains("mine();"));
-    assert!(html.contains("Save &lt;warning&gt;"));
-    assert!(!html.contains("alert("));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="-1""#,
+            r#"id="editCodePanel-1""#,
+            "move(1);",
+            "mine();",
+            "Save &lt;warning&gt;",
+        ],
+    );
+    assert_html_not_contains(&html, "alert(");
 }
 
 #[test]
@@ -244,9 +248,7 @@ fn edit_code_rendering_keeps_compiled_size_line_for_invalid_program() {
         },
     );
 
-    assert!(html.contains("Compile failed"));
-    assert!(html.contains("Compiled size"));
-    assert!(html.contains("unknown"));
+    assert_contains_all(&html, &["Compile failed", "Compiled size", "unknown"]);
 }
 
 #[test]
@@ -284,10 +286,15 @@ fn edit_code_shows_disabled_delete_when_program_is_linked() {
         },
     );
 
-    assert!(html.contains(r#"class="edit-code-btn edit-code-btn-danger" disabled"#));
-    assert!(html.contains("Used by 2 robot(s)."));
-    assert!(html.contains(r#"class="edit-code-action-link" href="robot">Open robot workshop</a>"#));
-    assert!(!html.contains(r#"id="eraseProgramSourceForm11""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="edit-code-btn edit-code-btn-danger" disabled"#,
+            "Used by 2 robot(s).",
+            r#"class="edit-code-action-link" href="robot">Open robot workshop</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, r#"id="eraseProgramSourceForm11""#);
 }
 
 #[test]
@@ -367,13 +374,18 @@ fn edit_code_omits_manual_update_linked_robots_controls() {
         },
     );
 
-    assert!(!html.contains(r#"id="editCodeApplyForm11""#));
-    assert!(!html.contains(r#"class="edit-code-apply-form""#));
-    assert!(!html.contains(">Update linked robots</button>"));
-    assert!(!html.contains(r#"name="requestType" value="applyRobots""#));
-    assert!(html.contains(
-        r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#
-    ));
+    for absent in [
+        r#"id="editCodeApplyForm11""#,
+        r#"class="edit-code-apply-form""#,
+        ">Update linked robots</button>",
+        r#"name="requestType" value="applyRobots""#,
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
+    assert_html_contains(
+        &html,
+        r#"class="edit-code-save-helper">Save compiles and stores your program. Verified programs are applied to linked robots automatically.</p>"#,
+    );
 }
 
 #[test]
@@ -419,9 +431,10 @@ fn edit_code_line_numbers_match_source_line_count() {
     assert_eq!(edit_code_line_count("mine();"), 1);
     assert_eq!(edit_code_line_count("move(1);\nrotate(90);"), 2);
     assert_eq!(render_edit_code_line_numbers("a\nb\nc"), "1<br>2<br>3");
-    assert!(render_edit_code_source_field(7, "mine();", "").contains(
-        r#"<div class="edit-code-line-numbers" id="sourceCodeLines7" aria-hidden="true">1</div>"#
-    ));
+    assert_html_contains(
+        &render_edit_code_source_field(7, "mine();", ""),
+        r#"<div class="edit-code-line-numbers" id="sourceCodeLines7" aria-hidden="true">1</div>"#,
+    );
 }
 
 #[test]

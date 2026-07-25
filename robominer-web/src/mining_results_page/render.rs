@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::html::layout;
 use crate::mining_results_page::MiningResultsPageState;
+use crate::static_assets::PageStylesheet;
 
 use super::render_detail::render_mining_results_detail_section;
 use super::render_filters::{
@@ -76,5 +77,6 @@ pub(super) fn render_mining_results_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::MiningResults],
     )
 }

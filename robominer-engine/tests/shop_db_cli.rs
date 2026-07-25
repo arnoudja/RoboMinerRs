@@ -19,7 +19,8 @@ async fn buy_robot_part_deducts_ore_and_adds_owned_part() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "buy-robot-part".to_string(),
+        "shop".to_string(),
+        "buy".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-part-id".to_string(),
@@ -29,7 +30,7 @@ async fn buy_robot_part_deducts_ore_and_adds_owned_part() {
 
     assert!(
         output.status.success(),
-        "expected buy-robot-part to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop buy to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Bought robot part"),
@@ -58,7 +59,8 @@ async fn buy_robot_part_insufficient_funds_rolls_back() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "buy-robot-part".to_string(),
+        "shop".to_string(),
+        "buy".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-part-id".to_string(),
@@ -68,7 +70,7 @@ async fn buy_robot_part_insufficient_funds_rolls_back() {
 
     assert!(
         !output.status.success(),
-        "expected buy-robot-part to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop buy to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -97,7 +99,8 @@ async fn sell_robot_part_refunds_half_cost_and_deletes_zero_owned_asset() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "sell-robot-part".to_string(),
+        "shop".to_string(),
+        "sell".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-part-id".to_string(),
@@ -107,7 +110,7 @@ async fn sell_robot_part_refunds_half_cost_and_deletes_zero_owned_asset() {
 
     assert!(
         output.status.success(),
-        "expected sell-robot-part to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop sell to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Sold robot part"),
@@ -136,7 +139,8 @@ async fn sell_robot_part_rejects_part_currently_used_by_robot() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "sell-robot-part".to_string(),
+        "shop".to_string(),
+        "sell".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-part-id".to_string(),
@@ -146,7 +150,7 @@ async fn sell_robot_part_rejects_part_currently_used_by_robot() {
 
     assert!(
         !output.status.success(),
-        "expected sell-robot-part to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop sell to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -175,7 +179,8 @@ async fn shop_robot_part_states_report_owned_and_assigned_counts() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "shop-robot-part-states".to_string(),
+        "shop".to_string(),
+        "robot-part-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -183,7 +188,7 @@ async fn shop_robot_part_states_report_owned_and_assigned_counts() {
 
     assert!(
         output.status.success(),
-        "expected shop-robot-part-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop robot-part-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -216,13 +221,14 @@ async fn shop_catalog_states_report_catalog_rows() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "shop-catalog-states".to_string(),
+        "shop".to_string(),
+        "catalog-states".to_string(),
     ]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
         output.status.success(),
-        "expected shop-catalog-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected shop catalog-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -288,7 +294,8 @@ async fn user_ore_asset_states_report_user_balances() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "user-ore-asset-states".to_string(),
+        "assets".to_string(),
+        "ore-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -296,7 +303,7 @@ async fn user_ore_asset_states_report_user_balances() {
 
     assert!(
         output.status.success(),
-        "expected user-ore-asset-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected assets ore-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

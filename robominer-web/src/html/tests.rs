@@ -1,7 +1,9 @@
 use super::{
-    format_relative_time_millis, inject_csrf_tokens, layout, render_claimed_ore_rewards_banner,
+    assert_contains_all, assert_html_not_contains, format_relative_time_millis, inject_csrf_tokens,
+    layout, render_claimed_ore_rewards_banner,
 };
 use crate::app_shell::render_app_shell_hud;
+use crate::static_assets::PageStylesheet;
 use robominer_db::{
     AppShellHudRecord, ClaimedOreRewardRecord, ClaimedUserResults, UserOreAssetStateRecord,
 };
@@ -14,14 +16,16 @@ fn inject_csrf_tokens_adds_meta_and_post_form_fields() {
 </body></html>"#;
     let injected = inject_csrf_tokens(html, "abc123");
 
-    assert!(injected.contains(r#"<meta name="csrf-token" content="abc123">"#));
-    assert!(injected.contains(
-        r#"<form action="shop" method="post"><input type="hidden" name="csrfToken" value="abc123"/>"#
-    ));
-    assert!(
-        !injected.contains(
-            r#"<form action="search" method="get"><input type="hidden" name="csrfToken""#
-        )
+    assert_contains_all(
+        &injected,
+        &[
+            r#"<meta name="csrf-token" content="abc123">"#,
+            r#"<form action="shop" method="post"><input type="hidden" name="csrfToken" value="abc123"/>"#,
+        ],
+    );
+    assert_html_not_contains(
+        &injected,
+        r#"<form action="search" method="get"><input type="hidden" name="csrfToken""#,
     );
 
     let again = inject_csrf_tokens(&injected, "abc123");
@@ -65,21 +69,28 @@ fn app_shell_header_marks_active_page_and_includes_atlas() {
         "Player",
         None,
         "<p>Body</p>",
+        &[PageStylesheet::MiningQueue],
     );
 
-    assert!(html.contains(r##"href="#main-content">Skip to content</a>"##));
-    assert!(html.contains(r#"id="main-content""#));
-    assert!(html.contains(r#"class="app-shell-header""#));
-    assert!(html.contains(r#"href="miningAreaOverview">Areas</a>"#));
-    assert!(html.contains(r#"app-shell-account-user">Player</span>"#));
-    assert!(html.contains(r#"id="app-shell-nav-toggle""#));
-    assert!(html.contains(r#"for="app-shell-nav-toggle""#));
-    assert!(html.contains(r#"id="app-shell-nav-panel""#));
-    assert!(html.contains(r#"href="miningQueue" aria-current="page">Mining queue</a>"#));
-    assert!(!html.contains("menuitemselected"));
-    assert!(!html.contains(r#"nav class="logoff""#));
-    assert!(html.contains(r#"class="robominer-dialog""#));
-    assert!(html.contains(r#"src="js/common/app_dialog.js?v="#));
+    assert_contains_all(
+        &html,
+        &[
+            r##"href="#main-content">Skip to content</a>"##,
+            r#"id="main-content""#,
+            r#"class="app-shell-header""#,
+            r#"href="miningAreaOverview">Areas</a>"#,
+            r#"app-shell-account-user">Player</span>"#,
+            r#"id="app-shell-nav-toggle""#,
+            r#"for="app-shell-nav-toggle""#,
+            r#"id="app-shell-nav-panel""#,
+            r#"href="miningQueue" aria-current="page">Mining queue</a>"#,
+            r#"class="robominer-dialog""#,
+            r#"src="js/common/app_dialog.js?v="#,
+        ],
+    );
+    for absent in ["menuitemselected", r#"nav class="logoff""#] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]
@@ -90,23 +101,41 @@ fn app_shell_header_marks_account_page_active() {
         "Player",
         None,
         "<p>Body</p>",
+        &[PageStylesheet::Account],
     );
 
-    assert!(html.contains(r#"href="account" aria-current="page""#));
-    assert!(html.contains(r#"title="Player""#));
-    assert!(html.contains(r#"app-shell-account-user">Player</span>"#));
-    assert!(!html.contains(r#"href="miningQueue" aria-current="page""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="account" aria-current="page""#,
+            r#"title="Player""#,
+            r#"app-shell-account-user">Player</span>"#,
+        ],
+    );
+    assert_html_not_contains(&html, r#"href="miningQueue" aria-current="page""#);
 }
 
 #[test]
 fn app_shell_footer_includes_help_link() {
-    let html = layout("RoboMiner - Help", "help", "Player", None, "<p>Body</p>");
+    let html = layout(
+        "RoboMiner - Help",
+        "help",
+        "Player",
+        None,
+        "<p>Body</p>",
+        &[PageStylesheet::Help],
+    );
 
-    assert!(html.contains(r#"class="app-shell-footer""#));
-    assert!(html.contains(r#"class="app-shell-footer-link" href="help">Help</a>"#));
-    assert!(!html.contains(r#"class="app-shell-footer-link" href="miningQueue""#));
-    assert!(html.contains(r#"href="https://opensource.org/license/mit""#));
-    assert!(html.contains(r#"href="https://www.apache.org/licenses/LICENSE-2.0""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="app-shell-footer""#,
+            r#"class="app-shell-footer-link" href="help">Help</a>"#,
+            r#"href="https://opensource.org/license/mit""#,
+            r#"href="https://www.apache.org/licenses/LICENSE-2.0""#,
+        ],
+    );
+    assert_html_not_contains(&html, r#"class="app-shell-footer-link" href="miningQueue""#);
 }
 
 #[test]
@@ -131,12 +160,17 @@ fn claimed_ore_rewards_banner_lists_net_wallet_increases() {
         true,
     );
 
-    assert!(html.contains("Added to wallet:"));
-    assert!(html.contains("Lithabine"));
-    assert!(html.contains(r#"class="claim-banner-reward-amount">+4</span>"#));
-    assert!(html.contains(r#"class="claim-banner-reward-amount">+9</span>"#));
-    assert!(html.contains(r#"href="miningResults">View results</a>"#));
-    assert!(!html.contains("Claimed 2 mining result(s)"));
+    assert_contains_all(
+        &html,
+        &[
+            "Added to wallet:",
+            "Lithabine",
+            r#"class="claim-banner-reward-amount">+4</span>"#,
+            r#"class="claim-banner-reward-amount">+9</span>"#,
+            r#"href="miningResults">View results</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, "Claimed 2 mining result(s)");
 }
 
 #[test]
@@ -173,9 +207,15 @@ fn app_shell_header_renders_hud_markup() {
         "Player",
         Some(&hud),
         "<p>Body</p>",
+        &[PageStylesheet::Shop],
     );
 
-    assert!(html.contains(r#"class="app-shell-hud""#));
-    assert!(html.contains(r#"app-shell-hud-value">1/4</span>"#));
-    assert!(html.contains("Iron"));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="app-shell-hud""#,
+            r#"app-shell-hud-value">1/4</span>"#,
+            "Iron",
+        ],
+    );
 }

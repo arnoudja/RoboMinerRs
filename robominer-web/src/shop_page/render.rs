@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use super::ShopPageState;
 use crate::help_pages;
 use crate::html::{escape_html, layout, selected_attr};
+use crate::static_assets::PageStylesheet;
 
 use super::catalog::{render_shop_part_compact_card, render_shop_part_detail_panel};
 use super::inventory::render_shop_inventory;
@@ -130,7 +131,14 @@ pub(super) fn render_shop_page(
     body.push_str(&super::scripts::shop_page_script_tag());
     body.push_str("</div>");
 
-    layout("RoboMiner - Shop", "shop", &username, hud, &body)
+    layout(
+        "RoboMiner - Shop",
+        "shop",
+        &username,
+        hud,
+        &body,
+        &[PageStylesheet::Shop],
+    )
 }
 
 fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {

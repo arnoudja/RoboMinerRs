@@ -271,7 +271,8 @@ pub fn create_user_via_engine(username: &str, email: &str, password: &str) -> i6
     let output = std::process::Command::new(engine_bin)
         .arg("--database-url")
         .arg(&database_url)
-        .arg("create-user")
+        .arg("user")
+        .arg("create")
         .arg("--username")
         .arg(username)
         .arg("--email")
@@ -279,18 +280,18 @@ pub fn create_user_via_engine(username: &str, email: &str, password: &str) -> i6
         .arg("--password")
         .arg(password)
         .output()
-        .expect("failed to execute robominer-engine create-user");
+        .expect("failed to execute robominer-engine user create");
 
     assert!(
         output.status.success(),
-        "create-user failed\nstdout: {}\nstderr: {}",
+        "user create failed\nstdout: {}\nstderr: {}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
 
     String::from_utf8(output.stdout)
-        .expect("create-user stdout should be utf-8")
+        .expect("user create stdout should be utf-8")
         .trim()
         .parse()
-        .expect("create-user should return the new user id")
+        .expect("user create should return the new user id")
 }

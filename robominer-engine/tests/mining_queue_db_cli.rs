@@ -19,7 +19,8 @@ async fn enqueue_mining_fill_deducts_costs_and_inserts_until_queue_limit() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "enqueue-mining".to_string(),
+        "mining".to_string(),
+        "enqueue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-id".to_string(),
@@ -32,7 +33,7 @@ async fn enqueue_mining_fill_deducts_costs_and_inserts_until_queue_limit() {
 
     assert!(
         output.status.success(),
-        "expected enqueue-mining --fill to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining enqueue --fill to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Enqueued 3 mining run(s)"),
@@ -52,7 +53,7 @@ async fn enqueue_mining_fill_deducts_costs_and_inserts_until_queue_limit() {
     .expect("failed to check last login time");
     assert_eq!(
         login_updated, 1,
-        "enqueue-mining should refresh last login time"
+        "mining enqueue should refresh last login time"
     );
 
     fixture.cleanup(&pool).await;
@@ -80,7 +81,8 @@ async fn enqueue_mining_insufficient_funds_rolls_back() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "enqueue-mining".to_string(),
+        "mining".to_string(),
+        "enqueue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-id".to_string(),
@@ -92,7 +94,7 @@ async fn enqueue_mining_insufficient_funds_rolls_back() {
 
     assert!(
         !output.status.success(),
-        "expected enqueue-mining to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining enqueue to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -112,7 +114,7 @@ async fn enqueue_mining_insufficient_funds_rolls_back() {
     .expect("failed to check last login time");
     assert_eq!(
         login_updated, 0,
-        "failed enqueue-mining should not refresh last login time"
+        "failed mining enqueue should not refresh last login time"
     );
 
     fixture.cleanup(&pool).await;
@@ -134,7 +136,8 @@ async fn enqueue_mining_rejects_unavailable_area_and_wrong_owner() {
     let unavailable_output = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "enqueue-mining".to_string(),
+        "mining".to_string(),
+        "enqueue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--robot-id".to_string(),
@@ -155,7 +158,8 @@ async fn enqueue_mining_rejects_unavailable_area_and_wrong_owner() {
     let wrong_owner_output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "enqueue-mining".to_string(),
+        "mining".to_string(),
+        "enqueue".to_string(),
         "--user-id".to_string(),
         fixture.other_user_id.to_string(),
         "--robot-id".to_string(),
@@ -193,7 +197,8 @@ async fn cancel_mining_queue_deletes_queued_item() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "cancel-mining-queue".to_string(),
+        "mining".to_string(),
+        "cancel-queue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--mining-queue-id".to_string(),
@@ -203,7 +208,7 @@ async fn cancel_mining_queue_deletes_queued_item() {
 
     assert!(
         output.status.success(),
-        "expected cancel-mining-queue to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining cancel-queue to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Canceled mining queue"),
@@ -236,7 +241,8 @@ async fn cancel_mining_queue_rejects_wrong_owner_and_unknown_queue() {
     let wrong_owner = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "cancel-mining-queue".to_string(),
+        "mining".to_string(),
+        "cancel-queue".to_string(),
         "--user-id".to_string(),
         fixture.other_user_id.to_string(),
         "--mining-queue-id".to_string(),
@@ -255,7 +261,8 @@ async fn cancel_mining_queue_rejects_wrong_owner_and_unknown_queue() {
     let unknown_queue = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "cancel-mining-queue".to_string(),
+        "mining".to_string(),
+        "cancel-queue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--mining-queue-id".to_string(),
@@ -294,7 +301,8 @@ async fn cancel_mining_queue_rejects_active_and_rally_backed_items() {
     let active_queue = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "cancel-mining-queue".to_string(),
+        "mining".to_string(),
+        "cancel-queue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--mining-queue-id".to_string(),
@@ -313,7 +321,8 @@ async fn cancel_mining_queue_rejects_active_and_rally_backed_items() {
     let rally_backed = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "cancel-mining-queue".to_string(),
+        "mining".to_string(),
+        "cancel-queue".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--mining-queue-id".to_string(),

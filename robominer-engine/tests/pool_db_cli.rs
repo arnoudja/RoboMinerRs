@@ -50,7 +50,8 @@ async fn run_pool_persist_updates_pool_item_tables() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "run-pool".to_string(),
+        "rally".to_string(),
+        "pool".to_string(),
         "--pool-id".to_string(),
         fixture.pool_id.to_string(),
         "--seed".to_string(),
@@ -61,7 +62,7 @@ async fn run_pool_persist_updates_pool_item_tables() {
 
     assert!(
         output.status.success(),
-        "expected run-pool --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected rally pool --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Pool rally complete") && stdout.contains("Persisted pool rally"),
@@ -89,7 +90,8 @@ async fn run_pool_until_complete_persists_until_required_runs() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "run-pool".to_string(),
+        "rally".to_string(),
+        "pool".to_string(),
         "--pool-id".to_string(),
         fixture.pool_id.to_string(),
         "--seed".to_string(),
@@ -103,7 +105,7 @@ async fn run_pool_until_complete_persists_until_required_runs() {
 
     assert!(
         output.status.success(),
-        "expected run-pool --until-complete --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected rally pool --until-complete --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Pool rally complete")

@@ -1,7 +1,7 @@
 use crate::auth_pages::LoginPageState;
 use crate::html::{escape_html, page_footer, render_password_field, render_password_toggle_script};
 use crate::request_helpers::auth_page_href;
-use crate::static_assets::robominer_stylesheet_tag;
+use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags};
 
 pub(super) fn render_login_page(state: &LoginPageState) -> String {
     let mut body = String::from(r#"<div class="auth-page">"#);
@@ -38,7 +38,7 @@ pub(super) fn render_login_page(state: &LoginPageState) -> String {
         </div>
     </body>
 </html>"##,
-        stylesheet = robominer_stylesheet_tag(),
+        stylesheet = robominer_stylesheet_tags(&[PageStylesheet::Auth]),
         footer = page_footer()
     )
 }

@@ -7,6 +7,8 @@ const DRAW_JS: &str = include_str!("../static/js/rally_animation/draw.js");
 const DEBUG_JS: &str = include_str!("../static/js/rally_animation/debug.js");
 const TIMELINE_JS: &str = include_str!("../static/js/rally_animation/timeline.js");
 const POSE_JS: &str = include_str!("../static/js/rally_animation/pose.js");
+const TRANSPORT_JS: &str = include_str!("../static/js/rally_animation/transport.js");
+const CONTROLS_JS: &str = include_str!("../static/js/rally_animation/controls.js");
 const PLAYER_JS: &str = include_str!("../static/js/rally_animation/player.js");
 const BOOTSTRAP_JS: &str = include_str!("../static/js/rally_animation/bootstrap.js");
 
@@ -18,6 +20,8 @@ pub fn rally_animation_script_tags() -> String {
         ("js/rally_animation/debug.js", DEBUG_JS),
         ("js/rally_animation/timeline.js", TIMELINE_JS),
         ("js/rally_animation/pose.js", POSE_JS),
+        ("js/rally_animation/transport.js", TRANSPORT_JS),
+        ("js/rally_animation/controls.js", CONTROLS_JS),
         ("js/rally_animation/player.js", PLAYER_JS),
     ])
 }
@@ -40,6 +44,8 @@ mod tests {
             "js/rally_animation/debug.js",
             "js/rally_animation/timeline.js",
             "js/rally_animation/pose.js",
+            "js/rally_animation/transport.js",
+            "js/rally_animation/controls.js",
             "js/rally_animation/player.js",
         ] {
             assert!(
@@ -54,8 +60,9 @@ mod tests {
     #[test]
     fn rally_animation_modules_define_core_entrypoints() {
         assert!(PLAYER_JS.contains("function runanimation("));
-        assert!(PLAYER_JS.contains("function rallySeekToRatio("));
-        assert!(PLAYER_JS.contains("function rallyWithPausedSeek("));
+        assert!(TRANSPORT_JS.contains("function rallySeekToRatio("));
+        assert!(TRANSPORT_JS.contains("function rallyWithPausedSeek("));
+        assert!(CONTROLS_JS.contains("function rallyBindKeyboardControls("));
         assert!(TIMELINE_JS.contains("function rallyRebuildCpuTimeline("));
         assert!(POSE_JS.contains("function updateRobotPosition("));
         assert!(PAYLOAD_JS.contains("function applyRallyResultPayload("));

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::http::{first_form_values, split_form_field_values};
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig, mutation_i64};
@@ -153,7 +154,7 @@ async fn achievements_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -176,34 +177,39 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
         &sample_achievement_state(Some("Unable to claim <x>".to_string())),
     );
 
-    assert!(html.contains(r#"class="achievements-page""#));
-    assert!(html.contains(r#"class="achievements-summary""#));
-    assert!(html.contains(r#"class="achievement-card achievement-card-claimable""#));
-    assert!(html.contains(r#"class="achievements-banner achievements-banner-error""#));
-    assert!(html.contains("Unable to claim &lt;x&gt;"));
-    assert!(html.contains("Title &lt;A&gt;"));
-    assert!(html.contains("Description &amp; B"));
-    assert!(html.contains("Ore &lt;C&gt; ore maximum"));
-    assert!(html.contains("50 → 100"));
-    assert!(html.contains("Ore &lt;C&gt; depot maximum"));
-    assert!(html.contains("10 → 25"));
-    assert!(html.contains("Area &amp; D"));
-    assert!(html.contains("New robot"));
-    assert!(html.contains(r#"class="sufficientbalance">(11)"#));
-    assert!(html.contains(r#"class="insufficientbalance">(5)"#));
-    assert!(html.contains(">12.3<"));
-    assert!(html.contains(r#"class="achievement-progress-bar" style="width: 33.3%"#));
-    assert!(html.contains(r#"name="achievementId" value="5""#));
-    assert!(html.contains(r#"achievement-claim-badge">Claim</button>"#));
-    assert!(!html.contains(r#">Claim step</button>"#));
-    assert!(!html.contains("confirmAchievementClaim"));
-    assert!(!html.contains("Claim next step for "));
-    assert!(html.contains(
-        r#">Points earned</span><span class="achievements-summary-value">45/150</span>"#
-    ));
-    assert!(
-        html.contains(r#">Ready to claim</span><span class="achievements-summary-value">1</span>"#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="achievements-page""#,
+            r#"class="achievements-summary""#,
+            r#"class="achievement-card achievement-card-claimable""#,
+            r#"class="achievements-banner achievements-banner-error""#,
+            "Unable to claim &lt;x&gt;",
+            "Title &lt;A&gt;",
+            "Description &amp; B",
+            "Ore &lt;C&gt; ore maximum",
+            "50 → 100",
+            "Ore &lt;C&gt; depot maximum",
+            "10 → 25",
+            "Area &amp; D",
+            "New robot",
+            r#"class="sufficientbalance">(11)"#,
+            r#"class="insufficientbalance">(5)"#,
+            ">12.3<",
+            r#"class="achievement-progress-bar" style="width: 33.3%"#,
+            r#"name="achievementId" value="5""#,
+            r#"achievement-claim-badge">Claim</button>"#,
+            r#">Points earned</span><span class="achievements-summary-value">45/150</span>"#,
+            r#">Ready to claim</span><span class="achievements-summary-value">1</span>"#,
+        ],
     );
+    for absent in [
+        ">Claim step</button>",
+        "confirmAchievementClaim",
+        "Claim next step for ",
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]
@@ -216,11 +222,10 @@ fn achievements_hide_ore_and_depot_maximum_when_reward_does_not_increase() {
 
     let html = render_achievements_page("Player".to_string(), None, &state);
 
-    assert!(!html.contains("ore maximum"));
-    assert!(!html.contains("depot maximum"));
-    assert!(!html.contains("100 → 100"));
-    assert!(!html.contains("40 → 40"));
-    assert!(html.contains("Queue increase"));
+    for absent in ["ore maximum", "depot maximum", "100 → 100", "40 → 40"] {
+        assert_html_not_contains(&html, absent);
+    }
+    assert_html_contains(&html, "Queue increase");
 }
 
 #[test]
@@ -261,22 +266,24 @@ fn achievements_overview_renders_other_player_tracks_without_claim_ui() {
 
     let html = render_achievements_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"class="achievements-page achievements-page-overview""#));
-    assert!(html.contains("Champion &lt;X&gt;&#39;s achievements"));
-    assert!(html.contains("Track &lt;Done&gt;"));
-    assert!(html.contains("Finished &amp; sealed"));
-    assert!(html.contains("Track &lt;Open&gt;"));
-    assert!(html.contains(r#"achievement-status-complete">Completed</span>"#));
-    assert!(html.contains(r#"achievement-status-progress">In progress</span>"#));
-    assert!(html.contains(
-        r#">Points earned</span><span class="achievements-summary-value">40/150</span>"#
-    ));
-    assert!(html.contains(r#">Tracks</span><span class="achievements-summary-value">2</span>"#));
-    assert!(!html.contains("Ready to claim"));
-    assert!(!html.contains("Claim"));
-    assert!(!html.contains("Next reward"));
-    assert!(!html.contains("Requirements"));
-    assert!(html.contains(r#"href="leaderboard">Back to Top players</a>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="achievements-page achievements-page-overview""#,
+            "Champion &lt;X&gt;&#39;s achievements",
+            "Track &lt;Done&gt;",
+            "Finished &amp; sealed",
+            "Track &lt;Open&gt;",
+            r#"achievement-status-complete">Completed</span>"#,
+            r#"achievement-status-progress">In progress</span>"#,
+            r#">Points earned</span><span class="achievements-summary-value">40/150</span>"#,
+            r#">Tracks</span><span class="achievements-summary-value">2</span>"#,
+            r#"href="leaderboard">Back to Top players</a>"#,
+        ],
+    );
+    for absent in ["Ready to claim", "Claim", "Next reward", "Requirements"] {
+        assert_html_not_contains(&html, absent);
+    }
     let done = achievement_card_position(&html, 2);
     let open = achievement_card_position(&html, 5);
     assert!(
@@ -304,10 +311,15 @@ fn achievements_overview_shows_not_found_for_missing_player() {
 
     let html = render_achievements_page("Player".to_string(), None, &state);
 
-    assert!(html.contains("Missing &lt;Player&gt;"));
-    assert!(html.contains("Player not found."));
-    assert!(html.contains(r#"href="leaderboard">Back to Top players</a>"#));
-    assert!(!html.contains("Claim"));
+    assert_contains_all(
+        &html,
+        &[
+            "Missing &lt;Player&gt;",
+            "Player not found.",
+            r#"href="leaderboard">Back to Top players</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, "Claim");
 }
 
 #[test]

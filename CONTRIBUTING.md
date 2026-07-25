@@ -97,6 +97,33 @@ Set the threshold locally:
 ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93 resources/scripts/run-coverage-with-db.sh
 ```
 
+## Page-scoped CSS
+
+Styles live under `robominer-web/static/css/pages/`. Every page loads shared `layout.css` plus
+only the page file(s) it needs via `robominer_stylesheet_tags(&[PageStylesheet::…])` (see
+`static_assets.rs`). Pass that slice as the last argument to `html::layout`, or call the helper
+directly for auth/logoff shells.
+
+When adding a page: create `static/css/pages/<name>.css`, add a `PageStylesheet` variant, and
+link only that variant (do not reintroduce “load every CSS file” in layout).
+
+| Page / shell | Stylesheets |
+|--------------|-------------|
+| Auth / logoff | `layout` + `auth` |
+| Account | `layout` + `account` |
+| Mining queue | `layout` + `mining_queue` |
+| Mining area atlas | `layout` + `mining_area_atlas` |
+| Mining results | `layout` + `mining_results` |
+| Activity | `layout` + `activity` |
+| Rally replay | `layout` + `rally` |
+| Edit code | `layout` + `edit_code` |
+| Robot workshop | `layout` + `robot` |
+| Achievements | `layout` + `achievements` |
+| Shop | `layout` + `shop` |
+| Help | `layout` + `help` |
+| Leaderboard | `layout` + `leaderboard` |
+| Robot stats | `layout` + `robot_stats` |
+
 ## Splitting a web page module
 
 Use `resources/scripts/split-web-page.py` when a `robominer-web/src/<page>.rs` file grows past
@@ -158,7 +185,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/miningResults` | `mining_results_page/tests.rs` | `read_model_pages.rs` | `mining_area_read_model_db_cli.rs` | |
 | `/leaderboard` | `leaderboard_page/tests.rs` | `read_model_pages.rs` | `leaderboard_read_model_db_cli.rs` | |
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
-| `/activity` | `rally_pages/tests.rs` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
+| `/activity` | `rally_pages/tests/` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
 | `/help*` | `help_page/tests.rs`, `help_pages/render.rs` | — | — | Route handler in `help_page/`; content/rendering in `help_pages/`; bodies in `static/help/` |
 | Rally worker / claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs` | Background engine, not a page POST |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |
@@ -197,7 +224,7 @@ domain, sim, or program.**
 ### Examples
 
 - **Rejection split:** `robominer_db::claim_achievement_step` returns `ClaimAchievementStepRejection`; web/engine use `robominer_domain::claim_achievement_step_rejection_message`.
-- **Sim pipeline:** engine `run-rallies` uses domain `load_next_rally_loadout` → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for persist stays in `robominer-db`.
+- **Sim pipeline:** engine `rally rallies` uses domain `load_next_rally_loadout` → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for persist stays in `robominer-db`.
 - **Anti-pattern:** Calling `robominer_db::create_program_source` from web/engine and skipping domain drops verify-and-mark. Embedding `"Unknown robot"`-style strings inside db mutation modules likewise breaks the split.
 
 See also [User-facing rejection messages](#user-facing-rejection-messages) below and the layer table in [ACHIEVEMENTS.md](ACHIEVEMENTS.md).

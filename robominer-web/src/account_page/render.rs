@@ -1,5 +1,6 @@
 use crate::account_page::AccountPageState;
 use crate::html::{escape_html, layout, render_password_field, render_password_toggle_script};
+use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -> String {
     let mut body = String::from(r#"<div class="account-page">"#);
@@ -84,5 +85,6 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         &state.current_username,
         hud,
         &body,
+        &[PageStylesheet::Account],
     )
 }

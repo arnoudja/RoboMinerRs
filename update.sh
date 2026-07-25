@@ -9,7 +9,7 @@ echo "### Buidling and deploying RoboMiner ###"
 deploy/systemd/install-robominer.sh
 
 echo "### Migrating database ###"
-sudo /opt/robominer/bin/robominer-engine migrate
+sudo /opt/robominer/bin/robominer-engine migrate apply
 
 echo "### Updating databases ###"
 sudo mysql RoboMiner < resources/database/gameData.sql

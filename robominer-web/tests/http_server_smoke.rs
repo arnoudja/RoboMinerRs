@@ -130,9 +130,13 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         "expected page-scoped help stylesheet link, got:\n{help_response}"
     );
     let help_stylesheet_count = help_response.matches(r#"<link rel="stylesheet""#).count();
+    assert_eq!(
+        help_stylesheet_count, 2,
+        "expected layout+help stylesheet links only, got {help_stylesheet_count} in:\n{help_response}"
+    );
     assert!(
-        help_stylesheet_count > 1,
-        "expected multiple page-scoped stylesheet links, got {help_stylesheet_count} in:\n{help_response}"
+        !help_response.contains(r#"href="css/pages/shop.css?v="#),
+        "help page should not load unrelated page CSS, got:\n{help_response}"
     );
 
     let health_response = raw_http_exchange(

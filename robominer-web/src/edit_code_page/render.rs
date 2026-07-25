@@ -1,6 +1,7 @@
 use super::{default_edit_code_program_source, edit_code_program_source_from_state};
 use crate::edit_code_page::EditCodePageState;
 use crate::html::{escape_html, layout};
+use crate::static_assets::PageStylesheet;
 
 use super::editor::render_edit_code_panel;
 use super::library::{render_edit_code_new_program_card, render_edit_code_program_card};
@@ -83,7 +84,14 @@ pub(super) fn render_edit_code_page(
     body.push_str(&super::scripts::edit_code_page_script_tag());
     body.push_str("</div>");
 
-    layout("RoboMiner - Edit code", "editCode", &username, hud, &body)
+    layout(
+        "RoboMiner - Edit code",
+        "editCode",
+        &username,
+        hud,
+        &body,
+        &[PageStylesheet::EditCode],
+    )
 }
 
 fn render_edit_code_summary(

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::help_pages;
 use crate::html::{escape_html, layout, selected_attr};
 use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
+use crate::static_assets::PageStylesheet;
 
 use super::inspector::render_mining_area_details;
 use super::robots::{render_robot_card, render_wallet_strip};
@@ -152,5 +153,6 @@ pub(super) fn render_mining_queue_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::MiningQueue],
     )
 }

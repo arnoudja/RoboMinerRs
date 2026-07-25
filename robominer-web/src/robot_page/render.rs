@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::html::layout;
 use crate::robot_page::RobotPageState;
+use crate::static_assets::PageStylesheet;
 
 use super::config::render_robot_config_panel;
 use super::fleet::{
@@ -78,5 +79,12 @@ pub(super) fn render_robot_page(
     body.push_str(&super::scripts::robot_page_script_tag());
     body.push_str("</div>");
 
-    layout("RoboMiner - Robot", "robot", &username, hud, &body)
+    layout(
+        "RoboMiner - Robot",
+        "robot",
+        &username,
+        hud,
+        &body,
+        &[PageStylesheet::Robot],
+    )
 }

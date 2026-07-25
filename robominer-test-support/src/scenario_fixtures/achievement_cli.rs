@@ -95,7 +95,8 @@ impl AchievementCliFixture {
         vec![
             "--database-url".to_string(),
             database_url.to_string(),
-            "claim-achievement-step".to_string(),
+            "achievement".to_string(),
+            "claim-step".to_string(),
             "--user-id".to_string(),
             self.user_id.to_string(),
             "--achievement-id".to_string(),

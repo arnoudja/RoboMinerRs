@@ -19,7 +19,8 @@ async fn create_program_source_inserts_and_verifies_source() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "create-program-source".to_string(),
+        "program".to_string(),
+        "create-source".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--source-name".to_string(),
@@ -31,7 +32,7 @@ async fn create_program_source_inserts_and_verifies_source() {
 
     assert!(
         output.status.success(),
-        "expected create-program-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program create-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Created program source"),
@@ -73,7 +74,8 @@ async fn program_source_states_report_editor_rows() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "program-source-states".to_string(),
+        "program".to_string(),
+        "source-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -81,7 +83,7 @@ async fn program_source_states_report_editor_rows() {
 
     assert!(
         output.status.success(),
-        "expected program-source-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program source-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -121,7 +123,8 @@ async fn update_program_source_applies_to_idle_robots_and_reports_warnings() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-program-source".to_string(),
+        "program".to_string(),
+        "update-source".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--program-source-id".to_string(),
@@ -135,7 +138,7 @@ async fn update_program_source_applies_to_idle_robots_and_reports_warnings() {
 
     assert!(
         output.status.success(),
-        "expected update-program-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program update-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("applied to 2 robot(s)")
@@ -273,7 +276,8 @@ async fn delete_program_source_removes_unlinked_source() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "delete-program-source".to_string(),
+        "program".to_string(),
+        "delete-source".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--program-source-id".to_string(),
@@ -283,7 +287,7 @@ async fn delete_program_source_removes_unlinked_source() {
 
     assert!(
         output.status.success(),
-        "expected delete-program-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program delete-source to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Deleted program source"),
@@ -312,7 +316,8 @@ async fn delete_program_source_rejects_source_linked_to_robot() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "delete-program-source".to_string(),
+        "program".to_string(),
+        "delete-source".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--program-source-id".to_string(),
@@ -322,7 +327,7 @@ async fn delete_program_source_rejects_source_linked_to_robot() {
 
     assert!(
         !output.status.success(),
-        "expected delete-program-source to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program delete-source to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -349,7 +354,8 @@ async fn update_program_source_rejects_wrong_owner() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "update-program-source".to_string(),
+        "program".to_string(),
+        "update-source".to_string(),
         "--user-id".to_string(),
         fixture.other_user_id.to_string(),
         "--program-source-id".to_string(),
@@ -363,7 +369,7 @@ async fn update_program_source_rejects_wrong_owner() {
 
     assert!(
         !output.status.success(),
-        "expected update-program-source to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected program update-source to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(

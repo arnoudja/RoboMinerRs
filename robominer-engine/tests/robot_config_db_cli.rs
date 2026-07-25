@@ -19,7 +19,7 @@ async fn robot_config_states_report_pending_page_state() {
     let update_output = run_engine(&fixture.update_args(&database_url));
     assert!(
         update_output.status.success(),
-        "expected update-robot-config fixture setup to succeed\nstdout:\n{}\nstderr:\n{}",
+        "expected robot update-config fixture setup to succeed\nstdout:\n{}\nstderr:\n{}",
         output_text(&update_output).0,
         output_text(&update_output).1
     );
@@ -27,7 +27,8 @@ async fn robot_config_states_report_pending_page_state() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "robot-config-states".to_string(),
+        "robot".to_string(),
+        "config-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -35,7 +36,7 @@ async fn robot_config_states_report_pending_page_state() {
 
     assert!(
         output.status.success(),
-        "expected robot-config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -101,7 +102,7 @@ async fn update_robot_config_updates_active_robot_when_not_queued() {
 
     assert!(
         output.status.success(),
-        "expected update-robot-config to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot update-config to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Updated active configuration"),
@@ -132,7 +133,7 @@ async fn update_robot_config_writes_pending_changes_when_queued() {
 
     assert!(
         output.status.success(),
-        "expected update-robot-config to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot update-config to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Updated pending configuration"),
@@ -161,7 +162,7 @@ async fn update_robot_config_updates_existing_pending_changes_when_queued() {
     let (first_stdout, first_stderr) = output_text(&first_output);
     assert!(
         first_output.status.success(),
-        "expected first update-robot-config to succeed\nstdout:\n{first_stdout}\nstderr:\n{first_stderr}"
+        "expected first robot update-config to succeed\nstdout:\n{first_stdout}\nstderr:\n{first_stderr}"
     );
     assert!(
         first_stdout.contains("Updated pending configuration"),
@@ -187,7 +188,7 @@ async fn update_robot_config_updates_existing_pending_changes_when_queued() {
     let (second_stdout, second_stderr) = output_text(&second_output);
     assert!(
         second_output.status.success(),
-        "expected second update-robot-config to succeed\nstdout:\n{second_stdout}\nstderr:\n{second_stderr}"
+        "expected second robot update-config to succeed\nstdout:\n{second_stdout}\nstderr:\n{second_stderr}"
     );
     assert!(
         second_stdout.contains("Updated pending configuration"),
@@ -227,7 +228,7 @@ async fn update_robot_config_rejects_missing_unassigned_part() {
 
     assert!(
         !output.status.success(),
-        "expected update-robot-config to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot update-config to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -257,7 +258,7 @@ async fn update_robot_config_rejects_program_that_does_not_fit_memory() {
 
     assert!(
         !output.status.success(),
-        "expected update-robot-config to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot update-config to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(

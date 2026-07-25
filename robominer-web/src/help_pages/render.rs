@@ -1,6 +1,7 @@
 use super::content::{PROGRAM_TIPS_BODY, TUTORIAL_INTRO, TUTORIAL_STEPS};
 use super::{HELP_GUIDES, HelpGuide, guide_by_href};
 use crate::html::{escape_html, layout};
+use crate::static_assets::PageStylesheet;
 
 pub(crate) fn render_help_index(username: &str, hud: Option<&str>, welcome_banner: &str) -> String {
     let mut body = String::from(r#"<div class="help-page">"#);
@@ -20,7 +21,14 @@ pub(crate) fn render_help_index(username: &str, hud: Option<&str>, welcome_banne
     }
     body.push_str("</div></div></div>");
 
-    layout("RoboMiner - Help", "help", username, hud, &body)
+    layout(
+        "RoboMiner - Help",
+        "help",
+        username,
+        hud,
+        &body,
+        &[PageStylesheet::Help],
+    )
 }
 
 pub(crate) fn render_help_article(
@@ -51,6 +59,7 @@ pub(crate) fn render_help_article(
         username,
         hud,
         &body,
+        &[PageStylesheet::Help],
     ))
 }
 

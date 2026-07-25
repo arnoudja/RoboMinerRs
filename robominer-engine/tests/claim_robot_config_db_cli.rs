@@ -19,6 +19,7 @@ async fn claim_results_updates_assets_totals_and_pending_changes() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "mining".to_string(),
         "claim-results".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
@@ -27,7 +28,7 @@ async fn claim_results_updates_assets_totals_and_pending_changes() {
 
     assert!(
         output.status.success(),
-        "expected claim-results to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining claim-results to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Claimed 1 mining result(s)") && stdout.contains("Added to wallet:"),
@@ -59,6 +60,7 @@ async fn claim_results_includes_runs_whose_end_time_equals_now() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "mining".to_string(),
         "claim-results".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
@@ -67,7 +69,7 @@ async fn claim_results_includes_runs_whose_end_time_equals_now() {
 
     assert!(
         output.status.success(),
-        "expected claim-results to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining claim-results to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Claimed 1 mining result(s)"),
@@ -95,7 +97,8 @@ async fn list_robot_config_reconciles_stale_pending_changes_without_claim() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "robot-config-states".to_string(),
+        "robot".to_string(),
+        "config-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -103,7 +106,7 @@ async fn list_robot_config_reconciles_stale_pending_changes_without_claim() {
 
     assert!(
         output.status.success(),
-        "expected robot-config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -138,7 +141,7 @@ async fn list_robot_config_applies_orphaned_pending_changes_when_idle() {
     let (update_stdout, update_stderr) = output_text(&update_output);
     assert!(
         update_output.status.success(),
-        "expected update-robot-config to succeed\nstdout:\n{update_stdout}\nstderr:\n{update_stderr}"
+        "expected robot update-config to succeed\nstdout:\n{update_stdout}\nstderr:\n{update_stderr}"
     );
 
     sqlx::query(
@@ -154,7 +157,8 @@ async fn list_robot_config_applies_orphaned_pending_changes_when_idle() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "robot-config-states".to_string(),
+        "robot".to_string(),
+        "config-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -162,7 +166,7 @@ async fn list_robot_config_applies_orphaned_pending_changes_when_idle() {
 
     assert!(
         output.status.success(),
-        "expected robot-config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected robot config-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

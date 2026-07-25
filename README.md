@@ -145,12 +145,12 @@ schema that already matches `createDatabase.sql`):
 ```sh
 resources/scripts/migrate-database.sh
 # or:
-cargo run -p robominer-engine -- migrate
-cargo run -p robominer-engine -- migrate-status
-cargo run -p robominer-engine -- migrate-status --check
+cargo run -p robominer-engine -- migrate apply
+cargo run -p robominer-engine -- migrate status
+cargo run -p robominer-engine -- migrate status --check
 ```
 
-`migrate-status --check` exits non-zero while migrations are pending. The web host
+`migrate status --check` exits non-zero while migrations are pending. The web host
 exposes loopback readiness at `GET /health` (database ping + migration currency).
 
 Versioned SQL lives under `resources/database/migrations/` (`NNN_description.sql`).
@@ -173,21 +173,21 @@ Example with an explicit database URL:
 ```sh
 cargo run -p robominer-engine -- \
   --database-url mysql://robominer:password@localhost/RoboMiner \
-  mining-queue-page-states --user-id 1
+  mining queue-page-states --user-id 1
 ```
 
 Example using the environment variable:
 
 ```sh
 ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
-  cargo run -p robominer-engine -- leaderboard-states --max-entries 10
+  cargo run -p robominer-engine -- leaderboard states --max-entries 10
 ```
 
 Run the rally worker loop:
 
 ```sh
 ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
-  cargo run -p robominer-engine -- run-rallies
+  cargo run -p robominer-engine -- rally rallies
 ```
 
 Show all available engine commands:
@@ -257,7 +257,7 @@ cargo run -p robominer-web
 
 Public self-registration is off by default. For local development, set
 `ROBOMINER_ALLOW_SIGNUP=1` or `allowsignup 1` in the config file; otherwise create
-users with `robominer-engine create-user`.
+users with `robominer-engine user create`.
 
 Logged-in users are identified by a signed `robominer_session` cookie minted at
 login. The legacy plain `robominer_user_id` cookie is no longer accepted.
@@ -273,7 +273,7 @@ deploy/systemd/install-robominer.sh --migrate --enable
 ```
 
 Omit `--migrate` only if you will apply schema changes yourself afterward
-(`robominer-engine migrate`). The install script prints a reminder when it
+(`robominer-engine migrate apply`). The install script prints a reminder when it
 skips that step.
 
 For HTTPS, put Caddy or nginx in front of the web host. See

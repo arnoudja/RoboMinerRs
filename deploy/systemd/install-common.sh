@@ -247,7 +247,7 @@ install_systemd_units() {
 }
 
 engine_migrate_command() {
-    echo "${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate"
+    echo "${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate apply"
 }
 
 print_migrate_reminder() {
@@ -260,7 +260,7 @@ After the database is reachable and ${SHARED_CONFIG_FILE} is configured, run:
 
 Check status with:
 
-  sudo ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate-status --check
+  sudo ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} migrate status --check
 
 Or pass --migrate to this install script to run migrate before enabling services.
 EOF
@@ -280,5 +280,5 @@ run_schema_migrate() {
     fi
 
     echo "Applying schema migrations..."
-    run_as_root "${engine_bin}" --config "${SHARED_CONFIG_FILE}" migrate
+    run_as_root "${engine_bin}" --config "${SHARED_CONFIG_FILE}" migrate apply
 }

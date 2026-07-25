@@ -286,7 +286,7 @@ async fn run_rallies_cycle(
 pub(crate) fn validate_run_rallies_options(options: &RunRalliesOptions) -> Result<()> {
     ensure!(
         options.once ^ options.loop_mode,
-        "run-rallies requires exactly one of --once or --loop"
+        "rally rallies requires exactly one of --once or --loop"
     );
     ensure!(
         options.sleep_seconds > 0,

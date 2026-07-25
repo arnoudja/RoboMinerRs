@@ -11,6 +11,8 @@ const SCRIPT_FILES = [
     'debug.js',
     'timeline.js',
     'pose.js',
+    'transport.js',
+    'controls.js',
     'player.js',
 ];
 

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
@@ -92,7 +93,7 @@ async fn robot_stats_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -104,31 +105,30 @@ fn robot_stats_rendering_escapes_fields_and_shows_tables() {
         3_600_000,
     );
 
-    assert!(html.contains(r#"class="robot-stats-page""#));
-    assert!(html.contains("Bot &lt;Alpha&gt;"));
-    assert!(html.contains("Owner &amp; Co"));
-    assert!(
-        html.contains(r#">Total runs</span><span class="robot-stats-summary-value">10</span>"#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="robot-stats-page""#,
+            "Bot &lt;Alpha&gt;",
+            "Owner &amp; Co",
+            r#">Total runs</span><span class="robot-stats-summary-value">10</span>"#,
+            r#">Ore mined</span><span class="robot-stats-summary-value">150</span>"#,
+            r#">Tax paid</span><span class="robot-stats-summary-value">25</span>"#,
+            r#">Ore per run</span><span class="robot-stats-summary-value">15.0</span>"#,
+            "Cave &amp; Crystals",
+            ">12.3<",
+            "Ore &lt;Iron&gt;",
+            ">80<",
+            r#"id="robot-stats-runs-title""#,
+            "Area &lt;One&gt;",
+            ">18.5<",
+            r#"href="activity?rallyResultId=55">View rally</a>"#,
+            r#"class="robot-stats-muted">—</td>"#,
+            r#"href="leaderboard?tab=robots">Back to Top robots</a>"#,
+        ],
     );
-    assert!(
-        html.contains(r#">Ore mined</span><span class="robot-stats-summary-value">150</span>"#)
-    );
-    assert!(html.contains(r#">Tax paid</span><span class="robot-stats-summary-value">25</span>"#));
-    assert!(
-        html.contains(r#">Ore per run</span><span class="robot-stats-summary-value">15.0</span>"#)
-    );
-    assert!(html.contains("Cave &amp; Crystals"));
-    assert!(html.contains(">12.3<"));
-    assert!(html.contains("Ore &lt;Iron&gt;"));
-    assert!(html.contains(">80<"));
-    assert!(html.contains(r#"id="robot-stats-runs-title""#));
-    assert!(html.contains("Area &lt;One&gt;"));
-    assert!(html.contains(">18.5<"));
-    assert!(html.contains(r#"href="activity?rallyResultId=55">View rally</a>"#));
     assert!(html.contains("1 minute ago") || html.contains("just now"));
-    assert!(html.contains(r#"class="robot-stats-muted">—</td>"#));
-    assert!(html.contains(r#"href="leaderboard?tab=robots">Back to Top robots</a>"#));
-    assert!(!html.contains("Robot not found."));
+    assert_html_not_contains(&html, "Robot not found.");
 }
 
 #[test]
@@ -146,12 +146,14 @@ fn robot_stats_rendering_shows_empty_sections_and_not_found() {
         recent_runs: Vec::new(),
     };
     let empty_html = render_robot_stats_page("Player".to_string(), None, &empty);
-    assert!(empty_html.contains("No mining area history yet."));
-    assert!(empty_html.contains("No claimed ore totals yet."));
-    assert!(empty_html.contains("No claimed runs yet."));
-    assert!(
-        empty_html
-            .contains(r#">Ore per run</span><span class="robot-stats-summary-value">—</span>"#)
+    assert_contains_all(
+        &empty_html,
+        &[
+            "No mining area history yet.",
+            "No claimed ore totals yet.",
+            "No claimed runs yet.",
+            r#">Ore per run</span><span class="robot-stats-summary-value">—</span>"#,
+        ],
     );
 
     let missing = RobotStatsPageState {
@@ -162,6 +164,11 @@ fn robot_stats_rendering_shows_empty_sections_and_not_found() {
         recent_runs: Vec::new(),
     };
     let missing_html = render_robot_stats_page("Player".to_string(), None, &missing);
-    assert!(missing_html.contains("Robot not found."));
-    assert!(missing_html.contains(r#"href="leaderboard?tab=robots">Back to Top robots</a>"#));
+    assert_contains_all(
+        &missing_html,
+        &[
+            "Robot not found.",
+            r#"href="leaderboard?tab=robots">Back to Top robots</a>"#,
+        ],
+    );
 }

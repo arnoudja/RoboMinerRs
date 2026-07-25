@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::csrf::csrf_token_from_cookie;
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::rate_limit::{
     MAX_ATTEMPTS_PER_LOGIN, lock_auth_rate_limiter_for_tests, record_auth_attempt,
     reset_auth_rate_limiter_for_tests,
@@ -66,7 +67,7 @@ async fn account_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -88,7 +89,7 @@ async fn account_update_is_rate_limited_before_database_work() {
     let response = account_page(&authenticated_account_update_request(), &config).await;
     let body = String::from_utf8(response.body).expect("message should be utf-8");
     assert_eq!(response.status, 429);
-    assert!(body.contains("Too many account password checks"));
+    assert_html_contains(&body, "Too many account password checks");
 }
 
 #[test]
@@ -105,24 +106,26 @@ fn account_rendering_preserves_form_contract_and_escapes_fields() {
         },
     );
 
-    assert!(html.contains(r#"class="account-page""#));
-    assert!(html.contains(r#"action="account" method="post""#));
-    assert!(html.contains("Signed in as User &lt;Current&gt;"));
-    assert!(
-        html.contains(r#"name="username" pattern="[A-Za-z0-9]{3,30}" value="User &lt;Edit&gt;""#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="account-page""#,
+            r#"action="account" method="post""#,
+            "Signed in as User &lt;Current&gt;",
+            r#"name="username" pattern="[A-Za-z0-9]{3,30}" value="User &lt;Edit&gt;""#,
+            r#"name="email" value="user&amp;edit@example.com""#,
+            r#"name="currentpassword""#,
+            r#"name="newpassword""#,
+            r#"pattern="^$|.{8,}""#,
+            r#"name="confirmpassword""#,
+            r#"<p class="auth-banner-success">Updated &lt;ok&gt;</p>"#,
+            r#"<p class="auth-banner-error">Error &lt;bad&gt;</p>"#,
+            r#"<button type="submit" class="auth-submit">Save changes</button>"#,
+            r#"class="auth-password-toggle""#,
+            r#"src="js/common/password_toggle.js?v="#,
+        ],
     );
-    assert!(html.contains(r#"name="email" value="user&amp;edit@example.com""#));
-    assert!(html.contains(r#"name="currentpassword""#));
-    assert!(html.contains(r#"name="newpassword""#));
-    assert!(html.contains(r#"pattern="^$|.{8,}""#));
-    assert!(html.contains(r#"name="confirmpassword""#));
-    assert!(html.contains(r#"name="confirmpassword""#));
-    assert!(html.contains(r#"<p class="auth-banner-success">Updated &lt;ok&gt;</p>"#));
-    assert!(html.contains(r#"<p class="auth-banner-error">Error &lt;bad&gt;</p>"#));
-    assert!(html.contains(r#"<button type="submit" class="auth-submit">Save changes</button>"#));
-    assert!(html.contains(r#"class="auth-password-toggle""#));
-    assert!(html.contains(r#"src="js/common/password_toggle.js?v="#));
-    assert!(!html.contains(r#"<table>"#));
+    assert_html_not_contains(&html, r#"<table>"#);
 }
 
 #[test]

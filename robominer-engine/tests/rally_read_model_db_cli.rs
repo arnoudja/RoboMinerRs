@@ -50,6 +50,7 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
+        "activity".to_string(),
         "rally-view-state".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
@@ -61,7 +62,7 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
 
     assert!(
         output.status.success(),
-        "expected rally-view-state to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected activity rally-view-state to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
     assert!(
@@ -87,6 +88,7 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
     let denied = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "activity".to_string(),
         "rally-view-state".to_string(),
         "--user-id".to_string(),
         fixture.other_user_id.to_string(),
@@ -97,7 +99,7 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
     let (denied_stdout, denied_stderr) = output_text(&denied);
     assert!(
         !denied.status.success(),
-        "expected inaccessible rally-view-state to fail\nstdout:\n{denied_stdout}\nstderr:\n{denied_stderr}"
+        "expected inaccessible activity rally-view-state to fail\nstdout:\n{denied_stdout}\nstderr:\n{denied_stderr}"
     );
     assert!(
         denied_stderr.contains("unknown or inaccessible rally result"),

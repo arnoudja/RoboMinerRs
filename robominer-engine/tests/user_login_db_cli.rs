@@ -23,7 +23,8 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     let create = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username.clone(),
         "--email".to_string(),
@@ -34,7 +35,7 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     let (stdout, stderr) = output_text(&create);
     assert!(
         create.status.success(),
-        "expected create-user to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user create to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     let user_id: i64 = stdout.trim().parse().expect("new user id should parse");
 
@@ -60,6 +61,7 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     let username_login = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
+        "user".to_string(),
         "verify-login".to_string(),
         "--login-name".to_string(),
         username,
@@ -96,6 +98,7 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     let email_login = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "user".to_string(),
         "verify-login".to_string(),
         "--login-name".to_string(),
         email,
@@ -131,7 +134,8 @@ async fn verify_login_rejects_unknown_user_and_bad_password() {
     let create = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username.clone(),
         "--email".to_string(),
@@ -142,13 +146,14 @@ async fn verify_login_rejects_unknown_user_and_bad_password() {
     let (stdout, stderr) = output_text(&create);
     assert!(
         create.status.success(),
-        "expected create-user to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user create to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     let user_id: i64 = stdout.trim().parse().expect("new user id should parse");
 
     let bad_password = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
+        "user".to_string(),
         "verify-login".to_string(),
         "--login-name".to_string(),
         username,
@@ -168,6 +173,7 @@ async fn verify_login_rejects_unknown_user_and_bad_password() {
     let unknown_user = run_engine(&[
         "--database-url".to_string(),
         database_url,
+        "user".to_string(),
         "verify-login".to_string(),
         "--login-name".to_string(),
         format!("{prefix}-missing"),
@@ -206,7 +212,8 @@ async fn verify_user_password_checks_current_password_without_touching_login_tim
     let create = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username,
         "--email".to_string(),
@@ -217,7 +224,7 @@ async fn verify_user_password_checks_current_password_without_touching_login_tim
     let (stdout, stderr) = output_text(&create);
     assert!(
         create.status.success(),
-        "expected create-user to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user create to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     let user_id: i64 = stdout.trim().parse().expect("new user id should parse");
 
@@ -230,7 +237,8 @@ async fn verify_user_password_checks_current_password_without_touching_login_tim
     let verify = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "verify-user-password".to_string(),
+        "user".to_string(),
+        "verify-password".to_string(),
         "--user-id".to_string(),
         user_id.to_string(),
         "--password".to_string(),

@@ -19,7 +19,8 @@ async fn mining_queue_states_report_active_and_queued_items() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "mining-queue-states".to_string(),
+        "mining".to_string(),
+        "queue-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -27,7 +28,7 @@ async fn mining_queue_states_report_active_and_queued_items() {
 
     assert!(
         output.status.success(),
-        "expected mining-queue-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining queue-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -104,7 +105,8 @@ async fn mining_queue_page_states_report_page_read_model() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "mining-queue-page-states".to_string(),
+        "mining".to_string(),
+        "queue-page-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -112,7 +114,7 @@ async fn mining_queue_page_states_report_page_read_model() {
 
     assert!(
         output.status.success(),
-        "expected mining-queue-page-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining queue-page-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

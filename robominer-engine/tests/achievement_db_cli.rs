@@ -21,7 +21,7 @@ async fn claim_achievement_step_applies_rewards() {
 
     assert!(
         output.status.success(),
-        "expected claim-achievement-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement claim-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Claimed achievement"),
@@ -52,7 +52,7 @@ async fn claim_achievement_step_unlocks_successor() {
 
     assert!(
         output.status.success(),
-        "expected claim-achievement-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement claim-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -78,7 +78,7 @@ async fn reconcile_successor_unlocks_after_late_predecessor_link() {
 
     assert!(
         output.status.success(),
-        "expected claim-achievement-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement claim-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -113,7 +113,7 @@ async fn claim_achievement_step_adds_robot_reward() {
 
     assert!(
         output.status.success(),
-        "expected claim-achievement-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement claim-step to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -139,7 +139,7 @@ async fn claim_achievement_step_rejects_unmet_requirements() {
 
     assert!(
         !output.status.success(),
-        "expected claim-achievement-step to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement claim-step to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stdout.is_empty(), "unexpected stdout:\n{stdout}");
     assert!(
@@ -207,7 +207,8 @@ async fn achievement_states_report_claimable_and_progress() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "achievement-states".to_string(),
+        "achievement".to_string(),
+        "states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -215,7 +216,7 @@ async fn achievement_states_report_claimable_and_progress() {
 
     assert!(
         output.status.success(),
-        "expected achievement-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
     assert!(
@@ -324,7 +325,8 @@ async fn achievement_page_states_report_display_model() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "achievement-page-states".to_string(),
+        "achievement".to_string(),
+        "page-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -332,7 +334,7 @@ async fn achievement_page_states_report_display_model() {
 
     assert!(
         output.status.success(),
-        "expected achievement-page-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected achievement page-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 

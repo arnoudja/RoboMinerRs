@@ -4,6 +4,7 @@ use super::AchievementsPageState;
 use super::card::render_achievement_card;
 use super::overview::{render_achievements_not_found, render_achievements_overview};
 use crate::html::layout;
+use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_achievements_page(
     username: String,
@@ -26,6 +27,7 @@ pub(super) fn render_achievements_page(
         &username,
         hud,
         &body,
+        &[PageStylesheet::Achievements],
     )
 }
 

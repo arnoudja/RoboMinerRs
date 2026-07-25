@@ -19,7 +19,8 @@ async fn run_rally_persist_writes_completed_rally_tables() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "run-rally".to_string(),
+        "rally".to_string(),
+        "run".to_string(),
         "--mining-area-id".to_string(),
         fixture.mining_area_id.to_string(),
         "--seed".to_string(),
@@ -30,7 +31,7 @@ async fn run_rally_persist_writes_completed_rally_tables() {
 
     assert!(
         output.status.success(),
-        "expected run-rally --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected rally run --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Rally complete") && stdout.contains("Persisted rally result"),
@@ -66,7 +67,8 @@ async fn run_rallies_once_persist_advances_ready_queue() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "run-rallies".to_string(),
+        "rally".to_string(),
+        "rallies".to_string(),
         "--once".to_string(),
         "--persist".to_string(),
         "--seed".to_string(),
@@ -76,7 +78,7 @@ async fn run_rallies_once_persist_advances_ready_queue() {
 
     assert!(
         output.status.success(),
-        "expected run-rallies --once --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected rally rallies --once --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("Processed mining areas:") && stdout.contains("ran="),
@@ -87,7 +89,7 @@ async fn run_rallies_once_persist_advances_ready_queue() {
             "Processing mining area {} ({area_name})",
             fixture.mining_area_id
         )),
-        "run-rallies should visit the fixture mining area\nstdout:\n{stdout}"
+        "rally rallies should visit the fixture mining area\nstdout:\n{stdout}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -99,7 +101,7 @@ async fn run_rallies_once_persist_advances_ready_queue() {
     .bind(fixture.mining_queue_id)
     .fetch_one(&pool)
     .await
-    .expect("failed to load queue row after run-rallies");
+    .expect("failed to load queue row after rally rallies");
 
     let rally_result_id: Option<i64> = queue.try_get("rallyResultId").unwrap();
     let ended: i8 = queue.try_get("ended").unwrap();

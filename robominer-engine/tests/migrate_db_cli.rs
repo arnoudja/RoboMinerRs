@@ -14,13 +14,14 @@ async fn migrate_status_lists_embedded_migrations() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "migrate-status".to_string(),
+        "migrate".to_string(),
+        "status".to_string(),
     ]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
         output.status.success(),
-        "expected migrate-status to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected migrate status to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("001_rename_scan_speed_to_scan_time"),
@@ -35,13 +36,14 @@ async fn migrate_status_lists_embedded_migrations() {
     let check = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "migrate-status".to_string(),
+        "migrate".to_string(),
+        "status".to_string(),
         "--check".to_string(),
     ]);
     let (check_stdout, check_stderr) = output_text(&check);
     assert!(
         check.status.success(),
-        "expected migrate-status --check to succeed on current schema\nstdout:\n{check_stdout}\nstderr:\n{check_stderr}"
+        "expected migrate status --check to succeed on current schema\nstdout:\n{check_stdout}\nstderr:\n{check_stderr}"
     );
 }
 
@@ -57,12 +59,13 @@ async fn migrate_is_idempotent_on_current_schema() {
         "--database-url".to_string(),
         database_url,
         "migrate".to_string(),
+        "apply".to_string(),
     ]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
         output.status.success(),
-        "expected migrate to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected migrate apply to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stdout.contains("already-applied")

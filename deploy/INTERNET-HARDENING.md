@@ -50,7 +50,7 @@ Create accounts while signup is disabled:
 
 ```bash
 ROBOMINER_DATABASE_URL='mysql://…' \
-  cargo run -p robominer-engine -- create-user \
+  cargo run -p robominer-engine -- user create \
   --username alice --email alice@example.com --password '…'
 ```
 
@@ -131,10 +131,10 @@ sudo fail2ban-client status robominer-login
   script does not migrate unless you pass `--migrate`):
 
 ```bash
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate-status --check
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
+sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
 # from a checkout: resources/scripts/migrate-database.sh
-# or: cargo run -p robominer-engine -- migrate
+# or: cargo run -p robominer-engine -- migrate apply
 ```
 
 Confirm readiness after start:

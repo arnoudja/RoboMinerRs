@@ -1,5 +1,5 @@
 -- Migration 001: rename scanSpeed to scanTime and convert scanner values.
--- Applied by robominer-engine migrate / resources/scripts/migrate-database.sh.
+-- Applied by robominer-engine migrate apply / resources/scripts/migrate-database.sh.
 -- Conversion: scanTime = GREATEST(1, 12 DIV scanSpeed)
 
 ALTER TABLE RobotPart

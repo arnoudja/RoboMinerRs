@@ -23,7 +23,8 @@ async fn create_user_inserts_initial_user_state() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username.clone(),
         "--email".to_string(),
@@ -35,13 +36,13 @@ async fn create_user_inserts_initial_user_state() {
 
     assert!(
         output.status.success(),
-        "expected create-user to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected user create to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
     let user_id: i64 = stdout
         .trim()
         .parse()
-        .expect("create-user should print the new user id");
+        .expect("user create should print the new user id");
 
     let user: (String, String, String, i32, i32) = sqlx::query_as(
         "SELECT username, email, password, achievementPoints, miningQueueSize \
@@ -120,7 +121,8 @@ async fn create_user_rejects_duplicate_username_and_email() {
     let first = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username.clone(),
         "--email".to_string(),
@@ -131,17 +133,18 @@ async fn create_user_rejects_duplicate_username_and_email() {
     let (first_stdout, first_stderr) = output_text(&first);
     assert!(
         first.status.success(),
-        "expected first create-user to succeed\nstdout:\n{first_stdout}\nstderr:\n{first_stderr}"
+        "expected first user create to succeed\nstdout:\n{first_stdout}\nstderr:\n{first_stderr}"
     );
     let user_id: i64 = first_stdout
         .trim()
         .parse()
-        .expect("create-user should print the new user id");
+        .expect("user create should print the new user id");
 
     let duplicate_username = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         username,
         "--email".to_string(),
@@ -152,7 +155,7 @@ async fn create_user_rejects_duplicate_username_and_email() {
     let (stdout, stderr) = output_text(&duplicate_username);
     assert!(
         !duplicate_username.status.success(),
-        "expected duplicate username create-user to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected duplicate username user create to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stderr.contains("duplicate username"),
@@ -162,7 +165,8 @@ async fn create_user_rejects_duplicate_username_and_email() {
     let duplicate_email = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         format!("{prefix}-other-user"),
         "--email".to_string(),
@@ -173,7 +177,7 @@ async fn create_user_rejects_duplicate_username_and_email() {
     let (stdout, stderr) = output_text(&duplicate_email);
     assert!(
         !duplicate_email.status.success(),
-        "expected duplicate email create-user to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected duplicate email user create to fail\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(
         stderr.contains("duplicate email"),
@@ -194,7 +198,8 @@ async fn create_user_rejects_invalid_profile_fields() {
     let invalid_username = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         "bad user".to_string(),
         "--email".to_string(),
@@ -205,7 +210,7 @@ async fn create_user_rejects_invalid_profile_fields() {
     let (_, stderr) = output_text(&invalid_username);
     assert!(
         !invalid_username.status.success(),
-        "expected invalid username create-user to fail"
+        "expected invalid username user create to fail"
     );
     assert!(
         stderr.contains("invalid username"),
@@ -215,7 +220,8 @@ async fn create_user_rejects_invalid_profile_fields() {
     let invalid_email = run_engine(&[
         "--database-url".to_string(),
         database_url.clone(),
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         "validuser".to_string(),
         "--email".to_string(),
@@ -226,7 +232,7 @@ async fn create_user_rejects_invalid_profile_fields() {
     let (_, stderr) = output_text(&invalid_email);
     assert!(
         !invalid_email.status.success(),
-        "expected invalid email create-user to fail"
+        "expected invalid email user create to fail"
     );
     assert!(
         stderr.contains("invalid email"),
@@ -236,7 +242,8 @@ async fn create_user_rejects_invalid_profile_fields() {
     let invalid_password = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "create-user".to_string(),
+        "user".to_string(),
+        "create".to_string(),
         "--username".to_string(),
         "validuser".to_string(),
         "--email".to_string(),
@@ -247,7 +254,7 @@ async fn create_user_rejects_invalid_profile_fields() {
     let (_, stderr) = output_text(&invalid_password);
     assert!(
         !invalid_password.status.success(),
-        "expected invalid password create-user to fail"
+        "expected invalid password user create to fail"
     );
     assert!(
         stderr.contains("invalid password"),

@@ -6,7 +6,7 @@
 #   ROBOMINER_DATABASE_URL=mysql://... resources/scripts/migrate-database.sh
 #
 # Prefer the Rust runner when available:
-#   cargo run -p robominer-engine -- migrate
+#   cargo run -p robominer-engine -- migrate apply
 #
 # DDL steps try the app user first, then fall back to MySQL root when
 # MYSQL_ROOT_PASSWORD is set (needed on older installs before CREATE/ALTER grants).

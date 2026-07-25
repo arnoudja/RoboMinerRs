@@ -1,6 +1,6 @@
 use super::format::escape_html;
 use super::shell::{app_shell_header, page_footer};
-use crate::static_assets::{robominer_stylesheet_tag, script_src_tag};
+use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags, script_src_tag};
 
 const APP_DIALOG_JS: &str = include_str!("../../static/js/common/app_dialog.js");
 
@@ -10,6 +10,7 @@ pub(crate) fn layout(
     username: &str,
     hud_markup: Option<&str>,
     body: &str,
+    styles: &[PageStylesheet],
 ) -> String {
     format!(
         r##"<!DOCTYPE html>
@@ -33,7 +34,7 @@ pub(crate) fn layout(
         {}
     </body>
 </html>"##,
-        robominer_stylesheet_tag(),
+        robominer_stylesheet_tags(styles),
         escape_html(title),
         app_shell_header(current_form, username, hud_markup),
         body,

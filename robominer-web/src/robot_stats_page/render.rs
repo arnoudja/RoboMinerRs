@@ -2,6 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::html::{escape_html, format_relative_time_millis, format_utc_millis, layout};
 use crate::robot_stats_page::RobotStatsPageState;
+use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_robot_stats_page(
     username: String,
@@ -36,6 +37,7 @@ pub(super) fn render_robot_stats_page_at(
         &username,
         hud,
         &body,
+        &[PageStylesheet::RobotStats],
     )
 }
 

@@ -17,7 +17,7 @@ sudo install -d -o robominer -g robominer -m 0755 "/opt/robominer/static/js"
 sudo rsync -a --delete --chown=robominer:robominer --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r "deploy/static/js/" "/opt/robominer/static/js/"
 
 echo "### Migrating database ###"
-sudo /opt/robominer/bin/robominer-engine migrate
+sudo /opt/robominer/bin/robominer-engine migrate apply
 
 echo "### Updating databases ###"
 sudo mysql RoboMiner < deploy/gameData.sql

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::{Request, ServerConfig};
 
 use super::render::render_leaderboard_page;
@@ -79,7 +80,7 @@ async fn leaderboard_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -114,13 +115,18 @@ fn leaderboard_rendering_escapes_dynamic_fields() {
         ),
     );
 
-    assert!(html.contains("Area &lt;A&gt;"));
-    assert!(html.contains("Bot &lt;1&gt;"));
-    assert!(html.contains("Owner &amp; Co"));
-    assert!(!html.contains("Top &quot;Bot&quot;"));
-    assert!(!html.contains("Player &lt;X&gt;"));
-    assert!(html.contains(">12.3<"));
-    assert!(!html.contains("User <One>"));
+    assert_contains_all(
+        &html,
+        &[
+            "Area &lt;A&gt;",
+            "Bot &lt;1&gt;",
+            "Owner &amp; Co",
+            ">12.3<",
+        ],
+    );
+    assert_html_not_contains(&html, "Top &quot;Bot&quot;");
+    assert_html_not_contains(&html, "Player &lt;X&gt;");
+    assert_html_not_contains(&html, "User <One>");
 }
 
 #[test]
@@ -164,21 +170,29 @@ fn leaderboard_rendering_shows_themed_shell_and_rank_rows() {
         ),
     );
 
-    assert!(html.contains(r#"class="leaderboard-page""#));
-    assert!(html.contains(r#"class="leaderboard-title">Leaderboard</h1>"#));
-    assert!(html.contains(r#"class="leaderboard-stats""#));
-    assert!(html.contains(r#"class="leaderboard-tab-filter""#));
-    assert!(html.contains(r#">Top players</a><a class="leaderboard-tab-link" href="leaderboard?tab=robots">Top robots</a><a class="leaderboard-tab-link leaderboard-tab-link-active" href="leaderboard?tab=areas&amp;areaId=1">By area</a>"#));
-    assert!(html.contains(r#"for="leaderboardAreaFilter""#));
-    assert!(html.contains(r#"id="leaderboardAreaFilter""#));
-    assert!(html.contains(r#"class="tableitem leaderboard-area-filter-select""#));
-    assert!(html.contains(r#"class="leaderboard-sidebar""#));
-    assert!(html.contains(r#"class="leaderboard-table leaderboard-table-split""#));
-    assert!(html.contains("leaderboard-row-rank-1"));
-    assert!(html.contains(r#">#1</td>"#));
-    assert!(html.contains(r#">#2</td>"#));
-    assert!(html.contains(r#"class="leaderboard-score-meta">12 runs</span>"#));
-    assert!(!html.contains(r#"class="leaderboard-section-title">Top robots</h2>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="leaderboard-page""#,
+            r#"class="leaderboard-title">Leaderboard</h1>"#,
+            r#"class="leaderboard-stats""#,
+            r#"class="leaderboard-tab-filter""#,
+            r#">Top players</a><a class="leaderboard-tab-link" href="leaderboard?tab=robots">Top robots</a><a class="leaderboard-tab-link leaderboard-tab-link-active" href="leaderboard?tab=areas&amp;areaId=1">By area</a>"#,
+            r#"for="leaderboardAreaFilter""#,
+            r#"id="leaderboardAreaFilter""#,
+            r#"class="tableitem leaderboard-area-filter-select""#,
+            r#"class="leaderboard-sidebar""#,
+            r#"class="leaderboard-table leaderboard-table-split""#,
+            "leaderboard-row-rank-1",
+            r#">#1</td>"#,
+            r#">#2</td>"#,
+            r#"class="leaderboard-score-meta">12 runs</span>"#,
+        ],
+    );
+    assert_html_not_contains(
+        &html,
+        r#"class="leaderboard-section-title">Top robots</h2>"#,
+    );
 }
 
 #[test]
@@ -233,20 +247,28 @@ fn leaderboard_rendering_shows_robots_tab_and_viewer_highlights() {
         ),
     );
 
-    assert!(html.contains("leaderboard-tab-link-active"));
-    assert!(html.contains(r#"href="leaderboard?tab=robots">Top robots</a>"#));
-    assert!(html.contains(r#"class="leaderboard-section-title">Top robots</h2>"#));
-    assert!(html.contains(r#"class="leaderboard-table leaderboard-table-split""#));
-    assert!(html.contains(r#"href="robotStats?robotId=7">My Bot</a>"#));
-    assert!(html.contains("leaderboard-row-self"));
-    assert!(html.contains(r#"class="leaderboard-you-badge">You</span>"#));
-    assert!(html.contains(r#"class="leaderboard-section-title">Your standings</h2>"#));
-    assert!(html.contains("#4 · 55 pts"));
-    assert!(html.contains(r#"href="achievements">#4 · 55 pts</a>"#));
-    assert!(html.contains("Crystal Cave · 12.0 behind leader (#2)"));
-    assert!(html.contains("#2 · 30.0 with My Bot"));
-    assert!(!html.contains(r#"leaderboard-standing-value">#1 · 30.0 with My Bot</span>"#));
-    assert!(!html.contains(r#"class="leaderboard-area-filter-select""#));
+    assert_contains_all(
+        &html,
+        &[
+            "leaderboard-tab-link-active",
+            r#"href="leaderboard?tab=robots">Top robots</a>"#,
+            r#"class="leaderboard-section-title">Top robots</h2>"#,
+            r#"class="leaderboard-table leaderboard-table-split""#,
+            r#"href="robotStats?robotId=7">My Bot</a>"#,
+            "leaderboard-row-self",
+            r#"class="leaderboard-you-badge">You</span>"#,
+            r#"class="leaderboard-section-title">Your standings</h2>"#,
+            "#4 · 55 pts",
+            r#"href="achievements">#4 · 55 pts</a>"#,
+            "Crystal Cave · 12.0 behind leader (#2)",
+            "#2 · 30.0 with My Bot",
+        ],
+    );
+    assert_html_not_contains(
+        &html,
+        r#"leaderboard-standing-value">#1 · 30.0 with My Bot</span>"#,
+    );
+    assert_html_not_contains(&html, r#"class="leaderboard-area-filter-select""#);
 }
 
 #[test]
@@ -283,8 +305,11 @@ fn leaderboard_sidebar_shows_rank_one_for_area_leader() {
         ),
     );
 
-    assert!(html.contains(r#"leaderboard-standing-value">#1 · 42.0 with My Bot</span>"#));
-    assert!(!html.contains("Closest to #1"));
+    assert_html_contains(
+        &html,
+        r#"leaderboard-standing-value">#1 · 42.0 with My Bot</span>"#,
+    );
+    assert_html_not_contains(&html, "Closest to #1");
 }
 
 #[test]
@@ -309,12 +334,17 @@ fn leaderboard_rendering_shows_players_tab() {
         ),
     );
 
-    assert!(html.contains(r#"href="leaderboard">Top players</a>"#));
-    assert!(html.contains(r#"class="leaderboard-section-title">Top players</h2>"#));
-    assert!(html.contains(r#"class="leaderboard-table""#));
-    assert!(!html.contains("leaderboard-table-split"));
-    assert!(html.contains("leaderboard-name-self"));
-    assert!(html.contains(r#"href="achievements">Champion</a>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="leaderboard">Top players</a>"#,
+            r#"class="leaderboard-section-title">Top players</h2>"#,
+            r#"class="leaderboard-table""#,
+            "leaderboard-name-self",
+            r#"href="achievements">Champion</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, "leaderboard-table-split");
 }
 
 #[test]
@@ -345,9 +375,14 @@ fn leaderboard_top_players_link_to_other_player_achievements_overview() {
         ),
     );
 
-    assert!(html.contains(r#"href="achievements?user=Champion">Champion</a>"#));
-    assert!(html.contains(r#"href="achievements?user=Player%20%3CX%3E">Player &lt;X&gt;</a>"#));
-    assert!(!html.contains(r#"href="achievements">Champion</a>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="achievements?user=Champion">Champion</a>"#,
+            r#"href="achievements?user=Player%20%3CX%3E">Player &lt;X&gt;</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, r#"href="achievements">Champion</a>"#);
 }
 
 #[test]
@@ -385,11 +420,14 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         ),
     );
 
-    assert!(html.contains(r#"href="activity?areaId=1">View area rallies</a>"#));
-    assert!(html.contains(
-        r#"href="leaderboard?tab=areas&amp;areaId=1&amp;limit=20">Load more entries</a>"#
-    ));
-    assert!(html.contains(r#"title="Best single-run score recorded in this mining area.""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="activity?areaId=1">View area rallies</a>"#,
+            r#"href="leaderboard?tab=areas&amp;areaId=1&amp;limit=20">Load more entries</a>"#,
+            r#"title="Best single-run score recorded in this mining area.""#,
+        ],
+    );
 
     let robots_html = render_leaderboard_page(
         "Player".to_string(),
@@ -415,11 +453,14 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         ),
     );
 
-    assert!(robots_html.contains(r#"href="miningResults">View mining results</a>"#));
-    assert!(
-        robots_html.contains(r#"href="leaderboard?tab=robots&amp;limit=20">Load more entries</a>"#)
+    assert_contains_all(
+        &robots_html,
+        &[
+            r#"href="miningResults">View mining results</a>"#,
+            r#"href="leaderboard?tab=robots&amp;limit=20">Load more entries</a>"#,
+            r#"title="Lifetime ore gathered divided by total mining runs.""#,
+        ],
     );
-    assert!(robots_html.contains(r#"title="Lifetime ore gathered divided by total mining runs.""#));
 
     let players_html = render_leaderboard_page(
         "Player".to_string(),
@@ -443,10 +484,13 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         ),
     );
 
-    assert!(players_html.contains(r#"href="achievements?user=Champion">Champion</a>"#));
-    assert!(players_html.contains(r#"href="achievements">View achievements</a>"#));
-    assert!(
-        players_html.contains(r#"title="Total achievement points claimed across all tracks.""#)
+    assert_contains_all(
+        &players_html,
+        &[
+            r#"href="achievements?user=Champion">Champion</a>"#,
+            r#"href="achievements">View achievements</a>"#,
+            r#"title="Total achievement points claimed across all tracks.""#,
+        ],
     );
 }
 
@@ -474,10 +518,15 @@ fn leaderboard_rendering_shows_climb_hints_and_metric_glossary() {
         ),
     );
 
-    assert!(html.contains(r#"class="leaderboard-metric-glossary""#));
-    assert!(html.contains(r#"class="leaderboard-climb-hint""#));
-    assert!(html.contains(r#"class="leaderboard-climb-title">How to climb</h3>"#));
-    assert!(html.contains(r#"href="editCode">Edit code</a>"#));
-    assert!(html.contains(r#"href="activity">Activity replays</a>"#));
-    assert!(html.contains("Best single-run score per robot in a mining area."));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="leaderboard-metric-glossary""#,
+            r#"class="leaderboard-climb-hint""#,
+            r#"class="leaderboard-climb-title">How to climb</h3>"#,
+            r#"href="editCode">Edit code</a>"#,
+            r#"href="activity">Activity replays</a>"#,
+            "Best single-run score per robot in a mining area.",
+        ],
+    );
 }

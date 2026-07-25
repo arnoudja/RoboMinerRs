@@ -29,7 +29,8 @@ async fn mining_area_scores_report_user_robot_scores() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "mining-area-scores".to_string(),
+        "mining".to_string(),
+        "area-scores".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -37,7 +38,7 @@ async fn mining_area_scores_report_user_robot_scores() {
 
     assert!(
         output.status.success(),
-        "expected mining-area-scores to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining area-scores to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
@@ -98,7 +99,8 @@ async fn mining_result_states_report_result_details() {
     let output = run_engine(&[
         "--database-url".to_string(),
         database_url,
-        "mining-result-states".to_string(),
+        "mining".to_string(),
+        "result-states".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
         "--max-results".to_string(),
@@ -108,7 +110,7 @@ async fn mining_result_states_report_result_details() {
 
     assert!(
         output.status.success(),
-        "expected mining-result-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        "expected mining result-states to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
