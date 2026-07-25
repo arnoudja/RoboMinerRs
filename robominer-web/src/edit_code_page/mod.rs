@@ -46,13 +46,14 @@ pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> 
 /// Map a `create_program_source` / `update_program_source` domain failure into a
 /// page-load error. These façades are only expected to fail with
 /// [`robominer_domain::DomainError::Database`]; any other variant is unreachable on
-/// this path today, so it surfaces as a protocol-style SQL error rather than
-/// panicking.
+/// this path today and maps to a fixed configuration error (no domain Display leak).
 fn program_source_write_page_error(
     error: robominer_domain::DomainError,
 ) -> crate::page_context::PageLoadError {
-    crate::page_context::PageLoadError::from_database(error).unwrap_or_else(|other| {
-        crate::page_context::PageLoadError::from(sqlx::Error::Protocol(other.to_string()))
+    crate::page_context::PageLoadError::from_database(error).unwrap_or_else(|_| {
+        crate::page_context::PageLoadError::from(sqlx::Error::Configuration(
+            "unexpected domain error on program source write".into(),
+        ))
     })
 }
 

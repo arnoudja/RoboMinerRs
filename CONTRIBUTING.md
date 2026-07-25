@@ -105,13 +105,15 @@ via `robominer_stylesheet_tags(&[PageStylesheet::…])` (see `static_assets.rs`)
 the last argument to `html::layout`, or call the helper directly for auth/logoff shells.
 
 When adding a page: create `static/css/pages/<name>.css`, add a `PageStylesheet` variant, and
-link only that variant (do not reintroduce “load every CSS file” in layout).
+link only that variant (do not reintroduce “load every CSS file” in layout). Shared strips used by
+more than one page (for example `PageStylesheet::PageWallet` → `page_wallet.css`) are requested
+alongside the page file, not baked into every layout.
 
 | Page / shell | Stylesheets |
 |--------------|-------------|
 | Auth / logoff | `layout` + `auth` |
 | Account | `layout` + `account` |
-| Mining queue | `layout` + `mining_queue` |
+| Mining queue | `layout` + `page_wallet` + `mining_queue` |
 | Mining area atlas | `layout` + `mining_area_atlas` |
 | Mining results | `layout` + `mining_results` |
 | Activity | `layout` + `activity` |
@@ -119,7 +121,7 @@ link only that variant (do not reintroduce “load every CSS file” in layout).
 | Edit code | `layout` + `edit_code` |
 | Robot workshop | `layout` + `robot` |
 | Achievements | `layout` + `achievements` |
-| Shop | `layout` + `shop` |
+| Shop | `layout` + `page_wallet` + `shop` |
 | Help | `layout` + `help` |
 | Leaderboard | `layout` + `leaderboard` |
 | Robot stats | `layout` + `robot_stats` |
