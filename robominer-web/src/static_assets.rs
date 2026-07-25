@@ -71,6 +71,7 @@ const LAYOUT_DIALOGS_CSS: &str = include_str!("../static/css/pages/layout_dialog
 const LAYOUT_TABLES_CSS: &str = include_str!("../static/css/pages/layout_tables.css");
 const AUTH_CSS: &str = include_str!("../static/css/pages/auth.css");
 const ACCOUNT_CSS: &str = include_str!("../static/css/pages/account.css");
+const PAGE_WALLET_CSS: &str = include_str!("../static/css/pages/page_wallet.css");
 const MINING_QUEUE_CSS: &str = include_str!("../static/css/pages/mining_queue.css");
 const MINING_AREA_ATLAS_CSS: &str = include_str!("../static/css/pages/mining_area_atlas.css");
 const MINING_RESULTS_CSS: &str = include_str!("../static/css/pages/mining_results.css");
@@ -87,10 +88,13 @@ const ROBOT_STATS_CSS: &str = include_str!("../static/css/pages/robot_stats.css"
 /// Page-specific stylesheet beyond the shared layout shell.
 ///
 /// Always paired with the shared layout partials via [`robominer_stylesheet_tags`].
+/// Shared strips used by more than one page (e.g. [`Self::PageWallet`]) are requested
+/// alongside the page file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PageStylesheet {
     Auth,
     Account,
+    PageWallet,
     MiningQueue,
     MiningAreaAtlas,
     MiningResults,
@@ -110,6 +114,7 @@ impl PageStylesheet {
         match self {
             Self::Auth => ("css/pages/auth.css", AUTH_CSS),
             Self::Account => ("css/pages/account.css", ACCOUNT_CSS),
+            Self::PageWallet => ("css/pages/page_wallet.css", PAGE_WALLET_CSS),
             Self::MiningQueue => ("css/pages/mining_queue.css", MINING_QUEUE_CSS),
             Self::MiningAreaAtlas => ("css/pages/mining_area_atlas.css", MINING_AREA_ATLAS_CSS),
             Self::MiningResults => ("css/pages/mining_results.css", MINING_RESULTS_CSS),
@@ -145,7 +150,7 @@ pub(crate) fn robominer_stylesheet_tags(pages: &[PageStylesheet]) -> String {
         "css/pages/layout_tables.css",
         LAYOUT_TABLES_CSS,
     ));
-    let mut emitted = [false; 14];
+    let mut emitted = [false; 15];
     for page in pages {
         let index = *page as usize;
         if emitted[index] {
@@ -202,6 +207,15 @@ mod tests {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::Shop, PageStylesheet::Shop]);
         assert_eq!(tags.matches(r#"href="css/pages/shop.css?v="#).count(), 1);
         assert_eq!(tags.lines().count(), 4);
+    }
+
+    #[test]
+    fn robominer_stylesheet_tags_can_pair_shared_wallet_with_page() {
+        let tags = robominer_stylesheet_tags(&[PageStylesheet::PageWallet, PageStylesheet::Shop]);
+        let links: Vec<&str> = tags.lines().collect();
+        assert_eq!(links.len(), 5);
+        assert!(links[3].contains(r#"href="css/pages/page_wallet.css?v="#));
+        assert!(links[4].contains(r#"href="css/pages/shop.css?v="#));
     }
 
     #[test]

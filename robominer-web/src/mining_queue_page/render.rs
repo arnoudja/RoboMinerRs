@@ -153,6 +153,6 @@ pub(super) fn render_mining_queue_page(
         &username,
         hud,
         &body,
-        &[PageStylesheet::MiningQueue],
+        &[PageStylesheet::PageWallet, PageStylesheet::MiningQueue],
     )
 }

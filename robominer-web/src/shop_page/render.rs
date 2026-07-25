@@ -137,7 +137,7 @@ pub(super) fn render_shop_page(
         &username,
         hud,
         &body,
-        &[PageStylesheet::Shop],
+        &[PageStylesheet::PageWallet, PageStylesheet::Shop],
     )
 }
 
