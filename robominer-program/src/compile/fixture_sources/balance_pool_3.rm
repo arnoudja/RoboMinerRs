@@ -1,0 +1,36 @@
+
+//while (!mine() && (move(2)>0.1))
+while (!mine())
+{
+    move(2);
+}
+bool clockwise = false;
+bool hasmined = false;
+
+while(true)
+{
+  int emptysteps = 0;
+  while (emptysteps <1)
+  {
+    while (mine())
+    {
+      emptysteps = 0;
+      hasmined = true;
+    }
+    if(move(1.42) < 0.1)
+    {
+      rotate(45*clockwise);
+    }
+    emptysteps++;
+  }
+
+  if((mine() < 1) && hasmined)
+  { 
+    int rotation = 90-180*clockwise;
+    rotate(rotation);
+    move(0.71);
+    rotate(rotation);
+    clockwise = !clockwise;
+    hasmined = false;
+  }
+}

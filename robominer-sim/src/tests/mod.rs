@@ -1,3 +1,4 @@
+mod animation_data;
 mod ground;
 mod helpers;
 mod movement;

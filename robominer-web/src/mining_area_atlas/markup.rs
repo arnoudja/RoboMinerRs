@@ -20,7 +20,7 @@ pub(crate) fn render_mining_area_atlas(
     ore_assets: &[robominer_db::UserOreAssetStateRecord],
 ) {
     render_mining_area_atlas_markup(body, mode, ores, areas, percentages, costs, ore_assets);
-    render_mining_area_atlas_script(body, mode);
+    render_mining_area_atlas_script(body);
 }
 
 pub(crate) fn render_mining_area_atlas_markup(

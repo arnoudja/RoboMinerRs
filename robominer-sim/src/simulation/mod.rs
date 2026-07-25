@@ -10,7 +10,7 @@ use robominer_program::motion::is_zero_motion;
 use crate::OreAnimationData;
 use crate::action_mapping::PendingSimMotionChunk;
 use crate::action_mapping::status_for_pending_wait;
-use crate::animation::{AnimationRecorder, CpuAnimationStep, RobotCycleStatus};
+use crate::animation::{AnimationRecorder, RecordedCpuStep, RobotCycleStatus};
 use crate::ground::{Ground, ScanState};
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
@@ -293,7 +293,7 @@ impl Simulation {
     fn next_robot_action(
         &mut self,
         robot_index: usize,
-    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<CpuAnimationStep>) {
+    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<RecordedCpuStep>) {
         if let Some(pending) = &self.pending_sim_motion_chunks[robot_index] {
             self.action_result_expected[robot_index] = true;
             let action = pending.next_robot_action(self.robots[robot_index].spec());

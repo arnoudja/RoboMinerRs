@@ -79,8 +79,7 @@ fn app_shell_header_marks_active_page_and_includes_atlas() {
     assert!(!html.contains("menuitemselected"));
     assert!(!html.contains(r#"nav class="logoff""#));
     assert!(html.contains(r#"class="robominer-dialog""#));
-    assert!(html.contains("window.robominerConfirm"));
-    assert!(html.contains("window.robominerAlert"));
+    assert!(html.contains(r#"src="js/common/app_dialog.js?v="#));
 }
 
 #[test]

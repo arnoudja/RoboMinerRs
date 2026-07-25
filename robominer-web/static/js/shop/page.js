@@ -5,55 +5,35 @@
         : 'robominer.shop.filterSelections';
 
     function readStoredShopFilters() {
-        try {
-            var raw = window.sessionStorage.getItem(STORAGE_KEY);
-            if (!raw) {
-                return null;
-            }
-            return JSON.parse(raw);
-        } catch (error) {
-            return null;
-        }
+        return window.RoboMinerSessionStore.readJson(STORAGE_KEY);
     }
 
     function writeStoredShopFilters() {
-        try {
-            var stored = {};
-            var typeSelect = document.getElementById('robotPartTypeId');
-            var tierSelect = document.getElementById('tierId');
-            if (typeSelect && typeSelect.value) {
-                stored.selectedRobotPartTypeId = typeSelect.value;
-            }
-            if (tierSelect && tierSelect.value) {
-                stored.selectedTierId = tierSelect.value;
-            }
-            var activePanel = document.querySelector('.shop-detail-panel-active:not(.shop-filter-hidden)');
-            if (activePanel) {
-                var partId = activePanel.getAttribute('data-part-id');
-                if (partId) {
-                    stored.selectedRobotPartId = partId;
-                }
-            }
-            window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-        } catch (error) {
+        var stored = {};
+        var typeSelect = document.getElementById('robotPartTypeId');
+        var tierSelect = document.getElementById('tierId');
+        if (typeSelect && typeSelect.value) {
+            stored.selectedRobotPartTypeId = typeSelect.value;
         }
+        if (tierSelect && tierSelect.value) {
+            stored.selectedTierId = tierSelect.value;
+        }
+        var activePanel = document.querySelector('.shop-detail-panel-active:not(.shop-filter-hidden)');
+        if (activePanel) {
+            var partId = activePanel.getAttribute('data-part-id');
+            if (partId) {
+                stored.selectedRobotPartId = partId;
+            }
+        }
+        window.RoboMinerSessionStore.writeJson(STORAGE_KEY, stored);
     }
 
     function urlHasShopFilterParams() {
-        var search = window.location.search;
-        if (!search) {
-            return false;
-        }
-        var params = search.substring(1).split('&');
-        for (var paramIndex = 0; paramIndex < params.length; paramIndex += 1) {
-            var name = decodeURIComponent(params[paramIndex].split('=')[0]);
-            if (name === 'selectedRobotPartTypeId'
-                || name === 'selectedTierId'
-                || name === 'selectedRobotPartId') {
-                return true;
-            }
-        }
-        return false;
+        return window.RoboMinerUrlQuery.hasAnyParam([
+            'selectedRobotPartTypeId',
+            'selectedTierId',
+            'selectedRobotPartId'
+        ]);
     }
 
     function applyStoredSelectValue(select, value) {
@@ -85,10 +65,7 @@
     }
 
     function syncShopUrl() {
-        var query = collectShopQueryParams();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', query ? 'shop?' + query : 'shop');
-        }
+        window.RoboMinerUrlQuery.sync('shop', collectShopQueryParams());
         writeStoredShopFilters();
     }
 
@@ -147,18 +124,7 @@
     }
 
     function shopUrlPartId() {
-        var search = window.location.search;
-        if (!search) {
-            return null;
-        }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
-            if (decodeURIComponent(pair[0]) === 'selectedRobotPartId' && pair[1]) {
-                return decodeURIComponent(pair[1]);
-            }
-        }
-        return null;
+        return window.RoboMinerUrlQuery.getParam('selectedRobotPartId');
     }
 
     function syncShopFormState() {

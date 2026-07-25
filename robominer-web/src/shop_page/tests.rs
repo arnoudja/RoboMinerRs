@@ -115,7 +115,7 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
     assert!(!html.contains(r#"<script src="js/shop.js"></script>"#));
     assert!(html.contains(r#"class="shop-page" data-filter-storage-key="#));
     assert!(html.contains(r#"src="js/shop/page.js?v="#));
-    assert!(html.contains(r#"class="shop-wallet""#));
+    assert!(html.contains(r#"class="page-wallet shop-wallet""#));
     assert!(html.contains(r#"class="shop-deck""#));
     assert!(html.contains(r#"class="shop-detail""#));
     assert!(html.contains(r#"id="shopPartDetails100""#));
@@ -160,7 +160,7 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
     ));
     assert!(html.contains(r#"<option value="2" selected>Ore &amp; Two quality</option>"#));
     assert!(
-        html.contains(r#">Ore &amp; Two</span><span class="shop-wallet-amount">40/100</span>"#)
+        html.contains(r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#)
     );
     assert!(html.contains(
         r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#

@@ -1,0 +1,27 @@
+
+int rot = 0;
+
+rotate(5);
+
+while (move(4.25) > 3.9 && !mine());
+
+while (true)
+{
+    while (mine())
+    {
+        rot = 100;
+    }
+    if (rot > 0)
+    {
+        if (rot < 100)
+        {
+            rotate(rot);
+        }
+        rot = rot - 10;
+    }
+    if (move(1.415) < 1.4)
+    {
+        move(-1.415);
+        rotate(45);
+    }
+}

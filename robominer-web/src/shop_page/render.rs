@@ -134,11 +134,6 @@ pub(super) fn render_shop_page(
 }
 
 fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {
-    body.push_str(r#"<section class="shop-wallet" aria-label="Wallet">"#);
-    body.push_str(r#"<div class="shop-wallet-heading">"#);
-    body.push_str(r#"<h1 class="shop-page-title">Parts shop</h1>"#);
-    body.push_str("</div>");
-
     let assets: Vec<_> = state
         .ore_assets
         .iter()
@@ -149,12 +144,19 @@ fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {
             max_allowed: asset.max_allowed,
         })
         .collect();
-    crate::html::render_wallet_ore_list(
+    crate::html::render_wallet_strip_section(
         body,
-        "shop-wallet",
-        &assets,
-        "No ore in wallet yet.",
-        true,
+        &crate::html::WalletStripSection {
+            section_class: "page-wallet shop-wallet",
+            aria_label: "Wallet",
+            heading_class: "shop-wallet-heading",
+            heading_markup: r#"<h1 class="shop-page-title">Parts shop</h1>"#,
+            middle_markup: "",
+            assets: &assets,
+            empty_message: "No ore in wallet yet.",
+            wrap_amount_row: true,
+            item_row_class: Some("shop-wallet-item-row"),
+        },
         |asset| {
             render_mining_area_atlas_ore_link(
                 asset.ore_id,
@@ -164,8 +166,6 @@ fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {
             )
         },
     );
-
-    body.push_str("</section>");
 }
 
 fn render_shop_message(body: &mut String, state: &ShopPageState) {

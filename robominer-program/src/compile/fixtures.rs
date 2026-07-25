@@ -1,4 +1,17 @@
-use crate::types::CompatibilityFixture;
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Verification {
+    pub verified: bool,
+    pub compiled_size: i32,
+    pub error_description: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CompatibilityFixture {
+    pub name: &'static str,
+    pub source: &'static str,
+    pub expected_size: Option<i32>,
+    pub expected_error_contains: Option<&'static str>,
+}
 
 static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
     CompatibilityFixture {
@@ -75,76 +88,13 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
     },
     CompatibilityFixture {
         name: "balance_pool_1",
-        source: "
-int rot = 0;
-
-rotate(5);
-
-while (move(4.25) > 3.9 && !mine());
-
-while (true)
-{
-    while (mine())
-    {
-        rot = 100;
-    }
-    if (rot > 0)
-    {
-        if (rot < 100)
-        {
-            rotate(rot);
-        }
-        rot = rot - 10;
-    }
-    if (move(1.415) < 1.4)
-    {
-        move(-1.415);
-        rotate(45);
-    }
-}
-",
+        source: include_str!("fixture_sources/balance_pool_1.rm"),
         expected_size: None,
         expected_error_contains: None,
     },
     CompatibilityFixture {
         name: "balance_pool_3",
-        source: "
-//while (!mine() && (move(2)>0.1))
-while (!mine())
-{
-    move(2);
-}
-bool clockwise = false;
-bool hasmined = false;
-
-while(true)
-{
-  int emptysteps = 0;
-  while (emptysteps <1)
-  {
-    while (mine())
-    {
-      emptysteps = 0;
-      hasmined = true;
-    }
-    if(move(1.42) < 0.1)
-    {
-      rotate(45*clockwise);
-    }
-    emptysteps++;
-  }
-
-  if((mine() < 1) && hasmined)
-  { 
-    int rotation = 90-180*clockwise;
-    rotate(rotation);
-    move(0.71);
-    rotate(rotation);
-    clockwise = !clockwise;
-    hasmined = false;
-  }
-}
-",
+        source: include_str!("fixture_sources/balance_pool_3.rm"),
         expected_size: None,
         expected_error_contains: None,
     },
@@ -270,58 +220,7 @@ while(true)
     },
     CompatibilityFixture {
         name: "ore_seeker_80x80",
-        source: "bool found = false;
-move(robot.forwardSpeed);
-
-while (!found)
-{
-    scan();
-
-    if (oreType() == 1) {
-        found = true;
-    } else {
-        scan(60);
-        if (oreType() == 1) {
-           found = true;
-           rotate(60);
-        } else {
-            scan(-60);
-            if (oreType() == 1) {
-                found = true;
-                rotate(-60);
-            } else {
-                while (move(robot.forwardSpeed) < 0.1) {
-                    rotate(robot.rotateSpeed);
-                }
-            }
-        }
-    }
-}
-
-if (oreDistance() > 0) {
-    move(oreDistance());
-}
-
-while (found) {
-    while (mine());
-
-    int direction = 0;
-    scan(direction);
-    while (oreType() != 1 && direction <= 350) {
-        rotate(robot.rotateSpeed);
-        direction += robot.rotateSpeed;
-        scan(0);
-    }
-
-    if (oreType() == 1) {
-        dump(2);
-        if (oreDistance() > 0) {
-            move(oreDistance());
-        }
-    } else {
-        found = false;
-    }
-}",
+        source: include_str!("fixture_sources/ore_seeker_80x80.rm"),
         expected_size: None,
         expected_error_contains: None,
     },

@@ -3,7 +3,7 @@
             <p class="helptext">
                 In this section the mechanics of the RoboMiner Robots are explained.
             </p>
-            <h2>Ore Container</h2>
+            <h2 id="ore-container">Ore Container</h2>
             <p class="helptext">
                 The Ore Container is the part of the Robot that stores the ore mined.
                 The size of the container limits the maximum amount of ore stored,
@@ -18,7 +18,7 @@
                 ore is in the container (total or per type). Use dumpA() / dumpB() / dumpC() to dump one type,
                 or dump() for all of it.
             </p>
-            <h2>Depot</h2>
+            <h2 id="depot">Depot</h2>
             <p class="helptext">
                 The depot is a personal ore bank for each ore type, separate from the robot's ore container
                 and from your wallet on the account page.
@@ -39,7 +39,7 @@
                 On the rally replay, a translucent square in your player color marks the spawn corner where
                 depot dumps land, and the player card shows depot fill next to cargo when capacity is unlocked.
             </p>
-            <h2>Mining Unit</h2>
+            <h2 id="mining-unit">Mining Unit</h2>
             <p class="helptext">
                 The Mining Unit is the part of the Robot that is put to work when executing the mine() command.
                 Unlike the Ore Container it is not aware of the different types of ore.
@@ -61,7 +61,7 @@
             <p class="helptext">
                 Besides the Mining Capacity there also is a large variation in power consumption and weight between the different mining units.
             </p>
-            <h2>Battery</h2>
+            <h2 id="battery">Battery</h2>
             <p class="helptext">
                 The Battery is what powers the Robot during the mining session.
                 Besides that, the Battery is also the part responsible for the recharge periods between mining sessions.
@@ -80,7 +80,7 @@
                 The recharge time is even simpler, it is shown directly in the Shop.
                 Recharge times can vary widely between different batteries, especially for the more advanced once.
             </p>
-            <h2>Memory Module</h2>
+            <h2 id="memory-module">Memory Module</h2>
             <p class="helptext">
                 The Memory Module stores the Robot program currently active for the Robot.
                 The Memory size determines the maximum number of low-level instructions it can contain.
@@ -123,7 +123,7 @@
                 The Power consumption slightly increases with the Memory size of the Memory Module.
                 So it is advisable to use the smallest Memory Module that can contain your compiled code.
             </p>
-            <h2>CPU</h2>
+            <h2 id="cpu">CPU</h2>
             <p class="helptext">
                 The CPU is probably the most complicated part of the Robot.
                 Besides a slight variation in Power consumption, it has one important property: The CPU speed.
@@ -156,7 +156,7 @@
             <p class="helptext">
                 A portion of the timeline of a mining session with a 4 i/c can be represented as followed:
             </p>
-            <table class="helptable">
+            <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">CPU</td>
                     <td class="helptable">CPU</td>
@@ -176,7 +176,7 @@
                     <td class="helptable" colspan="4">Physical</td>
                     <td class="helptable" colspan="4">Physical</td>
                 </tr>
-            </table>
+            </table></div>
             <p class="helptext">
                 There are two important rules concerning this timeline:
             </p>
@@ -192,7 +192,7 @@
             <p class="helptext">
                 When the CPU starts a mine() operation as the second CPU action, the timeline will look like this:
             </p>
-            <table class="helptable">
+            <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">CPU</td>
                     <td class="helptable">mine</td>
@@ -212,11 +212,11 @@
                     <td class="helptable" colspan="4">mine()</td>
                     <td class="helptable" colspan="4">Physical</td>
                 </tr>
-            </table>
+            </table></div>
             <p class="helptext">
                 And when the CPU is busy with non-physical actions until the 7th CPU action, the timeline will look like this:
             </p>
-            <table class="helptable">
+            <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">CPU</td>
                     <td class="helptable">CPU</td>
@@ -236,7 +236,7 @@
                     <td class="helptable" colspan="4">Wait</td>
                     <td class="helptable" colspan="4">mine()</td>
                 </tr>
-            </table>
+            </table></div>
             <p class="helptext">
                 In order to mine efficiently, it is important that the Robot program and CPU match each others capabilities.
                 It is useless to have a 72 i/c CPU for the default 'move(1); mine();' program.
@@ -251,7 +251,7 @@
             <p class="helptext">
                 If the Wait actions are above 20%, you might consider buying a better CPU or creating a more efficient program.
             </p>
-            <h2>Scanning and ore heaps</h2>
+            <h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>
             <p class="helptext">
                 Ore is placed in round heaps. Different ore types can overlap: a small high-value heap
                 often sits inside a larger lower-value one.
@@ -276,7 +276,7 @@
                 Dump the types you do not want to keep, or move off the cell before scanning again.
                 See Programming tips for nested-heap patterns.
             </p>
-            <h2>Engine</h2>
+            <h2 id="engine">Engine</h2>
             <p class="helptext">
                 The Engine is responsible for moving the Robot around.
                 Stronger Engines can move and rotate faster.
@@ -301,7 +301,7 @@
                 Assume the Robot has a forward speed of 1.2 and a move(1.8) is executed.
                 With a 4 i/c CPU, the timeline will look like this:
             </p>
-            <table class="helptable">
+            <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">CPU</td>
                     <td class="helptable">CPU</td>
@@ -322,13 +322,13 @@
                     <td class="helptable" colspan="2">move(0.6)</td>
                     <td class="helptable" colspan="2">idle</td>
                 </tr>
-            </table>
+            </table></div>
             <p class="helptext">
                 A collision cancels the move or rotate from the moment the collision occurs.
                 So, when a collision occurs at one half of the move(1.2) cycle,
                 the Robot has moved a distance of 0.6 and the second move(0.6) will not be executed.
             </p>
-            <table class="helptable">
+            <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">CPU</td>
                     <td class="helptable">CPU</td>
@@ -349,4 +349,4 @@
                     <td class="helptable" colspan="2">collision</td>
                     <td class="helptable" colspan="4">...</td>
                 </tr>
-            </table>
+            </table></div>

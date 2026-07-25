@@ -103,7 +103,7 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
     assert!(html.contains(r#"name="email" value="new&amp;user@example.com""#));
     assert!(html.contains(r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#));
     assert!(html.contains(r#"class="auth-password-toggle""#));
-    assert!(html.contains("toggleAuthPasswordVisibility"));
+    assert!(html.contains(r#"src="js/common/password_toggle.js?v="#));
     assert!(!html.contains("Latest news"));
 }
 

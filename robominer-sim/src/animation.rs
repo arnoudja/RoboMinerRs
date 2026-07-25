@@ -23,13 +23,13 @@ pub struct OreAnimationData {
 
 /// One program CPU instruction within a mining cycle (for replay stepping/highlight).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct CpuAnimationStep {
+pub struct RecordedCpuStep {
     pub line: u16,
     pub start_col: u16,
     pub end_col: u16,
 }
 
-impl CpuAnimationStep {
+impl RecordedCpuStep {
     pub fn from_span(span: robominer_program::SourceSpan) -> Option<Self> {
         if !span.is_known() {
             return None;
@@ -39,6 +39,21 @@ impl CpuAnimationStep {
             start_col: span.start_col,
             end_col: span.end_col,
         })
+    }
+}
+
+impl From<RecordedCpuStep> for AnimationCpuStep {
+    fn from(step: RecordedCpuStep) -> Self {
+        let mut entry = AnimationCpuStep {
+            l: step.line,
+            c: None,
+            e: None,
+        };
+        if step.start_col > 0 && step.end_col > step.start_col {
+            entry.c = Some(step.start_col);
+            entry.e = Some(step.end_col);
+        }
+        entry
     }
 }
 
@@ -95,7 +110,7 @@ struct RobotAnimationStep {
     /// Optional stuck/idle reason for this cycle.
     status: Option<RobotCycleStatus>,
     /// Program CPU micro-steps for this cycle; serialized as `cpu` when non-empty.
-    cpu_steps: Vec<CpuAnimationStep>,
+    cpu_steps: Vec<RecordedCpuStep>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -149,7 +164,7 @@ impl AnimationRecorder {
         action_index: Option<u8>,
         source_line: Option<u16>,
         status: Option<RobotCycleStatus>,
-        cpu_steps: Vec<CpuAnimationStep>,
+        cpu_steps: Vec<RecordedCpuStep>,
     ) {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
@@ -335,18 +350,8 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
             location.cpu = Some(
                 step.cpu_steps
                     .iter()
-                    .map(|cpu_step| {
-                        let mut entry = AnimationCpuStep {
-                            l: cpu_step.line,
-                            c: None,
-                            e: None,
-                        };
-                        if cpu_step.start_col > 0 && cpu_step.end_col > cpu_step.start_col {
-                            entry.c = Some(cpu_step.start_col);
-                            entry.e = Some(cpu_step.end_col);
-                        }
-                        entry
-                    })
+                    .copied()
+                    .map(AnimationCpuStep::from)
                     .collect(),
             );
         } else {

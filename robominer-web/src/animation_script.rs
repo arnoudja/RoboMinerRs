@@ -1,6 +1,6 @@
 //! Rally replay viewer scripts under `static/js/rally_animation/`, linked as static files.
 
-use crate::static_assets::script_src_tags;
+use crate::static_assets::{script_src_tag, script_src_tags};
 
 const PAYLOAD_JS: &str = include_str!("../static/js/rally_animation/payload.js");
 const DRAW_JS: &str = include_str!("../static/js/rally_animation/draw.js");
@@ -8,8 +8,9 @@ const DEBUG_JS: &str = include_str!("../static/js/rally_animation/debug.js");
 const TIMELINE_JS: &str = include_str!("../static/js/rally_animation/timeline.js");
 const POSE_JS: &str = include_str!("../static/js/rally_animation/pose.js");
 const PLAYER_JS: &str = include_str!("../static/js/rally_animation/player.js");
+const BOOTSTRAP_JS: &str = include_str!("../static/js/rally_animation/bootstrap.js");
 
-/// Ordered `<script src>` tags for the rally animation viewer.
+/// Ordered `<script src>` tags for the rally animation viewer (without bootstrap).
 pub fn rally_animation_script_tags() -> String {
     script_src_tags(&[
         ("js/rally_animation/payload.js", PAYLOAD_JS),
@@ -19,6 +20,11 @@ pub fn rally_animation_script_tags() -> String {
         ("js/rally_animation/pose.js", POSE_JS),
         ("js/rally_animation/player.js", PLAYER_JS),
     ])
+}
+
+/// Bootstrap runs after config/result JSON tags are in the DOM.
+pub fn rally_bootstrap_script_tag() -> String {
+    script_src_tag("js/rally_animation/bootstrap.js", BOOTSTRAP_JS)
 }
 
 #[cfg(test)]
@@ -42,6 +48,7 @@ mod tests {
             );
         }
         assert!(tags.contains("?v="));
+        assert!(rally_bootstrap_script_tag().contains("js/rally_animation/bootstrap.js"));
     }
 
     #[test]
@@ -55,5 +62,6 @@ mod tests {
         assert!(DRAW_JS.contains("function drawRobot("));
         assert!(DEBUG_JS.contains("function updateRobotDebugPanel("));
         assert!(DRAW_JS.contains("RALLY_VIEWER_HIGHLIGHT_PADDING"));
+        assert!(BOOTSTRAP_JS.contains("runanimation()"));
     }
 }

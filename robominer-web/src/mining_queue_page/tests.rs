@@ -183,11 +183,11 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
     ));
     assert!(!html.contains(r#"<button type="submit">Show details</button>"#));
     assert!(html.contains(r#"class="mining-queue-page" data-area-storage-key="#));
-    assert!(html.contains(r#"class="mining-queue-wallet""#));
+    assert!(html.contains(r#"class="page-wallet mining-queue-wallet""#));
     assert!(html.contains(r#"class="mining-queue-card""#));
-    assert!(html.contains(
-        r#">Ore &amp; Two</span><span class="mining-queue-wallet-amount">40/100</span>"#
-    ));
+    assert!(
+        html.contains(r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#)
+    );
     assert!(html.contains(r#"href="robot?robotId=1">Bot &lt;One&gt;</a>"#));
     assert!(html.contains(r#"mining-queue-status-mining">Mining</span>"#));
     assert!(html.contains(

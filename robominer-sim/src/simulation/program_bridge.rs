@@ -7,7 +7,7 @@ use robominer_program::{ExecutableAction, ExecutionContext, ProgramStep};
 use crate::action_mapping::{
     map_awaiting_executable, robot_action_from_executable, status_for_wait_from_executable,
 };
-use crate::animation::{CpuAnimationStep, RobotCycleStatus};
+use crate::animation::{RecordedCpuStep, RobotCycleStatus};
 use crate::ground::{ScanResult, ScanState};
 use crate::physics::ActionResult;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
@@ -121,7 +121,7 @@ impl Simulation {
     pub(super) fn run_program_cpu_loop(
         &mut self,
         robot_index: usize,
-    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<CpuAnimationStep>) {
+    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<RecordedCpuStep>) {
         let cpu_speed = self.robots[robot_index].spec.cpu_speed;
         let mut cpu_used = 0;
         let mut cpu_steps = Vec::new();
@@ -159,7 +159,7 @@ impl Simulation {
 
             match step {
                 ProgramStep::Cpu => {
-                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     self.action_results[robot_index] = context.action_result;
@@ -177,7 +177,7 @@ impl Simulation {
                     self.action_results[robot_index] = None;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
-                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     let scan_time = self.start_scan(robot_index, direction);
@@ -187,7 +187,7 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
-                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     let remaining = self.complete_scan_now(robot_index);
@@ -196,7 +196,7 @@ impl Simulation {
                     cpu_used += remaining.max(1);
                 }
                 ProgramStep::Action(action) => {
-                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     let awaits = {

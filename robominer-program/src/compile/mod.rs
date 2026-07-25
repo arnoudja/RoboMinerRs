@@ -1,4 +1,4 @@
-use crate::types::{CompileError, ExecutableProgram, Verification};
+use crate::types::{CompileError, ExecutableProgram};
 
 mod cache;
 mod executable;
@@ -10,7 +10,9 @@ use executable::parse_executable_program;
 use program_size::program_instruction_size;
 
 pub use cache::{clear_compile_cache, compile_cache_stats};
-pub use fixtures::{compatibility_fixture_source, compatibility_fixtures};
+pub use fixtures::{
+    CompatibilityFixture, Verification, compatibility_fixture_source, compatibility_fixtures,
+};
 
 pub fn verify_source(source: &str) -> Verification {
     match compile_executable_source_with_size(source) {

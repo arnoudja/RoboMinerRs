@@ -1511,15 +1511,51 @@ a.buttonlink {
     max-width: 1100px;
 }
 
-.mining-queue-wallet {
+.page-wallet {
     background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
-    border: 1px solid var(--mq-border);
     border-radius: 8px;
     box-shadow:
         0 10px 32px rgba(0, 0, 0, 0.35),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
     margin: 0 0 16px;
     padding: 16px 20px;
+}
+
+.page-wallet-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.page-wallet-item {
+    background: rgba(10, 16, 26, 0.85);
+    border-radius: 6px;
+    min-width: 140px;
+    padding: 8px 12px;
+}
+
+.page-wallet-ore {
+    color: #c5d4ea;
+    font-weight: bold;
+}
+
+.page-wallet-amount {
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.page-wallet-full .page-wallet-amount {
+    text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
+}
+
+.page-wallet-empty {
+    margin: 0;
+}
+
+.mining-queue-wallet {
+    border: 1px solid var(--mq-border);
 }
 
 .mining-queue-wallet-heading {
@@ -1539,45 +1575,27 @@ a.buttonlink {
     text-transform: uppercase;
 }
 
-.mining-queue-wallet-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.mining-queue-wallet-item {
-    background: rgba(10, 16, 26, 0.85);
+.mining-queue-wallet .page-wallet-item {
     border: 1px solid var(--mq-border);
-    border-radius: 6px;
     box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.04);
     display: flex;
     gap: 10px;
-    min-width: 140px;
-    padding: 8px 12px;
 }
 
-.mining-queue-wallet-ore {
-    color: #c5d4ea;
-    font-weight: bold;
+.mining-queue-wallet .page-wallet-ore {
     letter-spacing: 0.03em;
 }
 
-.mining-queue-wallet-amount {
+.mining-queue-wallet .page-wallet-amount {
     color: var(--mq-text-muted);
-    font-family: Consolas, "Courier New", monospace;
 }
 
-.mining-queue-wallet-full .mining-queue-wallet-amount {
+.mining-queue-wallet .page-wallet-full .page-wallet-amount {
     color: var(--mq-success);
-    text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
 }
 
-.mining-queue-wallet-empty {
+.mining-queue-wallet .page-wallet-empty {
     color: var(--mq-text-muted);
-    margin: 0;
 }
 
 .mining-queue-claim-banner {
@@ -5899,14 +5917,7 @@ tbody.miningresults {
 }
 
 .shop-wallet {
-    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
     border: 1px solid var(--shop-border);
-    border-radius: 8px;
-    box-shadow:
-        0 10px 32px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    margin: 0 0 16px;
-    padding: 16px 20px;
 }
 
 .shop-wallet-heading {
@@ -5922,26 +5933,14 @@ tbody.miningresults {
     text-transform: uppercase;
 }
 
-.shop-wallet-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.shop-wallet-item {
-    background: rgba(10, 16, 26, 0.85);
+.shop-wallet .page-wallet-item {
     border: 1px solid var(--shop-border);
-    border-radius: 6px;
     box-shadow: inset 0 0 0 1px rgba(124, 77, 255, 0.05);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
     min-width: 160px;
-    padding: 8px 12px;
 }
 
 .shop-wallet-item-row {
@@ -5952,24 +5951,16 @@ tbody.miningresults {
     width: 100%;
 }
 
-.shop-wallet-ore {
-    color: #c5d4ea;
-    font-weight: bold;
-}
-
-.shop-wallet-amount {
+.shop-wallet .page-wallet-amount {
     color: var(--shop-text-muted);
-    font-family: Consolas, "Courier New", monospace;
 }
 
-.shop-wallet-full .shop-wallet-amount {
+.shop-wallet .page-wallet-full .page-wallet-amount {
     color: var(--shop-success);
-    text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
 }
 
-.shop-wallet-empty {
+.shop-wallet .page-wallet-empty {
     color: var(--shop-text-muted);
-    margin: 0;
 }
 
 .shop-atlas-helper {

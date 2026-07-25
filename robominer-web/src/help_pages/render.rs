@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::content::{PROGRAM_TIPS_BODY, TUTORIAL_INTRO, TUTORIAL_STEPS};
 use super::{HELP_GUIDES, HelpGuide, guide_by_href};
 use crate::html::{escape_html, layout};
@@ -71,87 +69,35 @@ fn render_program_tips_content() -> String {
 }
 
 fn enrich_help_reference_content(html: &str) -> String {
-    let with_code = upgrade_help_code_blocks(html);
-    let with_tables = wrap_help_tables(&with_code);
-    let (with_anchors, toc) = add_help_heading_anchors(&with_tables);
+    let toc = collect_help_heading_toc(html);
     let mut content = String::new();
     if let Some(toc_markup) = render_help_article_toc(&toc) {
         content.push_str(&toc_markup);
     }
-    content.push_str(&with_anchors);
+    content.push_str(html);
     content
 }
 
-fn upgrade_help_code_blocks(html: &str) -> String {
-    const OPEN: &str = "<p class=\"codeexample\">";
-    let mut result = String::new();
-    let mut rest = html;
-    while let Some(pos) = rest.find(OPEN) {
-        result.push_str(&rest[..pos]);
-        let after_open = &rest[pos + OPEN.len()..];
-        if let Some(end) = after_open.find("</p>") {
-            result.push_str(r#"<pre class="help-code-block"><code>"#);
-            result.push_str(after_open[..end].trim_start());
-            result.push_str("</code></pre>");
-            rest = &after_open[end + 4..];
-        } else {
-            result.push_str(&rest[pos..]);
-            return result;
-        }
-    }
-    result.push_str(rest);
-    result
-}
-
-fn wrap_help_tables(html: &str) -> String {
-    const OPEN: &str = "<table class=\"helptable\">";
-    let mut result = String::new();
-    let mut rest = html;
-    while let Some(pos) = rest.find(OPEN) {
-        result.push_str(&rest[..pos]);
-        let after_open = &rest[pos + OPEN.len()..];
-        if let Some(end) = after_open.find("</table>") {
-            result.push_str(r#"<div class="help-table-wrap"><table class="helptable">"#);
-            result.push_str(&after_open[..end]);
-            result.push_str("</table></div>");
-            rest = &after_open[end + 8..];
-        } else {
-            result.push_str(&rest[pos..]);
-            return result;
-        }
-    }
-    result.push_str(rest);
-    result
-}
-
-fn add_help_heading_anchors(html: &str) -> (String, Vec<(String, String)>) {
-    let mut output = String::with_capacity(html.len() + 128);
+fn collect_help_heading_toc(html: &str) -> Vec<(String, String)> {
     let mut toc = Vec::new();
-    let mut slug_counts: HashMap<String, usize> = HashMap::new();
     let mut rest = html;
 
-    while let Some(start) = rest.find("<h2>") {
-        output.push_str(&rest[..start]);
-        let after_open = &rest[start + 4..];
-        let Some(end) = after_open.find("</h2>") else {
-            output.push_str(&rest[start..]);
-            return (output, toc);
+    while let Some(id_start) = rest.find(r#"<h2 id=""#) {
+        let after_id_attr = &rest[id_start + 8..];
+        let Some(id_end) = after_id_attr.find('"') else {
+            break;
         };
-        let title = after_open[..end].trim();
-        let base_slug = help_heading_slug(title);
-        let entry = slug_counts.entry(base_slug.clone()).or_insert(0);
-        *entry += 1;
-        let id = if *entry == 1 {
-            base_slug
-        } else {
-            format!("{base_slug}-{}", entry)
+        let id = &after_id_attr[..id_end];
+        let after_id = &after_id_attr[id_end + 2..];
+        let Some(title_end) = after_id.find("</h2>") else {
+            break;
         };
-        toc.push((id.clone(), title.to_string()));
-        output.push_str(&format!(r#"<h2 id="{id}">{}</h2>"#, escape_html(title)));
-        rest = &after_open[end + 5..];
+        let title = after_id[..title_end].trim();
+        toc.push((id.to_string(), title.to_string()));
+        rest = &after_id[title_end + 5..];
     }
-    output.push_str(rest);
-    (output, toc)
+
+    toc
 }
 
 fn render_help_article_toc(entries: &[(String, String)]) -> Option<String> {
@@ -170,27 +116,6 @@ fn render_help_article_toc(entries: &[(String, String)]) -> Option<String> {
     }
     toc.push_str("</ul></nav>");
     Some(toc)
-}
-
-fn help_heading_slug(title: &str) -> String {
-    let mut slug = String::new();
-    let mut previous_hyphen = false;
-    for ch in title.trim().chars() {
-        if ch.is_ascii_alphanumeric() {
-            slug.push(ch.to_ascii_lowercase());
-            previous_hyphen = false;
-        } else if !previous_hyphen && !slug.is_empty() {
-            slug.push('-');
-            previous_hyphen = true;
-        }
-    }
-    while slug.ends_with('-') {
-        slug.pop();
-    }
-    if slug.is_empty() {
-        slug.push_str("section");
-    }
-    slug
 }
 
 fn tutorial_action_links(step_index: usize) -> Vec<String> {
@@ -352,12 +277,18 @@ pub(crate) fn render_page_help_hint_line(links: &[(&str, &str)]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::help_heading_slug;
+    use super::collect_help_heading_toc;
 
     #[test]
-    fn help_heading_slug_normalizes_titles() {
-        assert_eq!(help_heading_slug("Ore Container"), "ore-container");
-        assert_eq!(help_heading_slug("Depot"), "depot");
-        assert_eq!(help_heading_slug("Repeated mining"), "repeated-mining");
+    fn collect_help_heading_toc_reads_baked_ids() {
+        let html = r#"<h2 id="ore-container">Ore Container</h2><h2 id="depot">Depot</h2>"#;
+        let toc = collect_help_heading_toc(html);
+        assert_eq!(
+            toc,
+            vec![
+                ("ore-container".to_string(), "Ore Container".to_string()),
+                ("depot".to_string(), "Depot".to_string()),
+            ]
+        );
     }
 }

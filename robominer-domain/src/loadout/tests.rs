@@ -1,5 +1,6 @@
-use super::ground::{LegacyHeapPlacement, legacy_heap_center, mining_area_to_ground};
-use crate::validate_ore_supply;
+use super::ground::{
+    LegacyHeapPlacement, legacy_heap_center, mining_area_to_ground, validate_ore_supply,
+};
 use robominer_db::{MiningAreaOreSupplyRecord, MiningAreaRecord};
 
 #[test]

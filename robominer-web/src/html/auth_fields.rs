@@ -1,3 +1,7 @@
+use crate::static_assets::script_src_tag;
+
+const PASSWORD_TOGGLE_JS: &str = include_str!("../../static/js/common/password_toggle.js");
+
 pub(crate) fn render_password_field(
     body: &mut String,
     field_id: &str,
@@ -26,27 +30,8 @@ pub(crate) fn render_password_field(
 }
 
 pub(crate) fn render_password_toggle_script(body: &mut String) {
-    body.push_str(
-        r#"<script>
-    function toggleAuthPasswordVisibility(button) {
-        var fieldId = button.getAttribute('data-target');
-        var input = document.getElementById(fieldId);
-        if (!input) {
-            return;
-        }
-        var showing = input.type === 'text';
-        input.type = showing ? 'password' : 'text';
-        button.textContent = showing ? 'Show' : 'Hide';
-        button.setAttribute('aria-pressed', showing ? 'false' : 'true');
-        button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
-    }
-
-    var authPasswordToggles = document.querySelectorAll('.auth-password-toggle');
-    for (var index = 0; index < authPasswordToggles.length; index += 1) {
-        authPasswordToggles[index].addEventListener('click', function(event) {
-            toggleAuthPasswordVisibility(event.currentTarget);
-        });
-    }
-</script>"#,
-    );
+    body.push_str(&script_src_tag(
+        "js/common/password_toggle.js",
+        PASSWORD_TOGGLE_JS,
+    ));
 }

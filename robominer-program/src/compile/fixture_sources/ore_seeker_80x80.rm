@@ -1,0 +1,52 @@
+bool found = false;
+move(robot.forwardSpeed);
+
+while (!found)
+{
+    scan();
+
+    if (oreType() == 1) {
+        found = true;
+    } else {
+        scan(60);
+        if (oreType() == 1) {
+           found = true;
+           rotate(60);
+        } else {
+            scan(-60);
+            if (oreType() == 1) {
+                found = true;
+                rotate(-60);
+            } else {
+                while (move(robot.forwardSpeed) < 0.1) {
+                    rotate(robot.rotateSpeed);
+                }
+            }
+        }
+    }
+}
+
+if (oreDistance() > 0) {
+    move(oreDistance());
+}
+
+while (found) {
+    while (mine());
+
+    int direction = 0;
+    scan(direction);
+    while (oreType() != 1 && direction <= 350) {
+        rotate(robot.rotateSpeed);
+        direction += robot.rotateSpeed;
+        scan(0);
+    }
+
+    if (oreType() == 1) {
+        dump(2);
+        if (oreDistance() > 0) {
+            move(oreDistance());
+        }
+    } else {
+        found = false;
+    }
+}

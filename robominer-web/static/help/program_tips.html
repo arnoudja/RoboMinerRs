@@ -3,17 +3,15 @@
             <p class="helptext">
                 This section contains some tips and tricks for programming your robot.
             </p>
-            <h2>Repeated mining</h2>
+            <h2 id="repeated-mining">Repeated mining</h2>
             <p class="helptext">
                 The default program includes the mine(); action.
                 However, most of the time your robot won't be able to gather all ore from the mining spot with only one mining action.
                 Since the mine() action returns the amount mined, you can use a while loop to continue mining until there is no ore left:
             </p>
-            <p class="codeexample">
-while (mine() > 0)
+            <pre class="help-code-block"><code>while (mine() > 0)
 {
-}
-            </p>
+}</code></pre>
             <p class="helptext">
                 When the while loop is started, the while-expression is evaluated.
                 When the expression evaluates to 'true', the code-block is executed and the process is repeated.
@@ -23,9 +21,7 @@ while (mine() > 0)
                 Since the actual action, the mining, is already done in the expression, the code-block can be empty.
                 To make the code more simple, we can skip the body altogether by adding a semicolon after the expression:
             </p>
-            <p class="codeexample">
-while (mine() > 0);
-            </p>
+            <pre class="help-code-block"><code>while (mine() > 0);</code></pre>
             <p class="helptext">
                 There's another trick to make the code more efficient.
                 A numeric value of 0 will be evaluated as 'false', all other numeric values will be evaluated to 'true'.
@@ -35,13 +31,11 @@ while (mine() > 0);
             <p class="helptext">
                 So by replacing 'mine() > 0' by 'mine()', we get exactly the same result:
             </p>
-            <p class="codeexample">
-while (mine());
-            </p>
+            <pre class="help-code-block"><code>while (mine());</code></pre>
             <p class="helptext">
                 This will efficiently mine all ore from the current robot position.
             </p>
-            <h2>One-time actions</h2>
+            <h2 id="one-time-actions">One-time actions</h2>
             <p class="helptext">
                 When the robot reaches the end of its program, the program is restarted.
                 This is fine with the initial code, but sooner or later you'll want to add some code that's only executed once.
@@ -54,15 +48,13 @@ while (mine());
                 The expression can be some calculation or comparison, but it can also be a constant value.
                 When you use the constant value 'true', the block is executed repeatedly until the mining session ends or the robot's battery is depleted.
             </p>
-            <p class="codeexample">
-&lsaquo;Insert the one-time code here&gt;
+            <pre class="help-code-block"><code>&lsaquo;Insert the one-time code here&gt;
 
 while (true)
 {
     &lsaquo;Insert the repeated code here&gt;
-}
-            </p>
-            <h2>Detecting a collision</h2>
+}</code></pre>
+            <h2 id="detecting-a-collision">Detecting a collision</h2>
             <p class="helptext">
                 You can move your robot forward by using the 'move(..)' command.
                 Sooner or later, however, your robot will collide with a wall or another robot.
@@ -81,12 +73,10 @@ while (true)
                 This can be used to detect the collision.
                 For instance, replace the default 'move(1);' with the following:
             </p>
-            <p class="codeexample">
-if (move(1) &lt; 0.9)
+            <pre class="help-code-block"><code>if (move(1) &lt; 0.9)
 {
     &lsaquo;Insert some smooth collision-avoiding moves here&gt;
-}
-            </p>
+}</code></pre>
             <p class="helptext">
                 Now why is the move result compared with 0.9 and not with 1?
             </p>
@@ -106,7 +96,7 @@ if (move(1) &lt; 0.9)
             <p class="helptext">
                 For the same reason, comparing to 0 would be unsafe while 0.1 would be a good value.
             </p>
-            <h2>Avoiding repeated collisions</h2>
+            <h2 id="avoiding-repeated-collisions">Avoiding repeated collisions</h2>
             <p class="helptext">
                 When we've detected a collision, we need to do something to avoid repeating that collision on the next move.
                 There are a lot of ways to do this, so don't be afraid to try something completely different from this example.
@@ -128,15 +118,13 @@ if (move(1) &lt; 0.9)
             <p class="helptext">
                 The final code, including the collision detection, will look something like this:
             </p>
-            <p class="codeexample">
-if (move(1) &lt; 0.9)
+            <pre class="help-code-block"><code>if (move(1) &lt; 0.9)
 {
     move(-1);
     rotate(135);
     move(1);
-}
-            </p>
-            <h2>Selective mining</h2>
+}</code></pre>
+            <h2 id="selective-mining">Selective mining</h2>
             <p class="helptext">
                 Most ore fields contain more then one type of ore.
                 However, you're most probably only interested in one type.
@@ -169,46 +157,40 @@ if (move(1) &lt; 0.9)
             <p class="helptext">
                 For this, we can use a variable:
             </p>
-            <p class="codeexample">
-int amountBeforeMining;
+            <pre class="help-code-block"><code>int amountBeforeMining;
 
 do {
     amountBeforeMining = robot.oreStoredA;
     mine();
-} while (robot.oreStoredA &gt; amountBeforeMining);
-            </p>
+} while (robot.oreStoredA &gt; amountBeforeMining);</code></pre>
             <p class="helptext">
                 This will repeat the mining process until there is no more high quality ore to mine at the current robot location.
             </p>
-            <h2>Ore Scanner</h2>
+            <h2 id="ore-scanner">Ore Scanner</h2>
             <p class="helptext">
                 The ore scanner allows the robot to scan the area for ore and return the type and distance of the ore.
                 A scan can be initiated with the scan() command, optionally with a direction parameter.
                 After a scan, the oreType() and oreDistance() commands can be used to get the type and distance of the ore found, if any.
                 If the ore is of the type you want, you can move to the ore with the move(oreDistance()) command.
             </p>
-            <p class="codeexample">
-scan();
+            <pre class="help-code-block"><code>scan();
 if (oreType() == 1)
 {
     move(oreDistance());
     while (mine());
-}
-            </p>
+}</code></pre>
             <p class="helptext">
                 Scanning in a direction will return the ore type and distance in that direction, relative to the robot's position and orientation.
                 If the ore is of the type you want, you can rotate into the direction of the ore and move to the ore with the move(oreDistance()) command.
             </p>
-            <p class="codeexample">
-scan(90);
+            <pre class="help-code-block"><code>scan(90);
 if (oreType() == 1)
 {
     rotate(90);
     move(oreDistance());
     while (mine());
-}
-            </p>
-            <h2>Nested heaps and mixed cells</h2>
+}</code></pre>
+            <h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>
             <p class="helptext">
                 Later areas often place a small high-value heap inside a larger lower-value heap.
                 To handle this correctly, keep the following in mind:
@@ -222,7 +204,7 @@ if (oreType() == 1)
             <p class="helptext">
                 More detail on scan, mine, and dump is in the Mechanics and Robot programming guides.
             </p>
-            <h2>Using the depot</h2>
+            <h2 id="using-the-depot">Using the depot</h2>
             <p class="helptext">
                 Once achievements unlock depot capacity for an ore type, dumping that ore at your spawn corner
                 banks it for the rest of the rally without taking container space.
@@ -232,14 +214,12 @@ if (oreType() == 1)
                 A useful pattern is to mine until the container is full of the ore you want to keep, navigate
                 back to spawn using robot.xPos and robot.yPos (both are 0 at the rally start corner), then dump:
             </p>
-            <p class="codeexample">
-while (robot.oreStored &lt; robot.oreCap)
+            <pre class="help-code-block"><code>while (robot.oreStored &lt; robot.oreCap)
 {
     // mine and seek as usual...
 }
 // Face and move until robot.xPos and robot.yPos are back near 0, then:
-dump();
-            </p>
+dump();</code></pre>
             <p class="helptext">
                 Depot dumps only apply when you are on that spawn corner.
                 Mechanics explains capacity, scoring, and what the replay markers mean.

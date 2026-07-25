@@ -11,17 +11,6 @@ pub(crate) fn escape_html(value: &str) -> String {
         .replace('\'', "&#39;")
 }
 
-pub(crate) fn escape_js_string(value: &str) -> String {
-    value
-        .replace('\\', "\\\\")
-        .replace('\'', "\\'")
-        .replace('\n', "\\n")
-        .replace('\r', "\\r")
-        .replace('<', "\\x3c")
-        .replace('>', "\\x3e")
-        .replace('&', "\\x26")
-}
-
 pub(crate) fn format_utc_millis(millis: i64) -> String {
     let seconds = millis.div_euclid(1000);
     let days = seconds.div_euclid(86_400);

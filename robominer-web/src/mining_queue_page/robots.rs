@@ -7,17 +7,6 @@ use super::inspector::render_mining_queue_selection_state_inputs;
 use super::mining_queue_status_description;
 
 pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageState) {
-    body.push_str(r#"<section class="mining-queue-wallet" aria-label="Wallet and queue limits">"#);
-    body.push_str(r#"<div class="mining-queue-wallet-heading">"#);
-    body.push_str(r#"<h1 class="mining-queue-page-title">Mining queue</h1>"#);
-    body.push_str("</div>");
-
-    body.push_str(&crate::html::render_claimed_ore_rewards_banner(
-        "mining-queue-claim-banner",
-        &state.claimed_results,
-        true,
-    ));
-
     let assets: Vec<_> = state
         .ore_assets
         .iter()
@@ -28,16 +17,26 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
             max_allowed: asset.max_allowed,
         })
         .collect();
-    crate::html::render_wallet_ore_list(
+    let claim_banner = crate::html::render_claimed_ore_rewards_banner(
+        "mining-queue-claim-banner",
+        &state.claimed_results,
+        true,
+    );
+    crate::html::render_wallet_strip_section(
         body,
-        "mining-queue-wallet",
-        &assets,
-        "No ore in wallet yet.",
-        false,
+        &crate::html::WalletStripSection {
+            section_class: "page-wallet mining-queue-wallet",
+            aria_label: "Wallet and queue limits",
+            heading_class: "mining-queue-wallet-heading",
+            heading_markup: r#"<h1 class="mining-queue-page-title">Mining queue</h1>"#,
+            middle_markup: &claim_banner,
+            assets: &assets,
+            empty_message: "No ore in wallet yet.",
+            wrap_amount_row: false,
+            item_row_class: None,
+        },
         |_| String::new(),
     );
-
-    body.push_str("</section>");
 }
 
 pub(super) fn render_robot_card(

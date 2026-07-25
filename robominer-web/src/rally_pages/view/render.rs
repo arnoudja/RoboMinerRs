@@ -1,5 +1,5 @@
 use crate::animation_script;
-use crate::html::{escape_html, escape_js_string, layout};
+use crate::html::{escape_html, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
 
@@ -71,15 +71,6 @@ pub fn render_rally_view_page(
     state: &RallyViewPageState,
     back_link: Option<RallyViewBackLink<'_>>,
 ) -> String {
-    let mut ore_cases = String::new();
-    for ore in &state.ores {
-        ore_cases.push_str(&format!(
-            "                        case {}:\n                            return '{}';\n",
-            ore.id,
-            escape_js_string(&ore.ore_name)
-        ));
-    }
-
     let payload_kind = classify_rally_result_payload(&state.result_data);
     let replay_available = payload_kind == RallyResultPayloadKind::VersionedJson;
 
@@ -92,7 +83,8 @@ pub fn render_rally_view_page(
     render_rally_view_deck(&mut body, state, replay_available, payload_kind);
     render_rally_view_quick_links(&mut body, state);
     if replay_available {
-        render_rally_view_bootstrap_script(&mut body, &ore_cases, &state.result_data, state);
+        render_rally_view_bootstrap_data(&mut body, &state.result_data, state);
+        body.push_str(&animation_script::rally_bootstrap_script_tag());
     }
     body.push_str("</div>");
 
@@ -413,102 +405,28 @@ fn render_rally_view_legend(body: &mut String) {
     body.push_str("</ul></section>");
 }
 
-fn render_rally_view_bootstrap_script(
+fn render_rally_view_bootstrap_data(
     body: &mut String,
-    ore_cases: &str,
     result_data: &str,
     state: &RallyViewPageState,
 ) {
-    let viewer_slot = state
-        .viewer_player_number
-        .map(|player_number| player_number.to_string())
-        .unwrap_or_else(|| "null".to_string());
-
     // Versioned JSON only — never inject stored resultData as executable script.
     body.push_str(r#"<script type="application/json" id="rally-result-data">"#);
     body.push_str(result_data);
     body.push_str("</script>");
 
-    body.push_str(&format!(
-        r#"<script>
-                function getOreName(oreId) {{
-
-                    switch (oreId) {{
-{ore_cases}                        default:
-                            return '';
-                    }}
-                }}
-
-                window.requestAnimFrame = (function(callback) {{
-                    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-                            function(callback) {{
-                                window.setTimeout(callback, 1000 / 60);
-                            }};
-                    }})();
-
-                var rallyPayloadError = null;
-                try {{
-                    var rallyResultDataEl = document.getElementById('rally-result-data');
-                    if (!rallyResultDataEl) {{
-                        rallyPayloadError = 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
-                    }} else {{
-                        rallyPayloadError = applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));
-                    }}
-                }} catch (error) {{
-                    rallyPayloadError = 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
-                }}
-                if (rallyPayloadError) {{
-                    showRallyReplayUnavailable(rallyPayloadError);
-                }} else {{
-                var myRallyViewerSlot = {viewer_slot};
-
-                var myRallyCanvas = document.getElementById('rallyCanvas');
-                var myRallyContext = myRallyCanvas.getContext('2d');
-
-                var myOreCanvas = [ document.getElementById('oreCanvas0'), document.getElementById('oreCanvas1'), document.getElementById('oreCanvas2'), document.getElementById('oreCanvas3') ];
-                var myOreContext = [ myOreCanvas[0].getContext('2d'), myOreCanvas[1].getContext('2d'), myOreCanvas[2].getContext('2d'), myOreCanvas[3].getContext('2d') ];
-                var myDepotCanvas = [ document.getElementById('depotCanvas0'), document.getElementById('depotCanvas1'), document.getElementById('depotCanvas2'), document.getElementById('depotCanvas3') ];
-                var myDepotContext = [ myDepotCanvas[0].getContext('2d'), myDepotCanvas[1].getContext('2d'), myDepotCanvas[2].getContext('2d'), myDepotCanvas[3].getContext('2d') ];
-
-                var myProgressCanvas = document.getElementById('progressCanvas');
-                var myProgressContext = myProgressCanvas ? myProgressCanvas.getContext('2d') : null;
-                var myCycleText = document.getElementById('cyclenr');
-
-                if (typeof myOreTypes.A !== 'undefined') {{
-                    var canvas = document.getElementById('oreLegendACanvas');
-                    var context = canvas.getContext('2d');
-                    context.beginPath();
-                    context.rect(0, 0, canvas.width, canvas.height);
-                    context.fillStyle = 'red';
-                    context.fill();
-                    document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);
-                    document.getElementById('oreLegendA').style.display = 'flex';
-                }}
-
-                if (typeof myOreTypes.B !== 'undefined') {{
-                    var canvas = document.getElementById('oreLegendBCanvas');
-                    var context = canvas.getContext('2d');
-                    context.beginPath();
-                    context.rect(0, 0, canvas.width, canvas.height);
-                    context.fillStyle = 'green';
-                    context.fill();
-                    document.getElementById('oreLegendBName').textContent = getOreName(myOreTypes.B.id);
-                    document.getElementById('oreLegendB').style.display = 'flex';
-                }}
-
-                if (typeof myOreTypes.C !== 'undefined') {{
-                    var canvas = document.getElementById('oreLegendCCanvas');
-                    var context = canvas.getContext('2d');
-                    context.beginPath();
-                    context.rect(0, 0, canvas.width, canvas.height);
-                    context.fillStyle = 'blue';
-                    context.fill();
-                    document.getElementById('oreLegendCName').textContent = getOreName(myOreTypes.C.id);
-                    document.getElementById('oreLegendC').style.display = 'flex';
-                }}
-
-                runanimation();
-                }}
-            </script>"#,
-    ));
+    let mut ore_names = serde_json::Map::new();
+    for ore in &state.ores {
+        ore_names.insert(
+            ore.id.to_string(),
+            serde_json::Value::String(ore.ore_name.clone()),
+        );
+    }
+    let config = serde_json::json!({
+        "viewerSlot": state.viewer_player_number,
+        "oreNames": ore_names,
+    });
+    body.push_str(r#"<script type="application/json" id="rally-view-config">"#);
+    body.push_str(&config.to_string());
+    body.push_str("</script>");
 }

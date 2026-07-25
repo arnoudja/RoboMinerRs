@@ -4,7 +4,7 @@ use robominer_sim::{Ground, RobotSpec};
 use crate::error::DomainError;
 use crate::loadout::{legacy_ore_slot, sorted_legacy_ore_supplies};
 
-pub fn robot_record_to_spec(robot: &RobotRecord) -> Result<RobotSpec, DomainError> {
+pub(crate) fn robot_record_to_spec(robot: &RobotRecord) -> Result<RobotSpec, DomainError> {
     Ok(RobotSpec {
         robot_id: i32::try_from(robot.id).map_err(|_| DomainError::RobotIdOutOfRange(robot.id))?,
         max_turns: robot.max_turns,
@@ -20,7 +20,7 @@ pub fn robot_record_to_spec(robot: &RobotRecord) -> Result<RobotSpec, DomainErro
     })
 }
 
-pub fn mining_area_to_ground(
+pub(crate) fn mining_area_to_ground(
     area: &MiningAreaRecord,
     ore_supplies: &[MiningAreaOreSupplyRecord],
     seed: u64,

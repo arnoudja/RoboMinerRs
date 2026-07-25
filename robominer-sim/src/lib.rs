@@ -14,7 +14,7 @@ mod simulation;
 mod tests;
 
 pub use animation::{
-    ANIMATION_PAYLOAD_VERSION, CpuAnimationStep, OreAnimationData, is_legacy_javascript_result_data,
+    ANIMATION_PAYLOAD_VERSION, OreAnimationData, RecordedCpuStep, is_legacy_javascript_result_data,
 };
 pub use animation_payload::{
     AnimationCpuStep, AnimationGround, AnimationGroundChange, AnimationGroundPosition,

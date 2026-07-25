@@ -5,45 +5,34 @@
         : 'robominer.miningQueue.areaSelections';
 
     function readStoredAreaSelections() {
-        try {
-            var raw = window.sessionStorage.getItem(STORAGE_KEY);
-            if (!raw) {
-                return null;
-            }
-            return JSON.parse(raw);
-        } catch (error) {
-            return null;
-        }
+        return window.RoboMinerSessionStore.readJson(STORAGE_KEY);
     }
 
     function writeStoredAreaSelections() {
-        try {
-            var stored = {};
-            var selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
-            for (var index = 0; index < selects.length; index += 1) {
-                var select = selects[index];
-                if (select.name && select.value) {
-                    stored[select.name] = select.value;
-                }
+        var stored = {};
+        var selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
+        for (var index = 0; index < selects.length; index += 1) {
+            var select = selects[index];
+            if (select.name && select.value) {
+                stored[select.name] = select.value;
             }
-            window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-        } catch (error) {
         }
+        window.RoboMinerSessionStore.writeJson(STORAGE_KEY, stored);
+    }
+
+    function areaSelectionParamNames() {
+        var names = ['infoMiningAreaId'];
+        var selects = document.querySelectorAll('select[name^="miningArea"]');
+        for (var index = 0; index < selects.length; index += 1) {
+            if (selects[index].name) {
+                names.push(selects[index].name);
+            }
+        }
+        return names;
     }
 
     function urlHasAreaSelectionParams() {
-        var search = window.location.search;
-        if (!search) {
-            return false;
-        }
-        var params = search.substring(1).split('&');
-        for (var paramIndex = 0; paramIndex < params.length; paramIndex += 1) {
-            var name = decodeURIComponent(params[paramIndex].split('=')[0]);
-            if (name === 'infoMiningAreaId' || name.indexOf('miningArea') === 0) {
-                return true;
-            }
-        }
-        return false;
+        return window.RoboMinerUrlQuery.hasAnyParam(areaSelectionParamNames());
     }
 
     function selectHasOption(select, areaId) {
@@ -114,10 +103,7 @@
 
     function syncInspectorArea(areaId) {
         showMiningAreaDetails(areaId);
-        var query = collectQueueQueryParams();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', query ? 'miningQueue?' + query : 'miningQueue');
-        }
+        window.RoboMinerUrlQuery.sync('miningQueue', collectQueueQueryParams());
         writeStoredAreaSelections();
     }
 

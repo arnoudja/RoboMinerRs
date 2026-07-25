@@ -635,31 +635,20 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
         "js/rally_animation/timeline.js",
         "js/rally_animation/pose.js",
         "js/rally_animation/player.js",
+        "js/rally_animation/bootstrap.js",
     ] {
         assert!(html.contains(path), "expected script src for {path}");
     }
     assert!(!html.contains("function rallyPlay()"));
     assert!(!html.contains("function updateRobotDebugPanel("));
-    assert!(html.contains("var myRallyViewerSlot = null;"));
-    assert!(html.contains("var myRallyContext = myRallyCanvas.getContext('2d');"));
-    assert!(html.contains("runanimation();"));
-    assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
     assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
+    assert!(html.contains(r#"<script type="application/json" id="rally-view-config">"#));
     assert!(html.contains(r#""v":1"#));
-    assert!(html.contains("applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));"));
-    assert!(html.contains("showRallyReplayUnavailable(rallyPayloadError);"));
-    assert!(html.contains(
-        "document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);"
-    ));
-    assert!(html.contains(
-        "document.getElementById('oreLegendBName').textContent = getOreName(myOreTypes.B.id);"
-    ));
-    assert!(html.contains(
-        "document.getElementById('oreLegendCName').textContent = getOreName(myOreTypes.C.id);"
-    ));
+    assert!(html.contains(r#""viewerSlot":null"#));
+    assert!(html.contains(r#""Ore <A> & 'B'""#) || html.contains(r#""Ore <A> & \'B\'""#));
+    // Ore names are JSON-encoded in config (angle brackets stay literal in JSON strings).
+    assert!(html.contains("Ore <A>"));
     assert!(!html.contains("oreLegendAName').innerHTML"));
-    assert!(!html.contains("oreLegendBName').innerHTML"));
-    assert!(!html.contains("oreLegendCName').innerHTML"));
 }
 
 #[test]
@@ -696,7 +685,8 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"<dt>Your robot</dt><dd>Lead Bot · green slot</dd>"#));
     assert!(html.contains(r#"<dt>Score</dt><dd>42.5</dd>"#));
     assert!(html.contains(r#"class="rally-view-context-payout">+17</dd>"#));
-    assert!(html.contains(r#"var myRallyViewerSlot = 0;"#));
+    assert!(html.contains(r#""viewerSlot":0"#));
+    assert!(html.contains(r#"id="rally-view-config""#));
     assert!(html.contains(r#"id="rallySourceCode""#));
     assert!(html.contains(r#"class="rally-view-source-code" id="rallySourceCode""#));
     assert!(!html.contains("<pre class=\"rally-view-source-code\""));
