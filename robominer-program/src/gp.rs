@@ -1,3 +1,4 @@
+use crate::ast_visit::count_statements;
 use crate::compile::compile_executable_source;
 use crate::types::{
     CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind,
@@ -73,31 +74,6 @@ pub fn mutate_program(program: &ExecutableProgram, rng: &mut impl RngLike) -> Ex
 pub trait RngLike {
     fn gen_range(&mut self, low: usize, high: usize) -> usize;
     fn gen_f64(&mut self) -> f64;
-}
-
-fn count_statements(statements: &[ExecutableStatement]) -> usize {
-    statements.iter().map(count_statement).sum()
-}
-
-fn count_statement(statement: &ExecutableStatement) -> usize {
-    1 + match &statement.kind {
-        ExecutableStatementKind::Sequence(statements) => count_statements(statements),
-        ExecutableStatementKind::If {
-            true_body,
-            false_body,
-            ..
-        } => {
-            count_statement(true_body)
-                + false_body
-                    .as_ref()
-                    .map(|body| count_statement(body))
-                    .unwrap_or(0)
-        }
-        ExecutableStatementKind::While { body, .. } => {
-            body.as_ref().map(|body| count_statement(body)).unwrap_or(0)
-        }
-        _ => 0,
-    }
 }
 
 fn take_statement_at(

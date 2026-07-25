@@ -1,8 +1,8 @@
 //! Unified runner-side state for multi-cycle move/rotate actions.
 //!
 //! All three initiation paths (statement, dynamic statement, and expression) call
-//! [`PendingPhysicalAction::start`] with the appropriate [`PhysicalCompletion`]
-//! and resume through [`PendingPhysicalAction::continue_action`].
+//! [`PendingProgramMotion::start`] with the appropriate [`ProgramMotionCompletion`]
+//! and resume through [`PendingProgramMotion::continue_action`].
 //!
 //! See also [`crate::pending_action_protocol`].
 
@@ -10,26 +10,26 @@ use crate::ExecutableAction;
 use crate::motion::is_zero_motion;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum PhysicalCompletion {
+pub(crate) enum ProgramMotionCompletion {
     Statement,
     Expression,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct PendingPhysicalAction {
+pub(crate) struct PendingProgramMotion {
     pub action: ExecutableAction,
-    pub completion: PhysicalCompletion,
+    pub completion: ProgramMotionCompletion,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum ContinuePhysicalAction {
+pub(crate) enum ContinueProgramMotion {
     NotActive,
     Reemit,
     StatementComplete,
     ExpressionComplete(f64),
 }
 
-impl PendingPhysicalAction {
+impl PendingProgramMotion {
     pub(crate) fn is_chunked(action: ExecutableAction) -> bool {
         match action {
             ExecutableAction::Move(distance) => !is_zero_motion(distance),
@@ -38,7 +38,7 @@ impl PendingPhysicalAction {
         }
     }
 
-    pub(crate) fn start(action: ExecutableAction, completion: PhysicalCompletion) -> Self {
+    pub(crate) fn start(action: ExecutableAction, completion: ProgramMotionCompletion) -> Self {
         debug_assert!(
             Self::is_chunked(action),
             "pending physical requires chunked move/rotate, got {action:?}"
@@ -49,22 +49,22 @@ impl PendingPhysicalAction {
     pub(crate) fn continue_action(
         pending: &mut Option<Self>,
         action_result: &mut Option<f64>,
-    ) -> ContinuePhysicalAction {
+    ) -> ContinueProgramMotion {
         let Some(_current) = pending.as_ref() else {
-            return ContinuePhysicalAction::NotActive;
+            return ContinueProgramMotion::NotActive;
         };
 
         let Some(value) = action_result.take() else {
-            return ContinuePhysicalAction::Reemit;
+            return ContinueProgramMotion::Reemit;
         };
 
         let completed = pending.take().expect("pending physical action");
         match completed.completion {
-            PhysicalCompletion::Statement => {
+            ProgramMotionCompletion::Statement => {
                 let _ = value;
-                ContinuePhysicalAction::StatementComplete
+                ContinueProgramMotion::StatementComplete
             }
-            PhysicalCompletion::Expression => ContinuePhysicalAction::ExpressionComplete(value),
+            ProgramMotionCompletion::Expression => ContinueProgramMotion::ExpressionComplete(value),
         }
     }
 }
@@ -79,23 +79,23 @@ mod tests {
         let mut action_result = Some(1.0);
 
         assert_eq!(
-            PendingPhysicalAction::continue_action(&mut pending, &mut action_result),
-            ContinuePhysicalAction::NotActive
+            PendingProgramMotion::continue_action(&mut pending, &mut action_result),
+            ContinueProgramMotion::NotActive
         );
         assert_eq!(action_result, Some(1.0));
     }
 
     #[test]
     fn continue_action_reemits_when_action_result_missing() {
-        let mut pending = Some(PendingPhysicalAction::start(
+        let mut pending = Some(PendingProgramMotion::start(
             ExecutableAction::Move(2.0),
-            PhysicalCompletion::Statement,
+            ProgramMotionCompletion::Statement,
         ));
         let mut action_result = None;
 
         assert_eq!(
-            PendingPhysicalAction::continue_action(&mut pending, &mut action_result),
-            ContinuePhysicalAction::Reemit
+            PendingProgramMotion::continue_action(&mut pending, &mut action_result),
+            ContinueProgramMotion::Reemit
         );
         assert!(pending.is_some());
         assert_eq!(pending.unwrap().action, ExecutableAction::Move(2.0));
@@ -103,15 +103,15 @@ mod tests {
 
     #[test]
     fn continue_action_statement_complete_clears_pending_and_discards_value() {
-        let mut pending = Some(PendingPhysicalAction::start(
+        let mut pending = Some(PendingProgramMotion::start(
             ExecutableAction::Move(2.0),
-            PhysicalCompletion::Statement,
+            ProgramMotionCompletion::Statement,
         ));
         let mut action_result = Some(0.0);
 
         assert_eq!(
-            PendingPhysicalAction::continue_action(&mut pending, &mut action_result),
-            ContinuePhysicalAction::StatementComplete
+            PendingProgramMotion::continue_action(&mut pending, &mut action_result),
+            ContinueProgramMotion::StatementComplete
         );
         assert!(pending.is_none());
         assert_eq!(action_result, None);
@@ -119,15 +119,15 @@ mod tests {
 
     #[test]
     fn continue_action_expression_complete_returns_accumulated_value() {
-        let mut pending = Some(PendingPhysicalAction::start(
+        let mut pending = Some(PendingProgramMotion::start(
             ExecutableAction::Move(2.0),
-            PhysicalCompletion::Expression,
+            ProgramMotionCompletion::Expression,
         ));
         let mut action_result = Some(1.25);
 
         assert_eq!(
-            PendingPhysicalAction::continue_action(&mut pending, &mut action_result),
-            ContinuePhysicalAction::ExpressionComplete(1.25)
+            PendingProgramMotion::continue_action(&mut pending, &mut action_result),
+            ContinueProgramMotion::ExpressionComplete(1.25)
         );
         assert!(pending.is_none());
         assert_eq!(action_result, None);
@@ -135,21 +135,21 @@ mod tests {
 
     #[test]
     fn is_chunked_only_for_non_zero_move_and_rotate() {
-        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+        assert!(PendingProgramMotion::is_chunked(ExecutableAction::Move(
             1.0
         )));
-        assert!(PendingPhysicalAction::is_chunked(ExecutableAction::Rotate(
+        assert!(PendingProgramMotion::is_chunked(ExecutableAction::Rotate(
             -90.0
         )));
-        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+        assert!(!PendingProgramMotion::is_chunked(ExecutableAction::Move(
             0.0
         )));
-        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Move(
+        assert!(!PendingProgramMotion::is_chunked(ExecutableAction::Move(
             crate::motion::MOTION_EPSILON
         )));
-        assert!(!PendingPhysicalAction::is_chunked(
-            ExecutableAction::Rotate(-crate::motion::MOTION_EPSILON / 2.0)
-        ));
-        assert!(!PendingPhysicalAction::is_chunked(ExecutableAction::Mine));
+        assert!(!PendingProgramMotion::is_chunked(ExecutableAction::Rotate(
+            -crate::motion::MOTION_EPSILON / 2.0
+        )));
+        assert!(!PendingProgramMotion::is_chunked(ExecutableAction::Mine));
     }
 }

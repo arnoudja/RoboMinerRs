@@ -1,0 +1,118 @@
+use std::collections::HashMap;
+
+use super::costs::{area_costs_affordable, render_area_entry_costs};
+use super::links::{
+    MiningAreaAtlasLinkTarget, mining_area_atlas_url, mining_area_atlas_url_for_ore,
+    render_mining_area_atlas_ore_link,
+};
+use super::markup::{MiningAreaAtlasMode, render_mining_area_atlas, yield_cell_class};
+
+#[test]
+fn yield_cell_class_buckets_percentages() {
+    assert_eq!(yield_cell_class(25.0), "mining-area-atlas-yield-high");
+    assert_eq!(yield_cell_class(5.0), "mining-area-atlas-yield-mid");
+    assert_eq!(yield_cell_class(1.0), "mining-area-atlas-yield-low");
+    assert_eq!(yield_cell_class(0.0), "mining-area-atlas-yield-zero");
+}
+
+#[test]
+fn area_entry_cost_label_reports_affordability() {
+    let cost = robominer_db::MiningQueuePageAreaCostRecord {
+        mining_area_id: 10,
+        ore_id: 2,
+        ore_name: "Iron".to_string(),
+        amount: 30,
+    };
+    let costs = vec![&cost];
+    let affordable = HashMap::from([(2, 40)]);
+
+    assert!(area_costs_affordable(&costs, &affordable));
+    assert!(
+        render_area_entry_costs(&costs, &affordable)
+            .contains(r#"<span class="mining-area-atlas-cost-affordable">30 Iron ✓</span>"#)
+    );
+
+    let unaffordable = HashMap::from([(2, 10)]);
+    assert!(!area_costs_affordable(&costs, &unaffordable));
+    assert!(render_area_entry_costs(&costs, &unaffordable).contains(
+        r#"<span class="mining-area-atlas-cost-unaffordable">Need 20 more Iron.</span>"#
+    ));
+}
+
+#[test]
+fn render_area_entry_costs_colors_each_line_by_affordability() {
+    let costs = vec![
+        robominer_db::MiningQueuePageAreaCostRecord {
+            mining_area_id: 10,
+            ore_id: 1,
+            ore_name: "Iron".to_string(),
+            amount: 10,
+        },
+        robominer_db::MiningQueuePageAreaCostRecord {
+            mining_area_id: 10,
+            ore_id: 2,
+            ore_name: "Gold".to_string(),
+            amount: 20,
+        },
+    ];
+    let cost_refs: Vec<_> = costs.iter().collect();
+    let ore_amounts = HashMap::from([(1, 15), (2, 5)]);
+
+    assert!(render_area_entry_costs(&cost_refs, &ore_amounts).contains(
+        r#"<span class="mining-area-atlas-cost-affordable">10 Iron ✓</span><br><span class="mining-area-atlas-cost-unaffordable">Need 15 more Gold.</span>"#
+    ));
+}
+
+#[test]
+fn mining_area_atlas_url_for_overview_and_ore_sort() {
+    assert_eq!(
+        mining_area_atlas_url(MiningAreaAtlasLinkTarget::StandalonePage, None, false),
+        "miningAreaOverview"
+    );
+    assert_eq!(
+        mining_area_atlas_url_for_ore(2, MiningAreaAtlasLinkTarget::StandalonePage),
+        "miningAreaOverview?sort=ore&oreId=2"
+    );
+}
+
+#[test]
+fn render_mining_area_atlas_ore_link_escapes_fields() {
+    let link = render_mining_area_atlas_ore_link(
+        2,
+        "Ore & Two",
+        MiningAreaAtlasLinkTarget::StandalonePage,
+        "shop-atlas-link",
+    );
+
+    assert!(link.contains(r#"href="miningAreaOverview?sort=ore&amp;oreId=2""#));
+    assert!(link.contains("Areas rich in Ore &amp; Two"));
+}
+
+#[test]
+fn render_mining_area_atlas_uses_area_links() {
+    let mut body = String::new();
+    render_mining_area_atlas(
+        &mut body,
+        MiningAreaAtlasMode::StandalonePage,
+        &[robominer_db::MiningAreaOverviewOreRecord {
+            ore_id: 1,
+            ore_name: "Iron".to_string(),
+        }],
+        &[robominer_db::MiningAreaOverviewAreaRecord {
+            mining_area_id: 10,
+            area_name: "Area A".to_string(),
+            total_percentage: 12.0,
+        }],
+        &[robominer_db::MiningAreaOverviewPercentageRecord {
+            mining_area_id: 10,
+            ore_id: 1,
+            percentage: 12.0,
+        }],
+        &[],
+        &[],
+    );
+
+    assert!(body.contains("mining-area-atlas-area-link"));
+    assert!(!body.contains("mining-area-atlas-area-select"));
+    assert!(body.contains(r#"href="miningQueue?infoMiningAreaId=10""#));
+}

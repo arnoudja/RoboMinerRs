@@ -27,18 +27,7 @@ pub(super) fn render_robot_claim_banner(body: &mut String, state: &RobotPageStat
 }
 
 pub(super) fn render_robot_message(body: &mut String, state: &RobotPageState) {
-    let Some(message) = &state.message else {
-        return;
-    };
-    let banner_class = if message.starts_with("Unable") {
-        "robot-banner robot-banner-error"
-    } else {
-        "robot-banner robot-banner-success"
-    };
-    body.push_str(&format!(
-        r#"<p class="{banner_class}">{}</p>"#,
-        escape_html(message)
-    ));
+    crate::html::render_status_banner(body, "robot", state.message.as_deref());
 }
 
 pub(super) fn render_robot_fleet_card(

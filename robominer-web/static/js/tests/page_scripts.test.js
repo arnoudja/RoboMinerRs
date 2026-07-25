@@ -1,0 +1,24 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('vm');
+
+const JS_ROOT = path.join(__dirname, '..');
+const PAGE_SCRIPTS = [
+    'edit_code/page.js',
+    'robot/page.js',
+    'shop/page.js',
+    'mining_queue/page.js',
+    'mining_results/page.js',
+];
+
+for (const relative of PAGE_SCRIPTS) {
+    test(`page script parses: ${relative}`, () => {
+        const source = fs.readFileSync(path.join(JS_ROOT, relative), 'utf8');
+        assert.ok(source.trim().length > 0, `${relative} should not be empty`);
+        assert.doesNotThrow(() => new vm.Script(source, { filename: relative }));
+    });
+}

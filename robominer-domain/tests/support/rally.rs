@@ -16,23 +16,84 @@ pub struct RallyScenario {
     pub loadout: RallyLoadout,
 }
 
-pub fn scenario(name: &str) -> RallyScenario {
-    match name {
-        "single_miner_seed0" => single_miner_seed0(),
-        "dual_miner_seed17" => dual_miner_seed17(),
-        "animation_seed0" => animation_seed0(),
-        "seed_ai_1_seed42" => seed_ai_1_seed42(),
-        "seed_ai_2_seed0" => seed_ai_2_seed0(),
-        "seed_ai_3_seed14" => seed_ai_3_seed14(),
-        "scan_then_mine_seed5" => scan_then_mine_seed5(),
-        "do_while_mine_seed0" => do_while_mine_seed0(),
-        "triple_queue_seed33" => triple_queue_seed33(),
-        "quad_queue_seed33" => quad_queue_seed33(),
-        "dual_ore_seed11" => dual_ore_seed11(),
-        "ore_seeker_80x80_seed0" => ore_seeker_80x80_seed0(),
-        "depot_dump_cerbonium_advanced_seed0" => depot_dump_cerbonium_advanced_seed0(),
-        other => panic!("unknown rally golden scenario: {other}"),
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RallyScenarioId {
+    SingleMinerSeed0,
+    DualMinerSeed17,
+    AnimationSeed0,
+    SeedAi1Seed42,
+    SeedAi2Seed0,
+    SeedAi3Seed14,
+    ScanThenMineSeed5,
+    DoWhileMineSeed0,
+    TripleQueueSeed33,
+    QuadQueueSeed33,
+    DualOreSeed11,
+    OreSeeker80x80Seed0,
+    DepotDumpCerboniumAdvancedSeed0,
+}
+
+impl RallyScenarioId {
+    pub const ALL: &'static [Self] = &[
+        Self::SingleMinerSeed0,
+        Self::DualMinerSeed17,
+        Self::AnimationSeed0,
+        Self::SeedAi1Seed42,
+        Self::SeedAi2Seed0,
+        Self::SeedAi3Seed14,
+        Self::ScanThenMineSeed5,
+        Self::DoWhileMineSeed0,
+        Self::TripleQueueSeed33,
+        Self::QuadQueueSeed33,
+        Self::DualOreSeed11,
+        Self::OreSeeker80x80Seed0,
+        Self::DepotDumpCerboniumAdvancedSeed0,
+    ];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SingleMinerSeed0 => "single_miner_seed0",
+            Self::DualMinerSeed17 => "dual_miner_seed17",
+            Self::AnimationSeed0 => "animation_seed0",
+            Self::SeedAi1Seed42 => "seed_ai_1_seed42",
+            Self::SeedAi2Seed0 => "seed_ai_2_seed0",
+            Self::SeedAi3Seed14 => "seed_ai_3_seed14",
+            Self::ScanThenMineSeed5 => "scan_then_mine_seed5",
+            Self::DoWhileMineSeed0 => "do_while_mine_seed0",
+            Self::TripleQueueSeed33 => "triple_queue_seed33",
+            Self::QuadQueueSeed33 => "quad_queue_seed33",
+            Self::DualOreSeed11 => "dual_ore_seed11",
+            Self::OreSeeker80x80Seed0 => "ore_seeker_80x80_seed0",
+            Self::DepotDumpCerboniumAdvancedSeed0 => "depot_dump_cerbonium_advanced_seed0",
+        }
     }
+
+    pub fn build(self) -> RallyScenario {
+        match self {
+            Self::SingleMinerSeed0 => single_miner_seed0(),
+            Self::DualMinerSeed17 => dual_miner_seed17(),
+            Self::AnimationSeed0 => animation_seed0(),
+            Self::SeedAi1Seed42 => seed_ai_1_seed42(),
+            Self::SeedAi2Seed0 => seed_ai_2_seed0(),
+            Self::SeedAi3Seed14 => seed_ai_3_seed14(),
+            Self::ScanThenMineSeed5 => scan_then_mine_seed5(),
+            Self::DoWhileMineSeed0 => do_while_mine_seed0(),
+            Self::TripleQueueSeed33 => triple_queue_seed33(),
+            Self::QuadQueueSeed33 => quad_queue_seed33(),
+            Self::DualOreSeed11 => dual_ore_seed11(),
+            Self::OreSeeker80x80Seed0 => ore_seeker_80x80_seed0(),
+            Self::DepotDumpCerboniumAdvancedSeed0 => depot_dump_cerbonium_advanced_seed0(),
+        }
+    }
+}
+
+pub fn scenario(name: &str) -> RallyScenario {
+    RallyScenarioId::ALL
+        .iter()
+        .copied()
+        .find(|id| id.as_str() == name)
+        .unwrap_or_else(|| panic!("unknown rally golden scenario: {name}"))
+        .build()
 }
 
 fn single_miner_seed0() -> RallyScenario {

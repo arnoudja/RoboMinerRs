@@ -15,15 +15,11 @@ pub(super) struct AccountPageState {
 }
 
 pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-
     // Account updates always verify the current password (Argon2). Rate-limit before DB work.
     if is_account_update_post(request) {
+        let Some(user_id) = crate::request_user_id(request) else {
+            return login_redirect(request);
+        };
         let ip = client_ip(request, config.trust_proxy);
         let account_key = account_rate_limit_key(user_id);
         if auth_attempt_is_rate_limited(&ip, &account_key) {
@@ -35,28 +31,27 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
         record_auth_attempt(&ip, &account_key);
     }
 
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Account requires ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Account requires ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
-    let result = load_account_page_state(pool, user_id, request).await;
+    let result = load_account_page_state(session.pool, session.user_id, request).await;
 
     match result {
         Ok(state) => {
             let reissue_session_version = state.reissue_session_version;
             let username_for_cookie = state.current_username.clone();
-            let mut response = crate::csrf::html_with_csrf(
-                request,
-                user_id,
-                render::render_account_page(
-                    crate::app_shell::hud_markup(request, config)
-                        .await
-                        .as_deref(),
-                    &state,
-                ),
-            );
+            let user_id = session.user_id;
+            let mut response = session
+                .html_with_hud(request, config, |_username, hud| {
+                    render::render_account_page(hud, &state)
+                })
+                .await;
             if let Some(session_version) = reissue_session_version {
                 response = reissue_session_cookies(
                     response,
@@ -67,7 +62,7 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
             }
             response
         }
-        Err(error) => Response::service_unavailable(format!("Unable to load account: {error}")),
+        Err(error) => crate::page_context::page_load_error("account", error),
     }
 }
 
@@ -108,7 +103,7 @@ async fn load_account_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<AccountPageState, robominer_domain::DomainError> {
-    robominer_db::claim_user_results(pool, user_id).await?;
+    crate::page_context::claim_user_results(pool, user_id).await?;
 
     let Some(current_user) = robominer_db::get_user_by_id(pool, user_id).await? else {
         return Ok(AccountPageState {

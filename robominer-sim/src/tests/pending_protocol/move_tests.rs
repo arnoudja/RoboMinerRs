@@ -1,6 +1,6 @@
 use super::super::helpers::*;
 use super::{protocol_simulation, runtime_move_program};
-use crate::action_mapping::PendingExpressionAction;
+use crate::action_mapping::PendingSimMotionChunk;
 use crate::physics::ActionResult;
 use crate::*;
 
@@ -12,7 +12,7 @@ fn partial_move_chunk_clears_action_result_and_keeps_sim_pending() {
     simulation.advance_test_turn();
 
     assert!(
-        simulation.pending_expression_action(0).is_some(),
+        simulation.pending_sim_motion_chunk(0).is_some(),
         "sim should keep chunking state after the first move cycle"
     );
     assert_eq!(
@@ -21,7 +21,10 @@ fn partial_move_chunk_clears_action_result_and_keeps_sim_pending() {
         "partial chunks must not expose a finished action result to the runner"
     );
     assert!(
-        simulation.program_runner(0).unwrap().has_pending_physical(),
+        simulation
+            .program_runner(0)
+            .unwrap()
+            .has_pending_program_motion(),
         "runner should still hold the logical move while sim chunks"
     );
     assert!(
@@ -38,24 +41,30 @@ fn sim_pending_chunks_skip_runner_until_move_finishes() {
     simulation.advance_test_turn();
 
     let runner = simulation.program_runner(0).unwrap();
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     simulation.advance_test_turn();
 
     assert!(
-        simulation.pending_expression_action(0).is_none(),
+        simulation.pending_sim_motion_chunk(0).is_none(),
         "sim pending should clear after the final move chunk"
     );
     assert_close(simulation.test_action_result(0).unwrap(), 2.0);
     assert!(
-        simulation.program_runner(0).unwrap().has_pending_physical(),
+        simulation
+            .program_runner(0)
+            .unwrap()
+            .has_pending_program_motion(),
         "runner should still resume the expression after sim chunking completes"
     );
 
     simulation.advance_test_turn();
 
     assert!(
-        !simulation.program_runner(0).unwrap().has_pending_physical(),
+        !simulation
+            .program_runner(0)
+            .unwrap()
+            .has_pending_program_motion(),
         "runner should finish the logical move once the accumulated result is consumed"
     );
 }
@@ -64,9 +73,9 @@ fn sim_pending_chunks_skip_runner_until_move_finishes() {
 fn record_action_result_accumulates_partial_chunks_then_finishes() {
     let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 3);
     simulation.prepare_test_run();
-    simulation.test_set_pending_expression(
+    simulation.test_set_pending_sim_motion_chunk(
         0,
-        Some(PendingExpressionAction::Move {
+        Some(PendingSimMotionChunk::Move {
             remaining: 2.0,
             accumulated: 0.0,
         }),
@@ -74,20 +83,20 @@ fn record_action_result_accumulates_partial_chunks_then_finishes() {
 
     simulation.test_record_action_result(0, ActionResult::Value(1.0));
     assert_eq!(simulation.test_action_result(0), None);
-    assert!(simulation.pending_expression_action(0).is_some());
+    assert!(simulation.pending_sim_motion_chunk(0).is_some());
 
     simulation.test_record_action_result(0, ActionResult::Value(1.0));
     assert_close(simulation.test_action_result(0).unwrap(), 2.0);
-    assert!(simulation.pending_expression_action(0).is_none());
+    assert!(simulation.pending_sim_motion_chunk(0).is_none());
 }
 
 #[test]
 fn wait_while_motion_pending_force_completes_with_accumulated() {
     let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 3);
     simulation.prepare_test_run();
-    simulation.test_set_pending_expression(
+    simulation.test_set_pending_sim_motion_chunk(
         0,
-        Some(PendingExpressionAction::Move {
+        Some(PendingSimMotionChunk::Move {
             remaining: 0.5,
             accumulated: 1.5,
         }),
@@ -98,7 +107,7 @@ fn wait_while_motion_pending_force_completes_with_accumulated() {
 
     assert_close(simulation.test_action_result(0).unwrap(), 1.5);
     assert!(
-        simulation.pending_expression_action(0).is_none(),
+        simulation.pending_sim_motion_chunk(0).is_none(),
         "Wait must force-complete stuck motion pending instead of livelocking"
     );
 }
@@ -107,9 +116,9 @@ fn wait_while_motion_pending_force_completes_with_accumulated() {
 fn blocked_move_chunk_finishes_pending_with_accumulated_travel() {
     let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 3);
     simulation.prepare_test_run();
-    simulation.test_set_pending_expression(
+    simulation.test_set_pending_sim_motion_chunk(
         0,
-        Some(PendingExpressionAction::Move {
+        Some(PendingSimMotionChunk::Move {
             remaining: 2.0,
             accumulated: 0.0,
         }),
@@ -118,7 +127,7 @@ fn blocked_move_chunk_finishes_pending_with_accumulated_travel() {
     simulation.test_record_action_result(0, ActionResult::Value(0.0));
 
     assert_close(simulation.test_action_result(0).unwrap(), 0.0);
-    assert!(simulation.pending_expression_action(0).is_none());
+    assert!(simulation.pending_sim_motion_chunk(0).is_none());
 }
 
 #[test]
@@ -145,15 +154,20 @@ fn multi_chunk_rotate_expression_uses_sim_pending_without_runner_resume() {
     simulation.advance_test_turn();
 
     assert!(
-        simulation.pending_expression_action(0).is_some(),
+        simulation.pending_sim_motion_chunk(0).is_some(),
         "first rotate chunk should leave sim pending state"
     );
     assert_eq!(simulation.test_action_result(0), None);
-    assert!(simulation.program_runner(0).unwrap().has_pending_physical());
+    assert!(
+        simulation
+            .program_runner(0)
+            .unwrap()
+            .has_pending_program_motion()
+    );
 
     simulation.advance_test_turn();
 
-    assert!(simulation.pending_expression_action(0).is_none());
+    assert!(simulation.pending_sim_motion_chunk(0).is_none());
     assert_close(simulation.test_action_result(0).unwrap(), 180.0);
 
     simulation.advance_test_turn();

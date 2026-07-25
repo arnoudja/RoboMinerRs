@@ -18,25 +18,24 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
         true,
     ));
 
-    if state.ore_assets.is_empty() {
-        body.push_str(r#"<p class="mining-queue-wallet-empty">No ore in wallet yet.</p>"#);
-    } else {
-        body.push_str(r#"<ul class="mining-queue-wallet-list">"#);
-        for asset in &state.ore_assets {
-            let balance_class = if asset.amount >= asset.max_allowed {
-                "mining-queue-wallet-full"
-            } else {
-                "mining-queue-wallet-ok"
-            };
-            body.push_str(&format!(
-                r#"<li class="mining-queue-wallet-item {balance_class}"><span class="mining-queue-wallet-ore">{}</span><span class="mining-queue-wallet-amount">{}/{}</span></li>"#,
-                escape_html(&asset.ore_name),
-                asset.amount,
-                asset.max_allowed
-            ));
-        }
-        body.push_str("</ul>");
-    }
+    let assets: Vec<_> = state
+        .ore_assets
+        .iter()
+        .map(|asset| crate::html::WalletOreLine {
+            ore_id: asset.ore_id,
+            ore_name: &asset.ore_name,
+            amount: asset.amount,
+            max_allowed: asset.max_allowed,
+        })
+        .collect();
+    crate::html::render_wallet_ore_list(
+        body,
+        "mining-queue-wallet",
+        &assets,
+        "No ore in wallet yet.",
+        false,
+        |_| String::new(),
+    );
 
     body.push_str("</section>");
 }

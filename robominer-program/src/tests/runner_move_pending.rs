@@ -102,7 +102,7 @@ fn while_move_statement_reemits_until_action_result_completes() {
 }
 
 #[test]
-fn runner_keeps_pending_physical_while_action_result_is_missing() {
+fn runner_keeps_pending_program_motion_while_action_result_is_missing() {
     let program = compile_executable_source("move(2);").expect("program should compile");
     let mut runner = program.runner();
 
@@ -111,14 +111,14 @@ fn runner_keeps_pending_physical_while_action_result_is_missing() {
         runner.step(&mut context),
         ProgramStep::Action(ExecutableAction::Move(2.0))
     ));
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     let mut still_pending = test_context(5, None);
     assert!(matches!(
         runner.step(&mut still_pending),
         ProgramStep::Action(ExecutableAction::Move(2.0))
     ));
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn statement_move_zero_advances_without_awaiting_result() {
         ProgramStep::Action(ExecutableAction::Move(0.0))
     );
     assert!(!runner.awaits_action_result());
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 
     assert_eq!(
         runner.next_action(&mut context),
@@ -151,7 +151,7 @@ fn expression_move_zero_completes_immediately_without_pending() {
         runner.next_action(&mut context),
         Some(ExecutableAction::Mine)
     );
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 }
 
 #[test]
@@ -168,7 +168,7 @@ fn dynamic_statement_move_zero_advances_to_next_statement() {
             other => panic!("unexpected step before move(0): {other:?}"),
         }
     }
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 
     assert_eq!(
         runner.next_action(&mut context),
@@ -188,7 +188,7 @@ fn dynamic_expression_move_zero_from_variable_selects_true_branch() {
         runner.next_action(&mut context),
         Some(ExecutableAction::Mine)
     );
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 }
 
 #[test]
@@ -205,5 +205,5 @@ fn dynamic_expression_move_below_epsilon_completes_without_pending() {
         runner.next_action(&mut context),
         Some(ExecutableAction::Mine)
     );
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 }

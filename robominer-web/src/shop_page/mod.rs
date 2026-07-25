@@ -1,7 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, login_redirect, mutation_form_has, mutation_i64, query_i64,
-    session_username,
-};
+use crate::{Request, Response, ServerConfig, mutation_form_has, mutation_i64, query_i64};
 
 pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = 7;
 pub(super) const MEMORY_MODULE_PART_TYPE_ID: i64 = 4;
@@ -22,16 +19,13 @@ pub(super) struct ShopPageState {
 }
 
 pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Shop requires ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Shop requires ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
     let buy_part_id = mutation_i64(request, "buyRobotPartId");
@@ -41,8 +35,8 @@ pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Respo
     let selected_part_id = query_i64(request, "selectedRobotPartId");
 
     let result = load_shop_state(
-        pool,
-        user_id,
+        session.pool,
+        session.user_id,
         buy_part_id,
         sell_part_id,
         mutation_form_has(request, "sellAllUnassigned"),
@@ -53,18 +47,14 @@ pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Respo
     .await;
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_shop_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => Response::service_unavailable(format!("Unable to load shop: {error}")),
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_shop_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("shop", error),
     }
 }
 
@@ -79,7 +69,7 @@ async fn load_shop_state(
     selected_tier_id: Option<i64>,
     selected_part_id: Option<i64>,
 ) -> Result<ShopPageState, robominer_domain::DomainError> {
-    robominer_db::claim_user_results(pool, user_id).await?;
+    crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
     if let Some(robot_part_id) = buy_part_id {

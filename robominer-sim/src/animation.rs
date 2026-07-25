@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 
-use serde_json::{Map, Number, Value, json};
-
 use crate::MAX_ORE_TYPES;
+use crate::animation_payload::{
+    AnimationCpuStep, AnimationGround, AnimationGroundChange, AnimationGroundPosition,
+    AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot, AnimationRobots,
+};
 use crate::ground::Ground;
 use crate::position::Position;
 use crate::robot::Robot;
@@ -168,25 +170,28 @@ impl AnimationRecorder {
         });
     }
 
+    pub(crate) fn into_animation_payload(
+        self,
+        ground: &Ground,
+        robots: &[Robot],
+        ore_data: &[OreAnimationData],
+    ) -> AnimationPayload {
+        AnimationPayload {
+            v: ANIMATION_PAYLOAD_VERSION,
+            robots: robots_animation(&self.robot_steps, robots, ground.size_x(), ground.size_y()),
+            ground: ground_animation(ground, &self.ground_changes),
+            ore_types: ore_animation(ore_data),
+        }
+    }
+
     pub(crate) fn into_animation_data(
         self,
         ground: &Ground,
         robots: &[Robot],
         ore_data: &[OreAnimationData],
     ) -> String {
-        let payload = json!({
-            "v": ANIMATION_PAYLOAD_VERSION,
-            "robots": robots_animation_value(
-                &self.robot_steps,
-                robots,
-                ground.size_x(),
-                ground.size_y(),
-            ),
-            "ground": ground_animation_value(ground, &self.ground_changes),
-            "oreTypes": ore_animation_value(ore_data),
-        });
-        // Prevent `</script>` breakout when the JSON is embedded in HTML.
-        payload.to_string().replace('<', "\\u003c")
+        self.into_animation_payload(ground, robots, ore_data)
+            .to_embedded_json()
     }
 }
 
@@ -210,12 +215,12 @@ fn depot_home_square(
     (x, y, side)
 }
 
-fn robots_animation_value(
+fn robots_animation(
     robot_steps: &[Vec<RobotAnimationStep>],
     robots: &[Robot],
     size_x: usize,
     size_y: usize,
-) -> Value {
+) -> AnimationRobots {
     let mut robot_values = Vec::with_capacity(robot_steps.len());
 
     for (index, steps) in robot_steps.iter().enumerate() {
@@ -226,42 +231,52 @@ fn robots_animation_value(
         let depot_capacity = robots[index].depot_capacity();
         let record_depot = depot_capacity.iter().take(3).any(|&cap| cap > 0);
 
-        let mut robot_object = Map::new();
-        robot_object.insert("robotnr".to_string(), json!(index));
-        robot_object.insert("x".to_string(), json!(legacy_float(first_step.position.x)));
-        robot_object.insert("y".to_string(), json!(legacy_float(first_step.position.y)));
-        robot_object.insert("o".to_string(), json!(first_step.position.orientation));
-        robot_object.insert("A".to_string(), json!(first_step.ore[0]));
-        robot_object.insert("B".to_string(), json!(first_step.ore[1]));
-        robot_object.insert("C".to_string(), json!(first_step.ore[2]));
-        robot_object.insert("size".to_string(), json!(legacy_float(spec.robot_size)));
-        robot_object.insert("maxore".to_string(), json!(spec.max_ore));
-        robot_object.insert("maxturns".to_string(), json!(spec.max_turns));
+        let mut robot = AnimationRobot {
+            robotnr: index,
+            x: legacy_float(first_step.position.x),
+            y: legacy_float(first_step.position.y),
+            o: first_step.position.orientation,
+            ore_a: first_step.ore[0],
+            ore_b: first_step.ore[1],
+            ore_c: first_step.ore[2],
+            size: legacy_float(spec.robot_size),
+            maxore: spec.max_ore,
+            maxturns: spec.max_turns,
+            depot_max_a: None,
+            depot_max_b: None,
+            depot_max_c: None,
+            depot_a: None,
+            depot_b: None,
+            depot_c: None,
+            home_x: None,
+            home_y: None,
+            home_size: None,
+            locations: robot_locations(steps, record_depot),
+        };
+
         if record_depot {
             let (home_x, home_y, home_size) =
                 depot_home_square(index, spec.robot_size, size_x, size_y);
-            robot_object.insert("depotMaxA".to_string(), json!(depot_capacity[0]));
-            robot_object.insert("depotMaxB".to_string(), json!(depot_capacity[1]));
-            robot_object.insert("depotMaxC".to_string(), json!(depot_capacity[2]));
-            robot_object.insert("DA".to_string(), json!(first_step.depot[0]));
-            robot_object.insert("DB".to_string(), json!(first_step.depot[1]));
-            robot_object.insert("DC".to_string(), json!(first_step.depot[2]));
-            robot_object.insert("homeX".to_string(), json!(home_x));
-            robot_object.insert("homeY".to_string(), json!(home_y));
-            robot_object.insert("homeSize".to_string(), json!(home_size));
+            robot.depot_max_a = Some(depot_capacity[0]);
+            robot.depot_max_b = Some(depot_capacity[1]);
+            robot.depot_max_c = Some(depot_capacity[2]);
+            robot.depot_a = Some(first_step.depot[0]);
+            robot.depot_b = Some(first_step.depot[1]);
+            robot.depot_c = Some(first_step.depot[2]);
+            robot.home_x = Some(home_x);
+            robot.home_y = Some(home_y);
+            robot.home_size = Some(home_size);
         }
-        robot_object.insert(
-            "locations".to_string(),
-            robot_step_array_value(steps, record_depot),
-        );
 
-        robot_values.push(Value::Object(robot_object));
+        robot_values.push(robot);
     }
 
-    json!({ "robot": robot_values })
+    AnimationRobots {
+        robot: robot_values,
+    }
 }
 
-fn robot_step_array_value(steps: &[RobotAnimationStep], record_depot: bool) -> Value {
+fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<AnimationLocation> {
     let mut last_x = 0.0;
     let mut last_y = 0.0;
     let mut last_orientation = 0;
@@ -274,163 +289,169 @@ fn robot_step_array_value(steps: &[RobotAnimationStep], record_depot: bool) -> V
     let mut values = Vec::with_capacity(steps.len());
 
     for (index, step) in steps.iter().enumerate() {
-        let mut object = Map::new();
+        let mut location = AnimationLocation::default();
 
         if index == 0 || step.position.x != last_x {
-            object.insert("x".to_string(), json!(legacy_float(step.position.x)));
+            location.x = Some(legacy_float(step.position.x));
             last_x = step.position.x;
         }
 
         if index == 0 || step.position.y != last_y {
-            object.insert("y".to_string(), json!(legacy_float(step.position.y)));
+            location.y = Some(legacy_float(step.position.y));
             last_y = step.position.y;
         }
 
         if index == 0 || step.position.orientation != last_orientation {
-            object.insert("o".to_string(), json!(step.position.orientation));
+            location.o = Some(step.position.orientation);
             last_orientation = step.position.orientation;
         }
 
         if index == 0 || step.ore[0] != last_ore_a {
-            object.insert("A".to_string(), json!(step.ore[0]));
+            location.ore_a = Some(step.ore[0]);
             last_ore_a = step.ore[0];
         }
 
         if index == 0 || step.ore[1] != last_ore_b {
-            object.insert("B".to_string(), json!(step.ore[1]));
+            location.ore_b = Some(step.ore[1]);
             last_ore_b = step.ore[1];
         }
 
         if index == 0 || step.ore[2] != last_ore_c {
-            object.insert("C".to_string(), json!(step.ore[2]));
+            location.ore_c = Some(step.ore[2]);
             last_ore_c = step.ore[2];
         }
 
         if record_depot {
             if index == 0 || step.depot[0] != last_depot_a {
-                object.insert("DA".to_string(), json!(step.depot[0]));
+                location.depot_a = Some(step.depot[0]);
                 last_depot_a = step.depot[0];
             }
             if index == 0 || step.depot[1] != last_depot_b {
-                object.insert("DB".to_string(), json!(step.depot[1]));
+                location.depot_b = Some(step.depot[1]);
                 last_depot_b = step.depot[1];
             }
             if index == 0 || step.depot[2] != last_depot_c {
-                object.insert("DC".to_string(), json!(step.depot[2]));
+                location.depot_c = Some(step.depot[2]);
                 last_depot_c = step.depot[2];
             }
         }
 
-        // Always emit when present so Wait cycles stay distinguishable after delta compression.
-        if let Some(action_index) = step.action_index {
-            object.insert("a".to_string(), json!(action_index));
-        }
-
-        // Always emit when present so the viewer can highlight the active statement.
-        if let Some(source_line) = step.source_line {
-            object.insert("l".to_string(), json!(source_line));
-        }
+        location.action_index = step.action_index;
+        location.source_line = step.source_line;
 
         if !step.cpu_steps.is_empty() {
-            let cpu = step
-                .cpu_steps
-                .iter()
-                .map(|cpu_step| {
-                    let mut entry = Map::new();
-                    entry.insert("l".to_string(), json!(cpu_step.line));
-                    if cpu_step.start_col > 0 && cpu_step.end_col > cpu_step.start_col {
-                        entry.insert("c".to_string(), json!(cpu_step.start_col));
-                        entry.insert("e".to_string(), json!(cpu_step.end_col));
-                    }
-                    Value::Object(entry)
-                })
-                .collect::<Vec<_>>();
-            object.insert("cpu".to_string(), Value::Array(cpu));
+            location.cpu = Some(
+                step.cpu_steps
+                    .iter()
+                    .map(|cpu_step| {
+                        let mut entry = AnimationCpuStep {
+                            l: cpu_step.line,
+                            c: None,
+                            e: None,
+                        };
+                        if cpu_step.start_col > 0 && cpu_step.end_col > cpu_step.start_col {
+                            entry.c = Some(cpu_step.start_col);
+                            entry.e = Some(cpu_step.end_col);
+                        }
+                        entry
+                    })
+                    .collect(),
+            );
         }
 
-        // Always emit when present so stuck reasons survive delta compression.
         if let Some(status) = step.status {
-            object.insert("s".to_string(), json!(status.as_str()));
+            location.status = Some(status.as_str().to_string());
         }
 
-        if step.time_fraction < 0.9 || object.is_empty() {
-            object.insert("t".to_string(), json!(legacy_float(step.time_fraction)));
+        let is_empty = location.x.is_none()
+            && location.y.is_none()
+            && location.o.is_none()
+            && location.ore_a.is_none()
+            && location.ore_b.is_none()
+            && location.ore_c.is_none()
+            && location.depot_a.is_none()
+            && location.depot_b.is_none()
+            && location.depot_c.is_none()
+            && location.action_index.is_none()
+            && location.source_line.is_none()
+            && location.cpu.is_none()
+            && location.status.is_none();
+
+        if step.time_fraction < 0.9 || is_empty {
+            location.time_fraction = Some(legacy_float(step.time_fraction));
         }
 
-        values.push(Value::Object(object));
+        values.push(location);
     }
 
-    Value::Array(values)
+    values
 }
 
-fn ground_animation_value(
+fn ground_animation(
     ground: &Ground,
     ground_changes: &BTreeMap<(usize, usize), Vec<GroundAnimationStep>>,
-) -> Value {
+) -> AnimationGround {
     let mut positions = Vec::with_capacity(ground_changes.len());
 
     for ((x, y), changes) in ground_changes {
-        positions.push(json!({
-            "x": x,
-            "y": y,
-            "c": ground_change_array_value(changes),
-        }));
+        positions.push(AnimationGroundPosition {
+            x: *x,
+            y: *y,
+            c: ground_change_array(changes),
+        });
     }
 
-    json!({
-        "sizeX": ground.size_x(),
-        "sizeY": ground.size_y(),
-        "positions": positions,
-    })
+    AnimationGround {
+        size_x: ground.size_x(),
+        size_y: ground.size_y(),
+        positions,
+    }
 }
 
-fn ground_change_array_value(changes: &[GroundAnimationStep]) -> Value {
+fn ground_change_array(changes: &[GroundAnimationStep]) -> Vec<AnimationGroundChange> {
     let mut values = Vec::with_capacity(changes.len());
 
     for change in changes {
-        let mut object = Map::new();
+        let mut object = AnimationGroundChange::default();
 
         if change.time > 0 {
-            object.insert("t".to_string(), json!(change.time));
+            object.time = Some(change.time);
         }
         if change.ore[0] > 0 {
-            object.insert("A".to_string(), json!(change.ore[0]));
+            object.ore_a = Some(change.ore[0]);
         }
         if change.ore[1] > 0 {
-            object.insert("B".to_string(), json!(change.ore[1]));
+            object.ore_b = Some(change.ore[1]);
         }
         if change.ore[2] > 0 {
-            object.insert("C".to_string(), json!(change.ore[2]));
+            object.ore_c = Some(change.ore[2]);
         }
 
-        values.push(Value::Object(object));
+        values.push(object);
     }
 
-    Value::Array(values)
+    values
 }
 
-fn ore_animation_value(ore_data: &[OreAnimationData]) -> Value {
-    let mut object = Map::new();
+fn ore_animation(ore_data: &[OreAnimationData]) -> BTreeMap<String, AnimationOreType> {
+    let mut object = BTreeMap::new();
 
     for (index, ore) in ore_data.iter().enumerate() {
         let ore_key = ((b'A' + index as u8) as char).to_string();
         object.insert(
             ore_key,
-            json!({
-                "id": ore.ore_id,
-                "max": ore.max_amount,
-            }),
+            AnimationOreType {
+                id: ore.ore_id,
+                max: ore.max_amount,
+            },
         );
     }
 
-    Value::Object(object)
+    object
 }
 
-fn legacy_float(value: f64) -> Value {
-    let rounded = (value * 10.0).round() / 10.0;
-    Number::from_f64(rounded)
-        .map(Value::Number)
-        .unwrap_or(Value::Null)
+fn legacy_float(value: f64) -> f64 {
+    (value * 10.0).round() / 10.0
 }
 
 /// True when `resultData` looks like pre-JSON executable JavaScript.
@@ -443,7 +464,7 @@ pub fn is_legacy_javascript_result_data(result_data: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::is_legacy_javascript_result_data;
+    use super::{AnimationPayload, is_legacy_javascript_result_data};
 
     #[test]
     fn detects_legacy_javascript_payloads() {
@@ -453,5 +474,16 @@ mod tests {
         assert!(!is_legacy_javascript_result_data(
             r#"{"v":2,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#
         ));
+    }
+
+    #[test]
+    fn parses_minimal_versioned_payload() {
+        let payload = AnimationPayload::parse(
+            r#"{"v":2,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#,
+        )
+        .expect("payload should parse");
+        assert_eq!(payload.v, 2);
+        assert!(payload.robots.robot.is_empty());
+        assert_eq!(payload.ground.size_x, 1);
     }
 }

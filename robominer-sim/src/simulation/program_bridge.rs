@@ -214,7 +214,7 @@ impl Simulation {
                     if awaits {
                         let (pending, robot_action) =
                             map_awaiting_executable(action, self.robots[robot_index].spec());
-                        self.pending_expression_actions[robot_index] = pending;
+                        self.pending_sim_motion_chunks[robot_index] = pending;
                         let status = if matches!(robot_action, RobotAction::Wait) {
                             Some(status_for_wait_from_executable(action))
                         } else {
@@ -241,7 +241,7 @@ impl Simulation {
             // Wait (or other no-ops) while motion is still pending: remaining distance is
             // within epsilon or speed is zero. Finish with the accumulated travel so the
             // runner is not left awaiting a result that will never arrive.
-            if let Some(pending) = self.pending_expression_actions[robot_index].take() {
+            if let Some(pending) = self.pending_sim_motion_chunks[robot_index].take() {
                 self.action_results[robot_index] = Some(pending.accumulated());
             }
             return;
@@ -253,10 +253,10 @@ impl Simulation {
             ActionResult::Move { .. } | ActionResult::None => return,
         };
 
-        if let Some(pending) = &mut self.pending_expression_actions[robot_index] {
+        if let Some(pending) = &mut self.pending_sim_motion_chunks[robot_index] {
             if pending.record_step(value, self.robots[robot_index].spec()) {
                 self.action_results[robot_index] = Some(pending.accumulated());
-                self.pending_expression_actions[robot_index] = None;
+                self.pending_sim_motion_chunks[robot_index] = None;
             } else {
                 self.action_results[robot_index] = None;
             }

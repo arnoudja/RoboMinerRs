@@ -3,8 +3,8 @@ use super::resume::ExpressionResume;
 use super::schedule::{
     ExpressionWork, ExpressionWorkItem, Truthy, evaluate_operator, schedule_expression,
 };
-use crate::pending_physical_action::{
-    ContinuePhysicalAction, PendingPhysicalAction, PhysicalCompletion,
+use crate::pending_program_motion::{
+    ContinueProgramMotion, PendingProgramMotion, ProgramMotionCompletion,
 };
 use crate::types::*;
 
@@ -234,7 +234,7 @@ impl ExecutableRunner {
         action_result: &mut Option<f64>,
         fixed_action: Option<ExecutableAction>,
     ) -> StepOutcome {
-        if let Some(outcome) = self.handle_continue_physical(action_result) {
+        if let Some(outcome) = self.handle_continue_program_motion(action_result) {
             return outcome;
         }
 
@@ -248,7 +248,7 @@ impl ExecutableRunner {
             }
         });
 
-        if !PendingPhysicalAction::is_chunked(action) {
+        if !PendingProgramMotion::is_chunked(action) {
             // move(0) / rotate(0) travel nothing; complete with 0 without awaiting the sim.
             let eval = self.expression_eval.as_mut().expect("expression eval");
             eval.values.push(0.0);
@@ -257,7 +257,9 @@ impl ExecutableRunner {
         }
 
         *action_result = None;
-        StepOutcome::Action(self.start_pending_physical(action, PhysicalCompletion::Expression))
+        StepOutcome::Action(
+            self.start_pending_program_motion(action, ProgramMotionCompletion::Expression),
+        )
     }
 
     fn step_expression_dump(&mut self, action_result: &mut Option<f64>) -> StepOutcome {
@@ -281,22 +283,23 @@ impl ExecutableRunner {
         StepOutcome::Action(self.queue_pending_action(ExecutableAction::Dump(arg as i32)))
     }
 
-    pub(crate) fn handle_continue_physical(
+    pub(crate) fn handle_continue_program_motion(
         &mut self,
         action_result: &mut Option<f64>,
     ) -> Option<StepOutcome> {
-        match PendingPhysicalAction::continue_action(&mut self.pending_physical, action_result) {
-            ContinuePhysicalAction::NotActive => None,
-            ContinuePhysicalAction::Reemit => {
+        match PendingProgramMotion::continue_action(&mut self.pending_program_motion, action_result)
+        {
+            ContinueProgramMotion::NotActive => None,
+            ContinueProgramMotion::Reemit => {
                 *action_result = None;
                 Some(StepOutcome::Action(
-                    self.pending_physical
+                    self.pending_program_motion
                         .as_ref()
                         .expect("reemit requires pending physical action")
                         .action,
                 ))
             }
-            ContinuePhysicalAction::StatementComplete => {
+            ContinueProgramMotion::StatementComplete => {
                 let frame = self
                     .stack
                     .last_mut()
@@ -304,7 +307,7 @@ impl ExecutableRunner {
                 frame.index += 1;
                 Some(StepOutcome::Cpu)
             }
-            ContinuePhysicalAction::ExpressionComplete(value) => {
+            ContinueProgramMotion::ExpressionComplete(value) => {
                 let eval = self.expression_eval.as_mut().expect("expression eval");
                 eval.values.push(value);
                 eval.index += 1;

@@ -8,7 +8,7 @@ use robominer_program::ExecutableRunner;
 use robominer_program::motion::is_zero_motion;
 
 use crate::OreAnimationData;
-use crate::action_mapping::PendingExpressionAction;
+use crate::action_mapping::PendingSimMotionChunk;
 use crate::action_mapping::status_for_pending_wait;
 use crate::animation::{AnimationRecorder, CpuAnimationStep, RobotCycleStatus};
 use crate::ground::{Ground, ScanState};
@@ -34,7 +34,7 @@ pub struct Simulation {
     action_results: Vec<Option<f64>>,
     action_result_expected: Vec<bool>,
     /// Per-cycle move/rotate chunks; see `robominer_program::pending_action_protocol`.
-    pending_expression_actions: Vec<Option<PendingExpressionAction>>,
+    pending_sim_motion_chunks: Vec<Option<PendingSimMotionChunk>>,
     time: i32,
     animation: Option<AnimationRecorder>,
 }
@@ -60,7 +60,7 @@ impl Simulation {
             .collect();
         let action_results = vec![None; action_sources.len()];
         let action_result_expected = vec![false; action_sources.len()];
-        let pending_expression_actions = vec![None; action_sources.len()];
+        let pending_sim_motion_chunks = vec![None; action_sources.len()];
         let robots = robots
             .into_iter()
             .map(|robot| {
@@ -78,7 +78,7 @@ impl Simulation {
             action_sources,
             action_results,
             action_result_expected,
-            pending_expression_actions,
+            pending_sim_motion_chunks,
             time: 0,
             animation: None,
         }
@@ -216,7 +216,7 @@ impl Simulation {
                 } else {
                     self.action_results[index] = None;
                     self.action_result_expected[index] = false;
-                    self.pending_expression_actions[index] = None;
+                    self.pending_sim_motion_chunks[index] = None;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
                     // Keep the last statement highlight after the battery expires.
                     cycle_source_lines[index] = self
@@ -303,7 +303,7 @@ impl Simulation {
         &mut self,
         robot_index: usize,
     ) -> (RobotAction, Option<RobotCycleStatus>, Vec<CpuAnimationStep>) {
-        if let Some(pending) = &self.pending_expression_actions[robot_index] {
+        if let Some(pending) = &self.pending_sim_motion_chunks[robot_index] {
             self.action_result_expected[robot_index] = true;
             let action = pending.next_robot_action(self.robots[robot_index].spec());
             let status = if matches!(action, RobotAction::Wait) {

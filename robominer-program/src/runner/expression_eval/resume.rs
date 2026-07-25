@@ -1,6 +1,6 @@
 use super::super::ExecutableRunner;
 use super::schedule::Truthy;
-use crate::pending_physical_action::PendingPhysicalAction;
+use crate::pending_program_motion::PendingProgramMotion;
 use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -130,7 +130,7 @@ impl ExecutableRunner {
             }
             ExpressionResume::DynamicMove => {
                 let action = ExecutableAction::Move(value);
-                if !PendingPhysicalAction::is_chunked(action) {
+                if !PendingProgramMotion::is_chunked(action) {
                     // Zero-distance dynamic moves are not pending; advance like a literal move(0).
                     let frame = self
                         .stack
@@ -142,7 +142,7 @@ impl ExecutableRunner {
             }
             ExpressionResume::DynamicRotate => {
                 let action = ExecutableAction::Rotate(value);
-                if !PendingPhysicalAction::is_chunked(action) {
+                if !PendingProgramMotion::is_chunked(action) {
                     let frame = self
                         .stack
                         .last_mut()

@@ -1,6 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, query_i64, session_username,
-};
+use crate::{Request, Response, ServerConfig, is_post, query_i64};
 
 #[derive(Debug)]
 pub(super) struct RobotPageState {
@@ -13,34 +11,27 @@ pub(super) struct RobotPageState {
 }
 
 pub(super) async fn robot_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Robot page requires ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Robot page requires ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
     let robot_id = query_i64(request, "robotId");
 
-    let result = load_robot_page_state(pool, user_id, request, robot_id).await;
+    let result = load_robot_page_state(session.pool, session.user_id, request, robot_id).await;
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_robot_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => Response::service_unavailable(format!("Unable to load robot page: {error}")),
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_robot_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("robot page", error),
     }
 }
 
@@ -50,7 +41,7 @@ async fn load_robot_page_state(
     request: &Request,
     requested_robot_id: Option<i64>,
 ) -> Result<RobotPageState, robominer_domain::DomainError> {
-    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
+    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
     if is_post(request)

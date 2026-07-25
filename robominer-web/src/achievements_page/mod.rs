@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, login_redirect, mutation_i64, session_username};
+use crate::{Request, Response, ServerConfig, mutation_i64, session_username};
 
 #[derive(Debug)]
 pub(super) struct AchievementsPageState {
@@ -15,16 +15,13 @@ pub(super) struct AchievementsPageState {
 }
 
 pub(super) async fn achievements_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Achievements require ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Achievements require ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
     let session_name = session_username(request);
@@ -37,29 +34,23 @@ pub(super) async fn achievements_page(request: &Request, config: &ServerConfig) 
 
     let result = match requested_user {
         Some(username) if username != session_name => {
-            load_achievements_overview(pool, username).await
+            load_achievements_overview(session.pool, username).await
         }
         _ => {
             let achievement_id = mutation_i64(request, "achievementId");
-            load_achievements_state(pool, user_id, achievement_id).await
+            load_achievements_state(session.pool, session.user_id, achievement_id).await
         }
     };
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_achievements_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => {
-            Response::service_unavailable(format!("Unable to load achievements: {error}"))
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_achievements_page(username, hud, &state)
+                })
+                .await
         }
+        Err(error) => crate::page_context::page_load_error("achievements", error),
     }
 }
 
@@ -68,7 +59,7 @@ async fn load_achievements_state(
     user_id: i64,
     achievement_id: Option<i64>,
 ) -> Result<AchievementsPageState, robominer_domain::DomainError> {
-    robominer_db::claim_user_results(pool, user_id).await?;
+    crate::page_context::claim_user_results(pool, user_id).await?;
 
     let claim_message = if let Some(achievement_id) = achievement_id {
         match robominer_db::claim_achievement_step(
@@ -158,6 +149,8 @@ pub(super) fn claim_achievement_step_rejection_message(
     robominer_domain::claim_achievement_step_rejection_message(rejection)
 }
 
+mod card;
+mod overview;
 mod render;
 
 #[cfg(test)]

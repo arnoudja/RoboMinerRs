@@ -3,12 +3,13 @@
 //! Multi-cycle move/rotate coordination with the simulator is documented in
 //! [`pending_action_protocol`].
 
+mod ast_visit;
 mod compile;
 pub mod gp;
 pub mod motion;
 pub mod pending_action_protocol;
 mod pending_await;
-mod pending_physical_action;
+mod pending_program_motion;
 mod pose;
 mod runner;
 mod types;
@@ -34,3 +35,8 @@ pub use types::{
     RobotProperty, SourceSpan, VariableOperator, Verification,
 };
 pub use unparse::unparse_program;
+
+/// Slot capacity for ore arrays in the runner / sim bridge (A… plus reserved slots).
+pub const MAX_ORE_TYPES: usize = 10;
+/// Language-facing dump/read slots A/B/C (`dump(1|2|3)`, `robot.oreStoredA|B|C`).
+pub const LANGUAGE_ORE_SLOTS: usize = 3;

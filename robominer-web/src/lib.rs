@@ -19,6 +19,7 @@ mod mining_area_atlas;
 mod mining_area_overview_page;
 mod mining_queue_page;
 mod mining_results_page;
+mod page_context;
 mod rally_pages;
 mod rate_limit;
 mod request_helpers;

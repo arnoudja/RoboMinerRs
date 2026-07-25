@@ -1,7 +1,7 @@
 use crate::*;
 
 pub(super) fn test_context(time_left: i32, action_result: Option<f64>) -> ExecutionContext {
-    ExecutionContext::from_runtime(time_left, [0; 10], action_result)
+    ExecutionContext::from_runtime(time_left, [0; crate::MAX_ORE_TYPES], action_result)
 }
 
 pub(super) fn scan_context(
@@ -13,7 +13,8 @@ pub(super) fn scan_context(
     distance: f64,
     ore_type: f64,
 ) -> ExecutionContext {
-    let mut context = ExecutionContext::from_runtime(time_left, [0; 10], action_result);
+    let mut context =
+        ExecutionContext::from_runtime(time_left, [0; crate::MAX_ORE_TYPES], action_result);
     context.scan_time = scan_time;
     context.scan_started = started;
     context.scan_complete = complete;
@@ -23,7 +24,7 @@ pub(super) fn scan_context(
 }
 
 pub(super) fn robot_context(cpu_speed: f64) -> ExecutionContext {
-    let mut context = ExecutionContext::from_runtime(10, [0; 10], None);
+    let mut context = ExecutionContext::from_runtime(10, [0; crate::MAX_ORE_TYPES], None);
     context.robot.cpu_speed = cpu_speed;
     context
 }

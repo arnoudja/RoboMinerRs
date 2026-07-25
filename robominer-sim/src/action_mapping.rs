@@ -27,10 +27,10 @@ pub(crate) fn status_for_wait_from_executable(action: ExecutableAction) -> Robot
     }
 }
 
-pub(crate) fn status_for_pending_wait(pending: &PendingExpressionAction) -> RobotCycleStatus {
+pub(crate) fn status_for_pending_wait(pending: &PendingSimMotionChunk) -> RobotCycleStatus {
     match *pending {
-        PendingExpressionAction::Move { remaining, .. }
-        | PendingExpressionAction::Rotate { remaining, .. } => {
+        PendingSimMotionChunk::Move { remaining, .. }
+        | PendingSimMotionChunk::Rotate { remaining, .. } => {
             if is_zero_motion(remaining) {
                 RobotCycleStatus::Zero
             } else {
@@ -101,18 +101,18 @@ pub(crate) fn robot_action_from_executable(
 
 /// Per-cycle chunking state for move/rotate actions emitted by the program runner.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) enum PendingExpressionAction {
+pub(crate) enum PendingSimMotionChunk {
     Move { remaining: f64, accumulated: f64 },
     Rotate { remaining: f64, accumulated: f64 },
 }
 
-impl PendingExpressionAction {
+impl PendingSimMotionChunk {
     pub(crate) fn next_robot_action(&self, spec: &RobotSpec) -> RobotAction {
         match *self {
-            PendingExpressionAction::Move { remaining, .. } => {
+            PendingSimMotionChunk::Move { remaining, .. } => {
                 motion_chunk_robot_action(remaining, spec, false)
             }
-            PendingExpressionAction::Rotate { remaining, .. } => {
+            PendingSimMotionChunk::Rotate { remaining, .. } => {
                 motion_chunk_robot_action(remaining, spec, true)
             }
         }
@@ -120,12 +120,12 @@ impl PendingExpressionAction {
 
     pub(crate) fn record_step(&mut self, value: f64, spec: &RobotSpec) -> bool {
         match self {
-            PendingExpressionAction::Move {
+            PendingSimMotionChunk::Move {
                 remaining,
                 accumulated,
             } => record_motion_step(remaining, accumulated, value, move_speed(spec, *remaining))
                 .is_finished(),
-            PendingExpressionAction::Rotate {
+            PendingSimMotionChunk::Rotate {
                 remaining,
                 accumulated,
             } => {
@@ -136,8 +136,8 @@ impl PendingExpressionAction {
 
     pub(crate) fn accumulated(&self) -> f64 {
         match *self {
-            PendingExpressionAction::Move { accumulated, .. }
-            | PendingExpressionAction::Rotate { accumulated, .. } => accumulated,
+            PendingSimMotionChunk::Move { accumulated, .. }
+            | PendingSimMotionChunk::Rotate { accumulated, .. } => accumulated,
         }
     }
 }
@@ -146,17 +146,17 @@ impl PendingExpressionAction {
 pub(crate) fn map_awaiting_executable(
     action: ExecutableAction,
     spec: &RobotSpec,
-) -> (Option<PendingExpressionAction>, RobotAction) {
+) -> (Option<PendingSimMotionChunk>, RobotAction) {
     match action {
         ExecutableAction::Move(amount) if !is_zero_motion(amount) => {
-            let pending = PendingExpressionAction::Move {
+            let pending = PendingSimMotionChunk::Move {
                 remaining: amount,
                 accumulated: 0.0,
             };
             (Some(pending), pending.next_robot_action(spec))
         }
         ExecutableAction::Rotate(amount) if !is_zero_motion(amount) => {
-            let pending = PendingExpressionAction::Rotate {
+            let pending = PendingSimMotionChunk::Rotate {
                 remaining: amount,
                 accumulated: 0.0,
             };
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn record_step_continues_multi_chunk_move() {
-        let mut pending = PendingExpressionAction::Move {
+        let mut pending = PendingSimMotionChunk::Move {
             remaining: 2.0,
             accumulated: 0.0,
         };
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn record_step_blocked_on_zero_travel() {
-        let mut pending = PendingExpressionAction::Move {
+        let mut pending = PendingSimMotionChunk::Move {
             remaining: 2.0,
             accumulated: 0.0,
         };

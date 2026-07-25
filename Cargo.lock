@@ -1228,6 +1228,7 @@ name = "robominer-sim"
 version = "0.1.0"
 dependencies = [
  "robominer-program",
+ "serde",
  "serde_json",
 ]
 

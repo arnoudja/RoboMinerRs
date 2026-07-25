@@ -1,4 +1,4 @@
-use crate::action_mapping::PendingExpressionAction;
+use crate::action_mapping::PendingSimMotionChunk;
 use crate::physics::ActionResult;
 
 use super::Simulation;
@@ -23,11 +23,11 @@ impl Simulation {
         self.process_step();
     }
 
-    pub(crate) fn pending_expression_action(
+    pub(crate) fn pending_sim_motion_chunk(
         &self,
         robot_index: usize,
-    ) -> Option<PendingExpressionAction> {
-        self.pending_expression_actions[robot_index]
+    ) -> Option<PendingSimMotionChunk> {
+        self.pending_sim_motion_chunks[robot_index]
     }
 
     pub(crate) fn test_action_result(&self, robot_index: usize) -> Option<f64> {
@@ -42,11 +42,11 @@ impl Simulation {
         self.record_action_result(robot_index, result);
     }
 
-    pub(crate) fn test_set_pending_expression(
+    pub(crate) fn test_set_pending_sim_motion_chunk(
         &mut self,
         robot_index: usize,
-        pending: Option<PendingExpressionAction>,
+        pending: Option<PendingSimMotionChunk>,
     ) {
-        self.pending_expression_actions[robot_index] = pending;
+        self.pending_sim_motion_chunks[robot_index] = pending;
     }
 }

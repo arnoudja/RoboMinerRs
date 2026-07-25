@@ -13,20 +13,20 @@ fn statement_rotate_reemits_until_action_result_is_provided() {
         runner.step(&mut context),
         ProgramStep::Action(ExecutableAction::Rotate(180.0))
     );
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     assert_eq!(
         runner.step(&mut test_context(5, None)),
         ProgramStep::Action(ExecutableAction::Rotate(180.0))
     );
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     let mut after_rotate = test_context(5, Some(180.0));
     assert_eq!(
         runner.next_action(&mut after_rotate),
         Some(ExecutableAction::Mine)
     );
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 }
 
 #[test]
@@ -43,7 +43,7 @@ fn dynamic_rotate_in_expression_reemits_until_action_result_is_provided() {
             other => panic!("unexpected step before rotate: {other:?}"),
         }
     }
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     assert_eq!(
         runner.step(&mut test_context(5, None)),
@@ -69,7 +69,7 @@ fn expression_rotate_condition_receives_traveled_angle() {
         runner.step(&mut context),
         ProgramStep::Action(ExecutableAction::Rotate(180.0))
     ));
-    assert!(runner.has_pending_physical());
+    assert!(runner.has_pending_program_motion());
 
     context.action_result = Some(180.0);
     assert_eq!(
@@ -109,7 +109,7 @@ fn expression_rotate_zero_completes_immediately_without_pending() {
         runner.next_action(&mut context),
         Some(ExecutableAction::Mine)
     );
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn dynamic_statement_rotate_zero_advances_to_next_statement() {
             other => panic!("unexpected step before rotate(0): {other:?}"),
         }
     }
-    assert!(!runner.has_pending_physical());
+    assert!(!runner.has_pending_program_motion());
 
     assert_eq!(
         runner.next_action(&mut context),

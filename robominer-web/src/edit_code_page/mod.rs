@@ -1,7 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, query_i64, query_signed_i64,
-    session_username,
-};
+use crate::{Request, Response, ServerConfig, is_post, query_i64, query_signed_i64};
 
 #[derive(Debug)]
 pub(super) struct EditCodePageState {
@@ -23,33 +20,26 @@ pub(super) struct EditCodeProgramSource {
 }
 
 pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Edit code requires ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Edit code requires ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
-    let result = load_edit_code_page_state(pool, user_id, request).await;
+    let result = load_edit_code_page_state(session.pool, session.user_id, request).await;
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_edit_code_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => Response::service_unavailable(format!("Unable to load edit code: {error}")),
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_edit_code_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("edit code", error),
     }
 }
 
@@ -58,7 +48,7 @@ async fn load_edit_code_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<EditCodePageState, robominer_domain::DomainError> {
-    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
+    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");

@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, login_redirect, query_i64, session_username};
+use crate::{Request, Response, ServerConfig, query_i64};
 
 pub(super) const ROBOT_STATS_RECENT_RUNS_LIMIT: i64 = 10;
 
@@ -30,34 +30,27 @@ impl RobotStatsPageState {
 }
 
 pub(super) async fn robot_stats_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Robot stats require ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Robot stats require ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
     let robot_id = query_i64(request, "robotId");
-    let result = load_robot_stats_state(pool, robot_id).await;
+    let result = load_robot_stats_state(session.pool, robot_id).await;
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_robot_stats_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => Response::service_unavailable(format!("Unable to load robot stats: {error}")),
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_robot_stats_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("robot stats", error),
     }
 }
 

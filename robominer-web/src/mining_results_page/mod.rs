@@ -1,6 +1,4 @@
-use crate::{
-    Request, Response, ServerConfig, login_redirect, query_i64, rally_pages, session_username,
-};
+use crate::{Request, Response, ServerConfig, query_i64, rally_pages};
 
 const MINING_RESULTS_MAX_SHOWN: i64 = 10;
 
@@ -15,54 +13,61 @@ pub(super) struct MiningResultsPageState {
 }
 
 pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Mining results require ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require_read(
+        request,
+        config,
+        "Mining results require ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
     if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
-        let result = rally_pages::load_user_rally_view_state(pool, user_id, rally_result_id).await;
+        let result =
+            rally_pages::load_user_rally_view_state(session.pool, session.user_id, rally_result_id)
+                .await;
 
         return match result {
-            Ok(Some(state)) => Response::html(rally_pages::render_rally_view_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
+            Ok(Some(state)) => {
+                session
+                    .html_read_with_hud(request, config, |username, hud| {
+                        rally_pages::render_rally_view_page(
+                            username,
+                            hud,
+                            &state,
+                            request
+                                .query
+                                .get("returnTo")
+                                .map(String::as_str)
+                                .and_then(rally_pages::valid_mining_results_return_to)
+                                .map(rally_pages::RallyViewBackLink::MiningResults),
+                        )
+                    })
                     .await
-                    .as_deref(),
-                &state,
-                request
-                    .query
-                    .get("returnTo")
-                    .map(String::as_str)
-                    .and_then(rally_pages::valid_mining_results_return_to)
-                    .map(rally_pages::RallyViewBackLink::MiningResults),
-            )),
-            Ok(None) => Response::not_found(),
-            Err(error) => {
-                Response::service_unavailable(format!("Unable to load rally view: {error}"))
             }
+            Ok(None) => Response::not_found(),
+            Err(error) => crate::page_context::page_load_error("rally view", error),
         };
     }
 
     let preferred_run_id = query_i64(request, "runId");
-    let result =
-        load_mining_results_state(pool, user_id, MINING_RESULTS_MAX_SHOWN, preferred_run_id).await;
+    let result = load_mining_results_state(
+        session.pool,
+        session.user_id,
+        MINING_RESULTS_MAX_SHOWN,
+        preferred_run_id,
+    )
+    .await;
 
     match result {
-        Ok(state) => Response::html(render::render_mining_results_page(
-            session_username(request),
-            crate::app_shell::hud_markup(request, config)
+        Ok(state) => {
+            session
+                .html_read_with_hud(request, config, |username, hud| {
+                    render::render_mining_results_page(username, hud, &state)
+                })
                 .await
-                .as_deref(),
-            &state,
-        )),
-        Err(error) => {
-            Response::service_unavailable(format!("Unable to load mining results: {error}"))
         }
+        Err(error) => crate::page_context::page_load_error("mining results", error),
     }
 }
 
@@ -72,7 +77,7 @@ async fn load_mining_results_state(
     max_results: i64,
     preferred_run_id: Option<i64>,
 ) -> Result<MiningResultsPageState, robominer_domain::DomainError> {
-    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
+    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let results =
         robominer_db::list_mining_result_states_for_user(pool, user_id, max_results).await?;

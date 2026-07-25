@@ -6,8 +6,8 @@
 //!
 //! | Layer | Type | Owner | Role |
 //! |---|---|---|---|
-//! | Program | `ExecutableRunner::pending_physical` | `robominer-program` | Hold the logical move/rotate and **defer advancing until the sim reports completion**. |
-//! | Simulation | `PendingExpressionAction` | `robominer-sim` | Split one logical move/rotate into **per-cycle speed chunks** and accumulate distance/angle traveled. |
+//! | Program | `ExecutableRunner::pending_program_motion` | `robominer-program` | Hold the logical move/rotate and **defer advancing until the sim reports completion**. |
+//! | Simulation | `PendingSimMotionChunk` | `robominer-sim` | Split one logical move/rotate into **per-cycle speed chunks** and accumulate distance/angle traveled. |
 //! | Simulation | `Robot::scan_state` | `robominer-sim` | Track in-progress or completed scan; feed `ExecutionContext` scan fields. |
 //!
 //! Do not merge move/rotate pending structs with scan state: the runner tracks
@@ -27,15 +27,15 @@
 //! Mining cycle N
 //! ──────────────
 //! 1. Simulation::next_robot_action
-//!      └─ if pending_expression_actions[i] is Some → emit next speed chunk (skip program)
+//!      └─ if pending_sim_motion_chunks[i] is Some → emit next speed chunk (skip program)
 //!      └─ else run_program_cpu_loop → ExecutableRunner::step
 //!
 //! 2. Runner emits `ProgramStep::Action(Move(total))` once
-//!      └─ `start_pending_physical`: `awaits_action_result = true`, `pending_physical` set
+//!      └─ `start_pending_program_motion`: `awaits_action_result = true`, `pending_program_motion` set
 //!      └─ statement index NOT advanced yet for chunked actions
 //!
-//! 3. Simulation::start_expression_action
-//!      └─ pending_expression_actions[i] = Move { remaining: total, accumulated: 0 }
+//! 3. Simulation::start_sim_motion_chunk
+//!      └─ pending_sim_motion_chunks[i] = Move { remaining: total, accumulated: 0 }
 //!      └─ first RobotAction chunk executed; walls/collisions applied
 //!
 //! 4. Simulation::record_action_result
@@ -44,29 +44,29 @@
 //!
 //! Mining cycle N+1 (partial move still running)
 //! ─────────────────────────────────────────────
-//! 5. next_robot_action serves the next chunk from pending_expression_actions
-//!    without calling the runner (program counter unchanged, `pending_physical` kept)
+//! 5. next_robot_action serves the next chunk from pending_sim_motion_chunks
+//!    without calling the runner (program counter unchanged, `pending_program_motion` kept)
 //!
 //! Mining cycle M (move finished)
 //! ──────────────────────────────
 //! 6. next_robot_action → run_program_cpu_loop
 //! 7. build_execution_context copies action_results[i] into ExecutionContext::action_result
-//! 8. Runner::step → `handle_continue_physical`
-//!      └─ requires `pending_physical` Some AND `action_result` Some
-//!      └─ clears `pending_physical`, advances frame index or pushes expression result
+//! 8. Runner::step → `handle_continue_program_motion`
+//!      └─ requires `pending_program_motion` Some AND `action_result` Some
+//!      └─ clears `pending_program_motion`, advances frame index or pushes expression result
 //! 9. Runner continues same cycle (CPU budget) or waits next cycle for next statement
 //! ```
 //!
 //! ## Move/rotate initiation (unified)
 //!
-//! All move/rotate paths call `PendingPhysicalAction::start` with a
-//! `PhysicalCompletion` and resume through `PendingPhysicalAction::continue_action`:
+//! All move/rotate paths call `PendingProgramMotion::start` with a
+//! `ProgramMotionCompletion` and resume through `PendingProgramMotion::continue_action`:
 //!
 //! | Source | Example | Completion |
 //! |---|---|---|
-//! | Statement | `move(4);` | `PhysicalCompletion::Statement` |
-//! | Dynamic statement | `move(robot.yPos);` | `PhysicalCompletion::Statement` |
-//! | Expression | `if (move(2) >= 1)` | `PhysicalCompletion::Expression` |
+//! | Statement | `move(4);` | `ProgramMotionCompletion::Statement` |
+//! | Dynamic statement | `move(robot.yPos);` | `ProgramMotionCompletion::Statement` |
+//! | Expression | `if (move(2) >= 1)` | `ProgramMotionCompletion::Expression` |
 //!
 //! Literal moves in expressions (`move(1.5)`) and dynamic moves (`move(x)`) both use
 //! the expression completion path via `step_expression_move_or_rotate`.
@@ -169,9 +169,9 @@
 //!
 //! ## Invariants
 //!
-//! - While `pending_expression_actions[i]` is `Some`, the simulation must **not** call
+//! - While `pending_sim_motion_chunks[i]` is `Some`, the simulation must **not** call
 //!   `ExecutableRunner::step` for that robot; chunk delivery is sim-driven.
-//! - While `ExecutableRunner::pending_physical` is `Some` for a chunked move/rotate, the
+//! - While `ExecutableRunner::pending_program_motion` is `Some` for a chunked move/rotate, the
 //!   runner must **not** advance past that statement until `action_result` is `Some`.
 //! - `move(0)` / `rotate(0)` (and amounts within [`crate::motion::MOTION_EPSILON`]) are not
 //!   chunked: expression forms complete immediately with result `0` (no pending), and dynamic
@@ -180,7 +180,7 @@
 //! - `ExecutionContext::action_result` is `None` between partial sim chunks so the
 //!   runner does not treat an incomplete move as finished.
 //! - `ExecutableRunner::step` clears `awaits_action_result` at entry; it is set again
-//!   only when `start_pending_physical` or `queue_pending_action` runs for the newly
+//!   only when `start_pending_program_motion` or `queue_pending_action` runs for the newly
 //!   emitted action.
 //! - While `pending_action == StartScan` or `AwaitScanResult`, the simulation must
 //!   **not** clear `action_results[i]` on `RobotAction::Wait` if a scan result is
@@ -202,10 +202,10 @@
 //!
 //! ## Related code
 //!
-//! - Runner: `pending_await`, `pending_physical_action`, `start_pending_physical`, `handle_continue_physical`
+//! - Runner: `pending_await`, `pending_program_motion`, `start_pending_program_motion`, `handle_continue_program_motion`
 //! - Runner scan eval: `expression_eval::step` (`PushStartScan`, `PushOreDistance`, `PushOreType`)
 //! - Motion chunking: [`motion`]
 //! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`, `complete_scan_now`,
 //!   `build_execution_context`
-//! - Sim pending move/rotate: `pending_expression_actions`, `record_action_result`,
+//! - Sim pending move/rotate: `pending_sim_motion_chunks`, `record_action_result`,
 //!   `should_preserve_program_action_result`, `next_robot_action`

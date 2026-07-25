@@ -2,6 +2,7 @@
 
 mod action_mapping;
 mod animation;
+mod animation_payload;
 mod ground;
 mod physics;
 mod position;
@@ -15,10 +16,14 @@ mod tests;
 pub use animation::{
     ANIMATION_PAYLOAD_VERSION, CpuAnimationStep, OreAnimationData, is_legacy_javascript_result_data,
 };
+pub use animation_payload::{
+    AnimationCpuStep, AnimationGround, AnimationGroundChange, AnimationGroundPosition,
+    AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot, AnimationRobots,
+};
 pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot};
 pub use position::Position;
 pub use robot::{ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, RobotSpec, ScriptedRobot};
 pub use score::{calculate_score, ore_amounts};
 pub use simulation::Simulation;
 
-pub const MAX_ORE_TYPES: usize = 10;
+pub use robominer_program::MAX_ORE_TYPES;

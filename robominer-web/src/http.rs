@@ -71,6 +71,16 @@ impl Response {
         }
     }
 
+    pub(crate) fn bad_request(message: impl Into<String>) -> Self {
+        Self {
+            status: 400,
+            reason: "Bad Request",
+            content_type: "text/plain; charset=utf-8",
+            headers: Vec::new(),
+            body: message.into().into_bytes(),
+        }
+    }
+
     pub(crate) fn method_not_allowed() -> Self {
         Self {
             status: 405,

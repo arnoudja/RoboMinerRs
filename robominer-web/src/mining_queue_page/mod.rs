@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{
-    Request, Response, ServerConfig, is_post, login_redirect, query_i64, session_username,
-};
+use crate::{Request, Response, ServerConfig, is_post, query_i64};
 
 #[derive(Debug)]
 pub(super) struct MiningQueuePageState {
@@ -33,16 +31,13 @@ pub(super) struct MiningQueueDisplayItem {
 }
 
 pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
-        return response;
-    }
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Mining queue requires ROBOMINER_DATABASE_URL to be configured",
-        );
+    let session = match crate::page_context::PageSession::require(
+        request,
+        config,
+        "Mining queue requires ROBOMINER_DATABASE_URL to be configured",
+    ) {
+        Ok(session) => session,
+        Err(response) => return response,
     };
 
     let selected_queue_item_ids = if is_post(request) {
@@ -50,24 +45,23 @@ pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) 
     } else {
         Vec::new()
     };
-    let result =
-        load_mining_queue_page_state(pool, user_id, request, selected_queue_item_ids).await;
+    let result = load_mining_queue_page_state(
+        session.pool,
+        session.user_id,
+        request,
+        selected_queue_item_ids,
+    )
+    .await;
 
     match result {
-        Ok(state) => crate::csrf::html_with_csrf(
-            request,
-            user_id,
-            render::render_mining_queue_page(
-                session_username(request),
-                crate::app_shell::hud_markup(request, config)
-                    .await
-                    .as_deref(),
-                &state,
-            ),
-        ),
-        Err(error) => {
-            Response::service_unavailable(format!("Unable to load mining queue: {error}"))
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_mining_queue_page(username, hud, &state)
+                })
+                .await
         }
+        Err(error) => crate::page_context::page_load_error("mining queue", error),
     }
 }
 
@@ -77,7 +71,7 @@ async fn load_mining_queue_page_state(
     request: &Request,
     selected_queue_item_ids: Vec<i64>,
 ) -> Result<MiningQueuePageState, robominer_domain::DomainError> {
-    let claim_result = robominer_db::claim_user_results(pool, user_id).await?;
+    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut error_message = None;
     if is_post(request) {

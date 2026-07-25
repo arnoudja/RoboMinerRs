@@ -1,0 +1,147 @@
+use super::markup::MiningAreaAtlasMode;
+
+pub(crate) fn render_mining_area_atlas_script(body: &mut String, mode: MiningAreaAtlasMode) {
+    let _ = mode;
+    let sync_url = r#"        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', query ? 'miningAreaOverview?' + query : 'miningAreaOverview');
+        }"#;
+
+    body.push_str(&format!(
+        r#"<script>
+(function() {{
+    function miningAreaAtlasUrlParam(name) {{
+        var search = window.location.search;
+        if (!search) {{
+            return null;
+        }}
+        var params = search.substring(1).split('&');
+        for (var index = 0; index < params.length; index += 1) {{
+            var pair = params[index].split('=');
+            if (decodeURIComponent(pair[0]) === name && pair[1]) {{
+                return decodeURIComponent(pair[1]);
+            }}
+        }}
+        return null;
+    }}
+
+    function collectMiningAreaAtlasQueryParams() {{
+        var params = [];
+        var sortSelect = document.getElementById('miningAreaAtlasSort');
+        var oreSelect = document.getElementById('miningAreaAtlasOreSort');
+        var affordableOnly = document.getElementById('miningAreaAtlasAffordableOnly');
+        if (sortSelect && sortSelect.value) {{
+            params.push(encodeURIComponent('sort') + '=' + encodeURIComponent(sortSelect.value));
+        }}
+        if (sortSelect && sortSelect.value === 'ore' && oreSelect && oreSelect.value) {{
+            params.push(encodeURIComponent('oreId') + '=' + encodeURIComponent(oreSelect.value));
+        }}
+        if (affordableOnly && affordableOnly.checked) {{
+            params.push(encodeURIComponent('affordable') + '=1');
+        }}
+        return params.join('&');
+    }}
+
+    function syncMiningAreaAtlasUrl() {{
+        var query = collectMiningAreaAtlasQueryParams();
+{sync_url}
+    }}
+
+    function compareAtlasRows(left, right, sortBy, oreId) {{
+        if (sortBy === 'name') {{
+            return left.getAttribute('data-area-name').localeCompare(right.getAttribute('data-area-name'));
+        }}
+        if (sortBy === 'ore' && oreId) {{
+            var leftYield = Number(left.getAttribute('data-ore-yield-' + oreId)) || 0;
+            var rightYield = Number(right.getAttribute('data-ore-yield-' + oreId)) || 0;
+            return rightYield - leftYield;
+        }}
+        var leftTotal = Number(left.getAttribute('data-total-yield')) || 0;
+        var rightTotal = Number(right.getAttribute('data-total-yield')) || 0;
+        return rightTotal - leftTotal;
+    }}
+
+    function updateOreSortVisibility() {{
+        var sortSelect = document.getElementById('miningAreaAtlasSort');
+        var oreField = document.getElementById('miningAreaAtlasOreField');
+        if (!sortSelect || !oreField) {{
+            return;
+        }}
+        oreField.hidden = sortSelect.value !== 'ore';
+    }}
+
+    function applyMiningAreaAtlasControls() {{
+        var sortSelect = document.getElementById('miningAreaAtlasSort');
+        var oreSelect = document.getElementById('miningAreaAtlasOreSort');
+        var affordableOnly = document.getElementById('miningAreaAtlasAffordableOnly');
+        var tbody = document.getElementById('miningAreaAtlasRows');
+        if (!sortSelect || !tbody) {{
+            return;
+        }}
+        updateOreSortVisibility();
+        var sortBy = sortSelect.value || 'total';
+        var oreId = oreSelect ? oreSelect.value : '';
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('.mining-area-atlas-row'));
+        rows.sort(function(left, right) {{
+            return compareAtlasRows(left, right, sortBy, oreId);
+        }});
+        for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {{
+            tbody.appendChild(rows[rowIndex]);
+        }}
+        var visibleCount = 0;
+        for (var filterIndex = 0; filterIndex < rows.length; filterIndex += 1) {{
+            var row = rows[filterIndex];
+            var hide = affordableOnly && affordableOnly.checked && row.getAttribute('data-affordable') !== '1';
+            row.classList.toggle('mining-area-atlas-filter-hidden', hide);
+            if (!hide) {{
+                visibleCount += 1;
+            }}
+        }}
+        var empty = document.getElementById('miningAreaAtlasFilterEmpty');
+        if (empty) {{
+            empty.hidden = visibleCount > 0;
+        }}
+        syncMiningAreaAtlasUrl();
+    }}
+
+    var sortSelect = document.getElementById('miningAreaAtlasSort');
+    var oreSelect = document.getElementById('miningAreaAtlasOreSort');
+    var affordableOnly = document.getElementById('miningAreaAtlasAffordableOnly');
+    if (sortSelect) {{
+        var preferredSort = miningAreaAtlasUrlParam('sort');
+        if (preferredSort) {{
+            for (var sortIndex = 0; sortIndex < sortSelect.options.length; sortIndex += 1) {{
+                if (sortSelect.options[sortIndex].value === preferredSort) {{
+                    sortSelect.value = preferredSort;
+                    break;
+                }}
+            }}
+        }}
+    }}
+    if (oreSelect) {{
+        var preferredOreId = miningAreaAtlasUrlParam('oreId');
+        if (preferredOreId) {{
+            for (var oreIndex = 0; oreIndex < oreSelect.options.length; oreIndex += 1) {{
+                if (oreSelect.options[oreIndex].value === preferredOreId) {{
+                    oreSelect.value = preferredOreId;
+                    break;
+                }}
+            }}
+        }}
+    }}
+    if (affordableOnly) {{
+        affordableOnly.checked = miningAreaAtlasUrlParam('affordable') === '1';
+    }}
+    applyMiningAreaAtlasControls();
+    if (sortSelect) {{
+        sortSelect.addEventListener('change', applyMiningAreaAtlasControls);
+    }}
+    if (oreSelect) {{
+        oreSelect.addEventListener('change', applyMiningAreaAtlasControls);
+    }}
+    if (affordableOnly) {{
+        affordableOnly.addEventListener('change', applyMiningAreaAtlasControls);
+    }}
+}})();
+</script>"#
+    ));
+}

@@ -121,16 +121,5 @@ fn render_edit_code_claim_banner(body: &mut String, state: &EditCodePageState) {
 }
 
 fn render_edit_code_message(body: &mut String, state: &EditCodePageState) {
-    let Some(message) = &state.message else {
-        return;
-    };
-    let banner_class = if message.starts_with("Unable") {
-        "edit-code-banner edit-code-banner-error"
-    } else {
-        "edit-code-banner edit-code-banner-success"
-    };
-    body.push_str(&format!(
-        r#"<p class="{banner_class}">{}</p>"#,
-        escape_html(message)
-    ));
+    crate::html::render_status_banner(body, "edit-code", state.message.as_deref());
 }

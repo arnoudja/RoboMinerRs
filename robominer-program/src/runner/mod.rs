@@ -1,6 +1,6 @@
 mod expression_eval;
 
-use crate::pending_physical_action::{PendingPhysicalAction, PhysicalCompletion};
+use crate::pending_program_motion::{PendingProgramMotion, ProgramMotionCompletion};
 
 use crate::types::*;
 
@@ -26,8 +26,8 @@ pub struct ExecutableRunner {
     /// Scan and other non-move actions awaiting a single-cycle result.
     pending_action: Option<ExecutableAction>,
     /// Multi-cycle move/rotate shared by statement and expression paths.
-    /// See [`pending_physical_action`] and [`pending_action_protocol`].
-    pending_physical: Option<PendingPhysicalAction>,
+    /// See [`pending_program_motion`] and [`pending_action_protocol`].
+    pending_program_motion: Option<PendingProgramMotion>,
     expression_eval: Option<OngoingExpressionEval>,
     /// Source line of the statement most recently entered (survives index advance for
     /// one-shot actions like mine, and multi-cycle pending motion). Refreshed to the
@@ -58,7 +58,7 @@ impl ExecutableRunner {
             variables: RuntimeVariables::default(),
             awaits_action_result: false,
             pending_action: None,
-            pending_physical: None,
+            pending_program_motion: None,
             expression_eval: None,
             active_source_line: None,
             active_source_span: None,
@@ -87,8 +87,8 @@ impl ExecutableRunner {
         matches!(self.pending_action, Some(ExecutableAction::StartScan(_)))
     }
 
-    pub fn has_pending_physical(&self) -> bool {
-        self.pending_physical.is_some()
+    pub fn has_pending_program_motion(&self) -> bool {
+        self.pending_program_motion.is_some()
     }
 
     /// 1-based source line of the statement currently executing, if any.
@@ -149,11 +149,14 @@ impl ExecutableRunner {
                 StepOutcome::Continue => continue,
                 StepOutcome::Cpu => break ProgramStep::Cpu,
                 StepOutcome::Action(action) => {
-                    let action = if PendingPhysicalAction::is_chunked(action)
-                        && self.pending_physical.is_none()
+                    let action = if PendingProgramMotion::is_chunked(action)
+                        && self.pending_program_motion.is_none()
                         && self.expression_eval.is_none()
                     {
-                        self.start_pending_physical(action, PhysicalCompletion::Statement)
+                        self.start_pending_program_motion(
+                            action,
+                            ProgramMotionCompletion::Statement,
+                        )
                     } else {
                         action
                     };
@@ -179,7 +182,7 @@ impl ExecutableRunner {
             return self.step_ongoing_expression(context, action_result);
         }
 
-        if let Some(outcome) = self.handle_continue_physical(action_result) {
+        if let Some(outcome) = self.handle_continue_program_motion(action_result) {
             return outcome;
         }
 
@@ -218,7 +221,7 @@ impl ExecutableRunner {
 
         match statement.kind {
             ExecutableStatementKind::Action(action) => {
-                if !PendingPhysicalAction::is_chunked(action) {
+                if !PendingProgramMotion::is_chunked(action) {
                     frame.index += 1;
                 }
                 StepOutcome::Action(action)
@@ -286,10 +289,11 @@ impl ExecutableRunner {
                         self.push_statement(*body, Some(condition), Some(loop_span));
                         StepOutcome::Cpu
                     } else if let Some(action) = condition.first_action() {
-                        if PendingPhysicalAction::is_chunked(action) {
-                            StepOutcome::Action(
-                                self.start_pending_physical(action, PhysicalCompletion::Statement),
-                            )
+                        if PendingProgramMotion::is_chunked(action) {
+                            StepOutcome::Action(self.start_pending_program_motion(
+                                action,
+                                ProgramMotionCompletion::Statement,
+                            ))
                         } else {
                             StepOutcome::Action(self.queue_pending_action(action))
                         }
@@ -320,9 +324,10 @@ impl ExecutableRunner {
                 self.pending_action = Some(action);
             }
             crate::ActionAwaitKind::Motion => {
-                // Chunked motion must use start_pending_physical, not scalar pending_action.
+                // Chunked motion must use start_pending_program_motion, not scalar pending_action.
                 debug_assert!(false, "motion action queued via pending_action: {action:?}");
-                return self.start_pending_physical(action, PhysicalCompletion::Expression);
+                return self
+                    .start_pending_program_motion(action, ProgramMotionCompletion::Expression);
             }
             crate::ActionAwaitKind::None => {
                 // Wait-mapped actions never produce action_result; emit without awaiting.
@@ -335,17 +340,17 @@ impl ExecutableRunner {
         action
     }
 
-    fn start_pending_physical(
+    fn start_pending_program_motion(
         &mut self,
         action: ExecutableAction,
-        completion: PhysicalCompletion,
+        completion: ProgramMotionCompletion,
     ) -> ExecutableAction {
         debug_assert!(
             crate::await_kind(action) == crate::ActionAwaitKind::Motion,
-            "start_pending_physical requires Motion await kind, got {action:?}"
+            "start_pending_program_motion requires Motion await kind, got {action:?}"
         );
         self.awaits_action_result = true;
-        self.pending_physical = Some(PendingPhysicalAction::start(action, completion));
+        self.pending_program_motion = Some(PendingProgramMotion::start(action, completion));
         action
     }
 

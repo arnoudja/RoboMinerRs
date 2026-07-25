@@ -322,7 +322,7 @@ impl RobotProperty {
         })
     }
 
-    pub fn stored_ore_value(self, ore: &[i32; 10]) -> Option<f64> {
+    pub fn stored_ore_value(self, ore: &[i32; crate::MAX_ORE_TYPES]) -> Option<f64> {
         Some(match self {
             Self::OreStored => ore.iter().sum::<i32>() as f64,
             Self::OreStoredA => ore.first().copied().unwrap_or(0) as f64,
@@ -351,7 +351,7 @@ pub struct RobotProperties {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutionContext {
     pub time_left: i32,
-    pub ore: [i32; 10],
+    pub ore: [i32; crate::MAX_ORE_TYPES],
     pub action_result: Option<f64>,
     pub scan_time: i32,
     pub scan_started: bool,
@@ -362,7 +362,11 @@ pub struct ExecutionContext {
 }
 
 impl ExecutionContext {
-    pub fn from_runtime(time_left: i32, ore: [i32; 10], action_result: Option<f64>) -> Self {
+    pub fn from_runtime(
+        time_left: i32,
+        ore: [i32; crate::MAX_ORE_TYPES],
+        action_result: Option<f64>,
+    ) -> Self {
         Self {
             time_left,
             ore,

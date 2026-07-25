@@ -1,31 +1,16 @@
 mod support;
 
 use robominer_domain::{completed_rally_record, run_rally_loadout_with_animation_seed};
+use robominer_sim::{ANIMATION_PAYLOAD_VERSION, AnimationPayload};
 use robominer_test_support::{
     load_fixture, round_golden_coord, round_golden_score, update_golden_enabled, write_fixture,
 };
 use serde::{Deserialize, Serialize};
-use support::RallyScenario;
+use support::{RallyScenario, RallyScenarioId};
 
 const MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const FIXTURE_SUBDIR: &str = "rally";
 const UPDATE_ENV_VAR: &str = "UPDATE_RALLY_GOLDEN";
-
-const SCENARIOS: &[&str] = &[
-    "single_miner_seed0",
-    "dual_miner_seed17",
-    "animation_seed0",
-    "seed_ai_1_seed42",
-    "seed_ai_2_seed0",
-    "seed_ai_3_seed14",
-    "scan_then_mine_seed5",
-    "do_while_mine_seed0",
-    "triple_queue_seed33",
-    "quad_queue_seed33",
-    "dual_ore_seed11",
-    "ore_seeker_80x80_seed0",
-    "depot_dump_cerbonium_advanced_seed0",
-];
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct GoldenPosition {
@@ -78,7 +63,6 @@ struct GoldenRallyFixture {
     final_time: i32,
     participants: Vec<GoldenParticipant>,
     completed_participants: Vec<GoldenCompletedParticipant>,
-    animation_contains: Vec<String>,
 }
 
 struct BuiltRallyFixture {
@@ -92,25 +76,6 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
     let outcome = &run.outcome;
     let record = completed_rally_record(&scenario.loadout, outcome, &run.result_data)
         .expect("golden scenario completed rally record should map");
-
-    let mut animation_contains = vec![
-        r#""v":2"#.to_string(),
-        r#""robots":{"robot":["#.to_string(),
-        format!(
-            r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,
-            scenario.loadout.mining_area.area.size_x, scenario.loadout.mining_area.area.size_y,
-        ),
-        r#""oreTypes":{"#.to_string(),
-    ];
-    if scenario
-        .loadout
-        .queue_entries
-        .iter()
-        .any(|entry| entry.robot.depot_capacity.iter().any(|&cap| cap > 0))
-    {
-        animation_contains.push(r#""depotMaxA":"#.to_string());
-        animation_contains.push(r#""DA":"#.to_string());
-    }
 
     BuiltRallyFixture {
         fixture: GoldenRallyFixture {
@@ -164,30 +129,89 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
                         .collect(),
                 })
                 .collect(),
-            animation_contains,
         },
         animation_data: run.result_data,
+    }
+}
+
+fn assert_animation_payload(scenario: &RallyScenario, animation_data: &str) {
+    let payload = AnimationPayload::parse(animation_data).unwrap_or_else(|error| {
+        panic!(
+            "scenario {} animation payload should parse: {error}",
+            scenario.name
+        )
+    });
+    assert_eq!(
+        payload.v, ANIMATION_PAYLOAD_VERSION,
+        "scenario {} animation version",
+        scenario.name
+    );
+    assert_eq!(
+        payload.robots.robot.len(),
+        4,
+        "scenario {} should animate four rally slots",
+        scenario.name
+    );
+    assert_eq!(
+        payload.ground.size_x, scenario.loadout.mining_area.area.size_x as usize,
+        "scenario {} ground sizeX",
+        scenario.name
+    );
+    assert_eq!(
+        payload.ground.size_y, scenario.loadout.mining_area.area.size_y as usize,
+        "scenario {} ground sizeY",
+        scenario.name
+    );
+    assert!(
+        !payload.ore_types.is_empty() || scenario.loadout.mining_area.ore_supplies.is_empty(),
+        "scenario {} oreTypes",
+        scenario.name
+    );
+
+    let expects_depot = scenario
+        .loadout
+        .queue_entries
+        .iter()
+        .any(|entry| entry.robot.depot_capacity.iter().any(|&cap| cap > 0));
+    if expects_depot {
+        assert!(
+            payload
+                .robots
+                .robot
+                .iter()
+                .any(|robot| robot.depot_max_a.is_some()),
+            "scenario {} should include depotMax fields",
+            scenario.name
+        );
+        assert!(
+            payload.robots.robot.iter().any(|robot| robot
+                .locations
+                .iter()
+                .any(|location| location.depot_a.is_some())),
+            "scenario {} should include depot amount samples",
+            scenario.name
+        );
     }
 }
 
 #[test]
 fn rally_outcomes_match_golden_fixtures() {
     if update_golden_enabled(UPDATE_ENV_VAR) {
-        for name in SCENARIOS {
-            let scenario = support::scenario(name);
+        for id in RallyScenarioId::ALL {
+            let scenario = id.build();
             write_fixture(
                 MANIFEST_DIR,
                 FIXTURE_SUBDIR,
-                name,
+                id.as_str(),
                 &build_fixture(&scenario).fixture,
             );
         }
         return;
     }
 
-    for name in SCENARIOS {
-        let scenario = support::scenario(name);
-        let expected: GoldenRallyFixture = load_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, name);
+    for id in RallyScenarioId::ALL {
+        let scenario = id.build();
+        let expected: GoldenRallyFixture = load_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, id.as_str());
         let built = build_fixture(&scenario);
         let actual = built.fixture;
 
@@ -200,12 +224,6 @@ fn rally_outcomes_match_golden_fixtures() {
             expected.completed_participants,
             actual.completed_participants
         );
-
-        for marker in &expected.animation_contains {
-            assert!(
-                built.animation_data.contains(marker),
-                "scenario {name} animation data missing marker: {marker}"
-            );
-        }
+        assert_animation_payload(&scenario, &built.animation_data);
     }
 }

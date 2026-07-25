@@ -139,48 +139,37 @@ fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {
     body.push_str(r#"<h1 class="shop-page-title">Parts shop</h1>"#);
     body.push_str("</div>");
 
-    if state.ore_assets.is_empty() {
-        body.push_str(r#"<p class="shop-wallet-empty">No ore in wallet yet.</p>"#);
-    } else {
-        body.push_str(r#"<ul class="shop-wallet-list">"#);
-        for asset in &state.ore_assets {
-            let balance_class = if asset.amount >= asset.max_allowed {
-                "shop-wallet-full"
-            } else {
-                "shop-wallet-ok"
-            };
-            body.push_str(&format!(
-                r#"<li class="shop-wallet-item {balance_class}"><div class="shop-wallet-item-row"><span class="shop-wallet-ore">{}</span><span class="shop-wallet-amount">{}/{}</span></div>{}</li>"#,
-                escape_html(&asset.ore_name),
-                asset.amount,
-                asset.max_allowed,
-                render_mining_area_atlas_ore_link(
-                    asset.ore_id,
-                    &asset.ore_name,
-                    MiningAreaAtlasLinkTarget::StandalonePage,
-                    "shop-atlas-link",
-                ),
-            ));
-        }
-        body.push_str("</ul>");
-    }
+    let assets: Vec<_> = state
+        .ore_assets
+        .iter()
+        .map(|asset| crate::html::WalletOreLine {
+            ore_id: asset.ore_id,
+            ore_name: &asset.ore_name,
+            amount: asset.amount,
+            max_allowed: asset.max_allowed,
+        })
+        .collect();
+    crate::html::render_wallet_ore_list(
+        body,
+        "shop-wallet",
+        &assets,
+        "No ore in wallet yet.",
+        true,
+        |asset| {
+            render_mining_area_atlas_ore_link(
+                asset.ore_id,
+                asset.ore_name,
+                MiningAreaAtlasLinkTarget::StandalonePage,
+                "shop-atlas-link",
+            )
+        },
+    );
 
     body.push_str("</section>");
 }
 
 fn render_shop_message(body: &mut String, state: &ShopPageState) {
-    let Some(message) = &state.message else {
-        return;
-    };
-    let banner_class = if message.starts_with("Unable") {
-        "shop-banner shop-banner-error"
-    } else {
-        "shop-banner shop-banner-success"
-    };
-    body.push_str(&format!(
-        r#"<p class="{banner_class}">{}</p>"#,
-        escape_html(message)
-    ));
+    crate::html::render_status_banner(body, "shop", state.message.as_deref());
 }
 
 fn render_shop_filters(body: &mut String, state: &ShopPageState) {
