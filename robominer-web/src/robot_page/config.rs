@@ -1,88 +1,14 @@
+//! Robot config panel form body orchestration.
+
 use std::collections::HashMap;
 
 use crate::html::{escape_html, format_period, selected_attr};
 
+use super::config_parts::{RobotPartSelect, render_robot_part_select};
+use super::config_stats::{
+    add_robot_stat_entry, push_robot_highlight, render_robot_memory_progress, robot_memory_percent,
+};
 use super::robot_apply_block_reason;
-
-struct RobotPartSelect<'a> {
-    label: &'a str,
-    field_prefix: &'a str,
-    robot_id: i64,
-    type_id: i64,
-    current_part_id: i64,
-    current_part_name: &'a str,
-    part_asset_map: &'a HashMap<i64, Vec<&'a robominer_db::RobotConfigPartAssetStateRecord>>,
-    memory_control: bool,
-    disabled_attr: &'a str,
-    current_memory_capacity: Option<i32>,
-}
-
-fn render_robot_part_select(body: &mut String, select: RobotPartSelect<'_>) {
-    let RobotPartSelect {
-        label,
-        field_prefix,
-        robot_id,
-        type_id,
-        current_part_id,
-        current_part_name,
-        part_asset_map,
-        memory_control,
-        disabled_attr,
-        current_memory_capacity,
-    } = select;
-    let id_attr = if memory_control {
-        format!(r#" id="{field_prefix}{robot_id}""#)
-    } else {
-        String::new()
-    };
-    let current_capacity_attr = current_memory_capacity
-        .map(|capacity| format!(r#" data-memory-capacity="{capacity}""#))
-        .unwrap_or_default();
-    body.push_str(&format!(
-        r#"<label class="robot-field"><span class="robot-field-label">{}</span><select{id_attr} name="{}{}" class="tableitem robot-select"{disabled_attr}><option value="{}"{current_capacity_attr} selected="selected">{}</option>"#,
-        label,
-        field_prefix,
-        robot_id,
-        current_part_id,
-        escape_html(current_part_name)
-    ));
-    for asset in part_asset_map.get(&type_id).into_iter().flatten() {
-        if asset.unassigned > 0 && asset.robot_part_id != current_part_id {
-            let capacity_attr = if asset.memory_capacity > 0 {
-                format!(r#" data-memory-capacity="{}""#, asset.memory_capacity)
-            } else {
-                String::new()
-            };
-            body.push_str(&format!(
-                r#"<option value="{}"{capacity_attr}>{}</option>"#,
-                asset.robot_part_id,
-                escape_html(&asset.part_name)
-            ));
-        }
-    }
-    body.push_str("</select></label>");
-}
-
-pub(super) fn push_robot_highlight(body: &mut String, label: &str, value: i32, suffix: &str) {
-    if value > 0 {
-        body.push_str(&format!(
-            r#"<span class="robot-stat-highlight"><span class="robot-stat-highlight-label">{label}</span><span class="robot-stat-highlight-value">{value}{suffix}</span></span>"#,
-        ));
-    }
-}
-
-pub(super) fn add_robot_stat_entry(body: &mut String, label: &str, value: String) {
-    body.push_str(&format!(
-        r#"<div class="robot-stat"><dt>{label}</dt><dd>{value}</dd></div>"#,
-    ));
-}
-
-pub(super) fn robot_memory_percent(program_size: i32, memory_size: i32) -> f64 {
-    if memory_size <= 0 {
-        return 100.0;
-    }
-    ((program_size as f64 / memory_size as f64) * 100.0).clamp(0.0, 100.0)
-}
 
 pub(super) fn render_robot_config_panel(
     body: &mut String,
@@ -330,26 +256,6 @@ pub(super) fn render_robot_config_panel(
         robot,
         program_sources,
         disabled_attr,
-    ));
-    body.push_str("</div></div>");
-}
-
-pub(super) fn render_robot_memory_progress(
-    body: &mut String,
-    program_size: i32,
-    memory_size: i32,
-    percent: f64,
-    overflow: bool,
-) {
-    let overflow_class = if overflow { " robot-progress-over" } else { "" };
-    body.push_str(&format!(r#"<div class="robot-progress{overflow_class}">"#));
-    body.push_str(&format!(
-        r#"<div class="robot-progress-heading"><span>Memory used</span><span class="robot-progress-value">{}/{}</span></div>"#,
-        program_size, memory_size
-    ));
-    body.push_str(r#"<div class="robot-progress-track" aria-hidden="true">"#);
-    body.push_str(&format!(
-        r#"<div class="robot-progress-bar" style="width: {percent:.1}%"></div>"#
     ));
     body.push_str("</div></div>");
 }

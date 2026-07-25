@@ -101,6 +101,8 @@ async fn load_robot_page_state(
 }
 
 mod config;
+mod config_parts;
+mod config_stats;
 mod fleet;
 mod render;
 mod scripts;
