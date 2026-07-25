@@ -7,8 +7,10 @@ const vm = require('vm');
 const ANIMATION_DIR = path.join(__dirname, '..');
 const SCRIPT_FILES = [
     'payload.js',
-    'draw.js',
-    'debug.js',
+    'draw_ground.js',
+    'draw_robots.js',
+    'debug_status.js',
+    'debug_source.js',
     'timeline.js',
     'pose.js',
     'transport.js',

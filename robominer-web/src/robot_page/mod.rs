@@ -40,7 +40,7 @@ async fn load_robot_page_state(
     user_id: i64,
     request: &Request,
     requested_robot_id: Option<i64>,
-) -> Result<RobotPageState, robominer_domain::DomainError> {
+) -> Result<RobotPageState, crate::page_context::PageLoadError> {
     let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;

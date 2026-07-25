@@ -58,7 +58,7 @@ async fn load_achievements_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     achievement_id: Option<i64>,
-) -> Result<AchievementsPageState, robominer_domain::DomainError> {
+) -> Result<AchievementsPageState, crate::page_context::PageLoadError> {
     crate::page_context::claim_user_results(pool, user_id).await?;
 
     let claim_message = if let Some(achievement_id) = achievement_id {
@@ -104,7 +104,7 @@ async fn load_achievements_state(
 async fn load_achievements_overview(
     pool: &robominer_db::MySqlPool,
     username: String,
-) -> Result<AchievementsPageState, robominer_domain::DomainError> {
+) -> Result<AchievementsPageState, crate::page_context::PageLoadError> {
     let Some(target_user_id) = robominer_db::get_user_id_by_username(pool, &username).await? else {
         return Ok(AchievementsPageState {
             viewed_username: Some(username),

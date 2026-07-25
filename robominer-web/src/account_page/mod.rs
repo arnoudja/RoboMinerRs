@@ -102,7 +102,7 @@ async fn load_account_page_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     request: &Request,
-) -> Result<AccountPageState, robominer_domain::DomainError> {
+) -> Result<AccountPageState, crate::page_context::PageLoadError> {
     crate::page_context::claim_user_results(pool, user_id).await?;
 
     let Some(current_user) = robominer_db::get_user_by_id(pool, user_id).await? else {

@@ -76,7 +76,7 @@ async fn load_mining_results_state(
     user_id: i64,
     max_results: i64,
     preferred_run_id: Option<i64>,
-) -> Result<MiningResultsPageState, robominer_domain::DomainError> {
+) -> Result<MiningResultsPageState, crate::page_context::PageLoadError> {
     let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let results =

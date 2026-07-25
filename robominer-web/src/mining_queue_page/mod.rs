@@ -70,7 +70,7 @@ async fn load_mining_queue_page_state(
     user_id: i64,
     request: &Request,
     selected_queue_item_ids: Vec<i64>,
-) -> Result<MiningQueuePageState, robominer_domain::DomainError> {
+) -> Result<MiningQueuePageState, crate::page_context::PageLoadError> {
     let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut error_message = None;
@@ -169,7 +169,7 @@ async fn load_mining_queue_page_state(
 async fn load_mining_queue_display_items(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
-) -> Result<Vec<MiningQueueDisplayItem>, robominer_domain::DomainError> {
+) -> Result<Vec<MiningQueueDisplayItem>, crate::page_context::PageLoadError> {
     let items = robominer_db::list_mining_queue_page_items(pool, user_id).await?;
     let states = robominer_db::list_mining_queue_states_for_user(pool, user_id).await?;
     let state_map: HashMap<i64, robominer_db::MiningQueueStateRecord> = states

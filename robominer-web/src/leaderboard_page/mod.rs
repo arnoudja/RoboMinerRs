@@ -146,7 +146,7 @@ async fn load_leaderboard_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     query: LeaderboardQuery,
-) -> Result<LeaderboardPageState, robominer_domain::DomainError> {
+) -> Result<LeaderboardPageState, crate::page_context::PageLoadError> {
     let fetch_limit = query.limit + 1;
     let viewer_standing = if user_id > 0 {
         Some(robominer_db::load_leaderboard_viewer_standing(pool, user_id).await?)

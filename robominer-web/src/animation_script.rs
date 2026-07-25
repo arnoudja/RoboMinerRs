@@ -3,8 +3,10 @@
 use crate::static_assets::{script_src_tag, script_src_tags};
 
 const PAYLOAD_JS: &str = include_str!("../static/js/rally_animation/payload.js");
-const DRAW_JS: &str = include_str!("../static/js/rally_animation/draw.js");
-const DEBUG_JS: &str = include_str!("../static/js/rally_animation/debug.js");
+const DRAW_GROUND_JS: &str = include_str!("../static/js/rally_animation/draw_ground.js");
+const DRAW_ROBOTS_JS: &str = include_str!("../static/js/rally_animation/draw_robots.js");
+const DEBUG_STATUS_JS: &str = include_str!("../static/js/rally_animation/debug_status.js");
+const DEBUG_SOURCE_JS: &str = include_str!("../static/js/rally_animation/debug_source.js");
 const TIMELINE_JS: &str = include_str!("../static/js/rally_animation/timeline.js");
 const POSE_JS: &str = include_str!("../static/js/rally_animation/pose.js");
 const TRANSPORT_JS: &str = include_str!("../static/js/rally_animation/transport.js");
@@ -16,8 +18,10 @@ const BOOTSTRAP_JS: &str = include_str!("../static/js/rally_animation/bootstrap.
 pub fn rally_animation_script_tags() -> String {
     script_src_tags(&[
         ("js/rally_animation/payload.js", PAYLOAD_JS),
-        ("js/rally_animation/draw.js", DRAW_JS),
-        ("js/rally_animation/debug.js", DEBUG_JS),
+        ("js/rally_animation/draw_ground.js", DRAW_GROUND_JS),
+        ("js/rally_animation/draw_robots.js", DRAW_ROBOTS_JS),
+        ("js/rally_animation/debug_status.js", DEBUG_STATUS_JS),
+        ("js/rally_animation/debug_source.js", DEBUG_SOURCE_JS),
         ("js/rally_animation/timeline.js", TIMELINE_JS),
         ("js/rally_animation/pose.js", POSE_JS),
         ("js/rally_animation/transport.js", TRANSPORT_JS),
@@ -40,8 +44,10 @@ mod tests {
         let tags = rally_animation_script_tags();
         for path in [
             "js/rally_animation/payload.js",
-            "js/rally_animation/draw.js",
-            "js/rally_animation/debug.js",
+            "js/rally_animation/draw_ground.js",
+            "js/rally_animation/draw_robots.js",
+            "js/rally_animation/debug_status.js",
+            "js/rally_animation/debug_source.js",
             "js/rally_animation/timeline.js",
             "js/rally_animation/pose.js",
             "js/rally_animation/transport.js",
@@ -66,9 +72,11 @@ mod tests {
         assert!(TIMELINE_JS.contains("function rallyRebuildCpuTimeline("));
         assert!(POSE_JS.contains("function updateRobotPosition("));
         assert!(PAYLOAD_JS.contains("function applyRallyResultPayload("));
-        assert!(DRAW_JS.contains("function drawRobot("));
-        assert!(DEBUG_JS.contains("function updateRobotDebugPanel("));
-        assert!(DRAW_JS.contains("RALLY_VIEWER_HIGHLIGHT_PADDING"));
+        assert!(DRAW_ROBOTS_JS.contains("function drawRobot("));
+        assert!(DEBUG_STATUS_JS.contains("function updateRobotDebugPanel("));
+        assert!(DRAW_ROBOTS_JS.contains("RALLY_VIEWER_HIGHLIGHT_PADDING"));
+        assert!(DRAW_GROUND_JS.contains("function drawGroundAt("));
+        assert!(DEBUG_SOURCE_JS.contains("function updateRallySourceHighlight("));
         assert!(BOOTSTRAP_JS.contains("runanimation()"));
     }
 }

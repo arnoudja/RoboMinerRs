@@ -1,77 +1,11 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
-use crate::session::format_authenticated_cookie;
-use crate::{Request, ServerConfig};
 
-use super::render::{
+use super::super::render::{
     edit_code_line_count, render_edit_code_line_numbers, render_edit_code_page,
     render_edit_code_source_field,
 };
-use super::{
-    EditCodePageState, EditCodeProgramSource, default_edit_code_program_source, edit_code_page,
-    edit_code_save_block_reason, format_save_with_optional_apply_message,
-    program_source_write_rejection_message, selected_edit_code_source,
-};
-
-fn authenticated_request(path: &str) -> Request {
-    Request {
-        method: "GET".to_string(),
-        path: path.to_string(),
-        query: HashMap::new(),
-        form: HashMap::new(),
-        form_values: HashMap::new(),
-        headers: HashMap::from([(
-            "cookie".to_string(),
-            format_authenticated_cookie(42, "Player"),
-        )]),
-    }
-}
-
-fn sample_edit_code_state(
-    selected_program_source_id: i64,
-    selected_program_source: EditCodeProgramSource,
-    message: Option<String>,
-) -> EditCodePageState {
-    EditCodePageState {
-        selected_program_source_id,
-        selected_program_source,
-        program_sources: vec![robominer_db::ProgramSourceStateRecord {
-            source: robominer_db::ProgramSourceRecord {
-                id: 11,
-                user_id: 1,
-                source_name: "Source <One>".to_string(),
-                source_code: Some("move(1);\n// <mine>\nmine();".to_string()),
-                verified: false,
-                compiled_size: 12,
-                error_description: "Compile <error>".to_string(),
-            },
-            linked_robot_count: 0,
-        }],
-        message,
-        claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
-    }
-}
-
-#[tokio::test(flavor = "current_thread")]
-async fn edit_code_requires_database_configuration() {
-    let config = ServerConfig {
-        static_root: PathBuf::from("robominer-web/static"),
-        database_pool: None,
-        allow_signup: true,
-        trust_proxy: false,
-    };
-
-    let response = edit_code_page(&authenticated_request("/editCode"), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
-
-    assert_eq!(response.status, 503);
-    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
-}
+use super::super::{EditCodePageState, EditCodeProgramSource, edit_code_save_block_reason};
+use super::fixtures::sample_edit_code_state;
 
 #[test]
 fn edit_code_rendering_preserves_forms_and_escapes_fields() {
@@ -190,7 +124,7 @@ fn edit_code_default_program_is_rendered_when_no_source_is_selected() {
         None,
         &EditCodePageState {
             selected_program_source_id: -1,
-            selected_program_source: default_edit_code_program_source(),
+            selected_program_source: super::super::default_edit_code_program_source(),
             program_sources: Vec::new(),
             message: Some("Unable to save program: Save <warning>".to_string()),
             claimed_results: robominer_db::ClaimedUserResults {
@@ -298,48 +232,6 @@ fn edit_code_shows_disabled_delete_when_program_is_linked() {
 }
 
 #[test]
-fn edit_code_new_program_selection_does_not_fall_back_to_first_source() {
-    let sources = vec![robominer_db::ProgramSourceStateRecord {
-        source: robominer_db::ProgramSourceRecord {
-            id: 11,
-            user_id: 1,
-            source_name: "Existing".to_string(),
-            source_code: Some("move(1);".to_string()),
-            verified: true,
-            compiled_size: 4,
-            error_description: String::new(),
-        },
-        linked_robot_count: 0,
-    }];
-
-    assert_eq!(
-        selected_edit_code_source(&sources, None).map(|state| state.source.id),
-        Some(11)
-    );
-    assert_eq!(
-        selected_edit_code_source(&sources, Some(11)).map(|state| state.source.id),
-        Some(11)
-    );
-    assert!(
-        selected_edit_code_source(&sources, Some(-1)).is_none(),
-        "New program must render the default program, not the first existing source"
-    );
-}
-
-#[test]
-fn edit_code_save_block_reason_matches_server_rejections() {
-    assert_eq!(
-        edit_code_save_block_reason("", "mine();"),
-        Some("Program name may not be empty.")
-    );
-    assert_eq!(
-        edit_code_save_block_reason("Miner", "   "),
-        Some("Program source may not be empty.")
-    );
-    assert_eq!(edit_code_save_block_reason("Miner", "mine();"), None);
-}
-
-#[test]
 fn edit_code_omits_manual_update_linked_robots_controls() {
     let html = render_edit_code_page(
         "Player".to_string(),
@@ -391,7 +283,7 @@ fn edit_code_omits_manual_update_linked_robots_controls() {
 #[test]
 fn format_save_with_optional_apply_message_keeps_plain_save_when_nothing_applied() {
     assert_eq!(
-        format_save_with_optional_apply_message(
+        super::super::format_save_with_optional_apply_message(
             "Program saved.",
             &robominer_db::AppliedProgramSource {
                 applied_robots: 0,
@@ -401,7 +293,7 @@ fn format_save_with_optional_apply_message_keeps_plain_save_when_nothing_applied
         "Program saved."
     );
     assert_eq!(
-        format_save_with_optional_apply_message(
+        super::super::format_save_with_optional_apply_message(
             "Program saved.",
             &robominer_db::AppliedProgramSource {
                 applied_robots: 1,
@@ -411,7 +303,7 @@ fn format_save_with_optional_apply_message_keeps_plain_save_when_nothing_applied
         "Program saved. Updated 1 robot(s)."
     );
     assert_eq!(
-        format_save_with_optional_apply_message(
+        super::super::format_save_with_optional_apply_message(
             "Program saved.",
             &robominer_db::AppliedProgramSource {
                 applied_robots: 1,
@@ -438,23 +330,14 @@ fn edit_code_line_numbers_match_source_line_count() {
 }
 
 #[test]
-fn edit_code_rejection_messages_are_user_facing() {
+fn edit_code_save_block_reason_matches_server_rejections() {
     assert_eq!(
-        program_source_write_rejection_message(
-            robominer_db::ProgramSourceWriteRejection::SourceInUse
-        ),
-        "Unable to delete program source because it is used by a robot."
+        edit_code_save_block_reason("", "mine();"),
+        Some("Program name may not be empty.")
     );
     assert_eq!(
-        program_source_write_rejection_message(
-            robominer_db::ProgramSourceWriteRejection::EmptySourceName
-        ),
-        "Program name may not be empty."
+        edit_code_save_block_reason("Miner", "   "),
+        Some("Program source may not be empty.")
     );
-    assert_eq!(
-        program_source_write_rejection_message(
-            robominer_db::ProgramSourceWriteRejection::EmptySourceCode
-        ),
-        "Program source may not be empty."
-    );
+    assert_eq!(edit_code_save_block_reason("Miner", "mine();"), None);
 }

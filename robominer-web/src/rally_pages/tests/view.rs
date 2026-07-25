@@ -250,8 +250,10 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     // Viewer modules are linked as static assets (not inlined).
     for path in [
         "js/rally_animation/payload.js",
-        "js/rally_animation/draw.js",
-        "js/rally_animation/debug.js",
+        "js/rally_animation/draw_ground.js",
+        "js/rally_animation/draw_robots.js",
+        "js/rally_animation/debug_status.js",
+        "js/rally_animation/debug_source.js",
         "js/rally_animation/timeline.js",
         "js/rally_animation/pose.js",
         "js/rally_animation/transport.js",
@@ -310,7 +312,8 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
             r#"class="rally-view-source-text">scan();</code>"#,
             r#"class="rally-view-source-line" data-line="1""#,
             r#"class="rally-view-source-line" data-line="2""#,
-            "js/rally_animation/debug.js",
+            "js/rally_animation/debug_status.js",
+            "js/rally_animation/debug_source.js",
             "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.",
             r#"id="rallyEditCodeLink" class="rally-view-source-edit-link" data-edit-href="editCode?nextProgramSourceId=11" href="editCode?nextProgramSourceId=11">Edit code at highlighted line</a>"#,
             "Opens the robot's current linked program in the editor (may differ from this snapshot).",

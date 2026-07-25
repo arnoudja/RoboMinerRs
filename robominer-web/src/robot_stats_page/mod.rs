@@ -57,7 +57,7 @@ pub(super) async fn robot_stats_page(request: &Request, config: &ServerConfig) -
 async fn load_robot_stats_state(
     pool: &robominer_db::MySqlPool,
     robot_id: Option<i64>,
-) -> Result<RobotStatsPageState, robominer_domain::DomainError> {
+) -> Result<RobotStatsPageState, crate::page_context::PageLoadError> {
     let Some(robot_id) = robot_id else {
         return Ok(empty_not_found_state());
     };

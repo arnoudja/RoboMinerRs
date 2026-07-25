@@ -99,10 +99,10 @@ ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93 resources/scripts/run-coverage-with-db.sh
 
 ## Page-scoped CSS
 
-Styles live under `robominer-web/static/css/pages/`. Every page loads shared `layout.css` plus
-only the page file(s) it needs via `robominer_stylesheet_tags(&[PageStylesheet::…])` (see
-`static_assets.rs`). Pass that slice as the last argument to `html::layout`, or call the helper
-directly for auth/logoff shells.
+Styles live under `robominer-web/static/css/pages/`. Every page loads the shared layout partials
+(`layout_shell.css`, `layout_dialogs.css`, `layout_tables.css`) plus only the page file(s) it needs
+via `robominer_stylesheet_tags(&[PageStylesheet::…])` (see `static_assets.rs`). Pass that slice as
+the last argument to `html::layout`, or call the helper directly for auth/logoff shells.
 
 When adding a page: create `static/css/pages/<name>.css`, add a `PageStylesheet` variant, and
 link only that variant (do not reintroduce “load every CSS file” in layout).
@@ -154,7 +154,7 @@ follow this layout: handlers and state in `mod.rs`, HTML in `render.rs`, pure te
 | Help content | `robominer-web/static/help/*.html` | Guide bodies loaded with `include_str!`; rendering in `help_pages/render.rs` |
 | HTTP + DB integration | `robominer-web/tests/*.rs` | POST/GET through `route()` with real MySQL |
 | Engine CLI integration | `robominer-engine/tests/*_db_cli.rs` | Subprocess `robominer-engine` against MySQL |
-| DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_robots.rs`) |
+| DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_robots.rs`, `db_migrate.rs`, `claim_golden.rs`) |
 | Domain goldens | `robominer-domain/tests/*_golden.rs` | Deterministic simulation fixtures |
 | Rally animation JS | `robominer-web/static/js/rally_animation/tests/` | Headless Node tests of viewer payload/draw helpers |
 | Shared fixtures | `robominer-test-support/` | SQL setup reused by web and engine tests |
@@ -220,12 +220,13 @@ domain, sim, or program.**
 5. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
 6. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source`.
 7. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
+8. **Web page loads use `PageLoadError`, not `DomainError`.** HTML page loaders and claim-on-load helpers return `crate::page_context::PageLoadError` (SQL failures only). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
 
 ### Examples
 
 - **Rejection split:** `robominer_db::claim_achievement_step` returns `ClaimAchievementStepRejection`; web/engine use `robominer_domain::claim_achievement_step_rejection_message`.
 - **Sim pipeline:** engine `rally rallies` uses domain `load_next_rally_loadout` → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for persist stays in `robominer-db`.
-- **Anti-pattern:** Calling `robominer_db::create_program_source` from web/engine and skipping domain drops verify-and-mark. Embedding `"Unknown robot"`-style strings inside db mutation modules likewise breaks the split.
+- **Anti-pattern:** Calling `robominer_db::create_program_source` from web/engine and skipping domain drops verify-and-mark. Embedding `"Unknown robot"`-style strings inside db mutation modules likewise breaks the split. Returning `DomainError` from a page `list_*` loader (via `From<sqlx::Error>`) is the same anti-pattern—use `PageLoadError`.
 
 See also [User-facing rejection messages](#user-facing-rejection-messages) below and the layer table in [ACHIEVEMENTS.md](ACHIEVEMENTS.md).
 

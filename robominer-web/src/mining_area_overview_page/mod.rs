@@ -46,7 +46,7 @@ pub(super) async fn mining_area_overview_page(
 async fn load_mining_area_overview_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
-) -> Result<MiningAreaOverviewPageState, robominer_domain::DomainError> {
+) -> Result<MiningAreaOverviewPageState, crate::page_context::PageLoadError> {
     Ok(MiningAreaOverviewPageState {
         ores: robominer_db::list_mining_area_overview_ores_for_user(pool, user_id).await?,
         areas: robominer_db::list_mining_area_overview_areas_for_user(pool, user_id).await?,

@@ -1,13 +1,46 @@
 //! Shared auth / CSRF / DB pool prologue for authenticated HTML pages.
 
+use std::fmt;
+
 use robominer_db::{ClaimedUserResults, MySqlPool};
-use robominer_domain::DomainError;
 
 use crate::ServerConfig;
 use crate::app_shell;
 use crate::csrf;
 use crate::http::{Request, Response};
 use crate::request_helpers::{login_redirect, request_user_id, session_username};
+
+/// Database failure while loading an HTML page (or auth prologue that only does SQL).
+///
+/// Page read models and claim-on-load helpers should use this instead of
+/// [`robominer_domain::DomainError`], which is reserved for loadout/simulation
+/// and other domain rule failures.
+#[derive(Debug)]
+pub(crate) struct PageLoadError(sqlx::Error);
+
+impl From<sqlx::Error> for PageLoadError {
+    fn from(error: sqlx::Error) -> Self {
+        Self(error)
+    }
+}
+
+/// Map a domain façade failure that is only expected to be SQL-backed (e.g. program
+/// create/update) into a page-load error. Non-database domain variants are rare on
+/// this path and surface as a configuration-style SQL error for HTTP mapping.
+impl From<robominer_domain::DomainError> for PageLoadError {
+    fn from(error: robominer_domain::DomainError) -> Self {
+        match error {
+            robominer_domain::DomainError::Database(error) => Self(error),
+            other => Self(sqlx::Error::Configuration(other.to_string().into())),
+        }
+    }
+}
+
+impl fmt::Display for PageLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 /// Authenticated page session with a configured database pool.
 pub(crate) struct PageSession<'a> {
@@ -85,25 +118,11 @@ impl<'a> PageSession<'a> {
 pub(crate) async fn claim_user_results(
     pool: &MySqlPool,
     user_id: i64,
-) -> Result<ClaimedUserResults, DomainError> {
+) -> Result<ClaimedUserResults, PageLoadError> {
     Ok(robominer_db::claim_user_results(pool, user_id).await?)
 }
 
-/// Map a domain load failure to an HTTP response.
-pub(crate) fn page_load_error(page: &str, error: DomainError) -> Response {
-    let message = format!("Unable to load {page}: {error}");
-    match &error {
-        DomainError::ReferencedAiRobotMissing { .. }
-        | DomainError::ReferencedRobotPartMissing { .. }
-        | DomainError::ReferencedQueueRobotMissing { .. }
-        | DomainError::ReferencedPoolMiningAreaMissing { .. }
-        | DomainError::ReferencedPoolRobotMissing { .. } => Response::not_found(),
-        DomainError::InvalidRallyLoadout { .. }
-        | DomainError::InvalidPoolLoadout { .. }
-        | DomainError::InvalidMiningAreaSize { .. }
-        | DomainError::InvalidMiningAreaOreSupply { .. }
-        | DomainError::TooManyMiningAreaOreTypes { .. }
-        | DomainError::RobotIdOutOfRange(_) => Response::bad_request(message),
-        _ => Response::service_unavailable(message),
-    }
+/// Map a page-load database failure to an HTTP response.
+pub(crate) fn page_load_error(page: &str, error: PageLoadError) -> Response {
+    Response::service_unavailable(format!("Unable to load {page}: {error}"))
 }

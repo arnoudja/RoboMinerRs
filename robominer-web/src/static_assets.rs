@@ -66,7 +66,9 @@ pub(crate) fn page_scripts_with_panel_and_url_query(page_src: &str, page_js: &st
     ])
 }
 
-const LAYOUT_CSS: &str = include_str!("../static/css/pages/layout.css");
+const LAYOUT_SHELL_CSS: &str = include_str!("../static/css/pages/layout_shell.css");
+const LAYOUT_DIALOGS_CSS: &str = include_str!("../static/css/pages/layout_dialogs.css");
+const LAYOUT_TABLES_CSS: &str = include_str!("../static/css/pages/layout_tables.css");
 const AUTH_CSS: &str = include_str!("../static/css/pages/auth.css");
 const ACCOUNT_CSS: &str = include_str!("../static/css/pages/account.css");
 const MINING_QUEUE_CSS: &str = include_str!("../static/css/pages/mining_queue.css");
@@ -84,7 +86,7 @@ const ROBOT_STATS_CSS: &str = include_str!("../static/css/pages/robot_stats.css"
 
 /// Page-specific stylesheet beyond the shared layout shell.
 ///
-/// Always paired with `layout.css` via [`robominer_stylesheet_tags`].
+/// Always paired with the shared layout partials via [`robominer_stylesheet_tags`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PageStylesheet {
     Auth,
@@ -124,11 +126,25 @@ impl PageStylesheet {
     }
 }
 
-/// Stylesheet links for a page: always `layout.css`, then each requested page file
-/// (deduped, stable enum order). Each link is content-hashed independently.
+/// Stylesheet links for a page: always the shared layout partials (shell, dialogs,
+/// tables), then each requested page file (deduped, stable enum order). Each link is
+/// content-hashed independently.
 pub(crate) fn robominer_stylesheet_tags(pages: &[PageStylesheet]) -> String {
     let mut out = String::new();
-    out.push_str(&stylesheet_href_tag("css/pages/layout.css", LAYOUT_CSS));
+    out.push_str(&stylesheet_href_tag(
+        "css/pages/layout_shell.css",
+        LAYOUT_SHELL_CSS,
+    ));
+    out.push('\n');
+    out.push_str(&stylesheet_href_tag(
+        "css/pages/layout_dialogs.css",
+        LAYOUT_DIALOGS_CSS,
+    ));
+    out.push('\n');
+    out.push_str(&stylesheet_href_tag(
+        "css/pages/layout_tables.css",
+        LAYOUT_TABLES_CSS,
+    ));
     let mut emitted = [false; 14];
     for page in pages {
         let index = *page as usize;
@@ -163,7 +179,9 @@ mod tests {
         let css = "body{color:red}";
         let hash = content_hash_hex(css.as_bytes());
         assert_eq!(hash.len(), 32);
-        assert!(stylesheet_href_tag("css/pages/layout.css", css).contains(&format!("?v={hash}")));
+        assert!(
+            stylesheet_href_tag("css/pages/layout_shell.css", css).contains(&format!("?v={hash}"))
+        );
         assert!(script_src_tag("js/x.js", css).contains(&format!("?v={hash}")));
     }
 
@@ -171,9 +189,11 @@ mod tests {
     fn robominer_stylesheet_tags_always_include_layout_then_requested_pages() {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::Help]);
         let links: Vec<&str> = tags.lines().collect();
-        assert_eq!(links.len(), 2);
-        assert!(links[0].contains(r#"href="css/pages/layout.css?v="#));
-        assert!(links[1].contains(r#"href="css/pages/help.css?v="#));
+        assert_eq!(links.len(), 4);
+        assert!(links[0].contains(r#"href="css/pages/layout_shell.css?v="#));
+        assert!(links[1].contains(r#"href="css/pages/layout_dialogs.css?v="#));
+        assert!(links[2].contains(r#"href="css/pages/layout_tables.css?v="#));
+        assert!(links[3].contains(r#"href="css/pages/help.css?v="#));
         assert!(!tags.contains("css/pages/shop.css"));
     }
 
@@ -181,7 +201,7 @@ mod tests {
     fn robominer_stylesheet_tags_dedupe_repeated_pages() {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::Shop, PageStylesheet::Shop]);
         assert_eq!(tags.matches(r#"href="css/pages/shop.css?v="#).count(), 1);
-        assert_eq!(tags.lines().count(), 2);
+        assert_eq!(tags.lines().count(), 4);
     }
 
     #[test]

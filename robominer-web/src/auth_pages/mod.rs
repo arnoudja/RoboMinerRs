@@ -74,7 +74,7 @@ async fn process_login_request(
     request: &Request,
     allow_signup: bool,
     trust_proxy: bool,
-) -> Result<Response, robominer_domain::DomainError> {
+) -> Result<Response, crate::page_context::PageLoadError> {
     let return_to = return_to_from_request(request);
     let is_login_post = is_post(request)
         && (request.form.contains_key("loginName") || request.form.contains_key("password"));

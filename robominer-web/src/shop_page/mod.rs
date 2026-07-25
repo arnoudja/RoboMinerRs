@@ -68,7 +68,7 @@ async fn load_shop_state(
     selected_part_type_id: Option<i64>,
     selected_tier_id: Option<i64>,
     selected_part_id: Option<i64>,
-) -> Result<ShopPageState, robominer_domain::DomainError> {
+) -> Result<ShopPageState, crate::page_context::PageLoadError> {
     crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;

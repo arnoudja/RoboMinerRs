@@ -54,7 +54,7 @@ async fn load_activity_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     feed_query: ActivityFeedQuery,
-) -> Result<ActivityPageState, robominer_domain::DomainError> {
+) -> Result<ActivityPageState, crate::page_context::PageLoadError> {
     let feed_user_id = match feed_query.filter {
         ActivityRallyFilter::Mine if user_id > 0 => Some(user_id),
         ActivityRallyFilter::Mine => None,

@@ -47,7 +47,7 @@ async fn load_edit_code_page_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     request: &Request,
-) -> Result<EditCodePageState, robominer_domain::DomainError> {
+) -> Result<EditCodePageState, crate::page_context::PageLoadError> {
     let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
 
     let mut message = None;

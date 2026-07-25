@@ -68,7 +68,7 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
 
     let get_response = raw_http_exchange(
         &addr,
-        "GET /css/pages/layout.css HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        "GET /css/pages/layout_shell.css HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
     );
     assert!(
         get_response.starts_with("HTTP/1.1 200"),
@@ -122,8 +122,16 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         "expected 200 for /help, got:\n{help_response}"
     );
     assert!(
-        help_response.contains(r#"href="css/pages/layout.css?v="#),
-        "expected page-scoped layout stylesheet link, got:\n{help_response}"
+        help_response.contains(r#"href="css/pages/layout_shell.css?v="#),
+        "expected page-scoped layout shell stylesheet link, got:\n{help_response}"
+    );
+    assert!(
+        help_response.contains(r#"href="css/pages/layout_dialogs.css?v="#),
+        "expected page-scoped layout dialogs stylesheet link, got:\n{help_response}"
+    );
+    assert!(
+        help_response.contains(r#"href="css/pages/layout_tables.css?v="#),
+        "expected page-scoped layout tables stylesheet link, got:\n{help_response}"
     );
     assert!(
         help_response.contains(r#"href="css/pages/help.css?v="#),
@@ -131,8 +139,8 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
     );
     let help_stylesheet_count = help_response.matches(r#"<link rel="stylesheet""#).count();
     assert_eq!(
-        help_stylesheet_count, 2,
-        "expected layout+help stylesheet links only, got {help_stylesheet_count} in:\n{help_response}"
+        help_stylesheet_count, 4,
+        "expected layout partials+help stylesheet links only, got {help_stylesheet_count} in:\n{help_response}"
     );
     assert!(
         !help_response.contains(r#"href="css/pages/shop.css?v="#),

@@ -1,0 +1,88 @@
+/******************************************************
+ * Table layout
+ ******************************************************/
+
+table {
+    border-collapse: collapse;
+    border: 2px solid #aaa;
+    background: #ddd;
+    margin: 20px;
+    caption-side: top;
+    text-align: left;
+}
+
+td, th {
+    border: 1px solid #aaa;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 7px;
+    padding-right: 7px;
+}
+
+td.checkbox, td.button {
+    text-align: center;
+}
+
+td.sufficientbalance {
+    color: green;
+}
+
+td.insufficientbalance {
+    color: red;
+}
+
+td.valid {
+    color: green;
+}
+
+td.invalid {
+    color: red;
+}
+
+td.important {
+    font-weight: bold;
+}
+
+select.tableitem {
+    width: 100%;
+    color-scheme: dark;
+}
+
+select option,
+select optgroup {
+    background-color: var(--select-option-bg);
+    color: var(--select-option-text);
+}
+
+select option:disabled {
+    color: var(--shell-text-muted);
+}
+
+
+a.buttonlink {
+    border: 2px outset ButtonFace;
+    background: ButtonFace;
+    color: ButtonText;
+    display: inline-block;
+    padding: 1px 6px;
+    text-decoration: none;
+}
+
+
+
+/******************************************************
+ * User assets
+ ******************************************************/
+
+div.userassets {
+    clear: right;
+    float: right;
+    min-height: 70vh;
+}
+
+table.userassets {
+    clear: right;
+    float: right;
+}
+
+

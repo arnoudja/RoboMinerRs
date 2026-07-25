@@ -5,7 +5,7 @@ pub async fn load_rally_view_state(
     user_id: i64,
     rally_result_id: i64,
     require_user_result: bool,
-) -> Result<Option<RallyViewPageState>, robominer_domain::DomainError> {
+) -> Result<Option<RallyViewPageState>, crate::page_context::PageLoadError> {
     rally_view_state(
         pool,
         user_id,
@@ -20,7 +20,7 @@ pub async fn load_user_rally_view_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
     rally_result_id: i64,
-) -> Result<Option<RallyViewPageState>, robominer_domain::DomainError> {
+) -> Result<Option<RallyViewPageState>, crate::page_context::PageLoadError> {
     rally_view_state(pool, user_id, rally_result_id, true, true).await
 }
 
@@ -30,7 +30,7 @@ async fn rally_view_state(
     rally_result_id: i64,
     require_user_result: bool,
     require_claimed_viewer_result: bool,
-) -> Result<Option<RallyViewPageState>, robominer_domain::DomainError> {
+) -> Result<Option<RallyViewPageState>, crate::page_context::PageLoadError> {
     let Some(state) =
         robominer_db::rally_view_state(pool, user_id, rally_result_id, require_user_result).await?
     else {
