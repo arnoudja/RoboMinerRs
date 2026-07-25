@@ -295,7 +295,7 @@ impl ExecutableRunner {
                 Some(StepOutcome::Action(
                     self.pending_program_motion
                         .as_ref()
-                        .expect("reemit requires pending physical action")
+                        .expect("reemit requires pending_program_motion")
                         .action,
                 ))
             }

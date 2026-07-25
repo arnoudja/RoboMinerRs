@@ -40,7 +40,6 @@ function validPayload(overrides = {}) {
                             DA: 0,
                             DB: 0,
                             DC: 0,
-                            l: 1,
                             cpu: [{ l: 1, c: 1, e: 7 }],
                         },
                         {
@@ -51,13 +50,12 @@ function validPayload(overrides = {}) {
                             B: 0,
                             C: 0,
                             a: 6,
-                            l: 1,
                             cpu: [
                                 { l: 1, c: 1, e: 7 },
                                 { l: 1, c: 9, e: 16 },
                             ],
                         },
-                        { A: 0, DA: 4, a: 7, l: 1, cpu: [{ l: 1, c: 9, e: 16 }] },
+                        { A: 0, DA: 4, a: 7, l: 1 },
                     ],
                 },
             ],
@@ -274,6 +272,24 @@ describe('rally animation viewer', () => {
         assert.equal(context.robotLooksIdle({ a: 6 }), false);
     });
 
+    it('exposes core viewer entrypoints from assembled modules', () => {
+        const { context } = loadRallyViewer();
+        for (const name of [
+            'applyRallyResultPayload',
+            'runanimation',
+            'rallySeekToRatio',
+            'rallySeekByCycles',
+            'rallyWithPausedSeek',
+            'rallyRebuildCpuTimeline',
+            'updateRobotPosition',
+            'drawRobot',
+            'updateRobotDebugPanel',
+        ]) {
+            assert.equal(typeof context[name], 'function', name);
+        }
+        assert.ok(context.RALLY_VIEWER_HIGHLIGHT_PADDING);
+    });
+
     it('builds a CPU timeline and seeks by CPU vs mining cycle', () => {
         const { context } = loadRallyViewer();
         assert.equal(context.applyRallyResultPayload(validPayload()), null);
@@ -294,9 +310,8 @@ describe('rally animation viewer', () => {
 
         assert.equal(context.myRallyCpuTimeline.length, 4);
         // Playback clock is mining cycles; CPU steps are for paused scrubbing.
-        assert.equal(context.rallyTotalSteps(), 3);
-        assert.equal(context.rallyTotalCpuSteps(), 4);
         assert.equal(context.rallyTotalMiningCycles(), 3);
+        assert.equal(context.rallyTotalCpuSteps(), 4);
         assert.equal(context.rallyTotalTime(), 150);
         assert.equal(context.rallyCpuIndexAtTime(0), 0);
         assert.equal(context.rallyPoseTimeForRender(0, { miningCycle: 0 }), 0);

@@ -40,14 +40,6 @@ impl CpuAnimationStep {
             end_col: span.end_col,
         })
     }
-
-    pub fn line_only(line: u16) -> Self {
-        Self {
-            line,
-            start_col: 0,
-            end_col: 0,
-        }
-    }
 }
 
 /// Compact per-cycle status for stuck/idle diagnosis in the replay viewer.
@@ -62,8 +54,9 @@ pub enum RobotCycleStatus {
     Cpu,
     /// `move(0)` / `rotate(0)` (or epsilon-equivalent) mapped to Wait.
     Zero,
-    /// Non-zero motion requested but no chunk could be issued (e.g. zero speed).
-    Motion,
+    /// Non-zero motion requested but collapsed to Wait — no speed chunk could be issued
+    /// (e.g. zero engine speed). Wire status remains `"motion"` for replay compatibility.
+    NoChunk,
     /// Requested move ended at the start pose due to map bounds.
     Wall,
     /// Requested move ended at the start pose due to another robot.
@@ -79,7 +72,7 @@ impl RobotCycleStatus {
             Self::Scan => "scan",
             Self::Cpu => "cpu",
             Self::Zero => "zero",
-            Self::Motion => "motion",
+            Self::NoChunk => "motion",
             Self::Wall => "wall",
             Self::Robot => "robot",
             Self::Wait => "wait",
@@ -96,12 +89,12 @@ struct RobotAnimationStep {
     /// Optional action index for this cycle (`RobotAction::action_index`, or 0 for scan).
     /// Absent on the initial step and on legacy replays.
     action_index: Option<u8>,
-    /// Optional 1-based source line of the statement executing this cycle.
-    /// Absent on the initial step, scripted action lists, and legacy replays.
+    /// Optional 1-based source line when this cycle has no CPU micro-steps (sticky highlight).
+    /// Serialized as `l`; omitted when `cpu_steps` is non-empty.
     source_line: Option<u16>,
     /// Optional stuck/idle reason for this cycle.
     status: Option<RobotCycleStatus>,
-    /// Program CPU instructions executed during this mining cycle (replay debug).
+    /// Program CPU micro-steps for this cycle; serialized as `cpu` when non-empty.
     cpu_steps: Vec<CpuAnimationStep>,
 }
 
@@ -337,7 +330,6 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
         }
 
         location.action_index = step.action_index;
-        location.source_line = step.source_line;
 
         if !step.cpu_steps.is_empty() {
             location.cpu = Some(
@@ -357,6 +349,8 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
                     })
                     .collect(),
             );
+        } else {
+            location.source_line = step.source_line;
         }
 
         if let Some(status) = step.status {

@@ -8,6 +8,7 @@ const vm = require('vm');
 
 const JS_ROOT = path.join(__dirname, '..');
 const PAGE_SCRIPTS = [
+    'common/panel_state.js',
     'edit_code/page.js',
     'robot/page.js',
     'shop/page.js',

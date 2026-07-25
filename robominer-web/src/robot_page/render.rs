@@ -75,7 +75,7 @@ pub(super) fn render_robot_page(
         body.push_str("</form></div></div>");
     }
 
-    body.push_str(super::scripts::ROBOT_PAGE_SCRIPT);
+    body.push_str(&super::scripts::robot_page_script_tag());
     body.push_str("</div>");
 
     layout("RoboMiner - Robot", "robot", &username, hud, &body)

@@ -46,8 +46,8 @@ fn statements_sharing_a_line_get_distinct_column_spans() {
     // so `mine()` is 1..7 and `dumpA()` is 9..16.
     assert_eq!(statements[0].source_span, span(1, 1, 7));
     assert_eq!(statements[1].source_span, span(1, 9, 16));
-    assert_eq!(statements[0].source_line, 1);
-    assert_eq!(statements[1].source_line, 1);
+    assert_eq!(statements[0].source_line(), 1);
+    assert_eq!(statements[1].source_line(), 1);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn source_span_line_matches_statement_source_line() {
         .expect("while loop should compile");
 
     for statement in program.statements() {
-        assert_eq!(statement.source_span.line, statement.source_line);
+        assert_eq!(statement.source_span.line, statement.source_line());
     }
 }
 

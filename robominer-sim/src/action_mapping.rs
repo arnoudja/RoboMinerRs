@@ -20,7 +20,7 @@ pub(crate) fn status_for_wait_from_executable(action: ExecutableAction) -> Robot
             if is_zero_motion(amount) {
                 RobotCycleStatus::Zero
             } else {
-                RobotCycleStatus::Motion
+                RobotCycleStatus::NoChunk
             }
         }
         _ => RobotCycleStatus::Wait,
@@ -34,7 +34,7 @@ pub(crate) fn status_for_pending_wait(pending: &PendingSimMotionChunk) -> RobotC
             if is_zero_motion(remaining) {
                 RobotCycleStatus::Zero
             } else {
-                RobotCycleStatus::Motion
+                RobotCycleStatus::NoChunk
             }
         }
     }

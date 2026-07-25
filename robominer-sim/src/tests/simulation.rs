@@ -105,7 +105,10 @@ fn animation_data_uses_versioned_json_payload_shape() {
     );
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["A"], 4);
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["a"], 6);
-    assert_eq!(payload["robots"]["robot"][0]["locations"][1]["l"], 1);
+    assert_eq!(
+        animation_location_highlight_line(&payload["robots"]["robot"][0]["locations"][1]),
+        Some(1)
+    );
     assert_eq!(payload["ground"]["sizeX"], 4);
     assert_eq!(payload["ground"]["sizeY"], 4);
     assert_eq!(payload["ground"]["positions"][0]["x"], 0);
@@ -323,7 +326,7 @@ fn animation_data_records_battery_status_after_max_turns() {
 }
 
 #[test]
-fn animation_data_records_motion_status_when_speed_is_zero() {
+fn animation_data_records_no_chunk_status_when_speed_is_zero() {
     let program = seeded_program("move(1);");
     let mut spec = RobotSpec::test_robot();
     spec.forward_speed = 0.0;
@@ -339,7 +342,7 @@ fn animation_data_records_motion_status_when_speed_is_zero() {
 
     assert!(
         data.contains(r#""s":"motion""#),
-        "zero-speed move should emit stuck status motion: {data}"
+        "zero-speed move should emit NoChunk status (wire \"motion\"): {data}"
     );
 }
 
@@ -429,19 +432,40 @@ fn animation_data_records_source_line_for_program_actions() {
         vec![ScriptedRobot::from_executable_program(spec, &program)],
     );
     let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations");
 
     assert!(
-        data.contains(r#""l":1"#) || data.contains(r#""l":2"#),
-        "program animation should include source lines: {data}"
+        locations.iter().any(|location| {
+            animation_location_highlight_line(location).is_some_and(|line| line == 1 || line == 2)
+        }),
+        "program animation should include source highlights: {data}"
     );
     assert!(
-        data.contains(r#""a":6"#) && data.contains(r#""l":"#),
-        "mine cycles should include a source line: {data}"
+        locations.iter().any(|location| {
+            location.get("a").and_then(|value| value.as_u64()) == Some(6)
+                && animation_location_highlight_line(location).is_some()
+        }),
+        "mine cycles should include a source highlight: {data}"
     );
     assert!(
         data.contains(r#""cpu":"#),
         "program animation should include cpu micro-steps: {data}"
     );
+    for location in locations {
+        let has_l = location.get("l").is_some();
+        let has_cpu = location
+            .get("cpu")
+            .and_then(|value| value.as_array())
+            .is_some_and(|cpu| !cpu.is_empty());
+        assert!(
+            !(has_l && has_cpu),
+            "location must not duplicate sticky `l` and `cpu` highlights: {location}"
+        );
+    }
     assert!(
         !data.contains("src:"),
         "program source must not be embedded in shared animation data: {data}"
@@ -478,9 +502,11 @@ fn animation_data_attributes_while_recheck_to_while_line() {
 
     for location in locations {
         let action = location.get("a").and_then(|v| v.as_u64());
-        let line = location.get("l").and_then(|v| v.as_u64());
-        if action == Some(6) && line == Some(3) {
+        let line = animation_location_highlight_line(location);
+        if animation_location_cpu_lines(location).contains(&3) {
             saw_mine_on_body_line = true;
+        }
+        if action == Some(6) {
             saw_mine = true;
         }
         if saw_mine && action == Some(2) && line == Some(1) {

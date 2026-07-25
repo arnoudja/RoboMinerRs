@@ -87,9 +87,7 @@ pub fn render_rally_view_page(
     render_rally_view_header(&mut body, back_link);
     render_rally_view_context(&mut body, state);
     if replay_available {
-        body.push_str("<script>");
-        body.push_str(animation_script::RALLY_ANIMATION_SCRIPT);
-        body.push_str("</script>");
+        body.push_str(&animation_script::rally_animation_script_tags());
     }
     render_rally_view_deck(&mut body, state, replay_available, payload_kind);
     render_rally_view_quick_links(&mut body, state);

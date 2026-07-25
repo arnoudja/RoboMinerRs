@@ -127,7 +127,7 @@ pub(super) fn render_shop_page(
     body.push_str("</div></aside></div>");
 
     render_shop_inventory(&mut body, state, &part_state_map);
-    body.push_str(super::scripts::SHOP_PAGE_SCRIPT);
+    body.push_str(&super::scripts::shop_page_script_tag());
     body.push_str("</div>");
 
     layout("RoboMiner - Shop", "shop", &username, hud, &body)

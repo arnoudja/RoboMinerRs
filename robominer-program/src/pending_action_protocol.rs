@@ -34,9 +34,10 @@
 //!      └─ `start_pending_program_motion`: `awaits_action_result = true`, `pending_program_motion` set
 //!      └─ statement index NOT advanced yet for chunked actions
 //!
-//! 3. Simulation::start_sim_motion_chunk
-//!      └─ pending_sim_motion_chunks[i] = Move { remaining: total, accumulated: 0 }
-//!      └─ first RobotAction chunk executed; walls/collisions applied
+//! 3. `run_program_cpu_loop` → `map_awaiting_executable`
+//!      └─ `pending_sim_motion_chunks[i] = Move { remaining: total, accumulated: 0 }`
+//!      └─ first `RobotAction` chunk via `PendingSimMotionChunk::next_robot_action`;
+//!        walls/collisions applied
 //!
 //! 4. Simulation::record_action_result
 //!      └─ partial chunk: action_results[i] = None, sim pending kept
@@ -155,7 +156,7 @@
 //! |---|---|---|
 //! | `None` | `move(0)`, `AwaitScanResult`, statement side effects | No |
 //! | `Scalar` | expression `mine()` / `dump(n)` | Yes (one cycle) |
-//! | `Motion` | chunked `move` / `rotate` | Yes (via pending physical + sim chunks) |
+//! | `Motion` | chunked `move` / `rotate` | Yes (via `pending_program_motion` + `PendingSimMotionChunk`) |
 //! | `ScanStart` | `scan()` | Result written in the CPU loop, not via Wait |
 //!
 //! **Invariant:** never set `awaits_action_result` / `action_result_expected` for a
@@ -207,5 +208,5 @@
 //! - Motion chunking: [`motion`]
 //! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`, `complete_scan_now`,
 //!   `build_execution_context`
-//! - Sim pending move/rotate: `pending_sim_motion_chunks`, `record_action_result`,
-//!   `should_preserve_program_action_result`, `next_robot_action`
+//! - Sim pending move/rotate: `map_awaiting_executable`, `pending_sim_motion_chunks`,
+//!   `record_action_result`, `should_preserve_program_action_result`, `next_robot_action`

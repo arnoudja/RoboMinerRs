@@ -134,31 +134,8 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
     ));
     assert!(html.contains("Compiled size"));
     assert!(html.contains(">12<"));
-    assert!(html.contains("function syncLineNumbersForTextarea(textarea)"));
-    assert!(html.contains("function attachLineNumberListeners(textarea)"));
-    assert!(html.contains("function handleEditCodeTabKey(event, textarea)"));
-    assert!(html.contains("var EDIT_CODE_INDENT = '    ';"));
-    assert!(html.contains("function selectProgramSource(sourceId, updateUrl)"));
-    assert!(html.contains("function isPanelDirty(panel)"));
-    assert!(html.contains("function editCodeUrlParam(name)"));
-    assert!(html.contains("function focusSourceLine(panel, lineNumber)"));
-    assert!(html.contains("function editCodeUrlLine()"));
-    assert!(html.contains("function editCodeSaveBlockReason(panel)"));
-    assert!(html.contains("function updateEditCodeSaveState(panel)"));
-    assert!(html.contains("function updateEditCodeSummary(sourceId)"));
-    assert!(html.contains("function syncEditCodeFormState(panel)"));
-    assert!(html.contains("addEventListener('beforeunload'"));
-    assert!(html.contains("form.action = 'editCode?nextProgramSourceId='"));
-    assert!(html.contains("function confirmEditCodeSave(event)"));
-    assert!(!html.contains("function confirmEditCodeApply(event)"));
-    assert!(html.contains("function confirmEditCodeDelete(event)"));
-    assert!(!html.contains("function updateEditCodeApplyState(panel)"));
-    assert!(html.contains(
-        "if (form.getAttribute('data-robominer-confirmed') === '1') {\n            form.removeAttribute('data-robominer-confirmed');\n            return;\n        }\n        var nameInput = panel.querySelector('input[name=\"sourceName\"]');"
-    ));
-    assert!(html.contains(
-        "if (form.getAttribute('data-robominer-confirmed') === '1') {\n            form.removeAttribute('data-robominer-confirmed');\n            return;\n        }\n        event.preventDefault();\n        var panel = event.target.closest('.edit-code-panel');"
-    ));
+    assert!(html.contains(r#"src="js/common/panel_state.js?v="#));
+    assert!(html.contains(r#"src="js/edit_code/page.js?v="#));
     assert!(html.contains(r#"class="edit-code-quick-link" href="robot""#));
     assert!(html.contains(r#"class="edit-code-quick-link" href="helpRobotProgram""#));
     assert!(html.contains(r#"class="edit-code-quick-link" href="helpProgramTips""#));

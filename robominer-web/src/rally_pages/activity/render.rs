@@ -3,7 +3,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::super::{ACTIVITY_RALLY_MAX_LIMIT, ACTIVITY_SIDEBAR_QUEUE_PREVIEW};
 use crate::help_pages;
-use crate::html::{escape_html, format_relative_time_millis, format_utc_millis, layout};
+use crate::html::{
+    AreaFilterOption, escape_html, format_relative_time_millis, format_utc_millis, layout,
+    render_area_filter_select,
+};
 use crate::rally_pages::{ActivityFeedQuery, ActivityPageState, ActivityRallyFilter};
 
 pub fn render_activity_page(
@@ -97,32 +100,24 @@ fn render_activity_area_filter(
         return;
     }
 
-    body.push_str(r#"<label class="activity-area-filter" for="activityAreaFilter">Area "#);
-    body.push_str(
-        r#"<select id="activityAreaFilter" class="tableitem activity-area-filter-select" aria-label="Filter rallies by area" onchange="window.location = this.value;">"#,
+    let mut options = vec![AreaFilterOption {
+        href: feed_query.area_href(None),
+        label: "All areas",
+        selected: feed_query.area_id.is_none(),
+    }];
+    options.extend(rally_areas.iter().map(|area| AreaFilterOption {
+        href: feed_query.area_href(Some(area.mining_area_id)),
+        label: &area.area_name,
+        selected: feed_query.area_id == Some(area.mining_area_id),
+    }));
+    render_area_filter_select(
+        body,
+        "activity-area-filter",
+        "activityAreaFilter",
+        "tableitem activity-area-filter-select",
+        "Filter rallies by area",
+        &options,
     );
-    body.push_str(&format!(
-        r#"<option value="{}"{}>All areas</option>"#,
-        escape_html(&feed_query.area_href(None)),
-        if feed_query.area_id.is_none() {
-            " selected"
-        } else {
-            ""
-        },
-    ));
-    for area in rally_areas {
-        body.push_str(&format!(
-            r#"<option value="{}"{}>{}</option>"#,
-            escape_html(&feed_query.area_href(Some(area.mining_area_id))),
-            if feed_query.area_id == Some(area.mining_area_id) {
-                " selected"
-            } else {
-                ""
-            },
-            escape_html(&area.area_name),
-        ));
-    }
-    body.push_str("</select></label>");
 }
 
 fn render_activity_feed_stats(

@@ -123,7 +123,7 @@ pub(super) fn render_mining_results_page(
             );
         }
         body.push_str("</div></div></div>");
-        body.push_str(super::scripts::MINING_RESULTS_PAGE_SCRIPT);
+        body.push_str(&super::scripts::mining_results_page_script_tag());
     }
 
     body.push_str("</div>");

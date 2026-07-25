@@ -103,7 +103,7 @@ impl ExecutableRunner {
         if frame.index >= frame.statements.len() {
             return None;
         }
-        Some(frame.statements[frame.index].source_line)
+        Some(frame.statements[frame.index].source_line())
     }
 
     /// Source range of the construct currently executing, if any.
@@ -216,7 +216,7 @@ impl ExecutableRunner {
         };
 
         let statement = frame.statements[frame.index].clone();
-        self.active_source_line = Some(statement.source_line);
+        self.active_source_line = Some(statement.source_line());
         self.active_source_span = Some(statement.source_span);
 
         match statement.kind {

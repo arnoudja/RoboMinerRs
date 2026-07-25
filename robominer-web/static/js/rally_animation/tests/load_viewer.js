@@ -5,7 +5,14 @@ const path = require('path');
 const vm = require('vm');
 
 const ANIMATION_DIR = path.join(__dirname, '..');
-const SCRIPT_FILES = ['payload.js', 'draw.js', 'debug.js', 'player.js'];
+const SCRIPT_FILES = [
+    'payload.js',
+    'draw.js',
+    'debug.js',
+    'timeline.js',
+    'pose.js',
+    'player.js',
+];
 
 function createRecordingContext2d() {
     const ops = [];

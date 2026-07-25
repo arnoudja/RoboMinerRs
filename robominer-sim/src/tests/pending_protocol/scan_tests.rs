@@ -213,7 +213,7 @@ fn scan_bridge_stand_on_ore_move_ore_distance_reaches_mine() {
                 .program_runner(0)
                 .unwrap()
                 .has_pending_program_motion(),
-            "move(oreDistance()) with distance 0 must not leave pending physical state"
+            "move(oreDistance()) with distance 0 must not leave pending_program_motion state"
         );
         simulation.advance_test_turn();
     }
@@ -231,7 +231,7 @@ fn scan_bridge_stand_on_ore_move_ore_distance_reaches_mine() {
             .program_runner(0)
             .unwrap()
             .has_pending_program_motion(),
-        "runner should clear pending physical after zero-distance move"
+        "runner should clear pending_program_motion after zero-distance move"
     );
 }
 

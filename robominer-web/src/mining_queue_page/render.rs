@@ -143,7 +143,7 @@ pub(super) fn render_mining_queue_page(
     }
 
     body.push_str("</table></div></div>");
-    body.push_str(super::scripts::MINING_QUEUE_PAGE_SCRIPT);
+    body.push_str(&super::scripts::mining_queue_page_script_tag());
     body.push_str("</div>");
 
     layout(

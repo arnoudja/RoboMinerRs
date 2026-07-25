@@ -40,7 +40,7 @@ impl ExecutableProgram {
     pub fn entry_source_line(&self) -> Option<u16> {
         self.statements
             .first()
-            .map(|statement| statement.source_line)
+            .map(|statement| statement.source_line())
     }
 }
 
@@ -118,8 +118,6 @@ impl SourceSpan {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutableStatement {
-    /// Always mirrors [`Self::source_span`]`.line`.
-    pub source_line: u16,
     pub source_span: SourceSpan,
     pub kind: ExecutableStatementKind,
 }
@@ -152,11 +150,11 @@ pub enum ExecutableStatementKind {
 
 impl ExecutableStatement {
     pub fn at(source_span: SourceSpan, kind: ExecutableStatementKind) -> Self {
-        Self {
-            source_line: source_span.line,
-            source_span,
-            kind,
-        }
+        Self { source_span, kind }
+    }
+
+    pub fn source_line(&self) -> u16 {
+        self.source_span.line
     }
 
     pub fn requires_runtime(&self) -> bool {

@@ -1,7 +1,7 @@
 /**
  * Load a versioned rally animation payload into the viewer globals.
  * Payload shape (v1/v2): { v, robots, ground, oreTypes }.
- * v2 locations may include `cpu:[{l,c?,e?},…]` per mining cycle.
+ * Per-cycle highlights: prefer `cpu:[{l,c?,e?},…]` when present; otherwise fall back to `l`.
  * Legacy executable `var myRobots = …` rows are rejected by the page and never injected.
  * Returns null on success; an error string leaves globals unchanged for a graceful unavailable UI.
  */

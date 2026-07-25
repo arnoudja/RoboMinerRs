@@ -41,3 +41,25 @@ pub(super) fn seed_ai_2() -> robominer_program::ExecutableProgram {
 pub(super) fn seed_ai_3() -> robominer_program::ExecutableProgram {
     seeded_program(robominer_program::compatibility_fixture_source("seed_ai_3"))
 }
+
+/// Preferred highlight line for a serialized animation location (cpu spans, else sticky `l`).
+pub(super) fn animation_location_highlight_line(location: &serde_json::Value) -> Option<u64> {
+    if let Some(cpu) = location.get("cpu").and_then(|value| value.as_array()) {
+        if let Some(last) = cpu.last() {
+            return last.get("l").and_then(|value| value.as_u64());
+        }
+    }
+    location.get("l").and_then(|value| value.as_u64())
+}
+
+pub(super) fn animation_location_cpu_lines(location: &serde_json::Value) -> Vec<u64> {
+    location
+        .get("cpu")
+        .and_then(|value| value.as_array())
+        .map(|cpu| {
+            cpu.iter()
+                .filter_map(|entry| entry.get("l").and_then(|value| value.as_u64()))
+                .collect()
+        })
+        .unwrap_or_default()
+}

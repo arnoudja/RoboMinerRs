@@ -1,3 +1,5 @@
+mod area_filter;
+mod auth_fields;
 mod banners;
 mod csrf;
 mod format;
@@ -9,6 +11,8 @@ mod wallet;
 #[cfg(test)]
 mod tests;
 
+pub(crate) use area_filter::{AreaFilterOption, render_area_filter_select};
+pub(crate) use auth_fields::{render_password_field, render_password_toggle_script};
 pub(crate) use banners::{render_claimed_ore_rewards_banner, render_status_banner};
 pub(crate) use csrf::inject_csrf_tokens;
 pub(crate) use format::{

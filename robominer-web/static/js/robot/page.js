@@ -1,55 +1,27 @@
 (function() {
     var allowPageUnload = false;
+    var panelState = window.RoboMinerPanelState;
+    var PANEL_SKIP_NAMES = ['robotId'];
+
+    function setPanelEnabled(panel, enabled) {
+        panelState.setPanelEnabled(panel, enabled);
+    }
+
+    function isPanelDirty(panel) {
+        return panelState.isPanelDirty(panel, PANEL_SKIP_NAMES);
+    }
+
+    function capturePanelBaseline(panel) {
+        panelState.capturePanelBaseline(panel, PANEL_SKIP_NAMES);
+    }
+
+    function restorePanelBaseline(panel) {
+        panelState.restorePanelBaseline(panel, PANEL_SKIP_NAMES);
+    }
 
     function syncRobotUrl(robotId) {
         if (window.history && window.history.replaceState) {
             window.history.replaceState(null, '', 'robot?robotId=' + encodeURIComponent(robotId));
-        }
-    }
-
-    function setPanelEnabled(panel, enabled) {
-        var fields = panel.querySelectorAll('input, select, button');
-        for (var index = 0; index < fields.length; index += 1) {
-            fields[index].disabled = !enabled;
-        }
-    }
-
-    function panelFormSnapshot(panel) {
-        var snapshot = {};
-        var fields = panel.querySelectorAll('input[name], select[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
-            if (field.name && field.name !== 'robotId') {
-                snapshot[field.name] = field.value;
-            }
-        }
-        return JSON.stringify(snapshot);
-    }
-
-    function isPanelDirty(panel) {
-        var baseline = panel.getAttribute('data-form-baseline');
-        if (!baseline) {
-            return false;
-        }
-        return panelFormSnapshot(panel) !== baseline;
-    }
-
-    function capturePanelBaseline(panel) {
-        panel.setAttribute('data-form-baseline', panelFormSnapshot(panel));
-    }
-
-    function restorePanelBaseline(panel) {
-        var baseline = panel.getAttribute('data-form-baseline');
-        if (!baseline) {
-            return;
-        }
-        var snapshot = JSON.parse(baseline);
-        var fields = panel.querySelectorAll('input[name], select[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
-            if (field.name && field.name !== 'robotId' && Object.prototype.hasOwnProperty.call(snapshot, field.name)) {
-                field.value = snapshot[field.name];
-            }
         }
     }
 

@@ -1,5 +1,26 @@
 (function() {
     var allowPageUnload = false;
+    var panelState = window.RoboMinerPanelState;
+
+    function setPanelEnabled(panel, enabled) {
+        panelState.setPanelEnabled(panel, enabled);
+    }
+
+    function isPanelDirty(panel) {
+        return panelState.isPanelDirty(panel);
+    }
+
+    function capturePanelBaseline(panel) {
+        panelState.capturePanelBaseline(panel);
+    }
+
+    function restorePanelBaseline(panel) {
+        panelState.restorePanelBaseline(panel);
+        var sourceInput = panel.querySelector('textarea[name="sourceCode"]');
+        if (sourceInput) {
+            syncLineNumbersForTextarea(sourceInput);
+        }
+    }
 
     function syncEditCodeUrl(sourceId) {
         if (!(window.history && window.history.replaceState)) {
@@ -59,56 +80,6 @@
         }
         textarea.scrollTop = Math.max(0, paddingTop + (targetLine - 1) * lineHeight - textarea.clientHeight / 3);
         syncLineNumbersForTextarea(textarea);
-    }
-
-    function setPanelEnabled(panel, enabled) {
-        var fields = panel.querySelectorAll('input, select, textarea, button');
-        for (var index = 0; index < fields.length; index += 1) {
-            fields[index].disabled = !enabled;
-        }
-    }
-
-    function panelFormSnapshot(panel) {
-        var snapshot = {};
-        var fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
-            if (field.name) {
-                snapshot[field.name] = field.value;
-            }
-        }
-        return JSON.stringify(snapshot);
-    }
-
-    function isPanelDirty(panel) {
-        var baseline = panel.getAttribute('data-form-baseline');
-        if (!baseline) {
-            return false;
-        }
-        return panelFormSnapshot(panel) !== baseline;
-    }
-
-    function capturePanelBaseline(panel) {
-        panel.setAttribute('data-form-baseline', panelFormSnapshot(panel));
-    }
-
-    function restorePanelBaseline(panel) {
-        var baseline = panel.getAttribute('data-form-baseline');
-        if (!baseline) {
-            return;
-        }
-        var snapshot = JSON.parse(baseline);
-        var fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
-            if (field.name && Object.prototype.hasOwnProperty.call(snapshot, field.name)) {
-                field.value = snapshot[field.name];
-            }
-        }
-        var sourceInput = panel.querySelector('textarea[name="sourceCode"]');
-        if (sourceInput) {
-            syncLineNumbersForTextarea(sourceInput);
-        }
     }
 
     function sourceCodeLineCount(value) {

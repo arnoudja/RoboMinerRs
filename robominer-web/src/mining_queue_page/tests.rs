@@ -162,16 +162,8 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
     assert!(!html.contains("slots used"));
     assert!(!html.contains("runs per robot"));
     assert!(html.contains("Fill queue adds runs until this robot's slots are full."));
-    assert!(html.contains("function removeQueuedRun(button)"));
-    assert!(html.contains("function submitQueuedRunRemoval(form, queueItemId)"));
-    assert!(html.contains("function areaNameOverflows(area)"));
-    assert!(html.contains("function syncQueuedStatusVisibility(row)"));
-    assert!(html.contains("mining-queue-status-compact-hidden"));
-    assert!(html.contains("function observeQueuedStatusVisibility()"));
-    assert!(html.contains("window.miningQueueRemoveRun = removeQueuedRun"));
-    assert!(html.contains("typeof window.robominerConfirm === 'function'"));
-    assert!(html.contains("try {"));
-    assert!(html.contains("restoreAreaSelectionsFromStorage();"));
+    assert!(html.contains(r#"src="js/mining_queue/page.js?v="#));
+    assert!(!html.contains("function removeQueuedRun(button)"));
     assert!(!html.contains(r#"name="submitType" value="remove">Remove selected</button>"#));
     assert!(!html.contains(r#"name="selectedQueueItemId" value="101" checked"#));
     assert!(html.contains(
@@ -190,15 +182,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
         r#"class="mining-queue-area-panel"><tr><td>Tax rate:</td><td colspan="3">5%</td></tr>"#
     ));
     assert!(!html.contains(r#"<button type="submit">Show details</button>"#));
-    assert!(html.contains("function collectQueueQueryParams()"));
-    assert!(html.contains("function showMiningAreaDetails(areaId)"));
-    assert!(html.contains("function syncInspectorArea(areaId)"));
-    assert!(html.contains("inspectorSelect.addEventListener('change'"));
     assert!(html.contains(r#"class="mining-queue-page" data-area-storage-key="#));
-    assert!(html.contains("function readStoredAreaSelections()"));
-    assert!(html.contains("function restoreAreaSelectionsFromStorage()"));
-    assert!(html.contains("function writeStoredAreaSelections()"));
-    assert!(html.contains("window.sessionStorage.setItem(STORAGE_KEY"));
     assert!(html.contains(r#"class="mining-queue-wallet""#));
     assert!(html.contains(r#"class="mining-queue-card""#));
     assert!(html.contains(
@@ -215,19 +199,6 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
     assert!(html.contains(r#"class="claim-banner-reward-amount">+9</span>"#));
     assert!(html.contains("Ore &amp; Two"));
     assert!(html.contains(r#"data-seconds-left="180""#));
-    assert!(html.contains("function formatTimeLeft(seconds)"));
-    assert!(html.contains("function refreshQueue()"));
-    assert!(html.contains("function startTimer(cell)"));
-    assert!(html.contains("encodeURIComponent(select.name)"));
-    assert!(html.contains(
-            r#"document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]')"#
-        ));
-    assert!(html.contains("if (seconds <= 0)"));
-    assert!(
-        html.contains(
-            r#"window.location.replace(query ? 'miningQueue?' + query : 'miningQueue');"#
-        )
-    );
     assert!(html.contains(">1:00<"));
     assert!(html.contains(">3:00<"));
     assert!(html.contains(r#"class="sufficientbalance">(40)"#));
@@ -373,7 +344,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
     ));
     assert!(html.contains(r#"<option value="21">Affordable</option>"#));
     assert!(!html.contains(r#"value="21" data-block-reason="#));
-    assert!(html.contains("function updateRobotEnqueueState(select)"));
+    assert!(html.contains(r#"src="js/mining_queue/page.js?v="#));
     assert!(html.contains(r#"class="mining-queue-action-hint">Need 10 more Iron.</p>"#));
 }
 

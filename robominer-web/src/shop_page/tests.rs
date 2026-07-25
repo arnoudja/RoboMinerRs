@@ -114,10 +114,7 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
 
     assert!(!html.contains(r#"<script src="js/shop.js"></script>"#));
     assert!(html.contains(r#"class="shop-page" data-filter-storage-key="#));
-    assert!(html.contains("function readStoredShopFilters()"));
-    assert!(html.contains("function restoreShopFiltersFromStorage()"));
-    assert!(html.contains("function writeStoredShopFilters()"));
-    assert!(html.contains("window.sessionStorage.setItem(STORAGE_KEY"));
+    assert!(html.contains(r#"src="js/shop/page.js?v="#));
     assert!(html.contains(r#"class="shop-wallet""#));
     assert!(html.contains(r#"class="shop-deck""#));
     assert!(html.contains(r#"class="shop-detail""#));
@@ -151,19 +148,10 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
     assert!(
         html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="1""#)
     );
-    assert!(html.contains("function confirmShopSell(event)"));
-    assert!(html.contains("robominerConfirm('Sell 1 unassigned '"));
-    assert!(html.contains("robominerConfirm(sellAllMessage"));
-    assert!(html.contains(
-        "if (form.getAttribute('data-robominer-confirmed') === '1') {\n            form.removeAttribute('data-robominer-confirmed');\n            return;\n        }\n        event.preventDefault();"
-    ));
+    assert!(html.contains(r#"src="js/shop/page.js?v="#));
+    assert!(!html.contains("function confirmShopSell(event)"));
     assert!(html.contains(r#"class="shop-part-owned-badge">Owned: 2</span>"#));
     assert!(!html.contains(r#"<button type="submit">Show items</button>"#));
-    assert!(html.contains("function applyShopFilters()"));
-    assert!(html.contains("function selectShopPart(partId, updateUrl)"));
-    assert!(html.contains("function collectShopQueryParams()"));
-    assert!(html.contains("function syncShopFormState()"));
-    assert!(html.contains("function shopUrlPartId()"));
     assert!(html.contains(r#"data-can-buy="1""#));
     assert!(html.contains(">2 minutes<"));
     assert!(html.contains(r#"class="sufficientbalance">(40)"#));

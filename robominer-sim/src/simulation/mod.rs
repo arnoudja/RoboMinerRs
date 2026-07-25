@@ -204,27 +204,21 @@ impl Simulation {
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
-                    cycle_cpu_steps[index] = if cpu_steps.is_empty() {
-                        // Pending motion / scripted waits: keep a sticky highlight marker.
-                        cycle_source_lines[index]
-                            .map(|line| vec![CpuAnimationStep::line_only(line)])
-                            .unwrap_or_default()
-                    } else {
-                        cpu_steps
-                    };
+                    cycle_cpu_steps[index] = cpu_steps;
+                    if !cycle_cpu_steps[index].is_empty() {
+                        // Prefer `cpu` spans; omit redundant sticky `l` for this cycle.
+                        cycle_source_lines[index] = None;
+                    }
                     *pending_result = self.process_robot_action(index, action);
                 } else {
                     self.action_results[index] = None;
                     self.action_result_expected[index] = false;
                     self.pending_sim_motion_chunks[index] = None;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
-                    // Keep the last statement highlight after the battery expires.
+                    // Keep the last statement highlight after the battery expires (`l` only).
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
-                    cycle_cpu_steps[index] = cycle_source_lines[index]
-                        .map(|line| vec![CpuAnimationStep::line_only(line)])
-                        .unwrap_or_default();
                 }
             }
 
@@ -261,9 +255,6 @@ impl Simulation {
         } else {
             for (index, line) in cycle_source_lines.iter_mut().enumerate() {
                 *line = self.program_entry_source_line(index);
-                cycle_cpu_steps[index] = line
-                    .map(|source_line| vec![CpuAnimationStep::line_only(source_line)])
-                    .unwrap_or_default();
             }
         }
 

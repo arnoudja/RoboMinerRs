@@ -80,7 +80,7 @@ pub(super) fn render_edit_code_page(
     );
     body.push_str("</div></div></div>");
 
-    body.push_str(super::scripts::EDIT_CODE_PAGE_SCRIPT);
+    body.push_str(&super::scripts::edit_code_page_script_tag());
     body.push_str("</div>");
 
     layout("RoboMiner - Edit code", "editCode", &username, hud, &body)

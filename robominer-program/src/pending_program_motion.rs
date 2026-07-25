@@ -41,7 +41,7 @@ impl PendingProgramMotion {
     pub(crate) fn start(action: ExecutableAction, completion: ProgramMotionCompletion) -> Self {
         debug_assert!(
             Self::is_chunked(action),
-            "pending physical requires chunked move/rotate, got {action:?}"
+            "pending_program_motion requires chunked move/rotate, got {action:?}"
         );
         Self { action, completion }
     }
@@ -58,7 +58,7 @@ impl PendingProgramMotion {
             return ContinueProgramMotion::Reemit;
         };
 
-        let completed = pending.take().expect("pending physical action");
+        let completed = pending.take().expect("pending_program_motion");
         match completed.completion {
             ProgramMotionCompletion::Statement => {
                 let _ = value;

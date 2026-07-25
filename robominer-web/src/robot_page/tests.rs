@@ -148,14 +148,12 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
         r#"class="robot-btn robot-btn-secondary robot-reset-btn" hidden>Reset changes</button>"#
     ));
     assert!(html.contains("Apply queues part and program changes for this robot."));
-    assert!(html.contains("function isPanelDirty(panel)"));
-    assert!(html.contains("Discard unsaved changes to "));
+    assert!(html.contains(r#"src="js/common/panel_state.js?v="#));
+    assert!(html.contains(r#"src="js/robot/page.js?v="#));
     assert!(html.contains(r#"href="miningQueue?robotId=7""#));
     assert!(html.contains(r#"data-compiled-size="12""#));
     assert!(html.contains(r#"data-memory-capacity="20""#));
     assert!(html.contains("Memory &amp; Spare"));
-    assert!(html.contains("function updateRobotApplyState(panel)"));
-    assert!(html.contains("function updateRobotMemoryPreview(panel)"));
     assert!(html.contains(
         r#"<form id="robotForm" action="robot" method="post" class="robot-config-form">"#
     ));
@@ -174,15 +172,6 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
     assert!(html.contains(r#"class="robot-btn robot-btn-primary">Apply changes</button>"#));
     assert!(html.contains(">2 minutes<"));
     assert!(html.contains(r#"class="robot-banner robot-banner-error">Unable to apply robot changes: Invalid &lt;robot&gt;</p>"#));
-    assert!(html.contains("function selectRobot(robotId, updateUrl)"));
-    assert!(html.contains("function confirmRobotApply(event)"));
-    assert!(html.contains("document.querySelector('.robot-config-panel-active')"));
-    assert!(html.contains("allowPageUnload = true"));
-    assert!(html.contains("robominerConfirm('Apply configuration changes to '"));
-    assert!(html.contains(
-        "if (robotForm.getAttribute('data-robominer-confirmed') === '1') {\n            robotForm.removeAttribute('data-robominer-confirmed');\n            return;\n        }\n        event.preventDefault();"
-    ));
-    assert!(html.contains("robominerConfirm('Discard unsaved changes to '"));
 }
 
 #[test]

@@ -76,6 +76,14 @@ pub struct AnimationRobot {
 }
 
 /// One mining-cycle sample. Unchanged fields may be omitted (delta compression).
+///
+/// Source highlighting uses two optional channels; emit at most one per location:
+/// - **`cpu`**: preferred when present with entries — ordered micro-steps `{l,c?,e?}` for
+///   token-level replay scrubbing.
+/// - **`l` (`source_line`)**: legacy/fallback — a single 1-based line when there are no CPU
+///   micro-steps (sticky highlights during pending motion, scan waits, battery expiry, etc.).
+///
+/// Viewers should prefer `cpu` when non-empty and fall back to `l`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct AnimationLocation {
     #[serde(skip_serializing_if = "Option::is_none", default)]

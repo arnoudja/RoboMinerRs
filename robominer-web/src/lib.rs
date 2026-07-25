@@ -31,6 +31,7 @@ mod session;
 mod settings;
 mod shop_page;
 pub mod startup;
+mod static_assets;
 
 pub use server::serve;
 pub use settings::{WebSettings, web_settings};

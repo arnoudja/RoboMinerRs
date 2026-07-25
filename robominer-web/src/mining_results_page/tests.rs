@@ -178,8 +178,8 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
     );
     assert!(html.contains(r#"data-sort-reward="27""#));
     assert!(html.contains(r#"data-rally-result-id="99""#));
-    assert!(html.contains("function applyMiningResultsSort()"));
-    assert!(html.contains("function syncReplayReturnLinks()"));
+    assert!(html.contains(r#"src="js/mining_results/page.js?v="#));
+    assert!(!html.contains("function applyMiningResultsSort()"));
     assert!(html.contains(r#"data-robot-id="1" data-area-name="Area &amp; One""#));
     assert!(html.contains(r#"class="mining-results-atlas-helper""#));
     assert!(
@@ -210,9 +210,6 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
     assert!(html.contains("16.7%"));
     assert!(html.contains("1970-01-01 00:00:00 UTC"));
     assert!(html.contains("1970-01-01 00:00:01 UTC"));
-    assert!(html.contains("function selectMiningResultRun(runId, updateUrl)"));
-    assert!(html.contains("function applyMiningResultsFilters(preferredRunId)"));
-    assert!(html.contains("encodeURIComponent('runId')"));
     assert!(!html.contains(r#"<details class="mining-results-run-card""#));
 }
 

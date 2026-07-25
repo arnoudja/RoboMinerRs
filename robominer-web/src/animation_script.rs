@@ -1,69 +1,59 @@
-/// Rally replay viewer script, assembled from focused modules under
-/// `static/js/rally_animation/`. Served as one inline `<script>` block.
-pub const RALLY_ANIMATION_SCRIPT: &str = concat!(
-    include_str!("../static/js/rally_animation/payload.js"),
-    "\n",
-    include_str!("../static/js/rally_animation/draw.js"),
-    "\n",
-    include_str!("../static/js/rally_animation/debug.js"),
-    "\n",
-    include_str!("../static/js/rally_animation/player.js"),
-);
+//! Rally replay viewer scripts under `static/js/rally_animation/`, linked as static files.
+
+use crate::static_assets::script_src_tags;
+
+const PAYLOAD_JS: &str = include_str!("../static/js/rally_animation/payload.js");
+const DRAW_JS: &str = include_str!("../static/js/rally_animation/draw.js");
+const DEBUG_JS: &str = include_str!("../static/js/rally_animation/debug.js");
+const TIMELINE_JS: &str = include_str!("../static/js/rally_animation/timeline.js");
+const POSE_JS: &str = include_str!("../static/js/rally_animation/pose.js");
+const PLAYER_JS: &str = include_str!("../static/js/rally_animation/player.js");
+
+/// Ordered `<script src>` tags for the rally animation viewer.
+pub fn rally_animation_script_tags() -> String {
+    script_src_tags(&[
+        ("js/rally_animation/payload.js", PAYLOAD_JS),
+        ("js/rally_animation/draw.js", DRAW_JS),
+        ("js/rally_animation/debug.js", DEBUG_JS),
+        ("js/rally_animation/timeline.js", TIMELINE_JS),
+        ("js/rally_animation/pose.js", POSE_JS),
+        ("js/rally_animation/player.js", PLAYER_JS),
+    ])
+}
 
 #[cfg(test)]
 mod tests {
-    use super::RALLY_ANIMATION_SCRIPT;
+    use super::*;
 
     #[test]
-    fn rally_animation_script_exposes_core_viewer_functions() {
-        for symbol in [
-            "function applyRallyResultPayload(",
-            "function validateRallyResultPayload(",
-            "function showRallyReplayUnavailable(",
-            "function runanimation(",
-            "function rallySetSpeed(",
-            "function rallySeekToRatio(",
-            "function rallySeekByCycles(",
-            "function rallyTogglePlayPause(",
-            "function rallyBindKeyboardControls(",
-            "function redrawRallyScene(",
-            "function expandAllRobotLocationDeltas(",
-            "function findGroundChangeIndex(",
-            "function updateRobotTo(",
-            "function drawRobot(",
-            "function drawRobotDepot(",
-            "function drawSideBySideDepotBar(",
-            "function drawDepotHomes(",
-            "function drawDepotHome(",
-            "function robotColorRgba(",
-            "function robotColor(",
-            "function updateRobotDebugPanel(",
-            "function robotCargoFull(",
-            "function robotHasDepot(",
-            "function robotTurnsRemaining(",
-            "function rallyActionName(",
-            "function updateRallySourceHighlight(",
-            "function updateRallyEditCodeLink(",
-            "function scrollRallySourceLineIntoView(",
+    fn rally_animation_script_tags_link_all_modules() {
+        let tags = rally_animation_script_tags();
+        for path in [
+            "js/rally_animation/payload.js",
+            "js/rally_animation/draw.js",
+            "js/rally_animation/debug.js",
+            "js/rally_animation/timeline.js",
+            "js/rally_animation/pose.js",
+            "js/rally_animation/player.js",
         ] {
             assert!(
-                RALLY_ANIMATION_SCRIPT.contains(symbol),
-                "expected rally animation script to define {symbol}"
+                tags.contains(path),
+                "expected rally script tags to include {path}"
             );
         }
+        assert!(tags.contains("?v="));
     }
 
     #[test]
-    fn rally_animation_script_declares_viewer_highlight_constants() {
-        assert!(RALLY_ANIMATION_SCRIPT.contains("RALLY_VIEWER_HIGHLIGHT_PADDING"));
-        assert!(RALLY_ANIMATION_SCRIPT.contains("RALLY_VIEWER_HIGHLIGHT_LINE_WIDTH"));
-    }
-
-    #[test]
-    fn rally_animation_script_is_assembled_from_modules() {
-        assert!(RALLY_ANIMATION_SCRIPT.contains("validateRallyResultPayload"));
-        assert!(RALLY_ANIMATION_SCRIPT.contains("drawFullGroundAt"));
-        assert!(RALLY_ANIMATION_SCRIPT.contains("updateRobotDebugPanel"));
-        assert!(RALLY_ANIMATION_SCRIPT.contains("rallyBindTransportControls"));
+    fn rally_animation_modules_define_core_entrypoints() {
+        assert!(PLAYER_JS.contains("function runanimation("));
+        assert!(PLAYER_JS.contains("function rallySeekToRatio("));
+        assert!(PLAYER_JS.contains("function rallyWithPausedSeek("));
+        assert!(TIMELINE_JS.contains("function rallyRebuildCpuTimeline("));
+        assert!(POSE_JS.contains("function updateRobotPosition("));
+        assert!(PAYLOAD_JS.contains("function applyRallyResultPayload("));
+        assert!(DRAW_JS.contains("function drawRobot("));
+        assert!(DEBUG_JS.contains("function updateRobotDebugPanel("));
+        assert!(DRAW_JS.contains("RALLY_VIEWER_HIGHLIGHT_PADDING"));
     }
 }

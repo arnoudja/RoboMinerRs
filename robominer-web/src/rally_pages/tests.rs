@@ -614,25 +614,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(!html.contains(r#"id="robotDepot0""#));
     assert!(html.contains(r#"id="robotAction0""#));
     assert!(html.contains(r#"id="rallyPlayer0""#));
-    assert!(html.contains("function updateRobotDebugPanel(robot, step, cpuEntry)"));
-    assert!(html.contains("function drawRobotDepot(robot)"));
-    assert!(html.contains("function drawSideBySideDepotBar("));
-    assert!(html.contains("function drawDepotHomes(scale, step)"));
-    assert!(html.contains("function robotCargoFull(robot)"));
-    assert!(html.contains("function robotHasDepot(robot)"));
-    assert!(!html.contains("function robotDepotMaxTotal(robot)"));
-    assert!(html.contains("function robotTurnsRemaining(robot, step)"));
     assert!(html.contains("rally-view-player-battery-fill"));
-    assert!(html.contains("rally-view-player-depleted"));
-    assert!(html.contains("var RALLY_ACTION_NAMES = {"));
-    assert!(html.contains("function rallyStatusLabel(status)"));
-    assert!(html.contains("function robotLooksBlocked(robot)"));
-    assert!(html.contains("return robot.a === 1;"));
-    assert!(html.contains("case 'zero':"));
-    assert!(html.contains("case 'wall':"));
-    assert!(html.contains("Blocked by wall"));
-    assert!(html.contains("Zero-distance move"));
-    assert!(html.contains("rally-view-player-blocked"));
     assert!(html.contains(r#"id="progressCanvas""#));
     assert!(html.contains(r#"id="rallyPlayPause""#));
     assert!(html.contains(r#"aria-keyshortcuts="Space""#));
@@ -645,30 +627,26 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("← → one CPU cycle (when paused)"));
     assert!(html.contains("Shift+← → next area cycle"));
     assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
-    assert!(html.contains("function rallyPlay()"));
-    assert!(html.contains("function rallySeekToRatio(ratio)"));
-    assert!(html.contains("function rallySeekByCycles(deltaCycles)"));
-    assert!(html.contains("function rallyBindKeyboardControls()"));
-    assert!(html.contains("ArrowLeft"));
-    assert!(html.contains("function redrawRallyScene()"));
-    assert!(html.contains("function expandAllRobotLocationDeltas()"));
-    assert!(html.contains("function findGroundChangeIndex(position, step)"));
-    assert!(html.contains("var best = -1;"));
-    assert!(html.contains("if (j < 0)"));
-    assert!(html.contains("function robotDrawRadiusPixels(robot, scale)"));
-    assert!(
-        html.contains("myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY)")
-    );
+    // Viewer modules are linked as static assets (not inlined).
+    for path in [
+        "js/rally_animation/payload.js",
+        "js/rally_animation/draw.js",
+        "js/rally_animation/debug.js",
+        "js/rally_animation/timeline.js",
+        "js/rally_animation/pose.js",
+        "js/rally_animation/player.js",
+    ] {
+        assert!(html.contains(path), "expected script src for {path}");
+    }
+    assert!(!html.contains("function rallyPlay()"));
+    assert!(!html.contains("function updateRobotDebugPanel("));
     assert!(html.contains("var myRallyViewerSlot = null;"));
     assert!(html.contains("var myRallyContext = myRallyCanvas.getContext('2d');"));
-    assert!(html.contains("function runanimation()"));
+    assert!(html.contains("runanimation();"));
     assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
     assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
     assert!(html.contains(r#""v":1"#));
-    assert!(html.contains("payload.v !== 1 && payload.v !== 2"));
     assert!(html.contains("applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));"));
-    assert!(html.contains("function showRallyReplayUnavailable(detail)"));
-    assert!(html.contains("function validateRallyResultPayload(payload)"));
     assert!(html.contains("showRallyReplayUnavailable(rallyPayloadError);"));
     assert!(html.contains(
         "document.getElementById('oreLegendAName').textContent = getOreName(myOreTypes.A.id);"
@@ -726,9 +704,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"class="rally-view-source-text">scan();</code>"#));
     assert!(html.contains(r#"class="rally-view-source-line" data-line="1""#));
     assert!(html.contains(r#"class="rally-view-source-line" data-line="2""#));
-    assert!(html.contains("function updateRallySourceHighlight(highlight)"));
-    assert!(html.contains("function updateRallyEditCodeLink(line)"));
-    assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
+    assert!(html.contains("js/rally_animation/debug.js"));
     assert!(html.contains(
         "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally."
     ));

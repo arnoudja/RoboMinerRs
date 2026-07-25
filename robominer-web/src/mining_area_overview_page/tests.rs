@@ -137,6 +137,5 @@ fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_percentage
     assert!(html.contains(">12.3%<"));
     assert!(html.contains(">7.9%<"));
     assert!(html.contains(">0.0%<"));
-    assert!(html.contains("function applyMiningAreaAtlasControls()"));
     assert!(html.contains("Percentages reflect historic rally yields"));
 }

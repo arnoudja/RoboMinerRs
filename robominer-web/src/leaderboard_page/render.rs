@@ -4,7 +4,7 @@ use super::render_robots::render_leaderboard_top_robots_section;
 use super::render_sidebar::render_leaderboard_sidebar;
 use super::{LeaderboardPageState, LeaderboardQuery, LeaderboardTab};
 use crate::help_pages;
-use crate::html::{escape_html, layout};
+use crate::html::{AreaFilterOption, escape_html, layout, render_area_filter_select};
 
 pub(super) fn render_leaderboard_page(
     username: String,
@@ -150,25 +150,20 @@ pub(super) fn render_leaderboard_area_filter(
     query: LeaderboardQuery,
     ranked_areas: &[&robominer_db::LeaderboardMiningAreaRecord],
 ) {
-    if ranked_areas.is_empty() {
-        return;
-    }
-
-    body.push_str(r#"<label class="leaderboard-area-filter" for="leaderboardAreaFilter">Area "#);
-    body.push_str(
-        r#"<select id="leaderboardAreaFilter" class="tableitem leaderboard-area-filter-select" aria-label="Choose mining area leaderboard" onchange="window.location = this.value;">"#,
+    let options: Vec<AreaFilterOption<'_>> = ranked_areas
+        .iter()
+        .map(|area| AreaFilterOption {
+            href: query.area_href(Some(area.id)),
+            label: &area.area_name,
+            selected: query.area_id == Some(area.id),
+        })
+        .collect();
+    render_area_filter_select(
+        body,
+        "leaderboard-area-filter",
+        "leaderboardAreaFilter",
+        "tableitem leaderboard-area-filter-select",
+        "Choose mining area leaderboard",
+        &options,
     );
-    for area in ranked_areas {
-        body.push_str(&format!(
-            r#"<option value="{}"{}>{}</option>"#,
-            escape_html(&query.area_href(Some(area.id))),
-            if query.area_id == Some(area.id) {
-                " selected"
-            } else {
-                ""
-            },
-            escape_html(&area.area_name),
-        ));
-    }
-    body.push_str("</select></label>");
 }
