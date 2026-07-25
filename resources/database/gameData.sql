@@ -1487,13 +1487,13 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (9,             1,    1502,         550.0);
 
-insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
-                     values (9,             2,    10,                7,     350);
+insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
+                     values (9,             2,    10,                7,     350,          10);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             2,    7,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
-                     values (9,             3,    10,                7,     500,          10);
+                     values (9,             3,    10,                7,     500,          100);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             3,    7,     3500);
 
@@ -1517,7 +1517,7 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             6,    1602,         700.0);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
-                     values (9,             7,    10,                7,     2500,         100);
+                     values (9,             7,    10,                7,     2500,         200);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (9,             7,    1601,         800.0),
                                                   (9,             7,    1602,         750.0);
@@ -1575,13 +1575,13 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (10,            1,    1602,         880.0);
 
-insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
-                     values (10,            2,    10,                8,     450);
+insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
+                     values (10,            2,    10,                8,     450,          10);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            2,    8,     1400);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
-                     values (10,            3,    10,                8,     600,          10);
+                     values (10,            3,    10,                8,     600,          100);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            3,    8,     5000);
 
@@ -1605,7 +1605,7 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            6,    1702,         700.0);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
-                     values (10,            7,    10,                8,     2500,         100);
+                     values (10,            7,    10,                8,     2500,         200);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (10,            7,    1701,         800.0),
                                                   (10,            7,    1702,         750.0);
