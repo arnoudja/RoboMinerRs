@@ -1,7 +1,7 @@
 use crate::compile::compile_executable_source;
 use crate::types::{
-    CompileError, ExecutableAction, ExecutableExpression, ExecutableProgram, ExecutableStatement,
-    ExecutableStatementKind,
+    CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind,
+    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, SourceSpan,
 };
 use crate::unparse::unparse_program;
 
@@ -295,20 +295,20 @@ fn count_numbers_in_statement(statement: &ExecutableStatement) -> usize {
 }
 
 fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
-    match expression {
-        ExecutableExpression::Number(_) => 1,
-        ExecutableExpression::UnaryNot(inner)
-        | ExecutableExpression::Ore(inner)
-        | ExecutableExpression::Move(inner)
-        | ExecutableExpression::Rotate(inner)
-        | ExecutableExpression::Dump(inner) => count_numbers_in_expression(inner),
-        ExecutableExpression::Binary { left, right, .. } => {
+    match &expression.kind {
+        ExecutableExpressionKind::Number(_) => 1,
+        ExecutableExpressionKind::UnaryNot(inner)
+        | ExecutableExpressionKind::Ore(inner)
+        | ExecutableExpressionKind::Move(inner)
+        | ExecutableExpressionKind::Rotate(inner)
+        | ExecutableExpressionKind::Dump(inner) => count_numbers_in_expression(inner),
+        ExecutableExpressionKind::Binary { left, right, .. } => {
             count_numbers_in_expression(left) + count_numbers_in_expression(right)
         }
-        ExecutableExpression::Scan(Some(inner)) => count_numbers_in_expression(inner),
-        ExecutableExpression::Action(ExecutableAction::Move(_))
-        | ExecutableExpression::Action(ExecutableAction::Rotate(_))
-        | ExecutableExpression::Action(ExecutableAction::StartScan(_)) => 1,
+        ExecutableExpressionKind::Scan(Some(inner)) => count_numbers_in_expression(inner),
+        ExecutableExpressionKind::Action(ExecutableAction::Move(_))
+        | ExecutableExpressionKind::Action(ExecutableAction::Rotate(_))
+        | ExecutableExpressionKind::Action(ExecutableAction::StartScan(_)) => 1,
         _ => 0,
     }
 }
@@ -400,8 +400,8 @@ fn apply_number_jitter_in_expression(
     target: usize,
     rng: &mut impl RngLike,
 ) -> bool {
-    match expression {
-        ExecutableExpression::Number(value) => {
+    match &mut expression.kind {
+        ExecutableExpressionKind::Number(value) => {
             if *counter == target {
                 *value = jitter_number(*value, rng);
                 true
@@ -410,23 +410,23 @@ fn apply_number_jitter_in_expression(
                 false
             }
         }
-        ExecutableExpression::UnaryNot(inner)
-        | ExecutableExpression::Ore(inner)
-        | ExecutableExpression::Move(inner)
-        | ExecutableExpression::Rotate(inner)
-        | ExecutableExpression::Dump(inner) => {
+        ExecutableExpressionKind::UnaryNot(inner)
+        | ExecutableExpressionKind::Ore(inner)
+        | ExecutableExpressionKind::Move(inner)
+        | ExecutableExpressionKind::Rotate(inner)
+        | ExecutableExpressionKind::Dump(inner) => {
             apply_number_jitter_in_expression(inner, counter, target, rng)
         }
-        ExecutableExpression::Binary { left, right, .. } => {
+        ExecutableExpressionKind::Binary { left, right, .. } => {
             apply_number_jitter_in_expression(left, counter, target, rng)
                 || apply_number_jitter_in_expression(right, counter, target, rng)
         }
-        ExecutableExpression::Scan(Some(inner)) => {
+        ExecutableExpressionKind::Scan(Some(inner)) => {
             apply_number_jitter_in_expression(inner, counter, target, rng)
         }
-        ExecutableExpression::Action(ExecutableAction::Move(v))
-        | ExecutableExpression::Action(ExecutableAction::Rotate(v))
-        | ExecutableExpression::Action(ExecutableAction::StartScan(v)) => {
+        ExecutableExpressionKind::Action(ExecutableAction::Move(v))
+        | ExecutableExpressionKind::Action(ExecutableAction::Rotate(v))
+        | ExecutableExpressionKind::Action(ExecutableAction::StartScan(v)) => {
             if *counter == target {
                 *v = jitter_number(*v, rng);
                 true
@@ -456,15 +456,17 @@ fn random_leaf_statement(rng: &mut impl RngLike) -> ExecutableStatement {
         2 => ExecutableStatementKind::Action(ExecutableAction::Rotate(90.0)),
         _ => ExecutableStatementKind::Action(ExecutableAction::Dump(0)),
     };
-    ExecutableStatement::at(1, kind)
+    ExecutableStatement::at(SourceSpan::line_only(1), kind)
 }
 
 fn wrap_in_while_mine(statement: &mut ExecutableStatement) {
     let body = statement.clone();
     *statement = ExecutableStatement::at(
-        statement.source_line,
+        statement.source_span,
         ExecutableStatementKind::While {
-            condition: ExecutableExpression::Action(ExecutableAction::Mine),
+            condition: ExecutableExpression::unspanned(ExecutableExpressionKind::Action(
+                ExecutableAction::Mine,
+            )),
             body: Some(Box::new(body)),
             is_do_while: false,
         },

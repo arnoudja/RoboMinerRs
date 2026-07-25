@@ -1,12 +1,13 @@
 /**
  * Load a versioned rally animation payload into the viewer globals.
- * Payload shape (v1): { v, robots, ground, oreTypes }.
+ * Payload shape (v1/v2): { v, robots, ground, oreTypes }.
+ * v2 locations may include `cpu:[{l,c?,e?},…]` per mining cycle.
  * Legacy executable `var myRobots = …` rows are rejected by the page and never injected.
  * Returns null on success; an error string leaves globals unchanged for a graceful unavailable UI.
  */
 function validateRallyResultPayload(payload)
 {
-    if (!payload || payload.v !== 1)
+    if (!payload || (payload.v !== 1 && payload.v !== 2))
     {
         return 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
     }
@@ -79,5 +80,9 @@ function applyRallyResultPayload(payload)
     myRobots = payload.robots;
     myGround = payload.ground;
     myOreTypes = payload.oreTypes || {};
+    if (typeof rallyRebuildCpuTimeline === 'function')
+    {
+        rallyRebuildCpuTimeline();
+    }
     return null;
 }

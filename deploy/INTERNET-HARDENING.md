@@ -187,7 +187,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
 | Email validation | Local + domain with TLD on signup / account update |
-| Rally replay payload | New runs store versioned JSON (`{"v":1,…}`) in `RallyResult.resultData`; viewer loads via `application/json`. Legacy executable rows are refused (replay unavailable) |
+| Rally replay payload | New runs store versioned JSON (`{"v":2,…}`) in `RallyResult.resultData`; viewer loads via `application/json`. Legacy executable rows are refused (replay unavailable) |
 
 ## Related docs
 

@@ -11,8 +11,8 @@ pub(crate) struct ExecutionFrame {
     statements: Vec<ExecutableStatement>,
     index: usize,
     repeat_condition: Option<ExecutableExpression>,
-    /// Source line of the while/do that owns [`Self::repeat_condition`].
-    repeat_source_line: Option<u16>,
+    /// Source location of the while/do that owns [`Self::repeat_condition`].
+    repeat_source_span: Option<SourceSpan>,
     scoped: bool,
 }
 
@@ -33,6 +33,8 @@ pub struct ExecutableRunner {
     /// one-shot actions like mine, and multi-cycle pending motion). Refreshed to the
     /// while/do line when a loop re-checks its condition.
     active_source_line: Option<u16>,
+    /// Same statement as [`Self::active_source_line`], with columns for replay highlighting.
+    active_source_span: Option<SourceSpan>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -50,7 +52,7 @@ impl ExecutableRunner {
                 statements: program.statements,
                 index: 0,
                 repeat_condition: None,
-                repeat_source_line: None,
+                repeat_source_span: None,
                 scoped: false,
             }],
             variables: RuntimeVariables::default(),
@@ -59,6 +61,7 @@ impl ExecutableRunner {
             pending_physical: None,
             expression_eval: None,
             active_source_line: None,
+            active_source_span: None,
         }
     }
 
@@ -90,6 +93,9 @@ impl ExecutableRunner {
 
     /// 1-based source line of the statement currently executing, if any.
     pub fn current_source_line(&self) -> Option<u16> {
+        if let Some(span) = self.active_source_span.filter(|span| span.is_known()) {
+            return Some(span.line);
+        }
         if let Some(line) = self.active_source_line {
             return Some(line);
         }
@@ -98,6 +104,30 @@ impl ExecutableRunner {
             return None;
         }
         Some(frame.statements[frame.index].source_line)
+    }
+
+    /// Source range of the construct currently executing, if any.
+    ///
+    /// While an expression is being evaluated this narrows to the sub-expression the next
+    /// CPU cycle will run, so replay highlighting follows evaluation inside a statement.
+    pub fn current_source_span(&self) -> Option<SourceSpan> {
+        if let Some(span) = self
+            .expression_eval
+            .as_ref()
+            .and_then(OngoingExpressionEval::current_span)
+            .filter(|span| span.is_known())
+        {
+            return Some(span);
+        }
+        if let Some(span) = self.active_source_span.filter(|span| span.is_known()) {
+            return Some(span);
+        }
+        let frame = self.stack.last()?;
+        frame
+            .statements
+            .get(frame.index)
+            .map(|statement| statement.source_span)
+            .filter(|span| span.is_known())
     }
 
     pub fn next_action(&mut self, context: &mut ExecutionContext) -> Option<ExecutableAction> {
@@ -130,7 +160,7 @@ impl ExecutableRunner {
                     break ProgramStep::Action(action);
                 }
                 StepOutcome::Done => {
-                    self.active_source_line = None;
+                    self.set_active_source(None);
                     break ProgramStep::Done;
                 }
             }
@@ -157,13 +187,13 @@ impl ExecutableRunner {
             .stack
             .last()
             .filter(|frame| frame.index >= frame.statements.len())
-            .map(|frame| (frame.repeat_condition.clone(), frame.repeat_source_line));
+            .map(|frame| (frame.repeat_condition.clone(), frame.repeat_source_span));
 
-        if let Some((Some(condition), repeat_line)) = repeat_frame {
+        if let Some((Some(condition), repeat_span)) = repeat_frame {
             // Re-attribute to the while/do line before evaluating the condition again
             // (otherwise sticky active_source_line keeps the last body statement).
-            if let Some(line) = repeat_line {
-                self.active_source_line = Some(line);
+            if let Some(span) = repeat_span {
+                self.set_active_source(Some(span));
             }
             self.start_expression_evaluation(condition, ExpressionResume::RepeatCondition);
             return StepOutcome::Continue;
@@ -184,6 +214,7 @@ impl ExecutableRunner {
 
         let statement = frame.statements[frame.index].clone();
         self.active_source_line = Some(statement.source_line);
+        self.active_source_span = Some(statement.source_span);
 
         match statement.kind {
             ExecutableStatementKind::Action(action) => {
@@ -248,11 +279,11 @@ impl ExecutableRunner {
                 body,
                 is_do_while,
             } => {
-                let loop_line = statement.source_line;
+                let loop_span = statement.source_span;
                 if is_do_while {
                     if let Some(body) = body {
                         frame.index += 1;
-                        self.push_statement(*body, Some(condition), Some(loop_line));
+                        self.push_statement(*body, Some(condition), Some(loop_span));
                         StepOutcome::Cpu
                     } else if let Some(action) = condition.first_action() {
                         if PendingPhysicalAction::is_chunked(action) {
@@ -273,7 +304,7 @@ impl ExecutableRunner {
                         ExpressionResume::While {
                             condition: resume_condition,
                             body,
-                            source_line: loop_line,
+                            source_span: loop_span,
                         },
                     );
                     StepOutcome::Continue
@@ -322,17 +353,17 @@ impl ExecutableRunner {
         &mut self,
         statement: ExecutableStatement,
         repeat_condition: Option<ExecutableExpression>,
-        repeat_source_line: Option<u16>,
+        repeat_source_span: Option<SourceSpan>,
     ) {
-        let source_line = statement.source_line;
+        let source_span = statement.source_span;
         match statement.kind {
             ExecutableStatementKind::Sequence(statements) => {
-                self.push_frame(statements, repeat_condition, repeat_source_line, true);
+                self.push_frame(statements, repeat_condition, repeat_source_span, true);
             }
             kind => self.push_frame(
-                vec![ExecutableStatement::at(source_line, kind)],
+                vec![ExecutableStatement::at(source_span, kind)],
                 repeat_condition,
-                repeat_source_line,
+                repeat_source_span,
                 false,
             ),
         }
@@ -342,7 +373,7 @@ impl ExecutableRunner {
         &mut self,
         statements: Vec<ExecutableStatement>,
         repeat_condition: Option<ExecutableExpression>,
-        repeat_source_line: Option<u16>,
+        repeat_source_span: Option<SourceSpan>,
         scoped: bool,
     ) {
         if scoped {
@@ -353,9 +384,14 @@ impl ExecutableRunner {
             statements,
             index: 0,
             repeat_condition,
-            repeat_source_line,
+            repeat_source_span,
             scoped,
         });
+    }
+
+    fn set_active_source(&mut self, span: Option<SourceSpan>) {
+        self.active_source_line = span.map(|span| span.line);
+        self.active_source_span = span;
     }
 
     fn pop_frame(&mut self) {

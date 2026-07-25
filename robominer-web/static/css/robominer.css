@@ -4242,6 +4242,14 @@ body.mining-area-atlas-drawer-open {
     font-weight: bold;
 }
 
+.rally-view-source-token-active {
+    background: rgba(0, 229, 255, 0.45);
+    color: inherit;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
 .rally-view-legend-list {
     display: grid;
     gap: 8px;

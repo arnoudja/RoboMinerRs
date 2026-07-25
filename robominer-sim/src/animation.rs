@@ -10,11 +10,42 @@ use crate::robot::Robot;
 /// Current on-disk / wire format for rally animation payloads stored in
 /// `RallyResult.resultData`. Older executable JavaScript rows (`var myRobots = …`)
 /// are no longer played by the web viewer.
-pub const ANIMATION_PAYLOAD_VERSION: u32 = 1;
+///
+/// Version 2 adds optional per-mining-cycle `cpu` arrays of instruction spans.
+pub const ANIMATION_PAYLOAD_VERSION: u32 = 2;
 
 pub struct OreAnimationData {
     pub ore_id: i64,
     pub max_amount: i32,
+}
+
+/// One program CPU instruction within a mining cycle (for replay stepping/highlight).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CpuAnimationStep {
+    pub line: u16,
+    pub start_col: u16,
+    pub end_col: u16,
+}
+
+impl CpuAnimationStep {
+    pub fn from_span(span: robominer_program::SourceSpan) -> Option<Self> {
+        if !span.is_known() {
+            return None;
+        }
+        Some(Self {
+            line: span.line,
+            start_col: span.start_col,
+            end_col: span.end_col,
+        })
+    }
+
+    pub fn line_only(line: u16) -> Self {
+        Self {
+            line,
+            start_col: 0,
+            end_col: 0,
+        }
+    }
 }
 
 /// Compact per-cycle status for stuck/idle diagnosis in the replay viewer.
@@ -68,6 +99,8 @@ struct RobotAnimationStep {
     source_line: Option<u16>,
     /// Optional stuck/idle reason for this cycle.
     status: Option<RobotCycleStatus>,
+    /// Program CPU instructions executed during this mining cycle (replay debug).
+    cpu_steps: Vec<CpuAnimationStep>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -121,6 +154,7 @@ impl AnimationRecorder {
         action_index: Option<u8>,
         source_line: Option<u16>,
         status: Option<RobotCycleStatus>,
+        cpu_steps: Vec<CpuAnimationStep>,
     ) {
         self.robot_steps[robot_index].push(RobotAnimationStep {
             position: robot.position(),
@@ -130,6 +164,7 @@ impl AnimationRecorder {
             action_index,
             source_line,
             status,
+            cpu_steps,
         });
     }
 
@@ -296,6 +331,23 @@ fn robot_step_array_value(steps: &[RobotAnimationStep], record_depot: bool) -> V
             object.insert("l".to_string(), json!(source_line));
         }
 
+        if !step.cpu_steps.is_empty() {
+            let cpu = step
+                .cpu_steps
+                .iter()
+                .map(|cpu_step| {
+                    let mut entry = Map::new();
+                    entry.insert("l".to_string(), json!(cpu_step.line));
+                    if cpu_step.start_col > 0 && cpu_step.end_col > cpu_step.start_col {
+                        entry.insert("c".to_string(), json!(cpu_step.start_col));
+                        entry.insert("e".to_string(), json!(cpu_step.end_col));
+                    }
+                    Value::Object(entry)
+                })
+                .collect::<Vec<_>>();
+            object.insert("cpu".to_string(), Value::Array(cpu));
+        }
+
         // Always emit when present so stuck reasons survive delta compression.
         if let Some(status) = step.status {
             object.insert("s".to_string(), json!(status.as_str()));
@@ -399,7 +451,7 @@ mod tests {
             "var myRobots = {robot: []};"
         ));
         assert!(!is_legacy_javascript_result_data(
-            r#"{"v":1,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#
+            r#"{"v":2,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#
         ));
     }
 }

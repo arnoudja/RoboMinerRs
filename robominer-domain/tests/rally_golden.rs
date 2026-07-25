@@ -94,7 +94,7 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
         .expect("golden scenario completed rally record should map");
 
     let mut animation_contains = vec![
-        r#""v":1"#.to_string(),
+        r#""v":2"#.to_string(),
         r#""robots":{"robot":["#.to_string(),
         format!(
             r#""ground":{{"sizeX":{},"sizeY":{},"positions":["#,

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::types::{CompileError, Operator, ValueType};
+use crate::types::{CompileError, Operator, SourceSpan, ValueType};
 
 pub(super) fn expect_empty_call(input: &mut CompileInput) -> Result<(), CompileError> {
     if !input.eat_char('(', false) || !input.eat_char(')', false) {
@@ -63,6 +63,15 @@ pub(super) fn parse_operator_token(input: &mut CompileInput) -> Operator {
     }
 }
 
+/// Start of a construct, captured before parsing it so [`CompileInput::span_from`] can
+/// turn the consumed range into a [`SourceSpan`].
+#[derive(Debug, Clone, Copy)]
+pub(super) struct SourceMark {
+    line: usize,
+    display_col: usize,
+    raw_pos: usize,
+}
+
 pub(super) struct CompileInput {
     pub(super) source: Vec<char>,
     pub(super) pos: usize,
@@ -72,6 +81,92 @@ pub(super) struct CompileInput {
 }
 
 impl CompileInput {
+    /// Record where the construct about to be parsed starts.
+    pub(super) fn mark_pos(&mut self) -> SourceMark {
+        if self.next_word.is_empty() {
+            self.skip_whitespace();
+        }
+        let raw_pos = self.consumed_pos();
+        SourceMark {
+            line: self.current_line,
+            display_col: self.display_column_at(raw_pos),
+            raw_pos,
+        }
+    }
+
+    /// Span from `mark` to everything consumed since, in displayed-source columns.
+    ///
+    /// Constructs that span several lines cannot be represented, so they are reported as
+    /// running to the end of their first line.
+    pub(super) fn span_from(&self, mark: SourceMark) -> SourceSpan {
+        // Lookahead via `peek` skips trailing whitespace, so walk back to the last
+        // character that actually belongs to the construct.
+        let end_pos = self
+            .trim_whitespace_before(self.consumed_pos())
+            .max(mark.raw_pos);
+        let end_col = if self.line_of(end_pos) == self.line_of(mark.raw_pos) {
+            self.display_column_at(end_pos)
+        } else {
+            self.display_column_at(self.end_of_line(mark.raw_pos))
+        };
+
+        SourceSpan {
+            line: clamp_u16(mark.line),
+            start_col: clamp_u16(mark.display_col),
+            end_col: clamp_u16(end_col.max(mark.display_col + 1)),
+        }
+    }
+
+    /// Position of the first not-yet-consumed character, ignoring the [`Self::next_word`]
+    /// lookahead buffer that `pos` has already been advanced past.
+    fn consumed_pos(&self) -> usize {
+        self.pos.saturating_sub(self.next_word.chars().count())
+    }
+
+    /// 1-based column in the source the player sees.
+    ///
+    /// The compiler parses `{<source>\n}`, so on the first line the wrapping `{` occupies
+    /// raw column 1 and displayed columns are one lower.
+    fn display_column_at(&self, pos: usize) -> usize {
+        let line_start = self.line_start(pos);
+        let raw_col = pos.min(self.source.len()) - line_start + 1;
+        if line_start == 0 {
+            raw_col.saturating_sub(1).max(1)
+        } else {
+            raw_col
+        }
+    }
+
+    fn line_start(&self, pos: usize) -> usize {
+        self.source[..pos.min(self.source.len())]
+            .iter()
+            .rposition(|character| *character == '\n')
+            .map_or(0, |index| index + 1)
+    }
+
+    fn end_of_line(&self, pos: usize) -> usize {
+        let start = pos.min(self.source.len());
+        self.source[start..]
+            .iter()
+            .position(|character| *character == '\n')
+            .map_or(self.source.len(), |offset| start + offset)
+    }
+
+    fn trim_whitespace_before(&self, mut pos: usize) -> usize {
+        pos = pos.min(self.source.len());
+        while pos > 0 && self.source[pos - 1].is_whitespace() {
+            pos -= 1;
+        }
+        pos
+    }
+
+    fn line_of(&self, pos: usize) -> usize {
+        self.source[..pos.min(self.source.len())]
+            .iter()
+            .filter(|character| **character == '\n')
+            .count()
+    }
+
     pub(super) fn new(source: &str) -> Self {
         let mut input = Self {
             source: format!("{{{}\n}}", source).chars().collect(),
@@ -238,6 +333,10 @@ impl CompileInput {
             }
         }
     }
+}
+
+fn clamp_u16(value: usize) -> u16 {
+    value.min(u16::MAX as usize) as u16
 }
 
 #[derive(Debug, Clone)]

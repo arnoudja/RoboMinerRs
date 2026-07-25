@@ -1,6 +1,6 @@
 use crate::types::{
     CompileError, ExecutableAction, ExecutableActionExpression, ExecutableExpression,
-    ExecutableStatement, ExecutableStatementKind,
+    ExecutableExpressionKind, ExecutableStatement, ExecutableStatementKind,
 };
 
 use super::super::input::{CompileInput, expect_char, expect_empty_call};
@@ -9,12 +9,12 @@ use super::expressions::parse_executable_expression;
 pub(super) fn parse_executable_action_statement(
     input: &mut CompileInput,
 ) -> Result<ExecutableStatement, CompileError> {
-    let source_line = input.current_line.min(u16::MAX as usize) as u16;
+    let mark = input.mark_pos();
 
     if input.use_next_word("mine") {
         expect_empty_call(input)?;
         return Ok(ExecutableStatement::at(
-            source_line,
+            input.span_from(mark),
             ExecutableStatementKind::Action(ExecutableAction::Mine),
         ));
     }
@@ -22,7 +22,7 @@ pub(super) fn parse_executable_action_statement(
     if input.use_next_word("move") {
         let action = ExecutableActionExpression::Move(parse_executable_call_expression(input)?);
         return Ok(ExecutableStatement::at(
-            source_line,
+            input.span_from(mark),
             action
                 .static_action()
                 .map(ExecutableStatementKind::Action)
@@ -33,7 +33,7 @@ pub(super) fn parse_executable_action_statement(
     if input.use_next_word("rotate") {
         let action = ExecutableActionExpression::Rotate(parse_executable_call_expression(input)?);
         return Ok(ExecutableStatement::at(
-            source_line,
+            input.span_from(mark),
             action
                 .static_action()
                 .map(ExecutableStatementKind::Action)
@@ -43,18 +43,23 @@ pub(super) fn parse_executable_action_statement(
 
     if let Some(ore_type) = parse_named_dump_action(input)? {
         return Ok(ExecutableStatement::at(
-            source_line,
+            input.span_from(mark),
             ExecutableStatementKind::Action(ExecutableAction::Dump(ore_type)),
         ));
     }
 
     if input.use_next_word("dump") {
-        let action = match parse_dump_call_expression(input)? {
-            DumpCall::All => ExecutableActionExpression::Dump(ExecutableExpression::Number(0.0)),
+        let call = parse_dump_call_expression(input)?;
+        let span = input.span_from(mark);
+        let action = match call {
+            DumpCall::All => ExecutableActionExpression::Dump(ExecutableExpression::new(
+                span,
+                ExecutableExpressionKind::Number(0.0),
+            )),
             DumpCall::Typed(expression) => ExecutableActionExpression::Dump(expression),
         };
         return Ok(ExecutableStatement::at(
-            source_line,
+            span,
             action
                 .static_action()
                 .map(ExecutableStatementKind::Action)
@@ -85,27 +90,27 @@ pub(super) fn parse_executable_call_expression(
 
 pub(super) fn parse_move_expression(
     input: &mut CompileInput,
-) -> Result<ExecutableExpression, CompileError> {
+) -> Result<ExecutableExpressionKind, CompileError> {
     let expression = parse_executable_call_expression(input)?;
     if let Some(distance) = expression.literal_number() {
-        Ok(ExecutableExpression::Action(ExecutableAction::Move(
+        Ok(ExecutableExpressionKind::Action(ExecutableAction::Move(
             distance,
         )))
     } else {
-        Ok(ExecutableExpression::Move(Box::new(expression)))
+        Ok(ExecutableExpressionKind::Move(Box::new(expression)))
     }
 }
 
 pub(super) fn parse_rotate_expression(
     input: &mut CompileInput,
-) -> Result<ExecutableExpression, CompileError> {
+) -> Result<ExecutableExpressionKind, CompileError> {
     let expression = parse_executable_call_expression(input)?;
     if let Some(rotation) = expression.literal_number() {
-        Ok(ExecutableExpression::Action(ExecutableAction::Rotate(
+        Ok(ExecutableExpressionKind::Action(ExecutableAction::Rotate(
             rotation,
         )))
     } else {
-        Ok(ExecutableExpression::Rotate(Box::new(expression)))
+        Ok(ExecutableExpressionKind::Rotate(Box::new(expression)))
     }
 }
 
@@ -155,17 +160,17 @@ pub(super) fn parse_dump_call_expression(
 
 pub(super) fn parse_dump_expression(
     input: &mut CompileInput,
-) -> Result<ExecutableExpression, CompileError> {
+) -> Result<ExecutableExpressionKind, CompileError> {
     match parse_dump_call_expression(input)? {
-        DumpCall::All => Ok(ExecutableExpression::Action(ExecutableAction::Dump(0))),
+        DumpCall::All => Ok(ExecutableExpressionKind::Action(ExecutableAction::Dump(0))),
         DumpCall::Typed(expression) => {
             // Deprecated: prefer dump() / dumpA() / dumpB() / dumpC().
             if let Some(ore_type) = expression.literal_number() {
-                Ok(ExecutableExpression::Action(ExecutableAction::Dump(
+                Ok(ExecutableExpressionKind::Action(ExecutableAction::Dump(
                     ore_type as i32,
                 )))
             } else {
-                Ok(ExecutableExpression::Dump(Box::new(expression)))
+                Ok(ExecutableExpressionKind::Dump(Box::new(expression)))
             }
         }
     }
@@ -173,10 +178,10 @@ pub(super) fn parse_dump_expression(
 
 pub(super) fn parse_scan_call(
     input: &mut CompileInput,
-) -> Result<ExecutableExpression, CompileError> {
+) -> Result<ExecutableExpressionKind, CompileError> {
     expect_char(input, '(', "'(' expected")?;
     if input.eat_char(')', false) {
-        return Ok(ExecutableExpression::Scan(None));
+        return Ok(ExecutableExpressionKind::Scan(None));
     }
 
     let direction = parse_executable_expression(input)?.ok_or_else(|| {
@@ -186,5 +191,5 @@ pub(super) fn parse_scan_call(
         ))
     })?;
     expect_char(input, ')', "')' expected")?;
-    Ok(ExecutableExpression::Scan(Some(Box::new(direction))))
+    Ok(ExecutableExpressionKind::Scan(Some(Box::new(direction))))
 }

@@ -6,7 +6,7 @@ const { loadRallyViewer } = require('./load_viewer');
 
 function validPayload(overrides = {}) {
     return {
-        v: 1,
+        v: 2,
         robots: {
             robot: [
                 {
@@ -30,9 +30,34 @@ function validPayload(overrides = {}) {
                     DB: 0,
                     DC: 0,
                     locations: [
-                        { x: 0, y: 0, o: 45, A: 0, B: 0, C: 0, DA: 0, DB: 0, DC: 0 },
-                        { x: 1, y: 0, o: 45, A: 4, B: 0, C: 0, a: 6 },
-                        { A: 0, DA: 4, a: 7 },
+                        {
+                            x: 0,
+                            y: 0,
+                            o: 45,
+                            A: 0,
+                            B: 0,
+                            C: 0,
+                            DA: 0,
+                            DB: 0,
+                            DC: 0,
+                            l: 1,
+                            cpu: [{ l: 1, c: 1, e: 7 }],
+                        },
+                        {
+                            x: 1,
+                            y: 0,
+                            o: 45,
+                            A: 4,
+                            B: 0,
+                            C: 0,
+                            a: 6,
+                            l: 1,
+                            cpu: [
+                                { l: 1, c: 1, e: 7 },
+                                { l: 1, c: 9, e: 16 },
+                            ],
+                        },
+                        { A: 0, DA: 4, a: 7, l: 1, cpu: [{ l: 1, c: 9, e: 16 }] },
                     ],
                 },
             ],
@@ -63,8 +88,16 @@ describe('rally animation viewer', () => {
     it('rejects unsupported or incomplete payloads', () => {
         const { context } = loadRallyViewer();
         assert.match(
-            context.validateRallyResultPayload({ v: 2, robots: { robot: [] }, ground: {} }),
+            context.validateRallyResultPayload({ v: 3, robots: { robot: [] }, ground: {} }),
             /unsupported version/
+        );
+        assert.equal(
+            context.validateRallyResultPayload({
+                v: 1,
+                robots: { robot: [{ locations: [] }] },
+                ground: { sizeX: 1, sizeY: 1, positions: [] },
+            }),
+            null
         );
         assert.match(
             context.validateRallyResultPayload({
@@ -239,5 +272,54 @@ describe('rally animation viewer', () => {
         assert.equal(context.robotLooksBlocked({ s: 'robot' }), true);
         assert.equal(context.robotLooksIdle({ a: 1 }), true);
         assert.equal(context.robotLooksIdle({ a: 6 }), false);
+    });
+
+    it('builds a CPU timeline and seeks by CPU vs mining cycle', () => {
+        const { context } = loadRallyViewer();
+        assert.equal(context.applyRallyResultPayload(validPayload()), null);
+        context.myRallyViewerSlot = 0;
+        context.myRallyPlayer.baseStepTime = 50;
+        context.myRallyPlayer.speed = 1;
+        context.myRallyPlayer.elapsedMs = 0;
+        context.redrawRallyScene = function redrawRallyScene() {};
+        context.rallyPause = function rallyPause() {
+            context.myRallyPlayer.playing = false;
+        };
+        context.rallyPlay = function rallyPlay() {};
+
+        assert.equal(context.myRallyCpuTimeline.length, 4);
+        assert.equal(context.rallyTotalSteps(), 4);
+        assert.equal(context.rallyTotalMiningCycles(), 3);
+
+        context.rallySeekByCycles(1);
+        assert.equal(context.rallyCpuIndexAtTime(context.myRallyPlayer.elapsedMs), 1);
+        assert.equal(
+            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
+            1
+        );
+
+        context.rallySeekByMiningCycles(1);
+        assert.equal(
+            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
+            2
+        );
+    });
+
+    it('highlights a token span within a source line', () => {
+        const { context, document } = loadRallyViewer();
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">mine(); dumpA();</code>
+              </div>
+            </div>
+        `;
+        context.updateRallySourceHighlight({ l: 1, c: 9, e: 16 });
+        const line = document.getElementById('rallySourceLine1');
+        assert.ok(line.classList.contains('rally-view-source-line-active'));
+        const token = line.querySelector('.rally-view-source-token-active');
+        assert.ok(token);
+        assert.equal(token.textContent, 'dumpA()');
     });
 });

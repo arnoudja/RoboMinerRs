@@ -1,6 +1,6 @@
 use crate::types::{
-    ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableProgram,
-    ExecutableStatement, ExecutableStatementKind, Operator, VariableOperator,
+    ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableExpressionKind,
+    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, Operator, VariableOperator,
 };
 
 /// Emit Edit-code-legal source for an executable program AST.
@@ -164,10 +164,10 @@ fn unparse_dynamic_action(action: &ExecutableActionExpression, out: &mut String)
 }
 
 fn unparse_expression(expression: &ExecutableExpression, out: &mut String, parent_priority: usize) {
-    match expression {
-        ExecutableExpression::Number(value) => unparse_number(*value, out),
-        ExecutableExpression::Variable(name) => out.push_str(name),
-        ExecutableExpression::VariableUpdate { name, operator } => match operator {
+    match &expression.kind {
+        ExecutableExpressionKind::Number(value) => unparse_number(*value, out),
+        ExecutableExpressionKind::Variable(name) => out.push_str(name),
+        ExecutableExpressionKind::VariableUpdate { name, operator } => match operator {
             VariableOperator::None => out.push_str(name),
             VariableOperator::PreIncrement => {
                 out.push_str("++");
@@ -186,11 +186,11 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
                 out.push_str("--");
             }
         },
-        ExecutableExpression::UnaryNot(inner) => {
+        ExecutableExpressionKind::UnaryNot(inner) => {
             out.push('!');
             unparse_expression(inner, out, usize::MAX);
         }
-        ExecutableExpression::Binary {
+        ExecutableExpressionKind::Binary {
             operator,
             left,
             right,
@@ -226,41 +226,41 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
                 out.push(')');
             }
         }
-        ExecutableExpression::Time => out.push_str("time()"),
-        ExecutableExpression::Ore(inner) => {
+        ExecutableExpressionKind::Time => out.push_str("time()"),
+        ExecutableExpressionKind::Ore(inner) => {
             out.push_str("ore(");
             unparse_expression(inner, out, 0);
             out.push(')');
         }
-        ExecutableExpression::Scan(direction) => {
+        ExecutableExpressionKind::Scan(direction) => {
             out.push_str("scan(");
             if let Some(direction) = direction {
                 unparse_expression(direction, out, 0);
             }
             out.push(')');
         }
-        ExecutableExpression::OreDistance => out.push_str("oreDistance()"),
-        ExecutableExpression::OreType => out.push_str("oreType()"),
-        ExecutableExpression::RobotProperty(property) => {
+        ExecutableExpressionKind::OreDistance => out.push_str("oreDistance()"),
+        ExecutableExpressionKind::OreType => out.push_str("oreType()"),
+        ExecutableExpressionKind::RobotProperty(property) => {
             out.push_str("robot.");
             out.push_str(property.as_name());
         }
-        ExecutableExpression::Move(inner) => {
+        ExecutableExpressionKind::Move(inner) => {
             out.push_str("move(");
             unparse_expression(inner, out, 0);
             out.push(')');
         }
-        ExecutableExpression::Rotate(inner) => {
+        ExecutableExpressionKind::Rotate(inner) => {
             out.push_str("rotate(");
             unparse_expression(inner, out, 0);
             out.push(')');
         }
-        ExecutableExpression::Dump(inner) => {
+        ExecutableExpressionKind::Dump(inner) => {
             out.push_str("dump(");
             unparse_expression(inner, out, 0);
             out.push(')');
         }
-        ExecutableExpression::Action(action) => unparse_action(action, out),
+        ExecutableExpressionKind::Action(action) => unparse_action(action, out),
     }
 }
 

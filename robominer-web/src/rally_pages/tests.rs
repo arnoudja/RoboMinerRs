@@ -463,7 +463,7 @@ fn rally_view_rendering_refuses_unsupported_result_data() {
         "Player".to_string(),
         None,
         &RallyViewPageState {
-            result_data: r#"{"v":2,"robots":{"robot":[]}}"#.to_string(),
+            result_data: r#"{"v":3,"robots":{"robot":[]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
             ores: vec![],
             slots: [
                 ("Bot 0".to_string(), "User 0".to_string()),
@@ -485,10 +485,45 @@ fn rally_view_rendering_refuses_unsupported_result_data() {
     );
 
     assert!(!html.contains(r#"id="rally-result-data""#));
-    assert!(!html.contains(r#""v":2"#));
+    assert!(!html.contains(r#""v":3"#));
     assert!(html.contains("Replay unavailable"));
     assert!(html.contains(
         "This rally replay payload is missing, corrupt, or uses an unsupported version."
+    ));
+}
+
+#[test]
+fn rally_view_rendering_accepts_v2_result_data() {
+    let html = render_rally_view_page(
+        "Player".to_string(),
+        None,
+        &RallyViewPageState {
+            result_data: r#"{"v":2,"robots":{"robot":[{"robotnr":0,"locations":[{"x":0,"y":0}]}]},"ground":{"sizeX":1,"sizeY":1,"positions":[]},"oreTypes":{}}"#.to_string(),
+            ores: vec![],
+            slots: [
+                ("Bot 0".to_string(), "User 0".to_string()),
+                ("Bot 1".to_string(), "User 1".to_string()),
+                ("Bot 2".to_string(), "User 2".to_string()),
+                ("Bot 3".to_string(), "User 3".to_string()),
+            ],
+            mining_area_name: "Area".to_string(),
+            viewer_player_number: Some(0),
+            viewer_robot_id: Some(11),
+            viewer_robot_name: Some("Bot".to_string()),
+            viewer_score: Some(1.0),
+            viewer_total_reward: Some(1),
+            viewer_result_claimed: false,
+            viewer_source_code: None,
+            viewer_program_source_id: None,
+        },
+        None,
+    );
+
+    assert!(html.contains(r#"id="rally-result-data""#));
+    assert!(html.contains(r#""v":2"#));
+    assert!(html.contains(r#"id="rallyCanvas""#));
+    assert!(!html.contains(
+        r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#
     ));
 }
 
@@ -579,7 +614,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(!html.contains(r#"id="robotDepot0""#));
     assert!(html.contains(r#"id="robotAction0""#));
     assert!(html.contains(r#"id="rallyPlayer0""#));
-    assert!(html.contains("function updateRobotDebugPanel(robot, step)"));
+    assert!(html.contains("function updateRobotDebugPanel(robot, step, cpuEntry)"));
     assert!(html.contains("function drawRobotDepot(robot)"));
     assert!(html.contains("function drawSideBySideDepotBar("));
     assert!(html.contains("function drawDepotHomes(scale, step)"));
@@ -607,7 +642,8 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains(r#"id="rallyProgressTrack""#));
     assert!(html.contains(r#"role="slider""#));
     assert!(html.contains(r#"class="rally-view-keyboard-hint""#));
-    assert!(html.contains("Shift+← → skip 10"));
+    assert!(html.contains("Shift+← → next area cycle"));
+    assert!(html.contains("← → one CPU cycle"));
     assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
     assert!(html.contains("function rallyPlay()"));
     assert!(html.contains("function rallySeekToRatio(ratio)"));
@@ -629,6 +665,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains("return 'Ore \\x3cA\\x3e \\x26 \\'B\\'';"));
     assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
     assert!(html.contains(r#""v":1"#));
+    assert!(html.contains("payload.v !== 1 && payload.v !== 2"));
     assert!(html.contains("applyRallyResultPayload(JSON.parse(rallyResultDataEl.textContent));"));
     assert!(html.contains("function showRallyReplayUnavailable(detail)"));
     assert!(html.contains("function validateRallyResultPayload(payload)"));
@@ -689,11 +726,11 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     assert!(html.contains(r#"class="rally-view-source-text">scan();</code>"#));
     assert!(html.contains(r#"class="rally-view-source-line" data-line="1""#));
     assert!(html.contains(r#"class="rally-view-source-line" data-line="2""#));
-    assert!(html.contains("function updateRallySourceHighlight(line)"));
+    assert!(html.contains("function updateRallySourceHighlight(highlight)"));
     assert!(html.contains("function updateRallyEditCodeLink(line)"));
     assert!(html.contains("function scrollRallySourceLineIntoView(container, lineEl)"));
     assert!(html.contains(
-        "Highlighted line is the statement running in the replay. Source is the private snapshot from this rally."
+        "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally."
     ));
     assert!(!html.contains("Source snapshot unavailable."));
     assert!(html.contains(

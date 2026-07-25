@@ -13,7 +13,7 @@ pub(crate) enum ExpressionResume {
     While {
         condition: ExecutableExpression,
         body: Option<Box<ExecutableStatement>>,
-        source_line: u16,
+        source_span: SourceSpan,
     },
     Declare {
         name: String,
@@ -78,7 +78,7 @@ impl ExecutableRunner {
             ExpressionResume::While {
                 condition,
                 body,
-                source_line,
+                source_span,
             } => {
                 let frame = self
                     .stack
@@ -89,13 +89,13 @@ impl ExecutableRunner {
                     let loop_body = body.map_or_else(
                         || {
                             ExecutableStatement::at(
-                                source_line,
+                                source_span,
                                 ExecutableStatementKind::Sequence(vec![]),
                             )
                         },
                         |statement| *statement,
                     );
-                    self.push_statement(loop_body, Some(condition), Some(source_line));
+                    self.push_statement(loop_body, Some(condition), Some(source_span));
                     ExpressionComplete::Continue
                 } else {
                     frame.index += 1;

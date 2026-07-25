@@ -1,5 +1,6 @@
 use crate::types::{
-    CompileError, ExecutableAction, ExecutableExpression, Operator, RobotProperty, VariableOperator,
+    CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind, Operator,
+    RobotProperty, VariableOperator,
 };
 
 use super::super::input::{
@@ -42,12 +43,17 @@ pub(super) fn parse_executable_expression(
             i += 1;
         }
 
-        let combined = ExecutableExpression::Binary {
-            operator: values[i].0,
-            left: Box::new(values[i - 1].1.clone()),
-            right: Box::new(values[i].1.clone()),
-        };
-        values[i - 1].1 = combined;
+        let left = values[i - 1].1.clone();
+        let right = values[i].1.clone();
+        let span = left.span.join(right.span);
+        values[i - 1].1 = ExecutableExpression::new(
+            span,
+            ExecutableExpressionKind::Binary {
+                operator: values[i].0,
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        );
         values.remove(i);
     }
 
@@ -57,6 +63,10 @@ pub(super) fn parse_executable_expression(
 pub(super) fn parse_executable_single_expression(
     input: &mut CompileInput,
 ) -> Result<Option<ExecutableExpression>, CompileError> {
+    let mark = input.mark_pos();
+
+    // A parenthesised group keeps the span of the inner expression, so highlighting
+    // points at the operands rather than the punctuation.
     if input.eat_char('(', false) {
         let value = parse_executable_expression(input)?;
         if value.is_none() || !input.eat_char(')', false) {
@@ -70,6 +80,16 @@ pub(super) fn parse_executable_single_expression(
         return Ok(value);
     }
 
+    let Some(kind) = parse_single_expression_kind(input)? else {
+        return Ok(None);
+    };
+
+    Ok(Some(ExecutableExpression::new(input.span_from(mark), kind)))
+}
+
+fn parse_single_expression_kind(
+    input: &mut CompileInput,
+) -> Result<Option<ExecutableExpressionKind>, CompileError> {
     if input.peek() != Some('=') && input.eat_char('!', false) {
         let value = parse_executable_single_expression(input)?.ok_or_else(|| {
             CompileError::new(format!(
@@ -78,20 +98,22 @@ pub(super) fn parse_executable_single_expression(
             ))
         })?;
 
-        return Ok(Some(ExecutableExpression::UnaryNot(Box::new(value))));
+        return Ok(Some(ExecutableExpressionKind::UnaryNot(Box::new(value))));
     }
 
     if input.use_next_word("true") {
-        return Ok(Some(ExecutableExpression::Number(1.0)));
+        return Ok(Some(ExecutableExpressionKind::Number(1.0)));
     }
 
     if input.use_next_word("false") {
-        return Ok(Some(ExecutableExpression::Number(0.0)));
+        return Ok(Some(ExecutableExpressionKind::Number(0.0)));
     }
 
     if input.use_next_word("mine") {
         expect_empty_call(input)?;
-        return Ok(Some(ExecutableExpression::Action(ExecutableAction::Mine)));
+        return Ok(Some(ExecutableExpressionKind::Action(
+            ExecutableAction::Mine,
+        )));
     }
 
     if input.use_next_word("move") {
@@ -103,9 +125,9 @@ pub(super) fn parse_executable_single_expression(
     }
 
     if let Some(ore_type) = parse_named_dump_action(input)? {
-        return Ok(Some(ExecutableExpression::Action(ExecutableAction::Dump(
-            ore_type,
-        ))));
+        return Ok(Some(ExecutableExpressionKind::Action(
+            ExecutableAction::Dump(ore_type),
+        )));
     }
 
     if input.use_next_word("dump") {
@@ -114,7 +136,7 @@ pub(super) fn parse_executable_single_expression(
 
     if input.use_next_word("time") {
         expect_empty_call(input)?;
-        return Ok(Some(ExecutableExpression::Time));
+        return Ok(Some(ExecutableExpressionKind::Time));
     }
 
     if input.use_next_word("scan") {
@@ -123,12 +145,12 @@ pub(super) fn parse_executable_single_expression(
 
     if input.use_next_word("oreDistance") {
         expect_empty_call(input)?;
-        return Ok(Some(ExecutableExpression::OreDistance));
+        return Ok(Some(ExecutableExpressionKind::OreDistance));
     }
 
     if input.use_next_word("oreType") {
         expect_empty_call(input)?;
-        return Ok(Some(ExecutableExpression::OreType));
+        return Ok(Some(ExecutableExpressionKind::OreType));
     }
 
     // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C. Kept for existing programs.
@@ -141,14 +163,14 @@ pub(super) fn parse_executable_single_expression(
             ))
         })?;
         expect_char(input, ')', "')' expected")?;
-        return Ok(Some(ExecutableExpression::Ore(Box::new(ore_type))));
+        return Ok(Some(ExecutableExpressionKind::Ore(Box::new(ore_type))));
     }
 
-    if let Some(expression) = parse_robot_property_expression(input)? {
+    if let Some(kind) = parse_robot_property_expression(input)? {
         if input.eat_sequence("++") || input.eat_sequence("--") {
             return Err(robot_property_mutation_error(input.current_line));
         }
-        return Ok(Some(expression));
+        return Ok(Some(kind));
     }
 
     let mut variable_operator = VariableOperator::None;
@@ -171,9 +193,9 @@ pub(super) fn parse_executable_single_expression(
         expect_declared_variable(input, &name)?;
 
         return Ok(Some(if variable_operator == VariableOperator::None {
-            ExecutableExpression::Variable(name)
+            ExecutableExpressionKind::Variable(name)
         } else {
-            ExecutableExpression::VariableUpdate {
+            ExecutableExpressionKind::VariableUpdate {
                 name,
                 operator: variable_operator,
             }
@@ -187,12 +209,12 @@ pub(super) fn parse_executable_single_expression(
 
     Ok(input
         .extract_number_value()
-        .map(ExecutableExpression::Number))
+        .map(ExecutableExpressionKind::Number))
 }
 
 fn parse_robot_property_expression(
     input: &mut CompileInput,
-) -> Result<Option<ExecutableExpression>, CompileError> {
+) -> Result<Option<ExecutableExpressionKind>, CompileError> {
     if !input.use_next_word("robot") {
         return Ok(None);
     }
@@ -211,5 +233,5 @@ fn parse_robot_property_expression(
     }
 
     let property = RobotProperty::from_name(&property_name, input.current_line)?;
-    Ok(Some(ExecutableExpression::RobotProperty(property)))
+    Ok(Some(ExecutableExpressionKind::RobotProperty(property)))
 }

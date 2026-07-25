@@ -1,43 +1,45 @@
-use crate::types::{ExecutableAction, ExecutableActionExpression, ExecutableExpression};
+use crate::types::{
+    ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableExpressionKind,
+};
 
 impl ExecutableExpression {
     pub(crate) fn literal_number(&self) -> Option<f64> {
-        match self {
-            ExecutableExpression::Number(value) => Some(*value),
+        match &self.kind {
+            ExecutableExpressionKind::Number(value) => Some(*value),
             _ => None,
         }
     }
 
     pub(crate) fn first_action(&self) -> Option<ExecutableAction> {
-        match self {
-            ExecutableExpression::Action(action) => Some(*action),
-            ExecutableExpression::Move(value) => value
+        match &self.kind {
+            ExecutableExpressionKind::Action(action) => Some(*action),
+            ExecutableExpressionKind::Move(value) => value
                 .literal_number()
                 .map(ExecutableAction::Move)
                 .or_else(|| value.first_action()),
-            ExecutableExpression::Rotate(value) => value
+            ExecutableExpressionKind::Rotate(value) => value
                 .literal_number()
                 .map(ExecutableAction::Rotate)
                 .or_else(|| value.first_action()),
-            ExecutableExpression::Dump(value) => value
+            ExecutableExpressionKind::Dump(value) => value
                 .literal_number()
                 .map(|value| ExecutableAction::Dump(value as i32))
                 .or_else(|| value.first_action()),
-            ExecutableExpression::UnaryNot(value) => value.first_action(),
-            ExecutableExpression::Binary { left, right, .. } => {
+            ExecutableExpressionKind::UnaryNot(value) => value.first_action(),
+            ExecutableExpressionKind::Binary { left, right, .. } => {
                 left.first_action().or_else(|| right.first_action())
             }
-            ExecutableExpression::Ore(value) => value.first_action(),
-            ExecutableExpression::Scan(direction) => {
+            ExecutableExpressionKind::Ore(value) => value.first_action(),
+            ExecutableExpressionKind::Scan(direction) => {
                 direction.as_ref().and_then(|value| value.first_action())
             }
-            ExecutableExpression::OreDistance
-            | ExecutableExpression::OreType
-            | ExecutableExpression::RobotProperty(_) => None,
-            ExecutableExpression::Number(_)
-            | ExecutableExpression::Variable(_)
-            | ExecutableExpression::VariableUpdate { .. }
-            | ExecutableExpression::Time => None,
+            ExecutableExpressionKind::OreDistance
+            | ExecutableExpressionKind::OreType
+            | ExecutableExpressionKind::RobotProperty(_) => None,
+            ExecutableExpressionKind::Number(_)
+            | ExecutableExpressionKind::Variable(_)
+            | ExecutableExpressionKind::VariableUpdate { .. }
+            | ExecutableExpressionKind::Time => None,
         }
     }
 }

@@ -123,6 +123,110 @@ function loadRallyViewer(options = {}) {
     });
 
     const documentStub = {
+        body: {
+            _html: '',
+            set innerHTML(html) {
+                this._html = html;
+                // Very small HTML subset for source-highlight tests.
+                elements.delete('rallySourceCode');
+                elements.delete('rallySourceLine1');
+                const lineMatch = html.match(
+                    /id="rallySourceLine1"[\s\S]*?<code class="rally-view-source-text">([^<]*)<\/code>/
+                );
+                const codeText = lineMatch ? lineMatch[1] : '';
+                const codeEl = {
+                    className: 'rally-view-source-text',
+                    textContent: codeText,
+                    firstChild: codeText ? { nodeType: 3 } : null,
+                    childNodes: [],
+                    appendChild(child) {
+                        this.childNodes.push(child);
+                        if (child.nodeType === 3 || typeof child.textContent === 'string') {
+                            // Rebuild textContent from children when mixed.
+                        }
+                        this.firstChild = this.childNodes[0] || null;
+                        this.textContent = this.childNodes
+                            .map((c) => c.textContent || '')
+                            .join('');
+                    },
+                    removeChild() {
+                        this.childNodes.shift();
+                        this.firstChild = this.childNodes[0] || null;
+                        this.textContent = this.childNodes
+                            .map((c) => c.textContent || '')
+                            .join('');
+                    },
+                    querySelector() {
+                        return null;
+                    },
+                };
+                // Keep textContent in sync when clearing via while(firstChild) removeChild
+                const originalRemove = codeEl.removeChild.bind(codeEl);
+                codeEl.removeChild = function removeChild(child) {
+                    const idx = this.childNodes.indexOf(child);
+                    if (idx >= 0) {
+                        this.childNodes.splice(idx, 1);
+                    } else if (this.childNodes.length) {
+                        this.childNodes.shift();
+                    }
+                    this.firstChild = this.childNodes[0] || null;
+                    if (this.childNodes.length === 0 && child && child.nodeType === 3) {
+                        // Clearing initial text node: empty the element.
+                        this.textContent = '';
+                    } else {
+                        this.textContent = this.childNodes
+                            .map((c) => c.textContent || '')
+                            .join('');
+                    }
+                    return child;
+                };
+                void originalRemove;
+
+                const lineEl = {
+                    id: 'rallySourceLine1',
+                    classList: {
+                        _set: new Set(),
+                        add(name) {
+                            this._set.add(name);
+                        },
+                        remove(name) {
+                            this._set.delete(name);
+                        },
+                        contains(name) {
+                            return this._set.has(name);
+                        },
+                    },
+                    querySelector(sel) {
+                        if (sel === '.rally-view-source-text') {
+                            return codeEl;
+                        }
+                        if (sel === '.rally-view-source-token-active') {
+                            return (
+                                codeEl.childNodes.find(
+                                    (c) => c.className === 'rally-view-source-token-active'
+                                ) || null
+                            );
+                        }
+                        return null;
+                    },
+                    getBoundingClientRect() {
+                        return { top: 0, bottom: 20 };
+                    },
+                };
+                const sourceCode = {
+                    id: 'rallySourceCode',
+                    getBoundingClientRect() {
+                        return { top: 0, bottom: 100 };
+                    },
+                    scrollTop: 0,
+                };
+                register('rallySourceCode', sourceCode);
+                register('rallySourceLine1', lineEl);
+            },
+            get innerHTML() {
+                return this._html;
+            },
+        },
         getElementById(id) {
             return elements.get(id) || null;
         },
@@ -138,11 +242,15 @@ function loadRallyViewer(options = {}) {
                 className: '',
                 textContent: '',
                 children: [],
+                nodeType: 1,
                 setAttribute() {},
                 appendChild(child) {
                     this.children.push(child);
                 },
             };
+        },
+        createTextNode(text) {
+            return { nodeType: 3, textContent: String(text) };
         },
     };
 
@@ -170,6 +278,7 @@ function loadRallyViewer(options = {}) {
         myOreTypes: undefined,
         myRallyPlayer: {
             scale: 10,
+            baseStepTime: 50,
             elapsedMs: 0,
             playing: false,
             finished: false,
@@ -188,6 +297,7 @@ function loadRallyViewer(options = {}) {
 
     return {
         context,
+        document: documentStub,
         elements,
         rallyContext,
         oreCanvas,

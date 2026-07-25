@@ -56,9 +56,71 @@ pub enum ExecutableAction {
     AwaitScanResult,
 }
 
+/// Location of a construct in the **displayed** program source.
+///
+/// Columns are 1-based, with `start_col` inclusive and `end_col` exclusive, which is
+/// what the rally replay UI needs to highlight a range. They are measured in the source
+/// the player edits: the compiler wraps that source in an implicit `{ ... }` block and
+/// the wrapper is not counted.
+///
+/// `line == 0` means the location is unknown; `start_col == 0` means only the line is
+/// known (AST nodes synthesised outside the parser, for example by GP mutation).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct SourceSpan {
+    pub line: u16,
+    pub start_col: u16,
+    pub end_col: u16,
+}
+
+impl SourceSpan {
+    pub const UNKNOWN: Self = Self {
+        line: 0,
+        start_col: 0,
+        end_col: 0,
+    };
+
+    /// Span for a node whose line is known but whose columns are not.
+    pub fn line_only(line: u16) -> Self {
+        Self {
+            line,
+            start_col: 0,
+            end_col: 0,
+        }
+    }
+
+    pub fn is_known(self) -> bool {
+        self.line != 0
+    }
+
+    pub fn has_columns(self) -> bool {
+        self.line != 0 && self.start_col != 0 && self.end_col > self.start_col
+    }
+
+    /// Smallest span covering both operands. Spans on different lines cannot be
+    /// represented, so the left one wins.
+    pub fn join(self, other: Self) -> Self {
+        if !self.is_known() {
+            return other;
+        }
+        if !other.is_known() || self.line != other.line {
+            return self;
+        }
+        if !self.has_columns() || !other.has_columns() {
+            return Self::line_only(self.line);
+        }
+        Self {
+            line: self.line,
+            start_col: self.start_col.min(other.start_col),
+            end_col: self.end_col.max(other.end_col),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutableStatement {
+    /// Always mirrors [`Self::source_span`]`.line`.
     pub source_line: u16,
+    pub source_span: SourceSpan,
     pub kind: ExecutableStatementKind,
 }
 
@@ -89,8 +151,12 @@ pub enum ExecutableStatementKind {
 }
 
 impl ExecutableStatement {
-    pub fn at(source_line: u16, kind: ExecutableStatementKind) -> Self {
-        Self { source_line, kind }
+    pub fn at(source_span: SourceSpan, kind: ExecutableStatementKind) -> Self {
+        Self {
+            source_line: source_span.line,
+            source_span,
+            kind,
+        }
     }
 
     pub fn requires_runtime(&self) -> bool {
@@ -119,7 +185,27 @@ pub enum ExecutableActionExpression {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ExecutableExpression {
+pub struct ExecutableExpression {
+    pub span: SourceSpan,
+    pub kind: ExecutableExpressionKind,
+}
+
+impl ExecutableExpression {
+    pub fn new(span: SourceSpan, kind: ExecutableExpressionKind) -> Self {
+        Self { span, kind }
+    }
+
+    /// Expression without source location, for nodes built outside the parser.
+    pub fn unspanned(kind: ExecutableExpressionKind) -> Self {
+        Self {
+            span: SourceSpan::UNKNOWN,
+            kind,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExecutableExpressionKind {
     Number(f64),
     Variable(String),
     VariableUpdate {

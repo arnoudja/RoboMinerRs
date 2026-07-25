@@ -79,7 +79,7 @@ fn run_rally_loadout_with_animation_returns_versioned_json_result_data() {
     assert_eq!(run.outcome.mining_area_id, 1001);
     let payload: serde_json::Value =
         serde_json::from_str(&run.result_data).expect("result data should be JSON");
-    assert_eq!(payload["v"], 1);
+    assert_eq!(payload["v"], 2);
     assert!(
         payload["robots"]["robot"]
             .as_array()

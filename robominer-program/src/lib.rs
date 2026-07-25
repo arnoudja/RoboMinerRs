@@ -29,8 +29,8 @@ pub use pose::{rally_map_position, rally_robot_pose};
 pub use runner::ExecutableRunner;
 pub use types::{
     CompatibilityFixture, CompileError, ExecutableAction, ExecutableActionExpression,
-    ExecutableExpression, ExecutableProgram, ExecutableStatement, ExecutableStatementKind,
-    ExecutionContext, Operator, ProgramStep, RobotProperties, RobotProperty, VariableOperator,
-    Verification,
+    ExecutableExpression, ExecutableExpressionKind, ExecutableProgram, ExecutableStatement,
+    ExecutableStatementKind, ExecutionContext, Operator, ProgramStep, RobotProperties,
+    RobotProperty, SourceSpan, VariableOperator, Verification,
 };
 pub use unparse::unparse_program;

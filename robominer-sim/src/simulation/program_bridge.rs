@@ -7,7 +7,7 @@ use robominer_program::{ExecutableAction, ExecutionContext, ProgramStep};
 use crate::action_mapping::{
     map_awaiting_executable, robot_action_from_executable, status_for_wait_from_executable,
 };
-use crate::animation::RobotCycleStatus;
+use crate::animation::{CpuAnimationStep, RobotCycleStatus};
 use crate::ground::{ScanResult, ScanState};
 use crate::physics::ActionResult;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
@@ -121,23 +121,32 @@ impl Simulation {
     pub(super) fn run_program_cpu_loop(
         &mut self,
         robot_index: usize,
-    ) -> (RobotAction, Option<RobotCycleStatus>) {
+    ) -> (
+        RobotAction,
+        Option<RobotCycleStatus>,
+        Vec<CpuAnimationStep>,
+    ) {
         let cpu_speed = self.robots[robot_index].spec.cpu_speed;
         let mut cpu_used = 0;
+        let mut cpu_steps = Vec::new();
 
         loop {
             let extend_budget = {
                 let ActionSource::Program { runner, .. } = &self.action_sources[robot_index] else {
                     self.action_result_expected[robot_index] = false;
-                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
+                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
                 };
                 runner.awaits_scan_result() || runner.has_pending_scan_completion()
             };
 
             if cpu_used >= cpu_speed && !extend_budget {
                 self.action_result_expected[robot_index] = false;
-                return (RobotAction::Wait, Some(RobotCycleStatus::Cpu));
+                return (RobotAction::Wait, Some(RobotCycleStatus::Cpu), cpu_steps);
             }
+
+            let span_before = self
+                .program_runner(robot_index)
+                .and_then(|runner| runner.current_source_span());
 
             let mut context = self.build_execution_context(robot_index);
 
@@ -147,13 +156,16 @@ impl Simulation {
                 } = &mut self.action_sources[robot_index]
                 else {
                     self.action_result_expected[robot_index] = false;
-                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
+                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
                 };
                 runner.step(&mut context)
             };
 
             match step {
                 ProgramStep::Cpu => {
+                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                        cpu_steps.push(step);
+                    }
                     self.action_results[robot_index] = context.action_result;
                     cpu_used += 1;
                     self.tick_scan(robot_index);
@@ -163,12 +175,15 @@ impl Simulation {
                         program, runner, ..
                     } = &mut self.action_sources[robot_index]
                     else {
-                        return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
+                        return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
                     };
                     **runner = program.runner();
                     self.action_results[robot_index] = None;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
+                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                        cpu_steps.push(step);
+                    }
                     let scan_time = self.start_scan(robot_index, direction);
                     self.robots[robot_index].actions_done[ROBOT_ACTION_TYPE_SCAN] += 1;
                     self.action_results[robot_index] = Some(scan_time as f64);
@@ -176,17 +191,23 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
+                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                        cpu_steps.push(step);
+                    }
                     let remaining = self.complete_scan_now(robot_index);
                     self.action_results[robot_index] = None;
                     self.action_result_expected[robot_index] = false;
                     cpu_used += remaining.max(1);
                 }
                 ProgramStep::Action(action) => {
+                    if let Some(step) = span_before.and_then(CpuAnimationStep::from_span) {
+                        cpu_steps.push(step);
+                    }
                     let awaits = {
                         let ActionSource::Program { runner, .. } =
                             &self.action_sources[robot_index]
                         else {
-                            return (RobotAction::Wait, Some(RobotCycleStatus::Wait));
+                            return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
                         };
                         runner.awaits_action_result()
                             && robominer_program::await_kind(action).expects_physics_result()
@@ -203,7 +224,7 @@ impl Simulation {
                         } else {
                             None
                         };
-                        return (robot_action, status);
+                        return (robot_action, status, cpu_steps);
                     }
 
                     let robot_action =
@@ -213,7 +234,7 @@ impl Simulation {
                     } else {
                         None
                     };
-                    return (robot_action, status);
+                    return (robot_action, status, cpu_steps);
                 }
             }
         }

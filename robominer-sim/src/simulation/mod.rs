@@ -10,7 +10,7 @@ use robominer_program::motion::is_zero_motion;
 use crate::OreAnimationData;
 use crate::action_mapping::PendingExpressionAction;
 use crate::action_mapping::status_for_pending_wait;
-use crate::animation::{AnimationRecorder, RobotCycleStatus};
+use crate::animation::{AnimationRecorder, CpuAnimationStep, RobotCycleStatus};
 use crate::ground::{Ground, ScanState};
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
@@ -180,12 +180,13 @@ impl Simulation {
         let mut cycle_actions = vec![None; self.robots.len()];
         let mut cycle_source_lines = vec![None; self.robots.len()];
         let mut cycle_statuses = vec![None; self.robots.len()];
+        let mut cycle_cpu_steps = vec![Vec::new(); self.robots.len()];
 
         if self.time > 0 {
             for (index, pending_result) in pending_results.iter_mut().enumerate() {
                 if self.robots[index].spec.max_turns >= self.time {
                     let scan_before = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
-                    let (action, status) = self.next_robot_action(index);
+                    let (action, status, cpu_steps) = self.next_robot_action(index);
                     let scan_after = self.robots[index].actions_done()[ROBOT_ACTION_TYPE_SCAN];
                     let action_index = animation_action_index(
                         action,
@@ -203,6 +204,14 @@ impl Simulation {
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
+                    cycle_cpu_steps[index] = if cpu_steps.is_empty() {
+                        // Pending motion / scripted waits: keep a sticky highlight marker.
+                        cycle_source_lines[index]
+                            .map(|line| vec![CpuAnimationStep::line_only(line)])
+                            .unwrap_or_default()
+                    } else {
+                        cpu_steps
+                    };
                     *pending_result = self.process_robot_action(index, action);
                 } else {
                     self.action_results[index] = None;
@@ -213,6 +222,9 @@ impl Simulation {
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
+                    cycle_cpu_steps[index] = cycle_source_lines[index]
+                        .map(|line| vec![CpuAnimationStep::line_only(line)])
+                        .unwrap_or_default();
                 }
             }
 
@@ -249,6 +261,9 @@ impl Simulation {
         } else {
             for (index, line) in cycle_source_lines.iter_mut().enumerate() {
                 *line = self.program_entry_source_line(index);
+                cycle_cpu_steps[index] = line
+                    .map(|source_line| vec![CpuAnimationStep::line_only(source_line)])
+                    .unwrap_or_default();
             }
         }
 
@@ -274,6 +289,7 @@ impl Simulation {
                     cycle_actions[index],
                     cycle_source_lines[index],
                     cycle_statuses[index],
+                    std::mem::take(&mut cycle_cpu_steps[index]),
                 );
             }
         }
@@ -283,7 +299,14 @@ impl Simulation {
         }
     }
 
-    fn next_robot_action(&mut self, robot_index: usize) -> (RobotAction, Option<RobotCycleStatus>) {
+    fn next_robot_action(
+        &mut self,
+        robot_index: usize,
+    ) -> (
+        RobotAction,
+        Option<RobotCycleStatus>,
+        Vec<CpuAnimationStep>,
+    ) {
         if let Some(pending) = &self.pending_expression_actions[robot_index] {
             self.action_result_expected[robot_index] = true;
             let action = pending.next_robot_action(self.robots[robot_index].spec());
@@ -292,7 +315,7 @@ impl Simulation {
             } else {
                 None
             };
-            return (action, status);
+            return (action, status, Vec::new());
         }
 
         match &mut self.action_sources[robot_index] {
@@ -307,7 +330,7 @@ impl Simulation {
                 } else {
                     None
                 };
-                (action, status)
+                (action, status, Vec::new())
             }
             ActionSource::Program { .. } => self.run_program_cpu_loop(robot_index),
         }

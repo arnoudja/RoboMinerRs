@@ -13,7 +13,7 @@ mod simulation;
 mod tests;
 
 pub use animation::{
-    ANIMATION_PAYLOAD_VERSION, OreAnimationData, is_legacy_javascript_result_data,
+    ANIMATION_PAYLOAD_VERSION, CpuAnimationStep, OreAnimationData, is_legacy_javascript_result_data,
 };
 pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot};
 pub use position::Position;

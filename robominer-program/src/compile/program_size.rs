@@ -1,6 +1,6 @@
 use crate::types::{
-    ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableProgram,
-    ExecutableStatement, ExecutableStatementKind, VariableOperator,
+    ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableExpressionKind,
+    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, VariableOperator,
 };
 
 pub(super) fn program_instruction_size(program: &ExecutableProgram) -> usize {
@@ -55,35 +55,35 @@ fn dynamic_action_size(action: &ExecutableActionExpression) -> usize {
 }
 
 fn expression_size(expression: &ExecutableExpression) -> usize {
-    match expression {
-        ExecutableExpression::Number(_) => 1,
-        ExecutableExpression::Variable(_) => 1,
-        ExecutableExpression::VariableUpdate { operator, .. } => {
+    match &expression.kind {
+        ExecutableExpressionKind::Number(_) => 1,
+        ExecutableExpressionKind::Variable(_) => 1,
+        ExecutableExpressionKind::VariableUpdate { operator, .. } => {
             if *operator == VariableOperator::None {
                 1
             } else {
                 2
             }
         }
-        ExecutableExpression::UnaryNot(expression) => 1 + expression_size(expression),
-        ExecutableExpression::Binary { left, right, .. } => {
+        ExecutableExpressionKind::UnaryNot(expression) => 1 + expression_size(expression),
+        ExecutableExpressionKind::Binary { left, right, .. } => {
             1 + expression_size(left) + expression_size(right)
         }
-        ExecutableExpression::Time
-        | ExecutableExpression::OreDistance
-        | ExecutableExpression::OreType => 1,
-        ExecutableExpression::Ore(expression) => 1 + expression_size(expression),
-        ExecutableExpression::Scan(direction) => {
+        ExecutableExpressionKind::Time
+        | ExecutableExpressionKind::OreDistance
+        | ExecutableExpressionKind::OreType => 1,
+        ExecutableExpressionKind::Ore(expression) => 1 + expression_size(expression),
+        ExecutableExpressionKind::Scan(direction) => {
             1 + direction
                 .as_ref()
                 .map(|expression| expression_size(expression))
                 .unwrap_or(0)
         }
-        ExecutableExpression::RobotProperty(_) => 1,
-        ExecutableExpression::Move(expression)
-        | ExecutableExpression::Rotate(expression)
-        | ExecutableExpression::Dump(expression) => 1 + expression_size(expression),
-        ExecutableExpression::Action(action) => action_expression_size(action),
+        ExecutableExpressionKind::RobotProperty(_) => 1,
+        ExecutableExpressionKind::Move(expression)
+        | ExecutableExpressionKind::Rotate(expression)
+        | ExecutableExpressionKind::Dump(expression) => 1 + expression_size(expression),
+        ExecutableExpressionKind::Action(action) => action_expression_size(action),
     }
 }
 

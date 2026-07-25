@@ -164,7 +164,7 @@
     }
   ],
   "animation_contains": [
-    "\"v\":1",
+    "\"v\":2",
     "\"robots\":{\"robot\":[",
     "\"ground\":{\"sizeX\":4,\"sizeY\":4,\"positions\":[",
     "\"oreTypes\":{"

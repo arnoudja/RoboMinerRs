@@ -23,13 +23,16 @@ fn classify_rally_result_payload(result_data: &str) -> RallyResultPayloadKind {
     }
 
     match serde_json::from_str::<serde_json::Value>(result_data) {
-        Ok(value) if is_valid_v1_rally_payload(&value) => RallyResultPayloadKind::VersionedJson,
+        Ok(value) if is_valid_versioned_rally_payload(&value) => {
+            RallyResultPayloadKind::VersionedJson
+        }
         _ => RallyResultPayloadKind::Unsupported,
     }
 }
 
-fn is_valid_v1_rally_payload(value: &serde_json::Value) -> bool {
-    if value.get("v").and_then(|version| version.as_u64()) != Some(1) {
+fn is_valid_versioned_rally_payload(value: &serde_json::Value) -> bool {
+    let version = value.get("v").and_then(|version| version.as_u64());
+    if version != Some(1) && version != Some(2) {
         return false;
     }
 
@@ -251,10 +254,10 @@ fn render_rally_view_deck(
         );
         body.push_str("</div>");
         body.push_str(
-            r#"<p class="rally-view-cycle-status">Cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
+            r#"<p class="rally-view-cycle-status">Area cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
         );
         body.push_str(
-            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → seek · Shift+← → skip 10 · Home/End jump</p>"#,
+            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle · Shift+← → next area cycle · Home/End jump</p>"#,
         );
         body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
         body.push_str(
@@ -320,7 +323,7 @@ fn render_rally_view_source(
     match source {
         Some(source) if !source.is_empty() => {
             body.push_str(
-                r#"<p class="rally-view-source-note">Highlighted line is the statement running in the replay. Source is the private snapshot from this rally.</p>"#,
+                r#"<p class="rally-view-source-note">Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.</p>"#,
             );
             if let Some(program_source_id) = program_source_id {
                 render_rally_view_edit_code_link(body, program_source_id, true);

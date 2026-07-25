@@ -7,4 +7,5 @@ mod runner_move_pending;
 mod runner_rotate_pending;
 mod runner_scan;
 mod runner_variables;
+mod source_spans;
 mod unparse;

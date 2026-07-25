@@ -176,6 +176,9 @@ var myRallyPlayer = {
     lastFrameTime: null
 };
 
+/** Flat CPU-instruction timeline for the viewer robot: [{miningCycle,l,c,e}, ...] */
+var myRallyCpuTimeline = null;
+
 
 function rallyHasAnimationData()
 {
@@ -186,13 +189,77 @@ function rallyHasAnimationData()
 }
 
 
-function rallyTotalSteps()
+function rallyViewerRobot()
+{
+    if (!rallyHasAnimationData())
+    {
+        return null;
+    }
+    if (typeof myRallyViewerSlot === 'number' && myRobots.robot[myRallyViewerSlot])
+    {
+        return myRobots.robot[myRallyViewerSlot];
+    }
+    return myRobots.robot[0];
+}
+
+
+function rallyRebuildCpuTimeline()
+{
+    myRallyCpuTimeline = null;
+    var robot = rallyViewerRobot();
+    if (!robot || !robot.locations)
+    {
+        return;
+    }
+
+    var timeline = [];
+    for (var m = 0; m < robot.locations.length; m++)
+    {
+        var loc = robot.locations[m];
+        var cpu = loc.cpu;
+        if (cpu && cpu.length > 0)
+        {
+            for (var i = 0; i < cpu.length; i++)
+            {
+                timeline.push({
+                    miningCycle: m,
+                    l: cpu[i].l,
+                    c: cpu[i].c,
+                    e: cpu[i].e
+                });
+            }
+        }
+        else
+        {
+            timeline.push({
+                miningCycle: m,
+                l: loc.l,
+                c: undefined,
+                e: undefined
+            });
+        }
+    }
+    myRallyCpuTimeline = timeline;
+}
+
+
+function rallyTotalMiningCycles()
 {
     if (!rallyHasAnimationData())
     {
         return 0;
     }
     return myRobots.robot[0].locations.length;
+}
+
+
+function rallyTotalSteps()
+{
+    if (myRallyCpuTimeline && myRallyCpuTimeline.length > 0)
+    {
+        return myRallyCpuTimeline.length;
+    }
+    return rallyTotalMiningCycles();
 }
 
 
@@ -208,22 +275,62 @@ function rallyTotalTime()
 }
 
 
-function rallyUpdateTransportUi(completed, cycle)
+function rallyCpuIndexAtTime(time)
+{
+    var stepTime = rallyStepTime();
+    if (stepTime <= 0)
+    {
+        return 0;
+    }
+    var index = Math.floor(time / stepTime);
+    var total = rallyTotalSteps();
+    if (index < 0)
+    {
+        return 0;
+    }
+    if (index >= total)
+    {
+        return Math.max(0, total - 1);
+    }
+    return index;
+}
+
+
+function rallyCpuEntryAtTime(time)
+{
+    if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
+    {
+        var cycle = Math.floor(time / rallyStepTime());
+        return { miningCycle: cycle, l: undefined, c: undefined, e: undefined };
+    }
+    return myRallyCpuTimeline[rallyCpuIndexAtTime(time)];
+}
+
+
+function rallyPoseTimeForCpuEntry(entry, stepTime)
+{
+    var miningCycle = entry && typeof entry.miningCycle === 'number' ? entry.miningCycle : 0;
+    // Snap pose to the end of the mining cycle so world state matches completed physics.
+    return miningCycle * stepTime + stepTime * 0.999;
+}
+
+
+function rallyUpdateTransportUi(completed, cpuIndex, miningCycle)
 {
     if (typeof myCycleText !== 'undefined' && myCycleText)
     {
-        myCycleText.value = cycle;
+        myCycleText.value = miningCycle;
     }
 
     var current = document.getElementById('rallyCycleCurrent');
     var total = document.getElementById('rallyCycleTotal');
     if (current)
     {
-        current.textContent = cycle;
+        current.textContent = miningCycle;
     }
     if (total)
     {
-        total.textContent = rallyTotalSteps();
+        total.textContent = rallyTotalMiningCycles();
     }
 
     var fill = document.getElementById('rallyProgressFill');
@@ -235,12 +342,16 @@ function rallyUpdateTransportUi(completed, cycle)
     var track = document.getElementById('rallyProgressTrack');
     if (track)
     {
-        var totalCycles = Math.max(0, rallyTotalSteps());
-        var currentCycle = Math.min(totalCycles, Math.max(0, Math.floor(cycle)));
+        var totalCpu = Math.max(0, rallyTotalSteps());
+        var currentCpu = Math.min(totalCpu, Math.max(0, Math.floor(cpuIndex)));
+        var totalMining = Math.max(0, rallyTotalMiningCycles());
         track.setAttribute('aria-valuemin', '0');
-        track.setAttribute('aria-valuemax', String(totalCycles));
-        track.setAttribute('aria-valuenow', String(currentCycle));
-        track.setAttribute('aria-valuetext', 'Cycle ' + currentCycle + ' of ' + totalCycles);
+        track.setAttribute('aria-valuemax', String(totalCpu));
+        track.setAttribute('aria-valuenow', String(currentCpu));
+        track.setAttribute(
+            'aria-valuetext',
+            'CPU ' + currentCpu + ' of ' + totalCpu + ', area cycle ' + miningCycle + ' of ' + totalMining
+        );
     }
 
     if (typeof myProgressContext !== 'undefined' && myProgressContext && typeof myProgressCanvas !== 'undefined' && myProgressCanvas)
@@ -281,6 +392,11 @@ function renderRallyFrame()
         return;
     }
 
+    if (!myRallyCpuTimeline)
+    {
+        rallyRebuildCpuTimeline();
+    }
+
     var time = myRallyPlayer.elapsedMs;
     var stepTime = rallyStepTime();
     var totalSteps = rallyTotalSteps();
@@ -291,14 +407,17 @@ function renderRallyFrame()
         completed = 1;
     }
 
-    var cycle = Math.floor(time / stepTime);
-    if (cycle > totalSteps)
+    var cpuIndex = rallyCpuIndexAtTime(time);
+    var entry = rallyCpuEntryAtTime(time);
+    var cycle = entry.miningCycle;
+    if (cycle > rallyTotalMiningCycles())
     {
-        cycle = totalSteps;
+        cycle = rallyTotalMiningCycles();
     }
 
-    rallyUpdateTransportUi(completed, cycle);
+    rallyUpdateTransportUi(completed, cpuIndex, cycle);
 
+    var poseTime = rallyPoseTimeForCpuEntry(entry, stepTime);
     var scale = myRallyPlayer.scale;
     for (var i = 0; i < myRobots.robot.length; i++)
     {
@@ -309,11 +428,11 @@ function renderRallyFrame()
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {
-        updateRobotPosition(i, time, stepTime);
+        updateRobotPosition(i, poseTime, stepTime);
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
         drawRobotDepot(myRobots.robot[i]);
-        updateRobotDebugPanel(myRobots.robot[i], cycle);
+        updateRobotDebugPanel(myRobots.robot[i], cycle, entry);
     }
 }
 
@@ -325,9 +444,13 @@ function redrawRallyScene()
         return;
     }
 
+    if (!myRallyCpuTimeline)
+    {
+        rallyRebuildCpuTimeline();
+    }
+
     var time = myRallyPlayer.elapsedMs;
     var stepTime = rallyStepTime();
-    var totalSteps = rallyTotalSteps();
     var totalTime = rallyTotalTime();
     var completed = totalTime > 0 ? time / totalTime : 0;
     if (completed > 1)
@@ -335,25 +458,28 @@ function redrawRallyScene()
         completed = 1;
     }
 
-    var cycle = Math.floor(time / stepTime);
-    if (cycle > totalSteps)
+    var cpuIndex = rallyCpuIndexAtTime(time);
+    var entry = rallyCpuEntryAtTime(time);
+    var cycle = entry.miningCycle;
+    if (cycle > rallyTotalMiningCycles())
     {
-        cycle = totalSteps;
+        cycle = rallyTotalMiningCycles();
     }
 
-    rallyUpdateTransportUi(completed, cycle);
+    rallyUpdateTransportUi(completed, cpuIndex, cycle);
 
+    var poseTime = rallyPoseTimeForCpuEntry(entry, stepTime);
     var scale = myRallyPlayer.scale;
     drawFullGroundAt(cycle, scale);
     drawDepotHomes(scale, cycle);
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {
-        updateRobotPosition(i, time, stepTime);
+        updateRobotPosition(i, poseTime, stepTime);
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
         drawRobotDepot(myRobots.robot[i]);
-        updateRobotDebugPanel(myRobots.robot[i], cycle);
+        updateRobotDebugPanel(myRobots.robot[i], cycle, entry);
     }
 }
 
@@ -551,6 +677,85 @@ function rallySeekByCycles(deltaCycles)
 }
 
 
+function rallySeekByMiningCycles(deltaMiningCycles)
+{
+    if (!rallyHasAnimationData())
+    {
+        return;
+    }
+    if (!myRallyCpuTimeline)
+    {
+        rallyRebuildCpuTimeline();
+    }
+    if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
+    {
+        rallySeekByCycles(deltaMiningCycles);
+        return;
+    }
+
+    var currentIndex = rallyCpuIndexAtTime(myRallyPlayer.elapsedMs);
+    var currentMining = myRallyCpuTimeline[currentIndex].miningCycle;
+    var targetMining = currentMining + deltaMiningCycles;
+    if (targetMining < 0)
+    {
+        targetMining = 0;
+    }
+    var maxMining = rallyTotalMiningCycles() - 1;
+    if (targetMining > maxMining)
+    {
+        targetMining = maxMining;
+    }
+
+    var targetIndex = currentIndex;
+    if (deltaMiningCycles > 0)
+    {
+        targetIndex = myRallyCpuTimeline.length - 1;
+        for (var i = currentIndex + 1; i < myRallyCpuTimeline.length; i++)
+        {
+            if (myRallyCpuTimeline[i].miningCycle >= targetMining)
+            {
+                targetIndex = i;
+                break;
+            }
+        }
+    }
+    else if (deltaMiningCycles < 0)
+    {
+        targetIndex = 0;
+        for (var j = currentIndex - 1; j >= 0; j--)
+        {
+            if (myRallyCpuTimeline[j].miningCycle <= targetMining)
+            {
+                // Land on the first CPU step of that mining cycle.
+                targetMining = myRallyCpuTimeline[j].miningCycle;
+                while (j > 0 && myRallyCpuTimeline[j - 1].miningCycle === targetMining)
+                {
+                    j--;
+                }
+                targetIndex = j;
+                break;
+            }
+        }
+    }
+
+    var total = myRallyCpuTimeline.length;
+    var stepTime = rallyStepTime();
+    if (total <= 0 || stepTime <= 0)
+    {
+        return;
+    }
+    var wasPlaying = myRallyPlayer.playing;
+    rallyPause();
+    myRallyPlayer.elapsedMs = Math.min(targetIndex, total - 1) * stepTime;
+    myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime();
+    redrawRallyScene();
+    if (wasPlaying && !myRallyPlayer.finished)
+    {
+        rallyPlay();
+    }
+}
+
+
 function rallyTogglePlayPause()
 {
     if (myRallyPlayer.playing)
@@ -623,14 +828,28 @@ function rallyBindKeyboardControls()
         if (key === 'ArrowLeft')
         {
             event.preventDefault();
-            rallySeekByCycles(event.shiftKey ? -10 : -1);
+            if (event.shiftKey)
+            {
+                rallySeekByMiningCycles(-1);
+            }
+            else
+            {
+                rallySeekByCycles(-1);
+            }
             return;
         }
 
         if (key === 'ArrowRight')
         {
             event.preventDefault();
-            rallySeekByCycles(event.shiftKey ? 10 : 1);
+            if (event.shiftKey)
+            {
+                rallySeekByMiningCycles(1);
+            }
+            else
+            {
+                rallySeekByCycles(1);
+            }
             return;
         }
 
@@ -722,6 +941,7 @@ function runanimation()
         myRobots.robot[i].updatedTo = 0;
     }
     expandAllRobotLocationDeltas();
+    rallyRebuildCpuTimeline();
 
     rallyBindTransportControls();
     redrawRallyScene();

@@ -94,9 +94,15 @@ fn animation_data_uses_versioned_json_payload_shape() {
 
     let payload: serde_json::Value =
         serde_json::from_str(&data).expect("animation payload should be JSON");
-    assert_eq!(payload["v"], 1);
+    assert_eq!(payload["v"], 2);
     assert_eq!(payload["robots"]["robot"][0]["robotnr"], 0);
     assert_eq!(payload["robots"]["robot"][0]["locations"][0]["l"], 1);
+    assert!(
+        payload["robots"]["robot"][0]["locations"][1]["cpu"]
+            .as_array()
+            .is_some_and(|cpu| !cpu.is_empty()),
+        "mining cycle should record CPU micro-steps: {data}"
+    );
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["A"], 4);
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["a"], 6);
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["l"], 1);
@@ -431,6 +437,10 @@ fn animation_data_records_source_line_for_program_actions() {
     assert!(
         data.contains(r#""a":6"#) && data.contains(r#""l":"#),
         "mine cycles should include a source line: {data}"
+    );
+    assert!(
+        data.contains(r#""cpu":"#),
+        "program animation should include cpu micro-steps: {data}"
     );
     assert!(
         !data.contains("src:"),

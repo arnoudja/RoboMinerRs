@@ -1,6 +1,8 @@
 use super::super::{ExecutableRunner, StepOutcome};
 use super::resume::ExpressionResume;
-use super::schedule::{ExpressionWork, Truthy, evaluate_operator, schedule_expression};
+use super::schedule::{
+    ExpressionWork, ExpressionWorkItem, Truthy, evaluate_operator, schedule_expression,
+};
 use crate::pending_physical_action::{
     ContinuePhysicalAction, PendingPhysicalAction, PhysicalCompletion,
 };
@@ -8,7 +10,7 @@ use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct OngoingExpressionEval {
-    work: Vec<ExpressionWork>,
+    work: Vec<ExpressionWorkItem>,
     index: usize,
     values: Vec<f64>,
     resume: ExpressionResume,
@@ -18,9 +20,14 @@ impl OngoingExpressionEval {
     pub(crate) fn pending_scan_read(&self) -> bool {
         self.index < self.work.len()
             && matches!(
-                self.work[self.index],
+                self.work[self.index].kind,
                 ExpressionWork::PushOreDistance | ExpressionWork::PushOreType
             )
+    }
+
+    /// Span of the sub-expression this evaluation is about to run, if it has not finished.
+    pub(crate) fn current_span(&self) -> Option<SourceSpan> {
+        self.work.get(self.index).map(|item| item.span)
     }
 }
 
@@ -60,7 +67,7 @@ impl ExecutableRunner {
 
         let work = {
             let eval = self.expression_eval.as_ref().expect("expression eval");
-            eval.work[eval.index].clone()
+            eval.work[eval.index].kind.clone()
         };
 
         if let ExpressionWork::PushAction(action) = &work {
@@ -234,7 +241,7 @@ impl ExecutableRunner {
         let action = fixed_action.unwrap_or_else(|| {
             let eval = self.expression_eval.as_mut().expect("expression eval");
             let arg = eval.values.pop().unwrap_or(0.0);
-            match eval.work[eval.index] {
+            match eval.work[eval.index].kind {
                 ExpressionWork::PushDynamicMove => ExecutableAction::Move(arg),
                 ExpressionWork::PushDynamicRotate => ExecutableAction::Rotate(arg),
                 _ => unreachable!("dynamic move/rotate requires matching work item"),

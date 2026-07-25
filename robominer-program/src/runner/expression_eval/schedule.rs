@@ -1,6 +1,15 @@
 use crate::types::{
-    ExecutableAction, ExecutableExpression, Operator, RobotProperty, VariableOperator,
+    ExecutableAction, ExecutableExpression, ExecutableExpressionKind, Operator, RobotProperty,
+    SourceSpan, VariableOperator,
 };
+
+/// One CPU step of expression evaluation, tagged with the source it came from so the
+/// rally replay can highlight the sub-expression being evaluated.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct ExpressionWorkItem {
+    pub span: SourceSpan,
+    pub kind: ExpressionWork,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum ExpressionWork {
@@ -25,72 +34,80 @@ pub(crate) enum ExpressionWork {
 }
 
 pub(crate) fn schedule_expression(
-    work: &mut Vec<ExpressionWork>,
+    work: &mut Vec<ExpressionWorkItem>,
     expression: &ExecutableExpression,
 ) {
-    match expression {
-        ExecutableExpression::Number(value) => {
-            work.push(ExpressionWork::PushNumber(*value));
+    let span = expression.span;
+    let push = |work: &mut Vec<ExpressionWorkItem>, kind| {
+        work.push(ExpressionWorkItem { span, kind });
+    };
+
+    match &expression.kind {
+        ExecutableExpressionKind::Number(value) => {
+            push(work, ExpressionWork::PushNumber(*value));
         }
-        ExecutableExpression::Variable(name) => {
-            work.push(ExpressionWork::PushVariable(name.clone()));
+        ExecutableExpressionKind::Variable(name) => {
+            push(work, ExpressionWork::PushVariable(name.clone()));
         }
-        ExecutableExpression::VariableUpdate { name, operator } => {
-            work.push(ExpressionWork::PushVariableUpdate {
-                name: name.clone(),
-                operator: *operator,
-            });
+        ExecutableExpressionKind::VariableUpdate { name, operator } => {
+            push(
+                work,
+                ExpressionWork::PushVariableUpdate {
+                    name: name.clone(),
+                    operator: *operator,
+                },
+            );
         }
-        ExecutableExpression::UnaryNot(value) => {
+        ExecutableExpressionKind::UnaryNot(value) => {
             schedule_expression(work, value);
-            work.push(ExpressionWork::ApplyUnaryNot);
+            push(work, ExpressionWork::ApplyUnaryNot);
         }
-        ExecutableExpression::Binary {
+        ExecutableExpressionKind::Binary {
             operator,
             left,
             right,
         } => {
             schedule_expression(work, left);
             schedule_expression(work, right);
-            work.push(ExpressionWork::ApplyBinary(*operator));
+            push(work, ExpressionWork::ApplyBinary(*operator));
         }
-        ExecutableExpression::Time => {
-            work.push(ExpressionWork::PushTime);
+        ExecutableExpressionKind::Time => {
+            push(work, ExpressionWork::PushTime);
         }
         // Deprecated: prefer RobotProperty::OreStored*.
-        ExecutableExpression::Ore(ore_type) => {
+        ExecutableExpressionKind::Ore(ore_type) => {
             schedule_expression(work, ore_type);
-            work.push(ExpressionWork::PushOre);
+            push(work, ExpressionWork::PushOre);
         }
-        ExecutableExpression::Scan(direction) => {
+        ExecutableExpressionKind::Scan(direction) => {
             if let Some(direction) = direction {
                 schedule_expression(work, direction);
             }
-            work.push(ExpressionWork::PushStartScan);
+            push(work, ExpressionWork::PushStartScan);
         }
-        ExecutableExpression::OreDistance => {
-            work.push(ExpressionWork::PushOreDistance);
+        ExecutableExpressionKind::OreDistance => {
+            push(work, ExpressionWork::PushOreDistance);
         }
-        ExecutableExpression::OreType => {
-            work.push(ExpressionWork::PushOreType);
+        ExecutableExpressionKind::OreType => {
+            push(work, ExpressionWork::PushOreType);
         }
-        ExecutableExpression::RobotProperty(property) => {
-            work.push(ExpressionWork::PushRobotProperty(*property));
+        ExecutableExpressionKind::RobotProperty(property) => {
+            push(work, ExpressionWork::PushRobotProperty(*property));
         }
-        ExecutableExpression::Move(arg) => {
+        ExecutableExpressionKind::Move(arg) => {
             schedule_expression(work, arg);
-            work.push(ExpressionWork::PushDynamicMove);
+            push(work, ExpressionWork::PushDynamicMove);
         }
-        ExecutableExpression::Rotate(arg) => {
+        ExecutableExpressionKind::Rotate(arg) => {
             schedule_expression(work, arg);
-            work.push(ExpressionWork::PushDynamicRotate);
+            push(work, ExpressionWork::PushDynamicRotate);
         }
-        ExecutableExpression::Dump(arg) => {
+        ExecutableExpressionKind::Dump(arg) => {
             schedule_expression(work, arg);
-            work.push(ExpressionWork::PushDynamicDump);
+            push(work, ExpressionWork::PushDynamicDump);
         }
-        ExecutableExpression::Action(action) => {
-            work.push(ExpressionWork::PushAction(*action));
+        ExecutableExpressionKind::Action(action) => {
+            push(work, ExpressionWork::PushAction(*action));
         }
     }
 }
