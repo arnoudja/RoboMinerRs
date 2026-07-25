@@ -302,11 +302,7 @@ impl Simulation {
     fn next_robot_action(
         &mut self,
         robot_index: usize,
-    ) -> (
-        RobotAction,
-        Option<RobotCycleStatus>,
-        Vec<CpuAnimationStep>,
-    ) {
+    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<CpuAnimationStep>) {
         if let Some(pending) = &self.pending_expression_actions[robot_index] {
             self.action_result_expected[robot_index] = true;
             let action = pending.next_robot_action(self.robots[robot_index].spec());

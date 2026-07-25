@@ -522,9 +522,9 @@ fn rally_view_rendering_accepts_v2_result_data() {
     assert!(html.contains(r#"id="rally-result-data""#));
     assert!(html.contains(r#""v":2"#));
     assert!(html.contains(r#"id="rallyCanvas""#));
-    assert!(!html.contains(
-        r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#
-    ));
+    assert!(
+        !html.contains(r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#)
+    );
 }
 
 #[test]

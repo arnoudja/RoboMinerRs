@@ -121,11 +121,7 @@ impl Simulation {
     pub(super) fn run_program_cpu_loop(
         &mut self,
         robot_index: usize,
-    ) -> (
-        RobotAction,
-        Option<RobotCycleStatus>,
-        Vec<CpuAnimationStep>,
-    ) {
+    ) -> (RobotAction, Option<RobotCycleStatus>, Vec<CpuAnimationStep>) {
         let cpu_speed = self.robots[robot_index].spec.cpu_speed;
         let mut cpu_used = 0;
         let mut cpu_steps = Vec::new();
