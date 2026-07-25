@@ -2,118 +2,15 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 
 use crate::{
-    AchievementClaimStateRecord, AchievementOverviewTrackRecord,
     AchievementPagePointsSummaryRecord, AchievementPageScoreRequirementRecord,
     AchievementPageStateRecord, AchievementPageTotalRequirementRecord, INITIAL_ORE_WALLET_MAX,
-    UserMiningAreaScoreRecord, UserOreMinedRecord,
 };
-
-pub async fn list_achievement_claim_states_for_user(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<Vec<AchievementClaimStateRecord>, sqlx::Error> {
-    super::unlock::reconcile_successor_unlocks(pool, user_id).await?;
-
-    sqlx::query_as::<_, (i64, i8)>(
-        "SELECT UserAchievement.achievementId, \
-                CASE WHEN AchievementStep.achievementId IS NOT NULL \
-                       AND NOT EXISTS \
-                         (SELECT 1 \
-                          FROM AchievementStepMiningTotalRequirement \
-                          WHERE AchievementStepMiningTotalRequirement.achievementId = AchievementStep.achievementId \
-                            AND AchievementStepMiningTotalRequirement.step = AchievementStep.step \
-                            AND AchievementStepMiningTotalRequirement.amount > \
-                              (SELECT CAST(COALESCE(SUM(RobotLifetimeResult.amount), 0) AS SIGNED) \
-                               FROM RobotLifetimeResult \
-                               INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
-                               WHERE Robot.userId = UserAchievement.userId \
-                                 AND RobotLifetimeResult.oreId = AchievementStepMiningTotalRequirement.oreId)) \
-                       AND NOT EXISTS \
-                         (SELECT 1 \
-                          FROM AchievementStepMiningScoreRequirement \
-                          WHERE AchievementStepMiningScoreRequirement.achievementId = AchievementStep.achievementId \
-                            AND AchievementStepMiningScoreRequirement.step = AchievementStep.step \
-                            AND AchievementStepMiningScoreRequirement.minimumScore > \
-                              (SELECT COALESCE(MAX(RobotMiningAreaScore.score), 0.0) \
-                               FROM RobotMiningAreaScore \
-                               INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
-                               WHERE Robot.userId = UserAchievement.userId \
-                                 AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId)) \
-                     THEN 1 ELSE 0 END \
-         FROM UserAchievement \
-         LEFT JOIN AchievementStep \
-           ON AchievementStep.achievementId = UserAchievement.achievementId \
-          AND AchievementStep.step = UserAchievement.stepsClaimed + 1 \
-         WHERE UserAchievement.userId = ? \
-         ORDER BY UserAchievement.achievementId",
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|(achievement_id, claimable)| AchievementClaimStateRecord {
-                achievement_id,
-                claimable: claimable != 0,
-            })
-            .collect()
-    })
-}
-
-pub async fn list_user_ore_mined_totals(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<Vec<UserOreMinedRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i32)>(
-        "SELECT RobotLifetimeResult.oreId, \
-                CAST(COALESCE(SUM(RobotLifetimeResult.amount), 0) AS SIGNED) \
-         FROM RobotLifetimeResult \
-         INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
-         WHERE Robot.userId = ? \
-         GROUP BY RobotLifetimeResult.oreId \
-         ORDER BY RobotLifetimeResult.oreId",
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|(ore_id, amount)| UserOreMinedRecord { ore_id, amount })
-            .collect()
-    })
-}
-
-pub async fn list_user_best_mining_area_scores(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<Vec<UserMiningAreaScoreRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, f64)>(
-        "SELECT RobotMiningAreaScore.miningAreaId, \
-                COALESCE(MAX(RobotMiningAreaScore.score), 0.0) \
-         FROM RobotMiningAreaScore \
-         INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
-         WHERE Robot.userId = ? \
-         GROUP BY RobotMiningAreaScore.miningAreaId \
-         ORDER BY RobotMiningAreaScore.miningAreaId",
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|(mining_area_id, score)| UserMiningAreaScoreRecord {
-                mining_area_id,
-                score,
-            })
-            .collect()
-    })
-}
 
 pub async fn list_achievement_page_states_for_user(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<AchievementPageStateRecord>, sqlx::Error> {
-    super::unlock::reconcile_successor_unlocks(pool, user_id).await?;
+    super::super::unlock::reconcile_successor_unlocks(pool, user_id).await?;
 
     let query = format!(
         "SELECT Achievement.id AS achievementId, \
@@ -218,55 +115,6 @@ pub async fn list_achievement_page_states_for_user(
                 })
                 .collect::<Result<Vec<_>, sqlx::Error>>()
         })?
-}
-
-/// Unlocked achievement tracks for a read-only player overview.
-///
-/// Unlike the claim-page loader, this includes completed tracks and does not
-/// reconcile successor unlocks (viewing another player must stay read-only).
-pub async fn list_achievement_overview_tracks_for_user(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<Vec<AchievementOverviewTrackRecord>, sqlx::Error> {
-    sqlx::query(
-        "SELECT Achievement.id AS achievementId, \
-                Achievement.title AS title, \
-                Achievement.description AS description, \
-                UserAchievement.stepsClaimed AS stepsClaimed, \
-                (SELECT COUNT(*) FROM AchievementStep AllSteps \
-                 WHERE AllSteps.achievementId = Achievement.id) AS numberOfSteps, \
-                CAST(COALESCE((SELECT SUM(ClaimedStep.achievementPoints) \
-                               FROM AchievementStep ClaimedStep \
-                               WHERE ClaimedStep.achievementId = Achievement.id \
-                                 AND ClaimedStep.step <= UserAchievement.stepsClaimed), 0) AS SIGNED) \
-                  AS pointsEarned, \
-                CAST(COALESCE((SELECT SUM(AllPoints.achievementPoints) \
-                               FROM AchievementStep AllPoints \
-                               WHERE AllPoints.achievementId = Achievement.id), 0) AS SIGNED) \
-                  AS totalPoints \
-         FROM UserAchievement \
-         INNER JOIN Achievement ON Achievement.id = UserAchievement.achievementId \
-         WHERE UserAchievement.userId = ? \
-         ORDER BY UserAchievement.achievementId DESC",
-    )
-    .bind(user_id)
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|row| {
-                Ok(AchievementOverviewTrackRecord {
-                    achievement_id: row.try_get("achievementId")?,
-                    title: row.try_get("title")?,
-                    description: row.try_get("description")?,
-                    steps_claimed: row.try_get("stepsClaimed")?,
-                    number_of_steps: row.try_get("numberOfSteps")?,
-                    points_earned: row.try_get("pointsEarned")?,
-                    total_points: row.try_get("totalPoints")?,
-                })
-            })
-            .collect::<Result<Vec<_>, sqlx::Error>>()
-    })?
 }
 
 pub async fn load_achievement_page_points_summary_for_user(
