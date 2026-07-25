@@ -68,7 +68,7 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
 
     let get_response = raw_http_exchange(
         &addr,
-        "GET /css/robominer.css HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+        "GET /css/pages/layout.css HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
     );
     assert!(
         get_response.starts_with("HTTP/1.1 200"),
@@ -111,6 +111,28 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
     assert!(
         post_response.starts_with("HTTP/1.1 413"),
         "expected 413 for oversized body, got:\n{post_response}"
+    );
+
+    let help_response = raw_http_exchange(
+        &addr,
+        "GET /help HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+    );
+    assert!(
+        help_response.starts_with("HTTP/1.1 200"),
+        "expected 200 for /help, got:\n{help_response}"
+    );
+    assert!(
+        help_response.contains(r#"href="css/pages/layout.css?v="#),
+        "expected page-scoped layout stylesheet link, got:\n{help_response}"
+    );
+    assert!(
+        help_response.contains(r#"href="css/pages/help.css?v="#),
+        "expected page-scoped help stylesheet link, got:\n{help_response}"
+    );
+    let help_stylesheet_count = help_response.matches(r#"<link rel="stylesheet""#).count();
+    assert!(
+        help_stylesheet_count > 1,
+        "expected multiple page-scoped stylesheet links, got {help_stylesheet_count} in:\n{help_response}"
     );
 
     let health_response = raw_http_exchange(

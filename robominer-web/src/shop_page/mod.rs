@@ -194,7 +194,7 @@ fn resolve_selected_part_id(
 pub(super) fn robot_part_transaction_rejection_message(
     rejection: robominer_db::RobotPartTransactionRejection,
 ) -> &'static str {
-    robominer_domain::robot_part_transaction_rejection_message(rejection)
+    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(rejection)
 }
 
 mod catalog;

@@ -1,0 +1,756 @@
+/******************************************************
+ * Page layout + app shell
+ ******************************************************/
+
+:root {
+    --shell-bg-deep: #070b12;
+    --shell-bg-header: linear-gradient(180deg, #121a2b 0%, #0d1422 100%);
+    --shell-bg-footer: #0d1220;
+    --shell-border: #243657;
+    --shell-text: #c5d4ea;
+    --shell-text-muted: #8b9bb8;
+    --shell-accent: #00e5ff;
+    --shell-link-hover: #1a2840;
+    --shell-link-active: #1e3a5f;
+    --select-option-bg: #0f1728;
+    --select-option-text: #e2e8f0;
+    /* Classic vh fallback; overridden to dvh when supported (iOS Safari URL bar). */
+    --app-vh: 1vh;
+    --app-svh: 1vh;
+    --app-viewport-height: 100vh;
+    color-scheme: dark;
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --app-vh: 1dvh;
+        --app-viewport-height: 100dvh;
+    }
+}
+
+@supports (height: 100svh) {
+    :root {
+        --app-svh: 1svh;
+    }
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    text-align: left;
+    margin: 0;
+    min-height: 100%;
+    background: var(--shell-bg-deep);
+    color: var(--shell-text);
+}
+
+.app-shell-skip {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.app-shell-skip:focus {
+    position: fixed;
+    left: 16px;
+    top: 16px;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    z-index: 1000;
+    padding: 10px 16px;
+    background: #121a2b;
+    border: 2px solid var(--shell-accent);
+    color: #d7e0f0;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+div.main {
+    min-height: var(--app-viewport-height);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--shell-bg-deep);
+}
+
+div.interface {
+    background: #eee;
+    flex: 1 0 auto;
+    margin: 0;
+    padding: 16px 16px 24px;
+}
+
+.app-shell-header {
+    background: var(--shell-bg-header);
+    border-bottom: 1px solid var(--shell-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    flex-shrink: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.app-shell-inner {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 10px 16px;
+    width: 100%;
+}
+
+.app-shell-home {
+    color: #f8fafc;
+    flex: 0 0 auto;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+}
+
+.app-shell-home:hover {
+    color: var(--shell-accent);
+}
+
+.app-shell-nav-toggle {
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+.app-shell-menu-toggle {
+    align-items: center;
+    background: rgba(26, 40, 64, 0.85);
+    border: 1px solid var(--shell-border);
+    border-radius: 8px;
+    color: var(--shell-text);
+    cursor: pointer;
+    display: none;
+    gap: 8px;
+    padding: 8px 12px;
+    user-select: none;
+}
+
+.app-shell-menu-toggle:hover {
+    background: var(--shell-link-hover);
+    color: #f8fafc;
+}
+
+.app-shell-menu-toggle-icon {
+    background: currentColor;
+    border-radius: 1px;
+    box-shadow: 0 6px 0 currentColor, 0 12px 0 currentColor;
+    display: block;
+    height: 2px;
+    width: 16px;
+}
+
+.app-shell-menu-toggle-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.app-shell-nav-panel {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    gap: 12px 20px;
+    min-width: 0;
+}
+
+.app-shell-hud {
+    align-items: center;
+    display: flex;
+    flex: 1 1 280px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    min-width: 0;
+}
+
+.app-shell-hud-item {
+    align-items: center;
+    background: rgba(10, 16, 26, 0.72);
+    border: 1px solid rgba(36, 54, 87, 0.9);
+    border-radius: 999px;
+    color: var(--shell-text);
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px 12px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.app-shell-hud-item:hover {
+    background: var(--shell-link-hover);
+    color: #f8fafc;
+}
+
+.app-shell-hud-label {
+    color: var(--shell-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.app-shell-hud-value {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.app-shell-hud-alert {
+    border-color: rgba(255, 209, 102, 0.55);
+    box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.18);
+    color: #ffe8a3;
+}
+
+.app-shell-hud-alert:hover {
+    background: rgba(255, 209, 102, 0.12);
+    color: #fff6d6;
+}
+
+.app-shell-hud-wallet {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.app-shell-hud-wallet-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.app-shell-hud-wallet-item {
+    align-items: center;
+    background: rgba(10, 16, 26, 0.72);
+    border: 1px solid rgba(36, 54, 87, 0.9);
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px 10px;
+}
+
+.app-shell-hud-wallet-full {
+    border-color: rgba(255, 107, 107, 0.55);
+}
+
+.app-shell-hud-wallet-ore {
+    color: #f8fafc;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.app-shell-hud-wallet-amount {
+    color: var(--shell-text-muted);
+    font-size: 0.76rem;
+}
+
+.app-shell-hud-wallet-more {
+    align-items: center;
+    color: var(--shell-text-muted);
+    display: inline-flex;
+    font-size: 0.76rem;
+    padding: 4px 8px;
+}
+
+.app-shell-nav {
+    flex: 1 1 420px;
+    min-width: 0;
+}
+
+.app-shell-menu,
+.app-shell-group-links,
+.app-shell-account-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.app-shell-menu {
+    align-items: flex-start;
+    gap: 8px 16px;
+}
+
+.app-shell-group {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.app-shell-group-label {
+    color: var(--shell-text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.app-shell-group-links {
+    gap: 2px;
+}
+
+.app-shell-account {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.app-shell-account-links {
+    justify-content: flex-end;
+}
+
+.app-shell-link {
+    border-radius: 6px;
+    color: var(--shell-text);
+    display: block;
+    font-size: 0.92rem;
+    padding: 8px 10px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.app-shell-link:hover {
+    background: var(--shell-link-hover);
+    color: #f8fafc;
+}
+
+.app-shell-link:focus-visible {
+    outline: 2px solid var(--shell-accent);
+    outline-offset: 2px;
+}
+
+.app-shell-link-active {
+    background: var(--shell-link-active);
+    box-shadow: inset 0 -2px 0 var(--shell-accent);
+    color: #f8fafc;
+}
+
+.app-shell-account-link {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.app-shell-account-label {
+    font-weight: 600;
+}
+
+.app-shell-account-user {
+    color: var(--shell-text-muted);
+    font-size: 0.82rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-shell-link-active .app-shell-account-user {
+    color: #b8d4ff;
+}
+
+.app-shell-footer {
+    background: var(--shell-bg-footer);
+    border-top: 1px solid var(--shell-border);
+    color: var(--shell-text-muted);
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.app-shell-footer-inner {
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.app-shell-footer-brand {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.app-shell-footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+}
+
+.app-shell-footer-link {
+    color: var(--shell-text-muted);
+    font-size: 0.84rem;
+    text-decoration: none;
+}
+
+.app-shell-footer-link:hover {
+    color: var(--shell-accent);
+}
+
+.app-shell-footer-brand .app-shell-footer-link {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+
+/******************************************************
+ * Confirmation / alert dialogs
+ ******************************************************/
+
+body.robominer-dialog-open {
+    overflow: hidden;
+}
+
+.robominer-dialog {
+    inset: 0;
+    padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
+    position: fixed;
+    z-index: 1400;
+}
+
+.robominer-dialog[hidden] {
+    display: none !important;
+}
+
+.robominer-dialog-backdrop {
+    appearance: none;
+    background: rgba(4, 8, 14, 0.78);
+    border: 0;
+    cursor: pointer;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+}
+
+.robominer-dialog-panel {
+    background: linear-gradient(180deg, rgba(18, 26, 43, 0.98) 0%, rgba(10, 16, 26, 0.99) 100%);
+    border: 1px solid var(--shell-border);
+    border-radius: 10px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    color: var(--shell-text);
+    left: 50%;
+    margin: 0;
+    max-width: 28rem;
+    padding: 20px 22px 18px;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 32px);
+}
+
+.robominer-dialog-title {
+    color: #e8fcff;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    margin: 0 0 10px;
+}
+
+.robominer-dialog-message {
+    color: var(--shell-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0 0 18px;
+}
+
+.robominer-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.robominer-dialog-btn {
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid var(--shell-border);
+    border-radius: 6px;
+    color: var(--shell-text);
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: 0.02em;
+    padding: 7px 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.robominer-dialog-btn:hover {
+    border-color: rgba(0, 229, 255, 0.45);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.12);
+    color: #ffffff;
+}
+
+.robominer-dialog-btn:focus-visible {
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.16);
+    outline: none;
+}
+
+.robominer-dialog-btn-primary {
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.22) 0%, rgba(0, 229, 255, 0.1) 100%);
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.16);
+    color: #e8fcff;
+}
+
+.robominer-dialog-btn-primary:hover {
+    background: linear-gradient(180deg, rgba(0, 229, 255, 0.3) 0%, rgba(0, 229, 255, 0.14) 100%);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.28);
+}
+
+.robominer-dialog-btn-secondary {
+    color: var(--shell-text-muted);
+}
+
+.robominer-dialog-btn-secondary:hover {
+    color: var(--shell-text);
+}
+
+@media (max-width: 900px) {
+    .app-shell-inner {
+        align-items: stretch;
+    }
+
+    .app-shell-home {
+        flex: 1 1 auto;
+    }
+
+    .app-shell-hud {
+        flex: 1 1 100%;
+        order: 4;
+    }
+
+    .app-shell-menu-toggle {
+        display: inline-flex;
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    .app-shell-nav-panel {
+        background: rgba(10, 16, 26, 0.96);
+        border: 1px solid var(--shell-border);
+        border-radius: 10px;
+        display: none;
+        flex: 1 1 100%;
+        flex-direction: column;
+        gap: 16px;
+        order: 5;
+        padding: 12px;
+    }
+
+    .app-shell-nav-toggle:checked ~ .app-shell-nav-panel {
+        display: flex;
+    }
+
+    .app-shell-nav-toggle:checked + .app-shell-menu-toggle {
+        background: var(--shell-link-active);
+        box-shadow: inset 0 -2px 0 var(--shell-accent);
+        color: #f8fafc;
+    }
+
+    .app-shell-nav,
+    .app-shell-account {
+        flex: 1 1 100%;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .app-shell-menu {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .app-shell-group {
+        border-top: 1px solid rgba(36, 54, 87, 0.75);
+        padding-top: 12px;
+        width: 100%;
+    }
+
+    .app-shell-group:first-child {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .app-shell-group-links,
+    .app-shell-account-links {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .app-shell-link {
+        width: 100%;
+    }
+
+    .app-shell-account-link {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .app-shell-account-user {
+        max-width: none;
+    }
+
+    .app-shell-account-links {
+        justify-content: flex-start;
+    }
+
+    .app-shell-footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+p.clear {
+    clear: both;
+}
+
+
+
+/******************************************************
+ * Generic layout
+ ******************************************************/
+
+p.error {
+    color: red;
+}
+
+p.success {
+    color: green;
+}
+
+
+
+/******************************************************
+ * Cross-page help links
+ ******************************************************/
+
+.page-help-hint {
+    color: #8b9bb8;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin: 0 0 12px;
+}
+
+.page-help-link {
+    color: #fde68a;
+    text-decoration: none;
+}
+
+.page-help-link:hover {
+    color: #fff3bf;
+}
+
+
+
+/******************************************************
+ * Table layout
+ ******************************************************/
+
+table {
+    border-collapse: collapse;
+    border: 2px solid #aaa;
+    background: #ddd;
+    margin: 20px;
+    caption-side: top;
+    text-align: left;
+}
+
+td, th {
+    border: 1px solid #aaa;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 7px;
+    padding-right: 7px;
+}
+
+td.checkbox, td.button {
+    text-align: center;
+}
+
+td.sufficientbalance {
+    color: green;
+}
+
+td.insufficientbalance {
+    color: red;
+}
+
+td.valid {
+    color: green;
+}
+
+td.invalid {
+    color: red;
+}
+
+td.important {
+    font-weight: bold;
+}
+
+select.tableitem {
+    width: 100%;
+    color-scheme: dark;
+}
+
+select option,
+select optgroup {
+    background-color: var(--select-option-bg);
+    color: var(--select-option-text);
+}
+
+select option:disabled {
+    color: var(--shell-text-muted);
+}
+
+
+a.buttonlink {
+    border: 2px outset ButtonFace;
+    background: ButtonFace;
+    color: ButtonText;
+    display: inline-block;
+    padding: 1px 6px;
+    text-decoration: none;
+}
+
+
+
+/******************************************************
+ * User assets
+ ******************************************************/
+
+div.userassets {
+    clear: right;
+    float: right;
+    min-height: 70vh;
+}
+
+table.userassets {
+    clear: right;
+    float: right;
+}
+
+

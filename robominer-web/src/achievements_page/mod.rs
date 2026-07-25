@@ -146,7 +146,7 @@ async fn load_achievements_overview(
 pub(super) fn claim_achievement_step_rejection_message(
     rejection: robominer_db::ClaimAchievementStepRejection,
 ) -> &'static str {
-    robominer_domain::claim_achievement_step_rejection_message(rejection)
+    robominer_domain::rejection_messages::claim_achievement_step_rejection_message(rejection)
 }
 
 mod card;

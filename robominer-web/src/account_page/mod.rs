@@ -212,7 +212,7 @@ pub(super) fn account_password_mismatch_message() -> &'static str {
 pub(super) fn update_user_account_rejection_message(
     rejection: robominer_db::UpdateUserAccountRejection,
 ) -> &'static str {
-    robominer_domain::update_user_account_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::update_user_account_rejection_player_message(rejection)
 }
 
 mod render;

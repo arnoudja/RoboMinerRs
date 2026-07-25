@@ -1,0 +1,366 @@
+/******************************************************
+ * Achievements — sci-fi dark theme
+ ******************************************************/
+
+.main:has(.achievements-page) {
+    background: #070b12;
+}
+
+.main:has(.achievements-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(255, 209, 102, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(0, 212, 170, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+}
+
+
+
+
+
+
+.achievements-page {
+    --ach-bg-deep: #0a101a;
+    --ach-bg-panel: #121a2b;
+    --ach-border: #2a3a5c;
+    --ach-text: #d7e0f0;
+    --ach-text-muted: #8b9bb8;
+    --ach-accent: #ffd166;
+    --ach-accent-secondary: #00d4aa;
+    --ach-success: #00ff9d;
+    --ach-danger: #ff5c7a;
+    color: var(--ach-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1100px;
+}
+
+.achievements-summary {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--ach-border);
+    border-radius: 8px;
+    box-shadow:
+        0 10px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.achievements-summary-heading {
+    margin-bottom: 12px;
+}
+
+.achievements-page-title {
+    color: #fff4d6;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-shadow: 0 0 18px rgba(255, 209, 102, 0.28);
+    text-transform: uppercase;
+}
+
+.achievements-overview-back {
+    margin: 0 0 16px;
+}
+
+.achievements-overview-back-link {
+    color: var(--ach-accent-secondary);
+    text-decoration: none;
+}
+
+.achievements-overview-back-link:hover {
+    text-decoration: underline;
+}
+
+.achievements-summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.achievements-summary-item {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid var(--ach-border);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+    padding: 8px 12px;
+}
+
+.achievements-summary-label {
+    color: var(--ach-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.achievements-summary-value {
+    color: #fff4d6;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 1.05rem;
+}
+
+.achievements-banner {
+    border-radius: 6px;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+}
+
+.achievements-banner-success {
+    background: rgba(0, 255, 157, 0.08);
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    box-shadow: 0 0 18px rgba(0, 255, 157, 0.12);
+    color: #9dffd4;
+}
+
+.achievements-banner-error {
+    background: rgba(255, 92, 122, 0.12);
+    border: 1px solid rgba(255, 92, 122, 0.55);
+    box-shadow: 0 0 16px rgba(255, 92, 122, 0.12);
+    color: #ffb3c0;
+}
+
+.achievements-list {
+    display: grid;
+    gap: 16px;
+}
+
+.achievements-empty {
+    color: var(--ach-text-muted);
+    font-style: italic;
+    margin: 0;
+    padding: 8px 0;
+}
+
+.achievement-card {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--ach-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    padding: 18px;
+}
+
+.achievement-card-claimable {
+    border-color: rgba(0, 255, 157, 0.45);
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.35),
+        0 0 18px rgba(0, 255, 157, 0.08);
+}
+
+.achievement-card-complete {
+    opacity: 0.82;
+}
+
+.achievement-card-header {
+    align-items: start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.achievement-card-title {
+    color: #fff4d6;
+    font-size: 1.15rem;
+    margin: 0 0 6px;
+}
+
+.achievement-card-description {
+    color: var(--ach-text-muted);
+    margin: 0;
+}
+
+.achievement-status-badge {
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.achievement-status-claimable {
+    background: rgba(0, 255, 157, 0.12);
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    color: #9dffd4;
+}
+
+.achievement-claim-badge-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.achievement-claim-badge {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.achievement-claim-badge:hover {
+    background: rgba(0, 255, 157, 0.22);
+    border-color: rgba(0, 255, 157, 0.65);
+    box-shadow: 0 0 14px rgba(0, 255, 157, 0.18);
+    color: #c8ffe8;
+}
+
+.achievement-status-complete {
+    background: rgba(255, 209, 102, 0.12);
+    border: 1px solid rgba(255, 209, 102, 0.45);
+    color: #ffe6a8;
+}
+
+.achievement-status-progress {
+    background: rgba(0, 212, 170, 0.1);
+    border: 1px solid rgba(0, 212, 170, 0.35);
+    color: #8ef5dd;
+}
+
+.achievement-progress {
+    margin-bottom: 14px;
+}
+
+.achievement-progress-heading {
+    color: #c5d4ea;
+    display: flex;
+    font-size: 0.92rem;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.achievement-progress-value {
+    color: var(--ach-text-muted);
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.achievement-progress-track {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.achievement-progress-bar {
+    background: linear-gradient(90deg, rgba(255, 209, 102, 0.85) 0%, rgba(0, 212, 170, 0.85) 100%);
+    box-shadow: 0 0 12px rgba(255, 209, 102, 0.35);
+    height: 100%;
+}
+
+.achievement-section-title {
+    color: var(--ach-accent);
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.achievement-rewards,
+.achievement-requirements {
+    margin-top: 16px;
+}
+
+.achievement-reward-list,
+.achievement-requirement-list {
+    display: grid;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.achievement-reward-list li,
+.achievement-requirement-list li {
+    align-items: center;
+    background: rgba(10, 16, 26, 0.72);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr auto auto;
+    padding: 8px 10px;
+}
+
+.achievement-reward-list li {
+    grid-template-columns: 1fr auto;
+}
+
+.achievement-reward-label {
+    color: var(--ach-text-muted);
+}
+
+.achievement-reward-value {
+    color: #fff4d6;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.achievement-requirement-target {
+    color: #fff4d6;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.achievements-page .sufficientbalance {
+    color: var(--ach-success);
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.achievements-page .insufficientbalance {
+    color: var(--ach-danger);
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.achievement-claim {
+    margin-top: 18px;
+}
+
+.achievement-claim-form {
+    display: inline-block;
+}
+
+.achievements-btn {
+    background: rgba(18, 26, 43, 0.95);
+    border: 1px solid var(--ach-border);
+    border-radius: 6px;
+    color: var(--ach-text);
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    padding: 8px 14px;
+}
+
+.achievements-btn:hover {
+    border-color: rgba(255, 209, 102, 0.45);
+    box-shadow: 0 0 14px rgba(255, 209, 102, 0.12);
+    color: #ffffff;
+}
+
+.achievements-btn-primary {
+    background: linear-gradient(180deg, rgba(255, 209, 102, 0.24) 0%, rgba(255, 209, 102, 0.12) 100%);
+    border-color: rgba(255, 209, 102, 0.55);
+    box-shadow: 0 0 16px rgba(255, 209, 102, 0.16);
+    color: #fff4d6;
+}
+
+.achievements-btn-primary:hover {
+    background: linear-gradient(180deg, rgba(255, 209, 102, 0.32) 0%, rgba(255, 209, 102, 0.16) 100%);
+    box-shadow: 0 0 20px rgba(255, 209, 102, 0.28);
+}
+
+.achievements-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.achievement-action-hint {
+    color: var(--ach-accent-secondary);
+    font-size: 0.9rem;
+    margin: 8px 0 0;
+}
+
+

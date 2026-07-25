@@ -15,7 +15,7 @@ pub(crate) async fn create_user(
         }
         Err(rejection) => Err(anyhow!(
             "unable to create user: {}",
-            robominer_domain::create_user_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::create_user_rejection_cli_message(rejection)
         )),
     }
 }
@@ -34,7 +34,9 @@ pub(crate) async fn update_user_account(
         }
         Err(rejection) => Err(anyhow!(
             "unable to update user account: {}",
-            robominer_domain::update_user_account_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::update_user_account_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }
@@ -68,7 +70,7 @@ pub(crate) async fn verify_login(
         }
         Err(rejection) => Err(anyhow!(
             "unable to verify login: {}",
-            robominer_domain::verify_login_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::verify_login_rejection_cli_message(rejection)
         )),
     }
 }
@@ -87,7 +89,7 @@ pub(crate) async fn verify_user_password(
         }
         Err(rejection) => Err(anyhow!(
             "unable to verify user password: {}",
-            robominer_domain::verify_login_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::verify_login_rejection_cli_message(rejection)
         )),
     }
 }

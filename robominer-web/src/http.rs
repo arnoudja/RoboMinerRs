@@ -375,13 +375,13 @@ mod tests {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
         let request = Request {
             method: "GET".to_string(),
-            path: "/css/robominer.css".to_string(),
+            path: "/css/pages/layout.css".to_string(),
             query: HashMap::new(),
             form: HashMap::new(),
             form_values: HashMap::new(),
             headers: HashMap::new(),
         };
-        let response = static_response("/css/robominer.css", &root, &request).await;
+        let response = static_response("/css/pages/layout.css", &root, &request).await;
         assert_eq!(response.status, 200);
         assert!(
             response
@@ -398,7 +398,7 @@ mod tests {
 
         let mut cached = request;
         cached.headers.insert("if-none-match".to_string(), etag);
-        let not_modified = static_response("/css/robominer.css", &root, &cached).await;
+        let not_modified = static_response("/css/pages/layout.css", &root, &cached).await;
         assert_eq!(not_modified.status, 304);
         assert!(not_modified.body.is_empty());
     }

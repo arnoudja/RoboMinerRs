@@ -89,7 +89,9 @@ pub(crate) async fn update_robot_config(
         }
         Err(rejection) => Err(anyhow!(
             "unable to update robot configuration: {}",
-            robominer_domain::update_robot_config_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::update_robot_config_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }

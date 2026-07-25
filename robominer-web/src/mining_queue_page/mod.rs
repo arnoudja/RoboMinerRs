@@ -230,11 +230,11 @@ pub(super) fn mining_queue_status_description(
 pub(super) fn enqueue_mining_rejection_message(
     rejection: robominer_db::EnqueueMiningRejection,
 ) -> &'static str {
-    robominer_domain::enqueue_mining_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::enqueue_mining_rejection_player_message(rejection)
 }
 
 pub(super) fn cancel_mining_rejection_message(
     rejection: robominer_db::CancelMiningQueueRejection,
 ) -> &'static str {
-    robominer_domain::cancel_mining_queue_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message(rejection)
 }

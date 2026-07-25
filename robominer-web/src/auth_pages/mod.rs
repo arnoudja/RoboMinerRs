@@ -313,7 +313,7 @@ fn signup_disabled_message() -> &'static str {
 pub(super) fn create_user_rejection_message(
     rejection: robominer_db::CreateUserRejection,
 ) -> &'static str {
-    robominer_domain::create_user_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::create_user_rejection_player_message(rejection)
 }
 
 mod render;

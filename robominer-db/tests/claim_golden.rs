@@ -1,23 +1,14 @@
 mod support;
 
 use robominer_db::{MySqlPool, claim_user_results};
-use robominer_test_support::{load_fixture, update_golden_enabled, write_fixture};
+use robominer_test_support::assert_or_update_golden_async;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use support::{ClaimScenario, ore_index, queue_index};
+use support::{ClaimScenario, ClaimScenarioId, ore_index, queue_index};
 
 const MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const FIXTURE_SUBDIR: &str = "claim";
 const UPDATE_ENV_VAR: &str = "UPDATE_CLAIM_GOLDEN";
-
-const SCENARIOS: &[&str] = &[
-    "single_queue_tax25",
-    "dual_queue_batch_claim",
-    "skips_unfinished_queue",
-    "claim_cap_limited",
-    "claim_zero_tax",
-    "claim_multiple_ore_types",
-];
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct GoldenOreResult {
@@ -226,28 +217,29 @@ async fn claim_outcomes_match_golden_fixtures() {
         .await
         .expect("failed to connect to test database");
 
-    if update_golden_enabled(UPDATE_ENV_VAR) {
-        for name in SCENARIOS {
-            support::scenario(name);
-            let scenario = support::setup(&pool, name).await;
-            write_fixture(
-                MANIFEST_DIR,
-                FIXTURE_SUBDIR,
-                name,
-                &build_fixture(&pool, &scenario).await,
+    assert_or_update_golden_async(
+        UPDATE_ENV_VAR,
+        MANIFEST_DIR,
+        FIXTURE_SUBDIR,
+        ClaimScenarioId::ALL,
+        |id| id.as_str(),
+        |id| {
+            let pool = pool.clone();
+            async move {
+                let scenario = support::setup(&pool, id).await;
+                let fixture = build_fixture(&pool, &scenario).await;
+                support::cleanup(&pool, &scenario).await;
+                (fixture, ())
+            }
+        },
+        |id, expected, actual, ()| {
+            assert_eq!(
+                expected,
+                actual,
+                "scenario {} claim outcome mismatch",
+                id.as_str()
             );
-            support::cleanup(&pool, &scenario).await;
-        }
-        return;
-    }
-
-    for name in SCENARIOS {
-        support::scenario(name);
-        let scenario = support::setup(&pool, name).await;
-        let expected: GoldenClaimFixture = load_fixture(MANIFEST_DIR, FIXTURE_SUBDIR, name);
-        let actual = build_fixture(&pool, &scenario).await;
-
-        assert_eq!(expected, actual, "scenario {name} claim outcome mismatch");
-        support::cleanup(&pool, &scenario).await;
-    }
+        },
+    )
+    .await;
 }

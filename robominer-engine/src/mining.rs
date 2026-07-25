@@ -40,7 +40,7 @@ pub(crate) async fn enqueue_mining(
         }
         Err(rejection) => Err(anyhow!(
             "unable to enqueue mining run: {}",
-            robominer_domain::enqueue_mining_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::enqueue_mining_rejection_cli_message(rejection)
         )),
     }
 }
@@ -59,7 +59,9 @@ pub(crate) async fn cancel_mining_queue(
         }
         Err(rejection) => Err(anyhow!(
             "unable to cancel mining queue item: {}",
-            robominer_domain::cancel_mining_queue_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::cancel_mining_queue_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }

@@ -80,3 +80,37 @@ pub fn assert_or_update_golden<S, T, E, FBuild, FCompare>(
         compare(*scenario, expected, actual, extra);
     }
 }
+
+/// Async counterpart of [`assert_or_update_golden`] for scenarios whose
+/// fixture build requires awaiting (e.g. database-backed setup/build/cleanup).
+pub async fn assert_or_update_golden_async<S, T, E, FBuild, FCompare, Fut>(
+    update_env_var: &str,
+    manifest_dir: &str,
+    fixture_subdir: &str,
+    scenarios: &[S],
+    fixture_name: impl Fn(S) -> &'static str,
+    build: FBuild,
+    compare: FCompare,
+) where
+    S: Copy,
+    T: serde::Serialize + serde::de::DeserializeOwned,
+    FBuild: Fn(S) -> Fut,
+    Fut: std::future::Future<Output = (T, E)>,
+    FCompare: Fn(S, T, T, E),
+{
+    if update_golden_enabled(update_env_var) {
+        for scenario in scenarios {
+            let name = fixture_name(*scenario);
+            let (fixture, _) = build(*scenario).await;
+            write_fixture(manifest_dir, fixture_subdir, name, &fixture);
+        }
+        return;
+    }
+
+    for scenario in scenarios {
+        let name = fixture_name(*scenario);
+        let expected: T = load_fixture(manifest_dir, fixture_subdir, name);
+        let (actual, extra) = build(*scenario).await;
+        compare(*scenario, expected, actual, extra);
+    }
+}

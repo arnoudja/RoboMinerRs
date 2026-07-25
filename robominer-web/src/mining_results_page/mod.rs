@@ -117,6 +117,9 @@ pub(super) fn selected_mining_queue_id(
 }
 
 mod render;
+mod render_detail;
+mod render_filters;
+mod render_log;
 mod scripts;
 
 #[cfg(test)]

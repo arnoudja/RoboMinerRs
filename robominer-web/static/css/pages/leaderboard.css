@@ -1,0 +1,565 @@
+/******************************************************
+ * Leaderboard — sci-fi dark theme
+ ******************************************************/
+
+.main:has(.leaderboard-page) {
+    background: #070b12;
+}
+
+.main:has(.leaderboard-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(255, 209, 102, 0.1), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 77, 255, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+}
+
+
+
+
+
+
+.leaderboard-page {
+    --lb-border: #2a3a5c;
+    --lb-text-muted: #8b9bb8;
+    --lb-accent: #ffd166;
+    --lb-accent-secondary: #b794ff;
+    color: #d7e0f0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1100px;
+}
+
+.leaderboard-header {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--lb-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.leaderboard-title {
+    color: #fff4d6;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 6px;
+    text-shadow: 0 0 18px rgba(255, 209, 102, 0.28);
+    text-transform: uppercase;
+}
+
+.leaderboard-subtitle {
+    color: var(--lb-text-muted);
+    margin: 0 0 8px;
+}
+
+.leaderboard-page .page-help-hint {
+    color: var(--lb-text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.leaderboard-page .page-help-hint a {
+    color: var(--lb-accent);
+}
+
+.leaderboard-page .page-help-hint a:hover {
+    color: #ffe08a;
+}
+
+.leaderboard-sections {
+    display: grid;
+    gap: 16px;
+}
+
+.leaderboard-stats {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+}
+
+.leaderboard-stat {
+    display: flex;
+    gap: 8px;
+}
+
+.leaderboard-stat dt {
+    color: var(--lb-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.leaderboard-stat dd {
+    color: #fff4d6;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.leaderboard-deck {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 34%);
+}
+
+.leaderboard-main {
+    display: grid;
+    gap: 12px;
+}
+
+.leaderboard-tab-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.leaderboard-tab-link {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 999px;
+    color: #c5d4ea;
+    font-size: 0.84rem;
+    padding: 7px 14px;
+    text-decoration: none;
+}
+
+.leaderboard-tab-link:hover {
+    border-color: rgba(255, 209, 102, 0.45);
+    color: #fff4d6;
+}
+
+.leaderboard-tab-link-active {
+    background: rgba(255, 209, 102, 0.12);
+    border-color: rgba(255, 209, 102, 0.55);
+    color: #ffd166;
+}
+
+.leaderboard-area-filter {
+    color: var(--lb-text-muted);
+    display: grid;
+    font-size: 0.82rem;
+    gap: 6px;
+    letter-spacing: 0.04em;
+    margin: 0 0 12px;
+    max-width: 280px;
+    text-transform: uppercase;
+}
+
+.leaderboard-area-filter-select {
+    display: block;
+    min-width: 180px;
+}
+
+.leaderboard-page select.tableitem,
+.leaderboard-page .leaderboard-area-filter-select {
+    appearance: none;
+    background: linear-gradient(180deg, rgba(15, 23, 40, 0.98) 0%, rgba(10, 16, 26, 0.98) 100%);
+    border: 1px solid var(--lb-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: #d7e0f0;
+    cursor: pointer;
+    padding: 8px 10px;
+    width: 100%;
+}
+
+.leaderboard-page select.tableitem:focus,
+.leaderboard-page .leaderboard-area-filter-select:focus {
+    border-color: rgba(255, 209, 102, 0.55);
+    box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.16);
+    outline: none;
+}
+
+.leaderboard-sidebar {
+    display: grid;
+    gap: 12px;
+}
+
+.leaderboard-sidebar-panel {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--lb-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    padding: 16px;
+}
+
+.leaderboard-standing-list {
+    display: grid;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.leaderboard-standing-item {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+}
+
+.leaderboard-standing-label {
+    color: var(--lb-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.leaderboard-standing-value {
+    color: #fff4d6;
+    font-size: 0.88rem;
+}
+
+.leaderboard-row-self {
+    background: rgba(255, 209, 102, 0.08);
+}
+
+.leaderboard-row-self:hover {
+    background: rgba(255, 209, 102, 0.12);
+}
+
+.leaderboard-you-badge {
+    background: rgba(255, 209, 102, 0.14);
+    border: 1px solid rgba(255, 209, 102, 0.45);
+    border-radius: 999px;
+    color: var(--lb-accent);
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.leaderboard-owner-self,
+.leaderboard-name-self {
+    color: #fff4d6;
+}
+
+.leaderboard-panel {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--lb-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    padding: 16px;
+}
+
+.leaderboard-section-title {
+    color: #fff4d6;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+}
+
+.leaderboard-section-hint {
+    color: var(--lb-text-muted);
+    font-size: 0.88rem;
+    margin: 0 0 12px;
+}
+
+.leaderboard-section-actions {
+    color: var(--lb-text-muted);
+    font-size: 0.86rem;
+    margin: 0 0 12px;
+}
+
+.leaderboard-section-action,
+.leaderboard-row-link,
+.leaderboard-standing-link {
+    color: var(--lb-accent);
+    text-decoration: none;
+}
+
+.leaderboard-section-action:hover,
+.leaderboard-row-link:hover,
+.leaderboard-standing-link:hover {
+    color: #ffe08a;
+}
+
+.leaderboard-load-more-wrap {
+    margin: 14px 0 0;
+    text-align: center;
+}
+
+.leaderboard-load-more-link {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(255, 209, 102, 0.35);
+    border-radius: 999px;
+    color: #ffd166;
+    display: inline-block;
+    font-size: 0.86rem;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+.leaderboard-load-more-link:hover {
+    border-color: rgba(255, 209, 102, 0.55);
+    color: #ffe08a;
+}
+
+.leaderboard-page .leaderboard-table th[title] {
+    cursor: help;
+    text-decoration: underline dotted rgba(255, 209, 102, 0.35);
+    text-underline-offset: 3px;
+}
+
+.leaderboard-empty {
+    color: var(--lb-text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.leaderboard-empty-state {
+    background: rgba(10, 16, 26, 0.55);
+    border: 1px dashed rgba(42, 58, 92, 0.85);
+    border-radius: 8px;
+    margin: 0 0 12px;
+    padding: 14px 16px;
+}
+
+.leaderboard-empty-state p {
+    color: var(--lb-text-muted);
+    margin: 0;
+}
+
+.leaderboard-empty-actions {
+    font-size: 0.86rem;
+    margin-top: 10px;
+}
+
+.leaderboard-climb-hint {
+    background: rgba(10, 16, 26, 0.55);
+    border: 1px solid rgba(255, 209, 102, 0.18);
+    border-radius: 8px;
+    margin-top: 14px;
+    padding: 14px 16px;
+}
+
+.leaderboard-climb-title {
+    color: #fff4d6;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.leaderboard-climb-copy {
+    color: var(--lb-text-muted);
+    font-size: 0.88rem;
+    margin: 0 0 8px;
+}
+
+.leaderboard-climb-links {
+    font-size: 0.86rem;
+    margin: 0;
+}
+
+.leaderboard-metric-glossary {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+.leaderboard-metric-item {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+
+.leaderboard-metric-item dt {
+    color: #fff4d6;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+}
+
+.leaderboard-metric-item dd {
+    color: var(--lb-text-muted);
+    font-size: 0.84rem;
+    margin: 0;
+}
+
+.leaderboard-standing-climb .leaderboard-standing-value {
+    color: #ffe08a;
+}
+
+.leaderboard-page .leaderboard-table {
+    background: transparent;
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-collapse: collapse;
+    margin: 0;
+    width: 100%;
+}
+
+.leaderboard-page .leaderboard-table th,
+.leaderboard-page .leaderboard-table td {
+    border: 1px solid rgba(42, 58, 92, 0.65);
+    padding: 10px 12px;
+    vertical-align: middle;
+}
+
+.leaderboard-page .leaderboard-table th {
+    background: rgba(10, 16, 26, 0.9);
+    color: var(--lb-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.leaderboard-page .leaderboard-table tbody tr {
+    background: rgba(10, 16, 26, 0.55);
+}
+
+.leaderboard-page .leaderboard-table tbody tr:hover {
+    background: rgba(16, 24, 39, 0.95);
+}
+
+.leaderboard-col-rank {
+    width: 4.5rem;
+}
+
+.leaderboard-col-score {
+    text-align: right;
+    width: 8rem;
+}
+
+.leaderboard-rank {
+    color: var(--lb-text-muted);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.leaderboard-rank-1 {
+    color: #ffd166;
+    text-shadow: 0 0 10px rgba(255, 209, 102, 0.35);
+}
+
+.leaderboard-rank-2 {
+    color: #c8d2e6;
+}
+
+.leaderboard-rank-3 {
+    color: #e8a86a;
+}
+
+.leaderboard-row-rank-1 {
+    box-shadow: inset 3px 0 0 rgba(255, 209, 102, 0.85);
+}
+
+.leaderboard-row-rank-2 {
+    box-shadow: inset 3px 0 0 rgba(200, 210, 230, 0.75);
+}
+
+.leaderboard-row-rank-3 {
+    box-shadow: inset 3px 0 0 rgba(232, 168, 106, 0.75);
+}
+
+.leaderboard-name {
+    color: #e8f4ff;
+    font-weight: 600;
+}
+
+.leaderboard-owner {
+    color: #c5d4ea;
+}
+
+.leaderboard-score {
+    text-align: right;
+}
+
+.leaderboard-score-value {
+    color: #fff4d6;
+    display: block;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.95rem;
+}
+
+.leaderboard-score-meta {
+    color: var(--lb-text-muted);
+    display: block;
+    font-size: 0.78rem;
+    margin-top: 2px;
+}
+
+@media (max-width: 720px) {
+    .leaderboard-deck {
+        grid-template-columns: 1fr;
+    }
+
+    /*
+     * Four-column robot/area boards use a card grid on narrow viewports.
+     * WebKit keeps <td> as table-cell inside display:grid <tr>, which stacks
+     * every cell into the first column — force block so grid-area works on iOS.
+     */
+    .leaderboard-page .leaderboard-table-split {
+        display: block;
+        width: 100%;
+    }
+
+    .leaderboard-page .leaderboard-table-split thead {
+        display: none;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody {
+        display: block;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr {
+        display: grid;
+        gap: 4px 10px;
+        grid-template-areas:
+            "rank name score"
+            "rank owner score";
+        grid-template-columns: auto 1fr auto;
+        padding: 10px 12px;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody td {
+        border: 0;
+        display: block;
+        min-width: 0;
+        padding: 0;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr td:first-child {
+        grid-area: rank;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr td:nth-child(2) {
+        grid-area: name;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr td:nth-child(3) {
+        grid-area: owner;
+    }
+
+    .leaderboard-page .leaderboard-table-split tbody tr td:last-child {
+        grid-area: score;
+        text-align: right;
+    }
+
+    .leaderboard-page .leaderboard-table th,
+    .leaderboard-page .leaderboard-table td {
+        padding: 8px 10px;
+    }
+
+    .leaderboard-section-hint {
+        font-size: 0.84rem;
+    }
+}
+

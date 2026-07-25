@@ -18,7 +18,9 @@ pub(crate) async fn claim_achievement_step(
         }
         Err(rejection) => Err(anyhow!(
             "unable to claim achievement step: {}",
-            robominer_domain::claim_achievement_step_rejection_message(rejection)
+            robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
+                rejection
+            )
         )),
     }
 }

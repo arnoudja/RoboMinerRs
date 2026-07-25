@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
@@ -101,7 +102,7 @@ async fn shop_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -112,63 +113,51 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
         &sample_shop_state(Some("Unable to buy <part>".to_string())),
     );
 
-    assert!(!html.contains(r#"<script src="js/shop.js"></script>"#));
-    assert!(html.contains(r#"class="shop-page" data-filter-storage-key="#));
-    assert!(html.contains(r#"src="js/shop/page.js?v="#));
-    assert!(html.contains(r#"class="page-wallet shop-wallet""#));
-    assert!(html.contains(r#"class="shop-deck""#));
-    assert!(html.contains(r#"class="shop-detail""#));
-    assert!(html.contains(r#"id="shopPartDetails100""#));
-    assert!(html.contains(r#"class="shop-detail-panel shop-detail-panel-active""#));
-    assert!(html.contains(r#"class="shop-banner shop-banner-error""#));
-    assert!(html.contains("Unable to buy &lt;part&gt;"));
-    assert!(html.contains("Type &lt;A&gt;"));
-    assert!(html.contains("Ore &amp; Two quality"));
-    assert!(html.contains("Part &lt;X&gt; &#39;Q&#39;"));
-    assert!(html.contains(r#"id="robotPartTypeRow10_2_1""#));
-    assert!(
-        html.contains(
-            r#"class="shop-part-card shop shop-part-card-compact shop-part-card-active""#
-        )
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="shop-page" data-filter-storage-key="#,
+            r#"src="js/shop/page.js?v="#,
+            r#"class="page-wallet shop-wallet""#,
+            r#"class="shop-deck""#,
+            r#"class="shop-detail""#,
+            r#"id="shopPartDetails100""#,
+            r#"class="shop-detail-panel shop-detail-panel-active""#,
+            r#"class="shop-banner shop-banner-error""#,
+            "Unable to buy &lt;part&gt;",
+            "Type &lt;A&gt;",
+            "Ore &amp; Two quality",
+            "Part &lt;X&gt; &#39;Q&#39;",
+            r#"id="robotPartTypeRow10_2_1""#,
+            r#"class="shop-part-card shop shop-part-card-compact shop-part-card-active""#,
+            r#"<input type="hidden" name="buyRobotPartId" value="100"/>"#,
+            r#"<input type="hidden" name="sellRobotPartId" value="100"/>"#,
+            r#"<input type="hidden" name="selectedRobotPartId" value="100"/>"#,
+            r#"<button type="submit" class="shop-btn shop-btn-primary">Buy part</button>"#,
+            r#"<button type="submit" class="shop-btn shop-btn-danger">Sell unassigned</button>"#,
+            r#"<button type="submit" class="shop-btn shop-btn-danger">Sell all unassigned</button>"#,
+            r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="1""#,
+            r#"class="shop-part-owned-badge">Owned: 2</span>"#,
+            r#"data-can-buy="1""#,
+            ">2 minutes<",
+            r#"class="sufficientbalance">(40)"#,
+            r#"name="selectedRobotPartTypeId" class="tableitem shop-filter-select"><option value="10" selected>"#,
+            r#"<option value="2" selected>Ore &amp; Two quality</option>"#,
+            r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#,
+            r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#,
+            r#"Compare all areas</a>.</p>"#,
+            r#"class="shop-atlas-helper""#,
+            r#"class="page-help-hint""#,
+            r#"href="helpMechanics">Read the mechanics guide</a>"#,
+        ],
     );
-    assert!(html.contains(r#"<input type="hidden" name="buyRobotPartId" value="100"/>"#));
-    assert!(html.contains(r#"<input type="hidden" name="sellRobotPartId" value="100"/>"#));
-    assert!(html.contains(r#"<input type="hidden" name="selectedRobotPartId" value="100"/>"#));
-    assert!(
-        html.contains(
-            r#"<button type="submit" class="shop-btn shop-btn-primary">Buy part</button>"#
-        )
-    );
-    assert!(html.contains(
-        r#"<button type="submit" class="shop-btn shop-btn-danger">Sell unassigned</button>"#
-    ));
-    assert!(html.contains(
-        r#"<button type="submit" class="shop-btn shop-btn-danger">Sell all unassigned</button>"#
-    ));
-    assert!(
-        html.contains(r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="1""#)
-    );
-    assert!(html.contains(r#"src="js/shop/page.js?v="#));
-    assert!(!html.contains("function confirmShopSell(event)"));
-    assert!(html.contains(r#"class="shop-part-owned-badge">Owned: 2</span>"#));
-    assert!(!html.contains(r#"<button type="submit">Show items</button>"#));
-    assert!(html.contains(r#"data-can-buy="1""#));
-    assert!(html.contains(">2 minutes<"));
-    assert!(html.contains(r#"class="sufficientbalance">(40)"#));
-    assert!(html.contains(
-        r#"name="selectedRobotPartTypeId" class="tableitem shop-filter-select"><option value="10" selected>"#
-    ));
-    assert!(html.contains(r#"<option value="2" selected>Ore &amp; Two quality</option>"#));
-    assert!(
-        html.contains(r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#)
-    );
-    assert!(html.contains(
-        r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#
-    ));
-    assert!(html.contains(r#"Compare all areas</a>.</p>"#));
-    assert!(html.contains(r#"class="shop-atlas-helper""#));
-    assert!(html.contains(r#"class="page-help-hint""#));
-    assert!(html.contains(r#"href="helpMechanics">Read the mechanics guide</a>"#));
+    for absent in [
+        r#"<script src="js/shop.js"></script>"#,
+        "function confirmShopSell(event)",
+        r#"<button type="submit">Show items</button>"#,
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]
@@ -224,12 +213,17 @@ fn shop_shows_disabled_buy_and_sell_with_reasons() {
 
     let html = render_shop_page("Player".to_string(), None, &state);
 
-    assert!(html.contains(r#"name="buyRobotPartId" value="100""#));
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-primary" disabled"#));
-    assert!(html.contains("Need 20 more Ore &amp; Two."));
-    assert!(html.contains(r#"Areas rich in Ore &amp; Two</a>"#));
-    assert!(html.contains(r#"<button type="submit" class="shop-btn shop-btn-danger" disabled"#));
-    assert!(html.contains("All units are assigned to robots."));
+    assert_contains_all(
+        &html,
+        &[
+            r#"name="buyRobotPartId" value="100""#,
+            r#"<button type="submit" class="shop-btn shop-btn-primary" disabled"#,
+            "Need 20 more Ore &amp; Two.",
+            r#"Areas rich in Ore &amp; Two</a>"#,
+            r#"<button type="submit" class="shop-btn shop-btn-danger" disabled"#,
+            "All units are assigned to robots.",
+        ],
+    );
 }
 
 #[test]

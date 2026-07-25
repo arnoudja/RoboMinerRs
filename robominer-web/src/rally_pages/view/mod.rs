@@ -113,4 +113,6 @@ pub fn valid_mining_results_return_to(value: &str) -> Option<&str> {
     }
 }
 
+mod payload;
 pub(super) mod render;
+mod render_deck;

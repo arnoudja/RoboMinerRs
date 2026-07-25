@@ -17,28 +17,51 @@ pub struct ClaimScenario {
     pub queue_ids: Vec<i64>,
 }
 
-pub fn scenario(name: &str) {
-    match name {
-        "single_queue_tax25"
-        | "dual_queue_batch_claim"
-        | "skips_unfinished_queue"
-        | "claim_cap_limited"
-        | "claim_zero_tax"
-        | "claim_multiple_ore_types" => {}
-        other => panic!("unknown claim golden scenario: {other}"),
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ClaimScenarioId {
+    SingleQueueTax25,
+    DualQueueBatchClaim,
+    SkipsUnfinishedQueue,
+    ClaimCapLimited,
+    ClaimZeroTax,
+    ClaimMultipleOreTypes,
+}
+
+impl ClaimScenarioId {
+    pub const ALL: &'static [Self] = &[
+        Self::SingleQueueTax25,
+        Self::DualQueueBatchClaim,
+        Self::SkipsUnfinishedQueue,
+        Self::ClaimCapLimited,
+        Self::ClaimZeroTax,
+        Self::ClaimMultipleOreTypes,
+    ];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SingleQueueTax25 => "single_queue_tax25",
+            Self::DualQueueBatchClaim => "dual_queue_batch_claim",
+            Self::SkipsUnfinishedQueue => "skips_unfinished_queue",
+            Self::ClaimCapLimited => "claim_cap_limited",
+            Self::ClaimZeroTax => "claim_zero_tax",
+            Self::ClaimMultipleOreTypes => "claim_multiple_ore_types",
+        }
+    }
+
+    pub async fn setup(self, pool: &MySqlPool) -> ClaimScenario {
+        match self {
+            Self::SingleQueueTax25 => single_queue_tax25(pool).await,
+            Self::DualQueueBatchClaim => dual_queue_batch_claim(pool).await,
+            Self::SkipsUnfinishedQueue => skips_unfinished_queue(pool).await,
+            Self::ClaimCapLimited => claim_cap_limited(pool).await,
+            Self::ClaimZeroTax => claim_zero_tax(pool).await,
+            Self::ClaimMultipleOreTypes => claim_multiple_ore_types(pool).await,
+        }
     }
 }
 
-pub async fn setup(pool: &MySqlPool, name: &str) -> ClaimScenario {
-    match name {
-        "single_queue_tax25" => single_queue_tax25(pool).await,
-        "dual_queue_batch_claim" => dual_queue_batch_claim(pool).await,
-        "skips_unfinished_queue" => skips_unfinished_queue(pool).await,
-        "claim_cap_limited" => claim_cap_limited(pool).await,
-        "claim_zero_tax" => claim_zero_tax(pool).await,
-        "claim_multiple_ore_types" => claim_multiple_ore_types(pool).await,
-        other => panic!("unknown claim golden scenario: {other}"),
-    }
+pub async fn setup(pool: &MySqlPool, id: ClaimScenarioId) -> ClaimScenario {
+    id.setup(pool).await
 }
 
 async fn single_queue_tax25(pool: &MySqlPool) -> ClaimScenario {

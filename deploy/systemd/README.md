@@ -127,9 +127,9 @@ cargo build --release -p robominer-web
 sudo install -D -m 0755 target/release/robominer-web /opt/robominer/bin/robominer-web
 sudo install -D -m 0755 deploy/systemd/wait-web-health.sh \
   /opt/robominer/bin/robominer-wait-web-health
-sudo install -d -o robominer -g robominer -m 0755 /opt/robominer/static/css
-sudo install -m 0644 robominer-web/static/css/robominer.css \
-  /opt/robominer/static/css/robominer.css
+sudo mkdir -p /opt/robominer/static/css
+sudo rsync -a --delete robominer-web/static/css/ /opt/robominer/static/css/
+sudo chown -R robominer:robominer /opt/robominer/static/css
 sudo mkdir -p /opt/robominer/static/js
 sudo rsync -a --delete robominer-web/static/js/ /opt/robominer/static/js/
 sudo chown -R robominer:robominer /opt/robominer/static/js

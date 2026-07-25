@@ -1,14 +1,8 @@
 /// Mining-queue page scripts: shared URL/session helpers, then page logic.
-use crate::static_assets::script_src_tags;
+use crate::static_assets::page_scripts_with_url_query_and_session;
 
-const URL_QUERY_JS: &str = include_str!("../../static/js/common/url_query.js");
-const SESSION_STORE_JS: &str = include_str!("../../static/js/common/session_store.js");
 const MINING_QUEUE_PAGE_JS: &str = include_str!("../../static/js/mining_queue/page.js");
 
 pub(super) fn mining_queue_page_script_tag() -> String {
-    script_src_tags(&[
-        ("js/common/url_query.js", URL_QUERY_JS),
-        ("js/common/session_store.js", SESSION_STORE_JS),
-        ("js/mining_queue/page.js", MINING_QUEUE_PAGE_JS),
-    ])
+    page_scripts_with_url_query_and_session("js/mining_queue/page.js", MINING_QUEUE_PAGE_JS)
 }

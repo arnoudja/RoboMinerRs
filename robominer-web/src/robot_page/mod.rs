@@ -124,5 +124,5 @@ pub(super) fn robot_apply_block_reason(
 pub(super) fn update_robot_config_rejection_message(
     rejection: robominer_db::UpdateRobotConfigRejection,
 ) -> &'static str {
-    robominer_domain::update_robot_config_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::update_robot_config_rejection_player_message(rejection)
 }

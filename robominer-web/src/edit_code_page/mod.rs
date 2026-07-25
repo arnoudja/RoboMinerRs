@@ -177,14 +177,14 @@ pub(super) fn edit_code_save_block_reason(
 ) -> Option<&'static str> {
     if source_name.trim().is_empty() {
         return Some(
-            robominer_domain::program_source_write_rejection_player_message(
+            robominer_domain::rejection_messages::program_source_write_rejection_player_message(
                 robominer_db::ProgramSourceWriteRejection::EmptySourceName,
             ),
         );
     }
     if source_code.trim().is_empty() {
         return Some(
-            robominer_domain::program_source_write_rejection_player_message(
+            robominer_domain::rejection_messages::program_source_write_rejection_player_message(
                 robominer_db::ProgramSourceWriteRejection::EmptySourceCode,
             ),
         );
@@ -193,7 +193,7 @@ pub(super) fn edit_code_save_block_reason(
 }
 
 fn format_program_source_apply_message(applied: &robominer_db::AppliedProgramSource) -> String {
-    robominer_domain::format_program_source_apply_player_message(applied)
+    robominer_domain::rejection_messages::format_program_source_apply_player_message(applied)
 }
 
 /// Combine a save/create banner with linked-robot apply results when anything was updated.
@@ -238,7 +238,7 @@ pub(super) fn default_edit_code_program_source() -> EditCodeProgramSource {
 pub(super) fn program_source_write_rejection_message(
     rejection: robominer_db::ProgramSourceWriteRejection,
 ) -> &'static str {
-    robominer_domain::program_source_write_rejection_player_message(rejection)
+    robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
 }
 
 mod editor;

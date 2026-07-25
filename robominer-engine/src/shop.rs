@@ -18,7 +18,9 @@ pub(crate) async fn buy_robot_part(
         }
         Err(rejection) => Err(anyhow!(
             "unable to buy robot part: {}",
-            robominer_domain::robot_part_transaction_rejection_message(rejection)
+            robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
+                rejection
+            )
         )),
     }
 }
@@ -40,7 +42,9 @@ pub(crate) async fn sell_robot_part(
         }
         Err(rejection) => Err(anyhow!(
             "unable to sell robot part: {}",
-            robominer_domain::robot_part_transaction_rejection_message(rejection)
+            robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
+                rejection
+            )
         )),
     }
 }

@@ -1,0 +1,657 @@
+/******************************************************
+ * Rally replay — sci-fi dark theme (matches mining results)
+ ******************************************************/
+
+.main:has(.rally-view-page) {
+    background: #070b12;
+}
+
+.main:has(.rally-view-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 77, 255, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+}
+
+
+
+
+
+
+.rally-view-page {
+    --mq-bg-deep: #0a101a;
+    --mq-bg-panel: #121a2b;
+    --mq-border: #2a3a5c;
+    --mq-text: #d7e0f0;
+    --mq-text-muted: #8b9bb8;
+    --mq-accent: #00e5ff;
+    color: var(--mq-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1100px;
+}
+
+.rally-view-header {
+    align-items: start;
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    justify-content: space-between;
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.rally-view-title {
+    color: #e8f4ff;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 6px;
+    text-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+    text-transform: uppercase;
+}
+
+.rally-view-subtitle {
+    color: var(--mq-text-muted);
+    margin: 0;
+}
+
+.rally-view-context {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.92) 0%, rgba(16, 24, 39, 0.96) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    margin: 0 0 16px;
+    padding: 14px 16px;
+}
+
+.rally-view-context-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin: 0;
+}
+
+.rally-view-context-item {
+    display: grid;
+    gap: 4px;
+}
+
+.rally-view-context-item dt {
+    color: var(--mq-text-muted);
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.rally-view-context-item dd {
+    color: #e8f4ff;
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+.rally-view-context-item-self dd {
+    color: var(--mq-accent);
+}
+
+.rally-view-context-payout {
+    color: #9dffd4;
+}
+
+.rally-view-quick-links {
+    border-top: 1px solid rgba(42, 58, 92, 0.85);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+}
+
+.rally-view-quick-link {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 999px;
+    color: #7eeeff;
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    text-decoration: none;
+}
+
+.rally-view-quick-link:hover {
+    border-color: rgba(0, 229, 255, 0.45);
+    color: #c8f7ff;
+}
+
+.rally-view-deck {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 620px) minmax(280px, 1fr);
+}
+
+@media (max-width: 980px) {
+    .rally-view-deck {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rally-view-stage,
+.rally-view-sidebar {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.rally-view-stage {
+    padding: 12px;
+}
+
+.rally-view-replay-unavailable {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+    min-height: 220px;
+    padding: 18px 16px;
+}
+
+.rally-view-replay-unavailable-title {
+    color: #e8f4ff;
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.rally-view-replay-unavailable-note {
+    color: var(--mq-text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 36rem;
+}
+
+.rally-view-canvas-wrap {
+    background: rgba(4, 8, 14, 0.95);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
+    max-width: 100%;
+    overflow: auto;
+}
+
+.rally-view-canvas-wrap canvas {
+    display: block;
+    max-width: 100%;
+}
+
+.rally-view-transport {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.rally-view-controls {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+}
+
+.rally-view-control-button,
+.rally-view-speed-button {
+    appearance: none;
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    border-radius: 6px;
+    color: #c5d4ea;
+    cursor: pointer;
+    font-size: 0.84rem;
+    padding: 8px 14px;
+}
+
+.rally-view-control-button:hover,
+.rally-view-speed-button:hover {
+    border-color: rgba(0, 229, 255, 0.55);
+    color: #e8f4ff;
+}
+
+.rally-view-control-button:focus-visible,
+.rally-view-speed-button:focus-visible,
+.rally-view-progress-track:focus-visible {
+    border-color: rgba(0, 229, 255, 0.85);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.35);
+    color: #e8f4ff;
+    outline: none;
+}
+
+.rally-view-speed {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rally-view-speed-button-active {
+    background: rgba(0, 229, 255, 0.12);
+    border-color: rgba(0, 229, 255, 0.65);
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.16);
+    color: var(--mq-accent);
+}
+
+.rally-view-progress {
+    width: 100%;
+}
+
+.rally-view-progress-track {
+    appearance: none;
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 999px;
+    cursor: pointer;
+    display: block;
+    height: 14px;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    width: 100%;
+}
+
+.rally-view-progress-fill {
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.85) 0%, rgba(0, 255, 157, 0.85) 100%);
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+    display: block;
+    height: 100%;
+    pointer-events: none;
+    width: 0;
+}
+
+.rally-view-cycle-status {
+    color: #c5d4ea;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+.rally-view-keyboard-hint {
+    color: var(--mq-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+    margin: 0;
+}
+
+.rally-view-progress-canvas {
+    display: none !important;
+}
+
+.rally-view-progress-wrap {
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    flex: 1 1 320px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 8px;
+}
+
+.rally-view-progress-wrap canvas {
+    display: block;
+    max-width: 100%;
+}
+
+.rally-view-cycle-label {
+    color: #c5d4ea;
+    font-size: 0.88rem;
+}
+
+.rally-view-cycle-label input {
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid var(--mq-border);
+    border-radius: 4px;
+    color: var(--mq-text);
+    font-family: Consolas, "Courier New", monospace;
+    margin-left: 6px;
+    padding: 4px 8px;
+    width: 4.5em;
+}
+
+.rally-view-sidebar {
+    padding: 14px 16px 16px;
+}
+
+.rally-view-sidebar-title,
+.rally-view-legend-title {
+    color: #c5d4ea;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+}
+
+.rally-view-players {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 16px;
+}
+
+@media (max-width: 520px) {
+    .rally-view-players {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rally-view-player {
+    background: rgba(10, 16, 26, 0.82);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.rally-view-player-self {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.rally-view-player-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.rally-view-player-color {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+    flex: 0 0 auto;
+    height: 14px;
+    width: 14px;
+}
+
+.rally-view-player-0 .rally-view-player-color {
+    background: #00a000;
+}
+
+.rally-view-player-1 .rally-view-player-color {
+    background: #0000ff;
+}
+
+.rally-view-player-2 .rally-view-player-color {
+    background: #ff0000;
+}
+
+.rally-view-player-3 .rally-view-player-color {
+    background: #ffff00;
+}
+
+.rally-view-player-user {
+    align-items: center;
+    color: #e8f4ff;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    font-weight: bold;
+    gap: 6px;
+    margin: 0;
+}
+
+.rally-view-player-you {
+    background: rgba(0, 229, 255, 0.14);
+    border: 1px solid rgba(0, 229, 255, 0.45);
+    border-radius: 999px;
+    color: var(--mq-accent);
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    text-transform: uppercase;
+}
+
+.rally-view-player-robot {
+    color: var(--mq-text-muted);
+    font-size: 0.82rem;
+    margin: 2px 0 0;
+}
+
+.rally-view-player-debug {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.rally-view-player-battery {
+    display: grid;
+    gap: 3px;
+    margin: 0 0 2px;
+}
+
+.rally-view-player-battery-meta {
+    align-items: baseline;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rally-view-player-battery-caption,
+.rally-view-player-turns,
+.rally-view-player-action {
+    color: #c5d4ea;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+.rally-view-player-battery-caption {
+    color: var(--mq-text-muted);
+    text-transform: uppercase;
+}
+
+.rally-view-player-battery-track {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 999px;
+    height: 7px;
+    overflow: hidden;
+}
+
+.rally-view-player-battery-fill {
+    background: linear-gradient(90deg, #2f9e6f 0%, #48c878 100%);
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+    transition: width 80ms linear;
+    width: 100%;
+}
+
+.rally-view-player-battery-low .rally-view-player-battery-fill {
+    background: linear-gradient(90deg, #b45309 0%, #f59e0b 100%);
+}
+
+.rally-view-player-action {
+    color: var(--mq-text-muted);
+}
+
+.rally-view-player-idle {
+    border-color: rgba(255, 176, 32, 0.7);
+    box-shadow: 0 0 14px rgba(255, 176, 32, 0.12);
+}
+
+.rally-view-player-idle .rally-view-player-action {
+    color: #ffb020;
+}
+
+.rally-view-player-blocked {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.12);
+}
+
+.rally-view-player-blocked .rally-view-player-action {
+    color: #f87171;
+}
+
+.rally-view-player-full {
+    border-color: rgba(72, 200, 120, 0.75);
+}
+
+.rally-view-player-depleted {
+    border-color: rgba(148, 163, 184, 0.55);
+}
+
+.rally-view-player-depleted .rally-view-player-turns {
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+.rally-view-player-depleted .rally-view-player-battery-fill {
+    background: rgba(148, 163, 184, 0.35);
+    width: 0 !important;
+}
+
+.rally-view-player-chart {
+    background: rgba(4, 8, 14, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.65);
+    border-radius: 4px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 6px;
+}
+
+.rally-view-player-chart-bar {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rally-view-player-chart-bar[hidden] {
+    display: none !important;
+}
+
+.rally-view-player-chart-label {
+    color: var(--mq-text-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rally-view-source {
+    margin-top: 16px;
+}
+
+.rally-view-source-title {
+    color: #e8f4ff;
+    font-size: 0.95rem;
+    margin: 0 0 6px;
+}
+
+.rally-view-source-note {
+    color: var(--mq-text-muted);
+    font-size: 0.75rem;
+    margin: 0 0 8px;
+}
+
+.rally-view-source-unavailable {
+    color: #d7e2f5;
+    font-size: 0.85rem;
+    margin: 0 0 6px;
+}
+
+.rally-view-source-edit {
+    margin: 0 0 8px;
+}
+
+.rally-view-source-edit-link {
+    color: var(--mq-accent);
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+
+.rally-view-source-edit-link:hover {
+    text-decoration: underline;
+}
+
+.rally-view-source-code {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 4px;
+    color: #c5d4ea;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    margin: 0;
+    /* Cap to the small viewport so iOS Safari chrome doesn't clip the panel. */
+    max-height: min(280px, calc(40 * var(--app-svh)));
+    overflow: auto;
+    padding: 8px 0;
+    /* Avoid <pre> + white-space:pre: iOS Safari collapses block children onto one line. */
+    white-space: normal;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+.rally-view-source-line {
+    display: block;
+    padding: 0 10px 0 0;
+}
+
+.rally-view-source-lineno {
+    color: #6a7a94;
+    display: inline-block;
+    min-width: 2.5em;
+    padding: 0 8px 0 10px;
+    text-align: right;
+    user-select: none;
+}
+
+.rally-view-source-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.rally-view-source-line-active {
+    background: rgba(0, 229, 255, 0.14);
+}
+
+.rally-view-source-line-active .rally-view-source-lineno {
+    color: var(--mq-accent);
+    font-weight: bold;
+}
+
+.rally-view-source-token-active {
+    background: rgba(0, 229, 255, 0.45);
+    color: inherit;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.rally-view-legend-list {
+    display: grid;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rally-view-legend-item {
+    align-items: center;
+    color: #c5d4ea;
+    display: none;
+    font-size: 0.88rem;
+    gap: 10px;
+}
+
+.rally-view-legend-item canvas {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+    flex: 0 0 auto;
+}
+
+

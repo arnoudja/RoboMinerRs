@@ -1,0 +1,50 @@
+/******************************************************
+ * Help pages
+ ******************************************************/
+
+body.helptext {
+    background: #eee;
+}
+
+div.helptext {
+    text-align: left;
+    margin: 20px;
+    background: #eee;
+}
+
+p.helptext, li.helptext {
+    max-width: 600px;
+}
+
+p.codeexample {
+    font-family: monospace;
+    white-space: pre;
+}
+
+table.helptable {
+    border: 1px solid black;
+    border-collapse: collapse;
+    margin-left: 0;
+}
+
+th.helptable {
+    border: 1px solid #aaa;
+    background: #bbb;
+    border-collapse: collapse;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 15px;
+}
+
+td.helptable {
+    border: 1px solid #aaa;
+    background: #ddd;
+    border-collapse: collapse;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 15px;
+}
+
+

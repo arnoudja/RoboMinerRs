@@ -147,8 +147,18 @@ ensure_web_config_keys() {
 install_static_assets() {
     echo "Installing static assets to ${STATIC_ROOT}..."
     run_as_root install -d -o robominer -g robominer -m 0755 "${STATIC_ROOT}/css"
-    run_as_root install -m 0644 "${ROOT}/robominer-web/static/css/robominer.css" \
-        "${STATIC_ROOT}/css/robominer.css"
+    if command -v rsync >/dev/null 2>&1; then
+        run_as_root rsync -a --delete \
+            --chown=robominer:robominer \
+            --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
+            "${ROOT}/robominer-web/static/css/" "${STATIC_ROOT}/css/"
+    else
+        run_as_root find "${STATIC_ROOT}/css" -mindepth 1 -delete 2>/dev/null || true
+        run_as_root cp -a "${ROOT}/robominer-web/static/css/." "${STATIC_ROOT}/css/"
+        run_as_root chown -R robominer:robominer "${STATIC_ROOT}/css"
+        run_as_root find "${STATIC_ROOT}/css" -type d -exec chmod 0755 {} +
+        run_as_root find "${STATIC_ROOT}/css" -type f -exec chmod 0644 {} +
+    fi
 
     # Page and rally JS (linked via <script src>, not inlined into HTML).
     run_as_root install -d -o robominer -g robominer -m 0755 "${STATIC_ROOT}/js"

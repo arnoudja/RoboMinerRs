@@ -1,0 +1,383 @@
+/******************************************************
+ * Mining area atlas — sci-fi dark theme (matches mining queue)
+ ******************************************************/
+
+.main:has(.mining-area-atlas-page) {
+    background: #070b12;
+}
+
+.main:has(.mining-area-atlas-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(61, 90, 241, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(0, 229, 255, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+}
+
+
+
+
+
+
+.mining-area-atlas-page {
+    --mq-border: #2a3a5c;
+    --mq-text: #d7e0f0;
+    --mq-text-muted: #8b9bb8;
+    --mq-accent: #00e5ff;
+    --mq-success: #00ff9d;
+    --mq-danger: #ff5c7a;
+    color: var(--mq-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1100px;
+}
+
+.mining-area-atlas-header {
+    align-items: start;
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    justify-content: space-between;
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.mining-area-atlas-title {
+    color: #e8f4ff;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 6px;
+    text-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+    text-transform: uppercase;
+}
+
+.mining-area-atlas-subtitle {
+    color: var(--mq-text-muted);
+    margin: 0;
+}
+
+.mining-area-atlas-back-link {
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid rgba(0, 229, 255, 0.45);
+    border-radius: 6px;
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.12);
+    color: var(--mq-accent);
+    font-size: 0.88rem;
+    padding: 8px 14px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.mining-area-atlas-back-link:hover {
+    border-color: rgba(0, 229, 255, 0.65);
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
+    color: #7eeeff;
+}
+
+.mining-area-atlas-header-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mining-area-atlas-full-page-link {
+    font-size: 0.82rem;
+}
+
+body.mining-area-atlas-drawer-open {
+    overflow: hidden;
+}
+
+.mining-area-atlas-drawer {
+    inset: 0;
+    padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
+    position: fixed;
+    z-index: 1200;
+}
+
+.mining-area-atlas-drawer[hidden] {
+    display: none !important;
+}
+
+.mining-area-atlas-drawer-overlay {
+    appearance: none;
+    background: rgba(4, 8, 14, 0.78);
+    border: 0;
+    cursor: pointer;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+}
+
+.mining-area-atlas-drawer-panel {
+    --mq-border: #2a3a5c;
+    --mq-text: #d7e0f0;
+    --mq-text-muted: #8b9bb8;
+    --mq-accent: #00e5ff;
+    --mq-success: #00ff9d;
+    --mq-danger: #ff5c7a;
+    background: linear-gradient(180deg, rgba(18, 26, 43, 0.98) 0%, rgba(10, 16, 26, 0.99) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 10px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    color: var(--mq-text);
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    inset: 24px;
+    margin: 0 auto;
+    max-width: 1100px;
+    overflow: hidden;
+    position: absolute;
+    right: 24px;
+    left: 24px;
+}
+
+.mining-area-atlas-drawer-panel .mining-area-atlas-header {
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 10px 10px 0 0;
+}
+
+.mining-area-atlas-drawer-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 16px;
+}
+
+.mining-area-atlas-drawer-content.mining-area-atlas-page {
+    max-width: none;
+}
+
+.mining-area-atlas-drawer-panel select.tableitem,
+.mining-area-atlas-drawer-panel .mining-area-atlas-control-select {
+    appearance: none;
+    background: linear-gradient(180deg, rgba(15, 23, 40, 0.98) 0%, rgba(10, 16, 26, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: var(--mq-text);
+    cursor: pointer;
+    padding: 8px 10px;
+}
+
+.mining-area-atlas-drawer-panel select.tableitem:focus,
+.mining-area-atlas-drawer-panel .mining-area-atlas-control-select:focus {
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.16);
+    outline: none;
+}
+
+@media (max-width: 720px) {
+    .mining-area-atlas-drawer-panel {
+        inset: 12px;
+    }
+}
+
+.mining-area-atlas-controls {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    margin: 0 0 16px;
+    padding: 14px 16px;
+}
+
+.mining-area-atlas-control-form {
+    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+}
+
+.mining-area-atlas-control-label {
+    color: #c5d4ea;
+    display: grid;
+    font-size: 0.82rem;
+    gap: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mining-area-atlas-control-select {
+    display: block;
+    min-width: 180px;
+}
+
+.mining-area-atlas-page select.tableitem,
+.mining-area-atlas-page .mining-area-atlas-control-select {
+    appearance: none;
+    background: linear-gradient(180deg, rgba(15, 23, 40, 0.98) 0%, rgba(10, 16, 26, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: var(--mq-text);
+    cursor: pointer;
+    padding: 8px 10px;
+}
+
+.mining-area-atlas-page select.tableitem:focus,
+.mining-area-atlas-page .mining-area-atlas-control-select:focus {
+    border-color: rgba(0, 229, 255, 0.55);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.16);
+    outline: none;
+}
+
+.mining-area-atlas-control-checkbox {
+    align-items: center;
+    color: #c5d4ea;
+    display: inline-flex;
+    font-size: 0.88rem;
+    gap: 8px;
+    min-height: 38px;
+}
+
+.mining-area-atlas-page [hidden] {
+    display: none !important;
+}
+
+.mining-area-atlas-filter-hidden {
+    display: none !important;
+}
+
+.mining-area-atlas-filter-empty {
+    color: var(--mq-text-muted);
+    font-size: 0.88rem;
+    margin: 12px 0 0;
+    text-align: center;
+}
+
+.mining-area-atlas-cost-cell {
+    text-align: left;
+    white-space: normal;
+}
+
+.mining-area-atlas-page table.mining-area-atlas-table .mining-area-atlas-cost-affordable,
+.mining-area-atlas-drawer-panel table.mining-area-atlas-table .mining-area-atlas-cost-affordable {
+    color: var(--mq-success);
+    text-shadow: 0 0 8px rgba(0, 255, 157, 0.25);
+}
+
+.mining-area-atlas-page table.mining-area-atlas-table .mining-area-atlas-cost-unaffordable,
+.mining-area-atlas-drawer-panel table.mining-area-atlas-table .mining-area-atlas-cost-unaffordable {
+    color: var(--mq-danger);
+    text-shadow: 0 0 8px rgba(255, 92, 122, 0.2);
+}
+
+.mining-area-atlas-matrix {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    margin: 0 0 12px;
+    padding: 12px;
+}
+
+.mining-area-atlas-table-wrap {
+    overflow-x: auto;
+}
+
+.mining-area-atlas-table {
+    background: rgba(10, 16, 26, 0.72);
+    border: 1px solid var(--mq-border);
+    border-collapse: collapse;
+    margin: 0;
+    min-width: 100%;
+    width: max-content;
+}
+
+.mining-area-atlas-page table.mining-area-atlas-table th,
+.mining-area-atlas-page table.mining-area-atlas-table td,
+.mining-area-atlas-drawer-panel table.mining-area-atlas-table th,
+.mining-area-atlas-drawer-panel table.mining-area-atlas-table td {
+    border-color: rgba(42, 58, 92, 0.85);
+    color: var(--mq-text);
+    padding: 10px 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.mining-area-atlas-table thead th {
+    background: rgba(10, 16, 26, 0.95);
+    color: #c5d4ea;
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    position: sticky;
+    text-transform: uppercase;
+    top: 0;
+    z-index: 2;
+}
+
+.mining-area-atlas-area-col {
+    background: rgba(10, 16, 26, 0.95);
+    left: 0;
+    position: sticky;
+    text-align: left;
+    z-index: 1;
+}
+
+.mining-area-atlas-table thead .mining-area-atlas-area-col {
+    z-index: 3;
+}
+
+.mining-area-atlas-row:hover td,
+.mining-area-atlas-row:hover th {
+    background: rgba(0, 229, 255, 0.06);
+}
+
+.mining-area-atlas-row:hover .mining-area-atlas-area-col {
+    background: rgba(0, 229, 255, 0.08);
+}
+
+.mining-area-atlas-area-link {
+    background: none;
+    border: 0;
+    color: #e8f4ff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    padding: 0;
+    text-align: left;
+    text-decoration: none;
+}
+
+.mining-area-atlas-area-link:hover {
+    color: var(--mq-accent);
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.mining-area-atlas-yield-high,
+.mining-area-atlas-yield-mid,
+.mining-area-atlas-yield-low,
+.mining-area-atlas-yield-zero {
+    color: var(--mq-text);
+    font-family: inherit;
+    font-weight: normal;
+}
+
+.mining-area-atlas-empty {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--mq-border);
+    border-radius: 8px;
+    color: var(--mq-text-muted);
+    margin: 0 0 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.mining-area-atlas-footnote {
+    color: var(--mq-text-muted);
+    font-size: 0.88rem;
+    margin: 0;
+}
+

@@ -5,6 +5,8 @@ use super::{
 use crate::{Request, Response, ServerConfig, query_i64, request_user_id, session_username};
 
 pub(super) mod render;
+mod render_feed;
+mod render_sidebar;
 
 pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response {
     let Some(pool) = config.database_pool.as_ref() else {

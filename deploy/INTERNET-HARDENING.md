@@ -157,7 +157,7 @@ curl -fsS http://127.0.0.1:8080/health
 | Engine private | No listening HTTP port for `robominer-engine` |
 | App rate limit | Rapid `/login` POSTs return `429` |
 | CSRF | Authenticated and login/signup POST forms include `csrfToken` |
-| Static cache | `curl -I /css/robominer.css` shows `Cache-Control` and `ETag` |
+| Static cache | `curl -I /css/pages/layout.css` shows `Cache-Control` and `ETag` |
 
 ## 8. Known gaps (app-level)
 

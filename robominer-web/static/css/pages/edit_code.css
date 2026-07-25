@@ -1,0 +1,542 @@
+/******************************************************
+ * Edit code — sci-fi dark theme
+ ******************************************************/
+
+.main:has(.edit-code-page) {
+    background: #070b12;
+}
+
+.main:has(.edit-code-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(192, 132, 252, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(34, 211, 238, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+}
+
+
+
+
+
+
+.edit-code-page {
+    --code-bg-deep: #0a101a;
+    --code-bg-panel: #121a2b;
+    --code-border: #2a3a5c;
+    --code-text: #d7e0f0;
+    --code-text-muted: #8b9bb8;
+    --code-accent: #c084fc;
+    --code-accent-secondary: #22d3ee;
+    --code-success: #00ff9d;
+    --code-danger: #ff5c7a;
+    color: var(--code-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 1100px;
+}
+
+.edit-code-summary {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(18, 26, 43, 0.98) 100%);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    box-shadow:
+        0 10px 32px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    margin: 0 0 16px;
+    padding: 16px 20px;
+}
+
+.edit-code-summary-heading {
+    margin-bottom: 12px;
+}
+
+.edit-code-page-title {
+    color: #f3e8ff;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0;
+    text-shadow: 0 0 18px rgba(192, 132, 252, 0.28);
+    text-transform: uppercase;
+}
+
+.edit-code-summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.edit-code-summary-item {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(192, 132, 252, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+    padding: 8px 12px;
+}
+
+.edit-code-summary-label {
+    color: var(--code-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.edit-code-summary-value {
+    color: #f3e8ff;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 1.05rem;
+}
+
+.edit-code-banner {
+    border-radius: 6px;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+}
+
+.edit-code-banner-error {
+    background: rgba(255, 92, 122, 0.12);
+    border: 1px solid rgba(255, 92, 122, 0.55);
+    box-shadow: 0 0 16px rgba(255, 92, 122, 0.12);
+    color: #ffb3c0;
+}
+
+.edit-code-banner-success {
+    background: rgba(0, 255, 157, 0.1);
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    box-shadow: 0 0 16px rgba(0, 255, 157, 0.12);
+    color: #9dffd4;
+}
+
+.edit-code-claim-banner {
+    background: rgba(0, 255, 157, 0.08);
+    border: 1px solid rgba(0, 255, 157, 0.35);
+    border-radius: 6px;
+    color: #9dffd4;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+}
+
+.edit-code-claim-banner a {
+    color: #c4b5fd;
+}
+
+.edit-code-claim-banner a:hover {
+    color: #e9d5ff;
+}
+
+.edit-code-banner-compile {
+    background: rgba(255, 209, 102, 0.1);
+    border: 1px solid rgba(255, 209, 102, 0.45);
+    color: #ffe6a8;
+    margin-top: 12px;
+}
+
+.edit-code-panels {
+    display: grid;
+    gap: 16px;
+}
+
+.edit-code-panel {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    padding: 18px;
+}
+
+.edit-code-panel-active {
+    border-color: rgba(192, 132, 252, 0.45);
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.35),
+        0 0 18px rgba(192, 132, 252, 0.08);
+}
+
+.edit-code-panel-header {
+    align-items: start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.edit-code-panel-title {
+    color: #f3e8ff;
+    font-size: 1.15rem;
+    margin: 0 0 6px;
+}
+
+.edit-code-panel-subtitle {
+    color: var(--code-text-muted);
+    margin: 0;
+}
+
+.edit-code-status-badge {
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.edit-code-status-new {
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.45);
+    color: #99f6ff;
+}
+
+.edit-code-status-verified {
+    background: rgba(0, 255, 157, 0.12);
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    color: #9dffd4;
+}
+
+.edit-code-status-ready {
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.45);
+    color: #e9d5ff;
+}
+
+.edit-code-status-error {
+    background: rgba(255, 92, 122, 0.12);
+    border: 1px solid rgba(255, 92, 122, 0.45);
+    color: #ffb3c0;
+}
+
+.edit-code-status-dirty {
+    background: rgba(255, 209, 102, 0.12);
+    border: 1px solid rgba(255, 209, 102, 0.45);
+    color: #ffe6a8;
+}
+
+.edit-code-meta-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+}
+
+.edit-code-meta-list li {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+    padding: 8px 10px;
+}
+
+.edit-code-meta-label {
+    color: var(--code-text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.edit-code-meta-value {
+    color: #f3e8ff;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.edit-code-field {
+    display: block;
+    margin-bottom: 14px;
+}
+
+.edit-code-field-label {
+    color: var(--code-text-muted);
+    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 6px;
+}
+
+.edit-code-page .edit-code-text-input {
+    background: rgba(10, 16, 26, 0.92);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: var(--code-text);
+    font-family: Consolas, "Courier New", monospace;
+    padding: 10px 12px;
+    width: 100%;
+}
+
+.edit-code-source-editor {
+    background: rgba(10, 16, 26, 0.92);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+}
+
+.edit-code-line-numbers {
+    background: rgba(8, 12, 20, 0.95);
+    border-right: 1px solid var(--code-border);
+    box-sizing: border-box;
+    color: var(--code-text-muted);
+    flex: 0 0 auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    min-width: 2.75em;
+    overflow: hidden;
+    padding: 10px 10px 10px 12px;
+    text-align: right;
+    user-select: none;
+}
+
+.edit-code-page .edit-code-source-editor .edit-code-textarea {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-sizing: border-box;
+    color: var(--code-text);
+    flex: 1 1 auto;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    /* Prefer the small viewport on phones so Safari chrome doesn't push controls off-screen. */
+    min-height: min(420px, calc(55 * var(--app-svh)));
+    padding: 10px 12px;
+    resize: vertical;
+    width: 100%;
+}
+
+.edit-code-page .edit-code-text-input:focus,
+.edit-code-page .edit-code-source-editor:focus-within {
+    border-color: rgba(192, 132, 252, 0.55);
+    box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.18);
+    outline: none;
+}
+
+.edit-code-actions,
+.edit-code-delete {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.edit-code-btn {
+    background: rgba(18, 26, 43, 0.95);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    color: var(--code-text);
+    cursor: pointer;
+    font: inherit;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    padding: 8px 14px;
+}
+
+.edit-code-btn:hover {
+    border-color: rgba(192, 132, 252, 0.45);
+    box-shadow: 0 0 14px rgba(192, 132, 252, 0.12);
+    color: #ffffff;
+}
+
+.edit-code-btn-primary {
+    background: linear-gradient(180deg, rgba(192, 132, 252, 0.24) 0%, rgba(192, 132, 252, 0.12) 100%);
+    border-color: rgba(192, 132, 252, 0.55);
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.16);
+    color: #f3e8ff;
+}
+
+.edit-code-btn-primary:hover {
+    background: linear-gradient(180deg, rgba(192, 132, 252, 0.32) 0%, rgba(192, 132, 252, 0.16) 100%);
+    box-shadow: 0 0 20px rgba(192, 132, 252, 0.28);
+}
+
+.edit-code-btn-secondary {
+    background: rgba(18, 26, 43, 0.95);
+    border-color: rgba(42, 58, 92, 0.85);
+    color: #c5d4ea;
+}
+
+.edit-code-btn-secondary:hover {
+    border-color: rgba(192, 132, 252, 0.45);
+    color: #f3e8ff;
+}
+
+.edit-code-save-helper,
+.edit-code-delete-helper {
+    color: var(--code-text-muted);
+    font-size: 0.88rem;
+    margin: 8px 0 0;
+    width: 100%;
+}
+
+.edit-code-btn-danger {
+    background: rgba(255, 92, 122, 0.08);
+    border-color: rgba(255, 92, 122, 0.55);
+    color: #ffb3c0;
+}
+
+.edit-code-btn-danger:hover {
+    background: rgba(255, 92, 122, 0.14);
+    box-shadow: 0 0 16px rgba(255, 92, 122, 0.18);
+    color: #ffd6de;
+}
+
+.edit-code-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.edit-code-action-hint {
+    color: var(--code-accent-secondary);
+    font-size: 0.9rem;
+    margin: 8px 0 0;
+    width: 100%;
+}
+
+.edit-code-action-link {
+    color: #c4b5fd;
+}
+
+.edit-code-action-link:hover {
+    color: #e9d5ff;
+}
+
+.edit-code-page [hidden] {
+    display: none !important;
+}
+
+.edit-code-deck {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(240px, 34%) minmax(0, 1fr);
+    margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+    .edit-code-deck {
+        grid-template-columns: 1fr;
+    }
+}
+
+.edit-code-library {
+    background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    padding: 16px;
+}
+
+.edit-code-section-title {
+    color: #f3e8ff;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.edit-code-library-hint {
+    color: var(--code-text-muted);
+    font-size: 0.88rem;
+    margin: 0 0 12px;
+}
+
+.edit-code-program-cards {
+    display: grid;
+    gap: 10px;
+}
+
+.edit-code-program-card {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    color: inherit;
+    cursor: pointer;
+    display: grid;
+    font: inherit;
+    gap: 8px;
+    padding: 12px;
+    text-align: left;
+    width: 100%;
+}
+
+.edit-code-program-card:hover {
+    border-color: rgba(192, 132, 252, 0.45);
+    box-shadow: 0 0 14px rgba(192, 132, 252, 0.12);
+}
+
+.edit-code-program-card-active {
+    border-color: rgba(192, 132, 252, 0.55);
+    box-shadow: 0 0 18px rgba(192, 132, 252, 0.16);
+}
+
+.edit-code-program-heading {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.edit-code-program-name {
+    color: #f3e8ff;
+    font-weight: bold;
+}
+
+.edit-code-program-status {
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.edit-code-program-highlights {
+    color: var(--code-text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.88rem;
+}
+
+.edit-code-editor-area {
+    min-width: 0;
+}
+
+.edit-code-editor-area .edit-code-panel-active {
+    position: sticky;
+    top: 12px;
+}
+
+.edit-code-quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.edit-code-quick-link {
+    background: rgba(10, 16, 26, 0.85);
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 999px;
+    color: #c4b5fd;
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    text-decoration: none;
+}
+
+.edit-code-quick-link:hover {
+    border-color: rgba(192, 132, 252, 0.45);
+    color: #e9d5ff;
+}
+
+

@@ -1,0 +1,77 @@
+/******************************************************
+ * Account — auth-aligned settings page
+ ******************************************************/
+
+.main:has(.account-page) {
+    background: #070b12;
+}
+
+.main:has(.account-page) .interface {
+    background:
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 77, 255, 0.08), transparent 24%),
+        linear-gradient(180deg, #070b12 0%, #0c1220 48%, #090e16 100%);
+    color: #d7e0f0;
+    min-height: calc(var(--app-viewport-height) - 120px);
+    padding: 24px 16px 76px;
+}
+
+
+
+
+
+
+.account-page {
+    color: #d7e0f0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0 auto;
+    max-width: 560px;
+}
+
+.account-shell {
+    display: grid;
+    gap: 16px;
+}
+
+.account-header {
+    margin-bottom: 4px;
+}
+
+.account-page-title {
+    color: #e8f4ff;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px;
+    text-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+    text-transform: uppercase;
+}
+
+.account-page-subtitle {
+    color: #8b9bb8;
+    font-size: 0.92rem;
+    margin: 0;
+}
+
+.account-card {
+    margin-top: 4px;
+}
+
+.account-section-title {
+    color: #c5d4ea;
+    font-size: 0.92rem;
+    letter-spacing: 0.06em;
+    margin: 18px 0 12px;
+    text-transform: uppercase;
+}
+
+.account-section-title:first-of-type {
+    margin-top: 0;
+}
+
+.account-section-hint {
+    color: #8b9bb8;
+    font-size: 0.84rem;
+    margin: -4px 0 14px;
+}
+
+

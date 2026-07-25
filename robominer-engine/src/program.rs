@@ -19,7 +19,9 @@ pub(crate) async fn create_program_source(
         }
         Err(rejection) => Err(anyhow!(
             "unable to create program source: {}",
-            robominer_domain::program_source_write_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }
@@ -54,7 +56,9 @@ pub(crate) async fn update_program_source(
         }
         Err(rejection) => Err(anyhow!(
             "unable to update program source: {}",
-            robominer_domain::program_source_write_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }
@@ -74,7 +78,9 @@ pub(crate) async fn delete_program_source(
         }
         Err(rejection) => Err(anyhow!(
             "unable to delete program source: {}",
-            robominer_domain::program_source_write_rejection_cli_message(rejection)
+            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                rejection
+            )
         )),
     }
 }
@@ -84,7 +90,9 @@ fn print_program_source_warnings(warnings: &[robominer_db::ProgramSourceApplyWar
         println!(
             "WARNING Unable to apply the code to robot {}: {}",
             warning.robot_name,
-            robominer_domain::program_source_apply_warning_message(warning.reason)
+            robominer_domain::rejection_messages::program_source_apply_warning_message(
+                warning.reason
+            )
         );
     }
 }

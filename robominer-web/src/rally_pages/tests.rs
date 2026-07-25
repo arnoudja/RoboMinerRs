@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::html::{
+    assert_contains_all, assert_html_contains, assert_html_has_class, assert_html_not_contains,
+};
 use crate::{Request, ServerConfig};
 
 use super::{
@@ -96,7 +99,7 @@ async fn activity_requires_database_configuration() {
     let body = String::from_utf8(response.body).expect("message should be utf-8");
 
     assert_eq!(response.status, 503);
-    assert!(body.contains("ROBOMINER_DATABASE_URL"));
+    assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
 }
 
 #[test]
@@ -144,41 +147,40 @@ fn activity_rendering_groups_participants_and_formats_utc_dates() {
         default_activity_feed_query(),
     );
 
-    assert!(html.contains(r#"class="activity-page""#));
-    assert!(html.contains(r#"class="activity-title">Activity</h1>"#));
-    assert!(html.contains(r#"class="page-help-hint""#));
-    assert!(html.contains(r#"href="helpTutorial?step=1">Tutorial</a>"#));
-    assert!(html.contains("Area &amp; One"));
-    assert!(html.contains("Lead &lt;Bot&gt;"));
-    assert!(html.contains(r#"class="activity-rally-card activity-rally-card-replayable""#));
-    assert!(html.contains(r#"href="activity">All rallies</a>"#));
-    assert!(html.contains(r#"href="activity?filter=mine">Your rallies</a>"#));
-    assert!(html.contains("activity-rally-filter-link-active"));
-    assert!(html.contains(r#"href="activity?rallyResultId=20""#));
-    assert!(html.contains(
-        r#"class="activity-rally-badge activity-rally-badge-replay">Replay ready</span>"#
-    ));
-    assert!(
-        html.contains(
-            r#"class="activity-rally-badge activity-rally-badge-players">2 players</span>"#
-        )
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="activity-page""#,
+            r#"class="activity-title">Activity</h1>"#,
+            r#"class="page-help-hint""#,
+            r#"href="helpTutorial?step=1">Tutorial</a>"#,
+            "Area &amp; One",
+            "Lead &lt;Bot&gt;",
+            r#"class="activity-rally-card activity-rally-card-replayable""#,
+            r#"href="activity">All rallies</a>"#,
+            r#"href="activity?filter=mine">Your rallies</a>"#,
+            r#"href="activity?rallyResultId=20""#,
+            r#"class="activity-rally-badge activity-rally-badge-replay">Replay ready</span>"#,
+            r#"class="activity-rally-badge activity-rally-badge-players">2 players</span>"#,
+            r#"class="activity-rally-replay-cta">Watch replay"#,
+            "activity-rally-participant-1",
+            "Other &amp; Bot",
+            "Other &lt;Owner&gt;",
+            "User &lt;A&gt;",
+            r#"title="1970-01-01 00:00:00 UTC">Ended 1 hour ago</p>"#,
+            r#"title="1970-01-01 00:00:00 UTC">1 hour ago</span>"#,
+            r#"class="activity-feed-stats""#,
+            r#"<dt>Showing</dt><dd>1 rallies</dd>"#,
+            r#"<dt>Replays</dt><dd>1 ready</dd>"#,
+            r#"class="tableitem activity-area-filter-select""#,
+            "Area &amp; One</option>",
+            r#"class="activity-sidebar""#,
+            "activity-sidebar-players",
+            r#"class="activity-deck""#,
+        ],
     );
-    assert!(html.contains(r#"class="activity-rally-replay-cta">Watch replay"#));
-    assert!(html.contains("activity-rally-participant-1"));
-    assert!(html.contains("Other &amp; Bot"));
-    assert!(html.contains("Other &lt;Owner&gt;"));
-    assert!(html.contains("User &lt;A&gt;"));
-    assert!(html.contains(r#"title="1970-01-01 00:00:00 UTC">Ended 1 hour ago</p>"#));
-    assert!(html.contains(r#"title="1970-01-01 00:00:00 UTC">1 hour ago</span>"#));
-    assert!(html.contains(r#"class="activity-feed-stats""#));
-    assert!(html.contains(r#"<dt>Showing</dt><dd>1 rallies</dd>"#));
-    assert!(html.contains(r#"<dt>Replays</dt><dd>1 ready</dd>"#));
-    assert!(html.contains(r#"class="tableitem activity-area-filter-select""#));
-    assert!(html.contains("Area &amp; One</option>"));
-    assert!(html.contains(r#"class="activity-sidebar""#));
-    assert!(html.contains("activity-sidebar-players"));
-    assert!(html.contains(r#"class="activity-deck""#));
-    assert!(!html.contains(r#"class="activity-deck activity-deck-full""#));
+    assert_html_has_class(&html, "activity-rally-filter-link-active");
+    assert_html_not_contains(&html, r#"class="activity-deck activity-deck-full""#);
 }
 
 #[test]
@@ -205,18 +207,21 @@ fn activity_rendering_shows_empty_states_and_unavailable_replay() {
         default_activity_feed_query(),
     );
 
-    assert!(!html.contains("activity-sidebar-players"));
-    assert!(!html.contains("No recent players to show."));
-    assert!(html.contains(r#"class="activity-sidebar""#));
-    assert!(html.contains(r#"class="activity-deck""#));
-    assert!(!html.contains(r#"class="activity-deck activity-deck-full""#));
-    assert!(html.contains(r#"class="activity-rally-card activity-rally-card-unavailable""#));
-    assert!(html.contains(r#"class="activity-rally-badge activity-rally-badge-unavailable""#));
-    assert!(html.contains("No replay stored</span>"));
-    assert!(!html.contains("Watch replay"));
-    assert!(
-        html.contains(r#"class="activity-rally-badge activity-rally-badge-players">Solo</span>"#)
+    assert_html_not_contains(&html, "activity-sidebar-players");
+    assert_html_not_contains(&html, "No recent players to show.");
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="activity-sidebar""#,
+            r#"class="activity-deck""#,
+            r#"class="activity-rally-card activity-rally-card-unavailable""#,
+            r#"class="activity-rally-badge activity-rally-badge-unavailable""#,
+            "No replay stored</span>",
+            r#"class="activity-rally-badge activity-rally-badge-players">Solo</span>"#,
+        ],
     );
+    assert_html_not_contains(&html, r#"class="activity-deck activity-deck-full""#);
+    assert_html_not_contains(&html, "Watch replay");
 }
 
 #[test]
@@ -229,9 +234,14 @@ fn activity_rendering_shows_actionable_empty_rally_state() {
         default_activity_feed_query(),
     );
 
-    assert!(html.contains("No finished rallies yet."));
-    assert!(html.contains(r#"href="miningQueue">Add runs to your mining queue</a>"#));
-    assert!(html.contains(r#"href="helpTutorial?step=1">follow the tutorial</a>"#));
+    assert_contains_all(
+        &html,
+        &[
+            "No finished rallies yet.",
+            r#"href="miningQueue">Add runs to your mining queue</a>"#,
+            r#"href="helpTutorial?step=1">follow the tutorial</a>"#,
+        ],
+    );
 }
 
 #[test]
@@ -263,13 +273,14 @@ fn activity_rendering_highlights_viewer_participation() {
         default_activity_feed_query(),
     );
 
-    assert!(
-        html.contains(
-            r#"class="activity-rally-badge activity-rally-badge-self">You played</span>"#
-        )
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="activity-rally-badge activity-rally-badge-self">You played</span>"#,
+            r#"class="activity-rally-participant activity-rally-participant-0 activity-rally-participant-self""#,
+            r#"class="activity-rally-participant-you">You</span>"#,
+        ],
     );
-    assert!(html.contains(r#"class="activity-rally-participant activity-rally-participant-0 activity-rally-participant-self""#));
-    assert!(html.contains(r#"class="activity-rally-participant-you">You</span>"#));
 }
 
 #[test]
@@ -286,10 +297,15 @@ fn activity_rendering_shows_your_rallies_filter_and_empty_state() {
         },
     );
 
-    assert!(html.contains(r#"href="activity">All rallies</a>"#));
-    assert!(html.contains(r#"href="activity?filter=mine">Your rallies</a>"#));
-    assert!(html.contains("activity-rally-filter-link-active"));
-    assert!(html.contains("No rallies you've joined yet."));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="activity">All rallies</a>"#,
+            r#"href="activity?filter=mine">Your rallies</a>"#,
+            "No rallies you've joined yet.",
+        ],
+    );
+    assert_html_has_class(&html, "activity-rally-filter-link-active");
 }
 
 #[test]
@@ -320,7 +336,7 @@ fn activity_mine_filter_preserves_replay_link() {
         },
     );
 
-    assert!(html.contains(r#"href="activity?rallyResultId=20&amp;filter=mine""#));
+    assert_html_contains(&html, r#"href="activity?rallyResultId=20&amp;filter=mine""#);
 }
 
 #[test]
@@ -354,8 +370,13 @@ fn activity_rendering_shows_load_more_and_area_filter_links() {
         },
     );
 
-    assert!(html.contains(r#"href="activity?areaId=5&amp;limit=20">Load more rallies</a>"#));
-    assert!(html.contains(r#"value="activity?areaId=5" selected>Crystal Cave</option>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"href="activity?areaId=5&amp;limit=20">Load more rallies</a>"#,
+            r#"value="activity?areaId=5" selected>Crystal Cave</option>"#,
+        ],
+    );
 }
 
 #[test]
@@ -372,7 +393,7 @@ fn activity_rendering_shows_area_specific_empty_state() {
         },
     );
 
-    assert!(html.contains("No finished rallies in this area yet."));
+    assert_html_contains(&html, "No finished rallies in this area yet.");
 }
 
 #[test]
@@ -413,10 +434,15 @@ fn activity_rendering_shows_sidebar_queue_snapshot() {
         default_activity_feed_query(),
     );
 
-    assert!(html.contains(r#"class="activity-section-title">Your mining queue</h2>"#));
-    assert!(html.contains("2/3 slots in use"));
-    assert!(html.contains(r#"href="miningQueue?robotId=7">Crystal &amp; Cave</a>"#));
-    assert!(html.contains(r#"class="activity-queue-manage" href="miningQueue">Manage queue</a>"#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="activity-section-title">Your mining queue</h2>"#,
+            "2/3 slots in use",
+            r#"href="miningQueue?robotId=7">Crystal &amp; Cave</a>"#,
+            r#"class="activity-queue-manage" href="miningQueue">Manage queue</a>"#,
+        ],
+    );
 }
 
 #[test]
@@ -446,15 +472,22 @@ fn rally_view_rendering_refuses_legacy_javascript_result_data() {
         None,
     );
 
-    assert!(!html.contains(r#"id="rally-result-data""#));
-    assert!(!html.contains("var myOreTypes = {};"));
-    assert!(!html.contains("applyRallyResultPayload(JSON.parse"));
-    assert!(!html.contains("function runanimation("));
-    assert!(!html.contains(r#"id="rallyCanvas""#));
-    assert!(html.contains("Replay unavailable"));
-    assert!(html.contains(
-        "This rally was stored in an older executable format that is no longer played for security reasons."
-    ));
+    for absent in [
+        r#"id="rally-result-data""#,
+        "var myOreTypes = {};",
+        "applyRallyResultPayload(JSON.parse",
+        "function runanimation(",
+        r#"id="rallyCanvas""#,
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
+    assert_contains_all(
+        &html,
+        &[
+            "Replay unavailable",
+            "This rally was stored in an older executable format that is no longer played for security reasons.",
+        ],
+    );
 }
 
 #[test]
@@ -484,12 +517,15 @@ fn rally_view_rendering_refuses_unsupported_result_data() {
         None,
     );
 
-    assert!(!html.contains(r#"id="rally-result-data""#));
-    assert!(!html.contains(r#""v":3"#));
-    assert!(html.contains("Replay unavailable"));
-    assert!(html.contains(
-        "This rally replay payload is missing, corrupt, or uses an unsupported version."
-    ));
+    assert_html_not_contains(&html, r#"id="rally-result-data""#);
+    assert_html_not_contains(&html, r#""v":3"#);
+    assert_contains_all(
+        &html,
+        &[
+            "Replay unavailable",
+            "This rally replay payload is missing, corrupt, or uses an unsupported version.",
+        ],
+    );
 }
 
 #[test]
@@ -519,11 +555,17 @@ fn rally_view_rendering_accepts_v2_result_data() {
         None,
     );
 
-    assert!(html.contains(r#"id="rally-result-data""#));
-    assert!(html.contains(r#""v":2"#));
-    assert!(html.contains(r#"id="rallyCanvas""#));
-    assert!(
-        !html.contains(r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"id="rally-result-data""#,
+            r#""v":2"#,
+            r#"id="rallyCanvas""#,
+        ],
+    );
+    assert_html_not_contains(
+        &html,
+        r#"<p class="rally-view-replay-unavailable-title">Replay unavailable</p>"#,
     );
 }
 
@@ -556,12 +598,15 @@ fn rally_view_rendering_refuses_incomplete_versioned_result_data() {
         None,
     );
 
-    assert!(!html.contains(r#"id="rally-result-data""#));
-    assert!(!html.contains(r#"id="rallyCanvas""#));
-    assert!(html.contains("Replay unavailable"));
-    assert!(html.contains(
-        "This rally replay payload is missing, corrupt, or uses an unsupported version."
-    ));
+    assert_html_not_contains(&html, r#"id="rally-result-data""#);
+    assert_html_not_contains(&html, r#"id="rallyCanvas""#);
+    assert_contains_all(
+        &html,
+        &[
+            "Replay unavailable",
+            "This rally replay payload is missing, corrupt, or uses an unsupported version.",
+        ],
+    );
 }
 
 #[test]
@@ -594,39 +639,53 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
         None,
     );
 
-    assert!(!html.contains(r#"<script src="js/animation.js"></script>"#));
-    assert!(html.contains(r#"class="rally-view-page""#));
-    assert!(html.contains(r#"class="rally-view-title">Rally replay</h1>"#));
-    assert!(
-        html.contains(
-            r#"class="rally-view-context-item"><dt>Area</dt><dd>Area &amp; One</dd></div>"#
-        )
+    assert_html_not_contains(&html, r#"<script src="js/animation.js"></script>"#);
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="rally-view-page""#,
+            r#"class="rally-view-title">Rally replay</h1>"#,
+            r#"class="rally-view-context-item"><dt>Area</dt><dd>Area &amp; One</dd></div>"#,
+            r#"class="rally-view-player-user">User &lt;0&gt;</p>"#,
+            r#"class="rally-view-player-robot">Bot &lt;0&gt;</p>"#,
+            r#"id="oreCanvas0""#,
+            r#"id="depotCanvas0""#,
+            r#"id="depotChart0""#,
+            r#"id="robotBattery0""#,
+            r#"id="robotBatteryFill0""#,
+            r#"id="robotTurns0""#,
+            r#"id="robotAction0""#,
+            r#"id="rallyPlayer0""#,
+            "rally-view-player-battery-fill",
+            r#"id="progressCanvas""#,
+            r#"id="rallyPlayPause""#,
+            r#"aria-keyshortcuts="Space""#,
+            r#">Play</button>"#,
+            r#"data-speed="0.1">0.1×</button>"#,
+            r#"id="rallyRestart">Restart</button>"#,
+            r#"id="rallyProgressTrack""#,
+            r#"role="slider""#,
+            r#"class="rally-view-keyboard-hint""#,
+            "← → one CPU cycle (when paused)",
+            "Shift+← → next area cycle",
+            r#"id="rallyCycleCurrent">0</span>"#,
+            r#"<script type="application/json" id="rally-result-data">"#,
+            r#"<script type="application/json" id="rally-view-config">"#,
+            r#""v":1"#,
+            r#""viewerSlot":null"#,
+            // Ore names are JSON-encoded in config (angle brackets stay literal in JSON strings).
+            "Ore <A>",
+        ],
     );
-    assert!(html.contains(r#"class="rally-view-player-user">User &lt;0&gt;</p>"#));
-    assert!(html.contains(r#"class="rally-view-player-robot">Bot &lt;0&gt;</p>"#));
-    assert!(html.contains(r#"id="oreCanvas0""#));
-    assert!(html.contains(r#"id="depotCanvas0""#));
-    assert!(html.contains(r#"id="depotChart0""#));
-    assert!(html.contains(r#"id="robotBattery0""#));
-    assert!(html.contains(r#"id="robotBatteryFill0""#));
-    assert!(html.contains(r#"id="robotTurns0""#));
-    assert!(!html.contains(r#"id="robotCargo0""#));
-    assert!(!html.contains(r#"id="robotDepot0""#));
-    assert!(html.contains(r#"id="robotAction0""#));
-    assert!(html.contains(r#"id="rallyPlayer0""#));
-    assert!(html.contains("rally-view-player-battery-fill"));
-    assert!(html.contains(r#"id="progressCanvas""#));
-    assert!(html.contains(r#"id="rallyPlayPause""#));
-    assert!(html.contains(r#"aria-keyshortcuts="Space""#));
-    assert!(html.contains(r#">Play</button>"#));
-    assert!(html.contains(r#"data-speed="0.1">0.1×</button>"#));
-    assert!(html.contains(r#"id="rallyRestart">Restart</button>"#));
-    assert!(html.contains(r#"id="rallyProgressTrack""#));
-    assert!(html.contains(r#"role="slider""#));
-    assert!(html.contains(r#"class="rally-view-keyboard-hint""#));
-    assert!(html.contains("← → one CPU cycle (when paused)"));
-    assert!(html.contains("Shift+← → next area cycle"));
-    assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
+    for absent in [
+        r#"id="robotCargo0""#,
+        r#"id="robotDepot0""#,
+        "function rallyPlay()",
+        "function updateRobotDebugPanel(",
+        "oreLegendAName').innerHTML",
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
     // Viewer modules are linked as static assets (not inlined).
     for path in [
         "js/rally_animation/payload.js",
@@ -639,16 +698,10 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     ] {
         assert!(html.contains(path), "expected script src for {path}");
     }
-    assert!(!html.contains("function rallyPlay()"));
-    assert!(!html.contains("function updateRobotDebugPanel("));
-    assert!(html.contains(r#"<script type="application/json" id="rally-result-data">"#));
-    assert!(html.contains(r#"<script type="application/json" id="rally-view-config">"#));
-    assert!(html.contains(r#""v":1"#));
-    assert!(html.contains(r#""viewerSlot":null"#));
-    assert!(html.contains(r#""Ore <A> & 'B'""#) || html.contains(r#""Ore <A> & \'B\'""#));
-    // Ore names are JSON-encoded in config (angle brackets stay literal in JSON strings).
-    assert!(html.contains("Ore <A>"));
-    assert!(!html.contains("oreLegendAName').innerHTML"));
+    assert!(
+        html.contains(r#""Ore <A> & 'B'""#) || html.contains(r#""Ore <A> & \'B\'""#),
+        "expected HTML to contain an ore name encoded as `\"Ore <A> & 'B'\"` or with an escaped apostrophe\nHTML:\n{html}"
+    );
 }
 
 #[test]
@@ -678,37 +731,34 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         Some("runId=10&robotId=7").map(RallyViewBackLink::MiningResults),
     );
 
-    assert!(
-        html.contains(r#"class="rally-view-player rally-view-player-0 rally-view-player-self""#)
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="rally-view-player rally-view-player-0 rally-view-player-self""#,
+            r#"<span class="rally-view-player-you">You</span>"#,
+            r#"<dt>Your robot</dt><dd>Lead Bot · green slot</dd>"#,
+            r#"<dt>Score</dt><dd>42.5</dd>"#,
+            r#"class="rally-view-context-payout">+17</dd>"#,
+            r#""viewerSlot":0"#,
+            r#"id="rally-view-config""#,
+            r#"id="rallySourceCode""#,
+            r#"class="rally-view-source-code" id="rallySourceCode""#,
+            r#"id="rallySourceLine1""#,
+            r#"class="rally-view-source-text">scan();</code>"#,
+            r#"class="rally-view-source-line" data-line="1""#,
+            r#"class="rally-view-source-line" data-line="2""#,
+            "js/rally_animation/debug.js",
+            "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.",
+            r#"id="rallyEditCodeLink" class="rally-view-source-edit-link" data-edit-href="editCode?nextProgramSourceId=11" href="editCode?nextProgramSourceId=11">Edit code at highlighted line</a>"#,
+            "Opens the robot's current linked program in the editor (may differ from this snapshot).",
+            r#"href="editCode?nextProgramSourceId=11">Edit code</a>"#,
+            r#"href="miningQueue?robotId=7">Mining queue</a>"#,
+            r#"href="robot?robotId=7">Robot workshop</a>"#,
+            r#"href="miningAreaOverview">Compare areas</a>"#,
+        ],
     );
-    assert!(html.contains(r#"<span class="rally-view-player-you">You</span>"#));
-    assert!(html.contains(r#"<dt>Your robot</dt><dd>Lead Bot · green slot</dd>"#));
-    assert!(html.contains(r#"<dt>Score</dt><dd>42.5</dd>"#));
-    assert!(html.contains(r#"class="rally-view-context-payout">+17</dd>"#));
-    assert!(html.contains(r#""viewerSlot":0"#));
-    assert!(html.contains(r#"id="rally-view-config""#));
-    assert!(html.contains(r#"id="rallySourceCode""#));
-    assert!(html.contains(r#"class="rally-view-source-code" id="rallySourceCode""#));
-    assert!(!html.contains("<pre class=\"rally-view-source-code\""));
-    assert!(html.contains(r#"id="rallySourceLine1""#));
-    assert!(html.contains(r#"class="rally-view-source-text">scan();</code>"#));
-    assert!(html.contains(r#"class="rally-view-source-line" data-line="1""#));
-    assert!(html.contains(r#"class="rally-view-source-line" data-line="2""#));
-    assert!(html.contains("js/rally_animation/debug.js"));
-    assert!(html.contains(
-        "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally."
-    ));
-    assert!(!html.contains("Source snapshot unavailable."));
-    assert!(html.contains(
-        r#"id="rallyEditCodeLink" class="rally-view-source-edit-link" data-edit-href="editCode?nextProgramSourceId=11" href="editCode?nextProgramSourceId=11">Edit code at highlighted line</a>"#
-    ));
-    assert!(html.contains(
-        "Opens the robot's current linked program in the editor (may differ from this snapshot)."
-    ));
-    assert!(html.contains(r#"href="editCode?nextProgramSourceId=11">Edit code</a>"#));
-    assert!(html.contains(r#"href="miningQueue?robotId=7">Mining queue</a>"#));
-    assert!(html.contains(r#"href="robot?robotId=7">Robot workshop</a>"#));
-    assert!(html.contains(r#"href="miningAreaOverview">Compare areas</a>"#));
+    assert_html_not_contains(&html, "<pre class=\"rally-view-source-code\"");
+    assert_html_not_contains(&html, "Source snapshot unavailable.");
 }
 
 #[test]
@@ -738,15 +788,22 @@ fn rally_view_shows_snapshot_unavailable_without_executed_source() {
         None,
     );
 
-    assert!(html.contains(r#"class="rally-view-source""#));
-    assert!(html.contains("Source snapshot unavailable."));
-    assert!(html.contains(
-        "This rally did not store a private program snapshot, so line highlighting is not shown."
-    ));
-    assert!(html.contains(r#"href="editCode?nextProgramSourceId=11">Edit linked program</a>"#));
-    assert!(!html.contains(r#"id="rallyEditCodeLink""#));
-    assert!(!html.contains(r#"id="rallySourceCode""#));
-    assert!(!html.contains(r#"id="rallySourceLine1""#));
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="rally-view-source""#,
+            "Source snapshot unavailable.",
+            "This rally did not store a private program snapshot, so line highlighting is not shown.",
+            r#"href="editCode?nextProgramSourceId=11">Edit linked program</a>"#,
+        ],
+    );
+    for absent in [
+        r#"id="rallyEditCodeLink""#,
+        r#"id="rallySourceCode""#,
+        r#"id="rallySourceLine1""#,
+    ] {
+        assert_html_not_contains(&html, absent);
+    }
 }
 
 #[test]
@@ -763,7 +820,10 @@ fn rally_view_shows_back_link_when_return_to_is_present() {
         Some("runId=10&robotId=1").map(RallyViewBackLink::MiningResults),
     );
 
-    assert!(html.contains(r#"class="rally-view-back-link" href="miningResults?runId=10&amp;robotId=1">Back to results</a>"#));
+    assert_html_contains(
+        &html,
+        r#"class="rally-view-back-link" href="miningResults?runId=10&amp;robotId=1">Back to results</a>"#,
+    );
 }
 
 #[test]
@@ -780,7 +840,10 @@ fn rally_view_shows_back_link_to_activity() {
         Some(RallyViewBackLink::Activity(default_activity_feed_query())),
     );
 
-    assert!(html.contains(r#"class="rally-view-back-link" href="activity">Back to activity</a>"#));
+    assert_html_contains(
+        &html,
+        r#"class="rally-view-back-link" href="activity">Back to activity</a>"#,
+    );
 }
 
 #[test]
@@ -801,9 +864,10 @@ fn rally_view_back_link_preserves_your_rallies_filter() {
         })),
     );
 
-    assert!(html.contains(
-        r#"class="rally-view-back-link" href="activity?filter=mine">Back to activity</a>"#
-    ));
+    assert_html_contains(
+        &html,
+        r#"class="rally-view-back-link" href="activity?filter=mine">Back to activity</a>"#,
+    );
 }
 
 #[test]

@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use crate::{Request, ServerConfig};
 
-use super::render::{
-    mining_result_unique_areas, mining_result_wallet_deltas, render_mining_results_page,
-};
+use super::render::render_mining_results_page;
+use super::render_filters::{mining_result_unique_areas, mining_result_wallet_deltas};
 use super::{MiningResultsPageState, mining_results_page, selected_mining_queue_id};
 
 use std::path::PathBuf;
