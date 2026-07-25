@@ -1,29 +1,12 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::ServerConfig;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
-use crate::session::format_authenticated_cookie;
-use crate::{Request, ServerConfig};
 
-use super::render::{format_queue_time_left, render_mining_queue_page};
-use super::{
-    MiningQueueDisplayItem, MiningQueuePageState, cancel_mining_rejection_message,
-    enqueue_mining_rejection_message, mining_queue_page,
-};
-
-fn authenticated_request(path: &str) -> Request {
-    Request {
-        method: "GET".to_string(),
-        path: path.to_string(),
-        query: HashMap::new(),
-        form: HashMap::new(),
-        form_values: HashMap::new(),
-        headers: HashMap::from([(
-            "cookie".to_string(),
-            format_authenticated_cookie(42, "Player"),
-        )]),
-    }
-}
+use super::super::render::render_mining_queue_page;
+use super::super::{MiningQueueDisplayItem, MiningQueuePageState, mining_queue_page};
+use super::fixtures::authenticated_request;
 
 #[tokio::test(flavor = "current_thread")]
 async fn mining_queue_requires_database_configuration() {
@@ -391,42 +374,4 @@ fn mining_queue_shows_no_robots_empty_state() {
     );
     assert_html_not_contains(&html, r#"class="page-help-hint""#);
     assert_html_not_contains(&html, r#"class="mining-queue-card""#);
-}
-
-#[test]
-fn mining_queue_time_left_uses_countdown_format() {
-    assert_eq!(format_queue_time_left(0), "0:00");
-    assert_eq!(format_queue_time_left(60), "1:00");
-    assert_eq!(format_queue_time_left(150), "2:30");
-    assert_eq!(format_queue_time_left(3_661), "1:01:01");
-}
-
-#[test]
-fn mining_queue_rejection_messages_match_legacy_copy() {
-    assert_eq!(
-        enqueue_mining_rejection_message(
-            robominer_db::EnqueueMiningRejection::MiningAreaUnavailable
-        ),
-        "Unable to add to the mining queue: The mining area is not available."
-    );
-    assert_eq!(
-        enqueue_mining_rejection_message(robominer_db::EnqueueMiningRejection::QueueFull),
-        "Unable to add to the mining queue: The mining queue is full."
-    );
-    assert_eq!(
-        enqueue_mining_rejection_message(robominer_db::EnqueueMiningRejection::InsufficientFunds),
-        "Unable to add to the mining queue: You do not have enough funds to pay the mining costs."
-    );
-}
-
-#[test]
-fn cancel_mining_rejection_messages_match_legacy_copy() {
-    assert_eq!(
-        cancel_mining_rejection_message(robominer_db::CancelMiningQueueRejection::UnknownQueue),
-        "Unknown mining queue item."
-    );
-    assert_eq!(
-        cancel_mining_rejection_message(robominer_db::CancelMiningQueueRejection::NotCancelable),
-        "Unable to cancel mining queue item: The mining queue item is not cancelable."
-    );
 }

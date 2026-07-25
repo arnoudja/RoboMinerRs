@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use super::{help_page, help_text_page};
 use crate::help_pages;
+use crate::html::{assert_contains_all, assert_html_not_contains};
 use crate::{Request, ServerConfig};
+
+use super::{help_page, help_text_page};
 
 fn request(path: &str) -> Request {
     let (path, query) = crate::http::split_target(path);
@@ -32,12 +34,17 @@ async fn help_route_renders_themed_help_center() {
     let body = String::from_utf8(response.body).expect("html should be utf-8");
 
     assert_eq!(response.status, 200);
-    assert!(body.contains(r#"class="help-page""#));
-    assert!(body.contains("Help center"));
-    assert!(body.contains(r#"class="help-card""#));
-    assert!(body.contains(r#"href="helpTutorial?step=1""#));
-    assert!(body.contains(r#"href="helpProgramTips""#));
-    assert!(!body.contains("target=\"tutorialWindow\""));
+    assert_contains_all(
+        &body,
+        &[
+            r#"class="help-page""#,
+            "Help center",
+            r#"class="help-card""#,
+            r#"href="helpTutorial?step=1""#,
+            r#"href="helpProgramTips""#,
+        ],
+    );
+    assert_html_not_contains(&body, "target=\"tutorialWindow\"");
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -45,8 +52,13 @@ async fn help_route_shows_signup_welcome_banner() {
     let response = help_page(&request("/help?welcome=1"), &config(), true).await;
     let body = String::from_utf8(response.body).expect("html should be utf-8");
 
-    assert!(body.contains(r#"class="help-welcome-banner""#));
-    assert!(body.contains(r#"href="helpTutorial?step=1""#));
+    assert_contains_all(
+        &body,
+        &[
+            r#"class="help-welcome-banner""#,
+            r#"href="helpTutorial?step=1""#,
+        ],
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -71,56 +83,69 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
 
     assert_eq!(tutorial.status, 200);
     let tutorial_body = String::from_utf8(tutorial.body).expect("html should be utf-8");
-    assert!(tutorial_body.contains(r#"class="help-page""#));
-    assert!(tutorial_body.contains(r#"class="help-sidebar""#));
-    assert!(tutorial_body.contains("help-nav-item-active"));
-    assert!(tutorial_body.contains("<h1>Tutorial</h1>"));
-    assert!(tutorial_body.contains("Step 1 of 5"));
-    assert!(tutorial_body.contains("Add to queue"));
-    assert!(tutorial_body.contains(r#"href="miningQueue""#));
-    assert!(tutorial_body.contains(r#"href="helpTutorial?step=2""#));
-    assert!(!tutorial_body.contains(r#"class="help-article-toc""#));
-    assert!(!tutorial_body.contains("'add' button"));
+    assert_contains_all(
+        &tutorial_body,
+        &[
+            r#"class="help-page""#,
+            r#"class="help-sidebar""#,
+            "help-nav-item-active",
+            "<h1>Tutorial</h1>",
+            "Step 1 of 5",
+            "Add to queue",
+            r#"href="miningQueue""#,
+            r#"href="helpTutorial?step=2""#,
+        ],
+    );
+    assert_html_not_contains(&tutorial_body, r#"class="help-article-toc""#);
+    assert_html_not_contains(&tutorial_body, "'add' button");
 
     assert_eq!(program_tips.status, 200);
     let tips_body = String::from_utf8(program_tips.body).expect("html should be utf-8");
-    assert!(tips_body.contains(r#"class="help-spoiler-banner""#));
-    assert!(tips_body.contains(r#"class="help-article-toc""#));
-    assert!(tips_body.contains("href=\"#repeated-mining\""));
-    assert!(tips_body.contains(r#"<h2 id="repeated-mining">Repeated mining</h2>"#));
-    assert!(tips_body.contains(r#"<h2 id="ore-scanner">Ore Scanner</h2>"#));
-    assert!(
-        tips_body
-            .contains(r#"<h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>"#)
+    assert_contains_all(
+        &tips_body,
+        &[
+            r#"class="help-spoiler-banner""#,
+            r#"class="help-article-toc""#,
+            "href=\"#repeated-mining\"",
+            r#"<h2 id="repeated-mining">Repeated mining</h2>"#,
+            r#"<h2 id="ore-scanner">Ore Scanner</h2>"#,
+            r#"<h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>"#,
+            "scan(90)",
+            "move(oreDistance())",
+            "you'll mine the same ore again",
+            r#"<pre class="help-code-block"><code>"#,
+            "<h1>Programming tips</h1>",
+        ],
     );
-    assert!(tips_body.contains("scan(90)"));
-    assert!(tips_body.contains("move(oreDistance())"));
-    assert!(tips_body.contains("you'll mine the same ore again"));
-    assert!(tips_body.contains(r#"<pre class="help-code-block"><code>"#));
-    assert!(tips_body.contains("<h1>Programming tips</h1>"));
 
     assert_eq!(robot_program.status, 200);
     let robot_program_body = String::from_utf8(robot_program.body).expect("html should be utf-8");
-    assert!(robot_program_body.contains(r#"class="help-article-toc""#));
-    assert!(robot_program_body.contains(r#"<h2 id="statements">Statements</h2>"#));
-    assert!(robot_program_body.contains("collects every ore type present on that cell"));
-    assert!(
-        robot_program_body.contains("When the robot is already standing on ore, the distance is 0")
+    assert_contains_all(
+        &robot_program_body,
+        &[
+            r#"class="help-article-toc""#,
+            r#"<h2 id="statements">Statements</h2>"#,
+            "collects every ore type present on that cell",
+            "When the robot is already standing on ore, the distance is 0",
+            "<h1>Robot programming help</h1>",
+        ],
     );
-    assert!(robot_program_body.contains("<h1>Robot programming help</h1>"));
 
     assert_eq!(mechanics.status, 200);
     let mechanics_body = String::from_utf8(mechanics.body).expect("html should be utf-8");
-    assert!(mechanics_body.contains(r#"class="help-article-toc""#));
-    assert!(mechanics_body.contains(r#"<h2 id="ore-container">Ore Container</h2>"#));
-    assert!(mechanics_body.contains(r#"<h2 id="depot">Depot</h2>"#));
-    assert!(mechanics_body.contains("personal ore bank for each ore type"));
-    assert!(
-        mechanics_body.contains(r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#)
+    assert_contains_all(
+        &mechanics_body,
+        &[
+            r#"class="help-article-toc""#,
+            r#"<h2 id="ore-container">Ore Container</h2>"#,
+            r#"<h2 id="depot">Depot</h2>"#,
+            "personal ore bank for each ore type",
+            r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#,
+            "finish the remaining scan cycles first",
+            r#"<div class="help-table-wrap"><table class="helptable">"#,
+            "<h1>RoboMiner Mechanics</h1>",
+        ],
     );
-    assert!(mechanics_body.contains("finish the remaining scan cycles first"));
-    assert!(mechanics_body.contains(r#"<div class="help-table-wrap"><table class="helptable">"#));
-    assert!(mechanics_body.contains("<h1>RoboMiner Mechanics</h1>"));
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -134,12 +159,17 @@ async fn tutorial_step_navigation_links_previous_and_next() {
     .await;
     let body = String::from_utf8(step_three.body).expect("html should be utf-8");
 
-    assert!(body.contains("Step 3 of 5"));
-    assert!(body.contains("Review mining results"));
-    assert!(body.contains(r#"href="helpTutorial?step=2""#));
-    assert!(body.contains(r#"href="helpTutorial?step=4""#));
-    assert!(body.contains(r#"href="miningResults""#));
-    assert!(body.contains("Replay rally"));
+    assert_contains_all(
+        &body,
+        &[
+            "Step 3 of 5",
+            "Review mining results",
+            r#"href="helpTutorial?step=2""#,
+            r#"href="helpTutorial?step=4""#,
+            r#"href="miningResults""#,
+            "Replay rally",
+        ],
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]
@@ -153,12 +183,17 @@ async fn tutorial_final_step_links_to_programming_tips() {
     .await;
     let body = String::from_utf8(step_five.body).expect("html should be utf-8");
 
-    assert!(body.contains("Step 5 of 5"));
-    assert!(body.contains("Save program"));
-    assert!(body.contains("Apply changes"));
-    assert!(body.contains(r#"href="helpTutorial?step=4""#));
-    assert!(body.contains(r#"href="helpProgramTips""#));
-    assert!(body.contains(r#"href="editCode""#));
+    assert_contains_all(
+        &body,
+        &[
+            "Step 5 of 5",
+            "Save program",
+            "Apply changes",
+            r#"href="helpTutorial?step=4""#,
+            r#"href="helpProgramTips""#,
+            r#"href="editCode""#,
+        ],
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]
