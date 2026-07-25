@@ -281,28 +281,56 @@ describe('rally animation viewer', () => {
         context.myRallyPlayer.baseStepTime = 50;
         context.myRallyPlayer.speed = 1;
         context.myRallyPlayer.elapsedMs = 0;
+        context.myRallyPlayer.playing = false;
+        context.myRallyPlayer.pausedCpuIndex = null;
         context.redrawRallyScene = function redrawRallyScene() {};
         context.rallyPause = function rallyPause() {
             context.myRallyPlayer.playing = false;
         };
-        context.rallyPlay = function rallyPlay() {};
+        context.rallyPlay = function rallyPlay() {
+            context.myRallyPlayer.playing = true;
+            context.myRallyPlayer.pausedCpuIndex = null;
+        };
 
         assert.equal(context.myRallyCpuTimeline.length, 4);
-        assert.equal(context.rallyTotalSteps(), 4);
+        // Playback clock is mining cycles; CPU steps are for paused scrubbing.
+        assert.equal(context.rallyTotalSteps(), 3);
+        assert.equal(context.rallyTotalCpuSteps(), 4);
         assert.equal(context.rallyTotalMiningCycles(), 3);
+        assert.equal(context.rallyTotalTime(), 150);
+        assert.equal(context.rallyCpuIndexAtTime(0), 0);
+        assert.equal(context.rallyPoseTimeForRender(0, { miningCycle: 0 }), 0);
 
         context.rallySeekByCycles(1);
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
         assert.equal(context.rallyCpuIndexAtTime(context.myRallyPlayer.elapsedMs), 1);
         assert.equal(
             context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
             1
         );
+        assert.equal(context.myRallyPlayer.elapsedMs, 50);
 
         context.rallySeekByMiningCycles(1);
         assert.equal(
             context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
             2
         );
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
+        assert.equal(context.myRallyPlayer.elapsedMs, 100);
+    });
+
+    it('interpolates pose on the mining-cycle clock while playing', () => {
+        const { context } = loadRallyViewer();
+        assert.equal(context.applyRallyResultPayload(validPayload()), null);
+        context.myRallyPlayer.baseStepTime = 50;
+        context.myRallyPlayer.speed = 1;
+        context.myRallyPlayer.playing = true;
+        context.myRallyPlayer.pausedCpuIndex = null;
+        context.myRallyPlayer.elapsedMs = 25;
+        assert.equal(context.rallyMiningCycleAtTime(25), 0);
+        assert.equal(context.rallyPoseTimeForRender(25, { miningCycle: 0 }), 25);
+        assert.equal(context.rallyLastCpuIndexForMiningCycle(0), 0);
+        assert.equal(context.rallyLastCpuIndexForMiningCycle(1), 2);
     });
 
     it('highlights a token span within a source line', () => {

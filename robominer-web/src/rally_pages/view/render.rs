@@ -257,7 +257,7 @@ fn render_rally_view_deck(
             r#"<p class="rally-view-cycle-status">Area cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
         );
         body.push_str(
-            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle · Shift+← → next area cycle · Home/End jump</p>"#,
+            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle (when paused) · Shift+← → next area cycle · Home/End jump</p>"#,
         );
         body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
         body.push_str(

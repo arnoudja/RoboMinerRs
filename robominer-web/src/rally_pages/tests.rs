@@ -642,8 +642,8 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     assert!(html.contains(r#"id="rallyProgressTrack""#));
     assert!(html.contains(r#"role="slider""#));
     assert!(html.contains(r#"class="rally-view-keyboard-hint""#));
+    assert!(html.contains("← → one CPU cycle (when paused)"));
     assert!(html.contains("Shift+← → next area cycle"));
-    assert!(html.contains("← → one CPU cycle"));
     assert!(html.contains(r#"id="rallyCycleCurrent">0</span>"#));
     assert!(html.contains("function rallyPlay()"));
     assert!(html.contains("function rallySeekToRatio(ratio)"));
