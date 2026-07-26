@@ -43,13 +43,10 @@ pub async fn run() -> Result<()> {
     }
 
     let initial_programs = load_initial_programs(&cli.programs, &cli.program_files)?;
-    if cli.evaluate_only {
-        if initial_programs.len() != 1 {
-            return Err(anyhow!(
-                "--evaluate-only requires exactly one --program or --program-file"
-            ));
-        }
-    } else if initial_programs.len() > cli.population.max(2) {
+    validate_evaluate_only_program_count(cli.evaluate_only, initial_programs.len())?;
+    if !cli.evaluate_only
+        && excess_initial_program_count(initial_programs.len(), cli.population).is_some()
+    {
         eprintln!(
             "warning: {} initial programs exceed population {}; extras are ignored",
             initial_programs.len(),
@@ -60,11 +57,7 @@ pub async fn run() -> Result<()> {
     let fixed_parts = parse_fixed_parts(&catalog, &cli.parts)?;
 
     // Default: rotate 5 seeds per generation. Explicit --seeds N keeps 0..N-1 fixed.
-    const DEFAULT_SEED_COUNT: u64 = 5;
-    let (seed_count, fixed_seeds) = match cli.seeds {
-        Some(seeds) => (seeds.max(1), true),
-        None => (DEFAULT_SEED_COUNT, false),
-    };
+    let (seed_count, fixed_seeds) = seed_policy_from_cli(cli.seeds);
     if fixed_seeds {
         eprintln!("using fixed rally seeds 0..{seed_count} every generation");
     } else {
@@ -101,6 +94,32 @@ pub async fn run() -> Result<()> {
     let report = format_top_results(&ranked, &catalog, cli.depot_capacity, cli.top_n);
     println!("{report}");
     Ok(())
+}
+
+fn validate_evaluate_only_program_count(evaluate_only: bool, program_count: usize) -> Result<()> {
+    if evaluate_only && program_count != 1 {
+        return Err(anyhow!(
+            "--evaluate-only requires exactly one --program or --program-file"
+        ));
+    }
+    Ok(())
+}
+
+fn seed_policy_from_cli(seeds: Option<u64>) -> (u64, bool) {
+    const DEFAULT_SEED_COUNT: u64 = 5;
+    match seeds {
+        Some(seeds) => (seeds.max(1), true),
+        None => (DEFAULT_SEED_COUNT, false),
+    }
+}
+
+fn excess_initial_program_count(program_count: usize, population: usize) -> Option<usize> {
+    let limit = population.max(2);
+    if program_count > limit {
+        Some(program_count - limit)
+    } else {
+        None
+    }
 }
 
 fn parse_fixed_parts(catalog: &PartCatalog, parts: &[i64]) -> Result<Option<[i64; 7]>> {
@@ -181,6 +200,54 @@ mod tests {
         assert!(cli.evaluate_only);
         assert!(cli.programs.is_empty());
         assert!(cli.program_files.is_empty());
+    }
+
+    #[test]
+    fn evaluate_only_rejects_wrong_program_count() {
+        validate_evaluate_only_program_count(true, 0).expect_err("zero programs");
+        validate_evaluate_only_program_count(true, 2).expect_err("two programs");
+        validate_evaluate_only_program_count(true, 1).expect("one program");
+        validate_evaluate_only_program_count(false, 0).expect("not evaluate-only");
+    }
+
+    #[test]
+    fn seed_policy_from_cli_defaults_and_clamps_zero() {
+        assert_eq!(seed_policy_from_cli(None), (5, false));
+        assert_eq!(seed_policy_from_cli(Some(3)), (3, true));
+        assert_eq!(seed_policy_from_cli(Some(0)), (1, true));
+    }
+
+    #[test]
+    fn excess_initial_program_count_uses_population_max_two() {
+        assert_eq!(excess_initial_program_count(1, 1), None);
+        assert_eq!(excess_initial_program_count(2, 1), None);
+        assert_eq!(excess_initial_program_count(3, 1), Some(1));
+        assert_eq!(excess_initial_program_count(5, 4), Some(1));
+    }
+
+    #[test]
+    fn cli_parses_defaults_and_comma_areas() {
+        let defaults = Cli::try_parse_from(["robominer-optimize"]).expect("defaults");
+        assert_eq!(defaults.areas, vec![1001, 1002]);
+        assert_eq!(defaults.population, 40);
+        assert_eq!(defaults.generations, 50);
+        assert_eq!(defaults.seeds, None);
+        assert!(defaults.parts.is_empty());
+        assert!(!defaults.evaluate_only);
+
+        let areas =
+            Cli::try_parse_from(["robominer-optimize", "--areas", "7,8,9"]).expect("comma areas");
+        assert_eq!(areas.areas, vec![7, 8, 9]);
+    }
+
+    #[test]
+    fn load_initial_programs_rejects_missing_file() {
+        let missing = std::path::PathBuf::from("/tmp/robominer-missing-program-source.rm");
+        let error = load_initial_programs(&[], &[missing]).expect_err("missing file");
+        assert!(
+            error.to_string().contains("failed to read program file"),
+            "{error}"
+        );
     }
 
     #[test]

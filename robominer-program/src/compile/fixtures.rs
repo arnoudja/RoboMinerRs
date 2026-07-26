@@ -135,6 +135,18 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         expected_error_contains: Some("const variable cannot be changed"),
     },
     CompatibilityFixture {
+        name: "invalid_const_compound_assignment",
+        source: "const int x = 1; x += 1;",
+        expected_size: None,
+        expected_error_contains: Some("const variable cannot be changed"),
+    },
+    CompatibilityFixture {
+        name: "invalid_do_without_while",
+        source: "do { mine(); }",
+        expected_size: None,
+        expected_error_contains: Some("'while' expected"),
+    },
+    CompatibilityFixture {
         name: "invalid_robot_property_assignment",
         source: "robot.forwardSpeed = 5;",
         expected_size: None,

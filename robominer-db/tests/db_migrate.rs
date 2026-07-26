@@ -94,3 +94,52 @@ async fn migrate_applies_pending_version_when_tracking_is_partial() {
         .execute(&pool)
         .await;
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn failed_migration_does_not_record_version() {
+    let Some(database_url) = database_url() else {
+        eprintln!("skipping migrate failed-version test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url).await.expect("connect");
+    let _ = sqlx::query("DELETE FROM SchemaMigration WHERE version = ?")
+        .bind("998_migrate_runner_fail_self_test")
+        .execute(&pool)
+        .await;
+
+    let pending = [(
+        "998_migrate_runner_fail_self_test",
+        "SELECT * FROM DefinitelyMissingMigrationTable_998;",
+    )];
+    let error = run_migrations(&pool, &pending)
+        .await
+        .expect_err("bad SQL should fail the migration");
+    assert!(
+        error
+            .to_string()
+            .contains("998_migrate_runner_fail_self_test")
+            || error.to_string().contains("failed"),
+        "unexpected error: {error}"
+    );
+
+    let recorded: Option<String> =
+        sqlx::query_scalar("SELECT version FROM SchemaMigration WHERE version = ?")
+            .bind("998_migrate_runner_fail_self_test")
+            .fetch_optional(&pool)
+            .await
+            .expect("query schema migration");
+    assert!(
+        recorded.is_none(),
+        "failed migration must not record a SchemaMigration row"
+    );
+
+    let status = migration_status(&pool, &pending)
+        .await
+        .expect("status after failure");
+    assert_eq!(
+        status,
+        vec![("998_migrate_runner_fail_self_test".to_string(), false)]
+    );
+}

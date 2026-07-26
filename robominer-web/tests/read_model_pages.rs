@@ -162,3 +162,95 @@ async fn rally_view_renders_from_mining_results_and_activity() {
 
     fixture.cleanup(&pool).await;
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn robot_stats_renders_seeded_robot_from_db() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!("skipping robot stats web test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    }
+
+    ensure_session_configured();
+
+    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = WebSmokeFixture::create(&pool).await;
+    let config = server_config(pool.clone());
+    let cookie = cookie_header(&fixture.login(&config).await);
+
+    let mut query = HashMap::new();
+    query.insert("robotId".to_string(), fixture.robot_id.to_string());
+
+    let response = route(
+        &get_request_query("/robotStats", query, Some(&cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "{body}");
+    assert!(
+        body.contains(r#"class="robot-stats-page""#),
+        "expected robot stats page:\n{body}"
+    );
+    assert!(
+        body.contains(&fixture.robot_name),
+        "expected robot name in stats page:\n{body}"
+    );
+    assert!(
+        !body.contains("Robot not found."),
+        "seeded robot should be found:\n{body}"
+    );
+
+    fixture.cleanup(&pool).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn robot_stats_missing_or_unknown_shows_not_found() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!("skipping robot stats not-found web test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    }
+
+    ensure_session_configured();
+
+    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = WebSmokeFixture::create(&pool).await;
+    let config = server_config(pool.clone());
+    let cookie = cookie_header(&fixture.login(&config).await);
+
+    let missing_id = route(&get_request("/robotStats", Some(&cookie)), &config).await;
+    let missing_body = response_body(&missing_id);
+    assert_eq!(missing_id.status, 200, "{missing_body}");
+    assert!(
+        missing_body.contains("Robot not found."),
+        "missing robotId should soft-not-find:\n{missing_body}"
+    );
+    assert!(
+        missing_body.contains(r#"href="leaderboard?tab=robots""#),
+        "not-found should link back to top robots:\n{missing_body}"
+    );
+
+    let mut query = HashMap::new();
+    query.insert("robotId".to_string(), "999999999".to_string());
+    let unknown = route(
+        &get_request_query("/robotStats", query, Some(&cookie)),
+        &config,
+    )
+    .await;
+    let unknown_body = response_body(&unknown);
+    assert_eq!(unknown.status, 200, "{unknown_body}");
+    assert!(
+        unknown_body.contains("Robot not found."),
+        "unknown robotId should soft-not-find:\n{unknown_body}"
+    );
+
+    fixture.cleanup(&pool).await;
+}

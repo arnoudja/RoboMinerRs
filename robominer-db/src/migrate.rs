@@ -326,4 +326,20 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn load_migrations_rejects_non_numeric_prefix() {
+        let dir =
+            std::env::temp_dir().join(format!("robominer-migrate-bad-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("temp migrations dir");
+        std::fs::write(dir.join("not_a_version.sql"), "SELECT 1;").expect("write bad migration");
+        let error = load_migrations_from_dir(&dir).expect_err("non-numeric prefix");
+        let _ = std::fs::remove_dir_all(&dir);
+        let message = error.to_string();
+        assert!(
+            message.contains("must start with a numeric version prefix"),
+            "{message}"
+        );
+    }
 }

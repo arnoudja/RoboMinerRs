@@ -340,6 +340,15 @@ mod tests {
     }
 
     #[test]
+    fn seed_program_sources_all_compile() {
+        for source in seed_program_sources() {
+            compile_executable_source(source).unwrap_or_else(|error| {
+                panic!("seed program failed to compile ({error}): {source}")
+            });
+        }
+    }
+
+    #[test]
     fn mutate_program_returns_compiling_program() {
         let source = compatibility_fixture_source("seed_ai_2");
         let program = compile_executable_source(source).expect("fixture compiles");
