@@ -378,3 +378,41 @@ fn scan_bridge_uses_pose_from_scan_start_not_completion() {
         "oreType() must use the pose from scan() start so the +Y ore is still found after rotating 180"
     );
 }
+
+#[test]
+fn scan_bridge_zero_scan_time_completes_without_waiting() {
+    let source = "scan(); mine();";
+    let program = robominer_program::compile_executable_source(source)
+        .expect("zero scan_time program should compile");
+
+    let mut spec = RobotSpec::test_robot();
+    spec.cpu_speed = 72;
+    spec.scan_time = 0;
+    spec.scan_distance = 50;
+    spec.max_turns = 1;
+
+    let mut simulation = Simulation::new(
+        Ground::new(5, 5),
+        1,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    simulation.prepare_test_run();
+    simulation.advance_test_turn();
+
+    assert_eq!(
+        simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN],
+        1
+    );
+    assert!(
+        matches!(
+            simulation.robot(0).scan_state,
+            crate::ground::ScanState::Complete(_)
+        ),
+        "scan_time 0 should complete immediately at start_scan"
+    );
+    assert_eq!(
+        simulation.robot(0).actions_done()[6],
+        1,
+        "mine should run in the same cycle when scan_time is 0"
+    );
+}

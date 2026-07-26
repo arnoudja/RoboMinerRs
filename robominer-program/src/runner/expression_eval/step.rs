@@ -17,14 +17,6 @@ pub(crate) struct OngoingExpressionEval {
 }
 
 impl OngoingExpressionEval {
-    pub(crate) fn pending_scan_read(&self) -> bool {
-        self.index < self.work.len()
-            && matches!(
-                self.work[self.index].kind,
-                ExpressionWork::PushOreDistance | ExpressionWork::PushOreType
-            )
-    }
-
     /// Span of the sub-expression this evaluation is about to run, if it has not finished.
     pub(crate) fn current_span(&self) -> Option<SourceSpan> {
         self.work.get(self.index).map(|item| item.span)

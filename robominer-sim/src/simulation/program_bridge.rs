@@ -140,8 +140,7 @@ impl Simulation {
                     program: _, runner, ..
                 } = &mut self.action_sources[robot_index]
                 else {
-                    self.action_result_expected[robot_index] = false;
-                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
+                    unreachable!("ActionSource::Program checked above");
                 };
                 runner.step(&mut context)
             };
@@ -160,7 +159,7 @@ impl Simulation {
                         program, runner, ..
                     } = &mut self.action_sources[robot_index]
                     else {
-                        return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
+                        unreachable!("ActionSource::Program checked above");
                     };
                     **runner = program.runner();
                     self.action_results[robot_index] = None;

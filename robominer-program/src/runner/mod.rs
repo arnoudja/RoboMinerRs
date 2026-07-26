@@ -73,12 +73,6 @@ impl ExecutableRunner {
         self.variables.get(name)
     }
 
-    pub fn has_pending_scan_completion(&self) -> bool {
-        self.expression_eval
-            .as_ref()
-            .is_some_and(OngoingExpressionEval::pending_scan_read)
-    }
-
     pub fn awaits_scan_result(&self) -> bool {
         self.pending_action == Some(ExecutableAction::AwaitScanResult)
     }
