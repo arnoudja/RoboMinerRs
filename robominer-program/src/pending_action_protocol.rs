@@ -89,11 +89,11 @@
 //! | `Complete(result)` | true | true | Ray-march done; distance/ore_type available |
 //!
 //! - **`start_scan`** — called on `StartScan`; sets `Scanning` with
-//!   `cycles_remaining = robot.spec.scan_time`, increments scan action counter,
-//!   sets `action_results[i] = Some(scan_time)`.
+//!   `cycles_remaining = robot.spec.scan_time`, snapshots the robot center pose,
+//!   increments scan action counter, sets `action_results[i] = Some(scan_time)`.
 //! - **`tick_scan`** — called on every `ProgramStep::Cpu` and on each
 //!   `AwaitScanResult` step in the CPU loop; decrements `cycles_remaining` and
-//!   ray-marches when it reaches zero.
+//!   ray-marches from the **start** pose when it reaches zero.
 //!
 //! Passive countdown (`tick_scan` on CPU steps) and active wait (`AwaitScanResult`)
 //! share the same countdown. Programs that call `oreDistance()` / `oreType()` while

@@ -15,18 +15,18 @@ use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
 use super::Simulation;
 
 impl Simulation {
-    fn perform_scan(&mut self, robot_index: usize, direction: f64) -> ScanResult {
-        let robot = &self.robots[robot_index];
-        let spec = &robot.spec;
+    fn perform_scan(
+        &mut self,
+        robot_index: usize,
+        origin: crate::position::Position,
+        direction: f64,
+    ) -> ScanResult {
+        let spec = &self.robots[robot_index].spec;
         if spec.scan_time <= 0 || spec.scan_distance <= 0 {
             ScanResult::empty()
         } else {
-            self.ground.scan_ore(
-                robot.center_position(),
-                direction,
-                spec.scan_distance,
-                &self.ore_ids,
-            )
+            self.ground
+                .scan_ore(origin, direction, spec.scan_distance, &self.ore_ids)
         }
     }
 
@@ -37,8 +37,10 @@ impl Simulation {
             return 0;
         }
 
+        let origin = self.robots[robot_index].center_position();
         self.robots[robot_index].scan_state = ScanState::Scanning {
             direction,
+            origin,
             cycles_remaining: scan_time,
         };
         scan_time
@@ -47,6 +49,7 @@ impl Simulation {
     fn tick_scan(&mut self, robot_index: usize) {
         let ScanState::Scanning {
             direction,
+            origin,
             cycles_remaining,
         } = self.robots[robot_index].scan_state.clone()
         else {
@@ -54,11 +57,12 @@ impl Simulation {
         };
 
         if cycles_remaining <= 1 {
-            let result = self.perform_scan(robot_index, direction);
+            let result = self.perform_scan(robot_index, origin, direction);
             self.robots[robot_index].scan_state = ScanState::Complete(result);
         } else {
             self.robots[robot_index].scan_state = ScanState::Scanning {
                 direction,
+                origin,
                 cycles_remaining: cycles_remaining - 1,
             };
         }

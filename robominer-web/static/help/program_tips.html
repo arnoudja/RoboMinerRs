@@ -180,7 +180,7 @@ if (oreType() == 1)
     while (mine());
 }</code></pre>
             <p class="helptext">
-                Scanning in a direction will return the ore type and distance in that direction, relative to the robot's position and orientation.
+                Scanning in a direction returns the ore type and distance along that ray relative to the robot's position and orientation when scan() started (not when the scan finishes).
                 If the ore is of the type you want, you can rotate into the direction of the ore and move to the ore with the move(oreDistance()) command.
             </p>
             <pre class="help-code-block"><code>scan(90);

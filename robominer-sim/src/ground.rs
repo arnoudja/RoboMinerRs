@@ -213,7 +213,11 @@ pub(crate) enum ScanState {
     #[default]
     Idle,
     Scanning {
+        /// Relative scan direction from `scan(dir)`, degrees.
         direction: f64,
+        /// Robot center pose when `scan()` started; ray-march uses this, not the
+        /// pose at completion.
+        origin: Position,
         cycles_remaining: i32,
     },
     Complete(ScanResult),

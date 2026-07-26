@@ -258,7 +258,8 @@
                 often sits inside a larger lower-value one.
             </p>
             <p class="helptext">
-                scan() reports the nearest cell that still has any ore.
+                scan() reports the nearest cell that still has any ore, along a ray from the
+                robot's position and orientation when the scan started.
                 It does not skip lower-value ore to find type 1 further along the same ray.
                 If you are standing on a cell that has ore, oreDistance() is 0 and oreType()
                 describes that cell (when several types share a cell, the richer type wins).

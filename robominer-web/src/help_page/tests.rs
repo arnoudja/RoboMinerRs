@@ -112,6 +112,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             r#"<h2 id="nested-heaps-and-mixed-cells">Nested heaps and mixed cells</h2>"#,
             "scan(90)",
             "move(oreDistance())",
+            "when scan() started",
             "you'll mine the same ore again",
             r#"<pre class="help-code-block"><code>"#,
             "<h1>Programming tips</h1>",
@@ -127,6 +128,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             r#"<h2 id="statements">Statements</h2>"#,
             "collects every ore type present on that cell",
             "When the robot is already standing on ore, the distance is 0",
+            "position and orientation at the moment scan() starts",
             "<h1>Robot programming help</h1>",
         ],
     );
@@ -142,6 +144,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             "personal ore bank for each ore type",
             r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#,
             "wait until the full scan countdown finishes",
+            "when the scan started",
             r#"<div class="help-table-wrap"><table class="helptable">"#,
             "<h1>RoboMiner Mechanics</h1>",
         ],

@@ -333,3 +333,48 @@ fn scan_bridge_directional_scan_finds_ore_off_axis() {
         "directional scan should detect off-axis ore and mine"
     );
 }
+
+#[test]
+fn scan_bridge_uses_pose_from_scan_start_not_completion() {
+    // Ore sits on +Y from spawn. scan(45) from facing 45° finds it. After rotate(180)
+    // the same relative scan would miss it if completion pose were used.
+    let source = "scan(45); rotate(180); if (oreType() > 0) { mine(); }";
+    let program = robominer_program::compile_executable_source(source)
+        .expect("scan start-pose program should compile");
+
+    let mut ground = Ground::new(10, 10);
+    ground.at_mut(0, 4).add_ore(0, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.cpu_speed = 72;
+    spec.scan_time = 6;
+    spec.scan_distance = 10;
+    spec.rotate_speed = 90;
+    spec.max_turns = 20;
+    let max_turns = spec.max_turns;
+
+    let mut simulation = Simulation::new(
+        ground,
+        max_turns,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    simulation.prepare_test_run();
+
+    while simulation.robot(0).actions_done()[6] == 0 && simulation.time() < max_turns {
+        simulation.advance_test_turn();
+    }
+
+    assert!(
+        simulation.robot(0).actions_done()[ROBOT_ACTION_TYPE_SCAN] > 0,
+        "scan should start before rotate"
+    );
+    assert!(
+        simulation.robot(0).actions_done()[4] > 0,
+        "rotate should run between scan start and oreType()"
+    );
+    assert_eq!(
+        simulation.robot(0).actions_done()[6],
+        1,
+        "oreType() must use the pose from scan() start so the +Y ore is still found after rotating 180"
+    );
+}

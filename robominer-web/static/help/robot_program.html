@@ -214,7 +214,7 @@
                 </tr>
             </table></div>
             <h3>scan()</h3>
-            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). Use oreDistance() or oreType() to read the result once the scan has finished.
+            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). The ray uses the robot's position and orientation at the moment scan() starts, even if the robot moves or rotates before the scan finishes. Use oreDistance() or oreType() to read the result once the scan has finished.
                 The scanner reports the nearest ore of any type along the ray. Outer lower-value ore can hide a richer heap further away on the same line of sight.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
