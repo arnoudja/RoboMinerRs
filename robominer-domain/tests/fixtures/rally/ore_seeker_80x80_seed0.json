@@ -186,11 +186,5 @@
         }
       ]
     }
-  ],
-  "animation_contains": [
-    "\"v\":2",
-    "\"robots\":{\"robot\":[",
-    "\"ground\":{\"sizeX\":80,\"sizeY\":80,\"positions\":[",
-    "\"oreTypes\":{"
   ]
 }

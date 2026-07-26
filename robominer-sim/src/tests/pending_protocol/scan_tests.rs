@@ -28,7 +28,7 @@ fn program_bridge_scan_and_mine_in_same_cpu_loop() {
 }
 
 #[test]
-fn program_bridge_extends_cpu_budget_while_awaiting_scan_result() {
+fn program_bridge_waits_across_cycles_for_scan_result() {
     let source = "scan(); if (oreDistance() < 0) { rotate(0); } mine();";
     let program = robominer_program::compile_executable_source(source)
         .expect("scan condition program should compile");
@@ -41,7 +41,7 @@ fn program_bridge_extends_cpu_budget_while_awaiting_scan_result() {
     spec.cpu_speed = 1;
     spec.scan_time = 6;
     spec.scan_distance = 50;
-    spec.max_turns = 6;
+    spec.max_turns = 20;
     let max_turns = spec.max_turns;
 
     let mut simulation = Simulation::new(
@@ -60,7 +60,7 @@ fn program_bridge_extends_cpu_budget_while_awaiting_scan_result() {
     assert_eq!(
         simulation.robot(0).actions_done()[6],
         0,
-        "mine should not run until the scan result is read on a later cycle"
+        "mine should not run until the scan countdown finishes"
     );
     assert!(
         simulation.program_runner(0).unwrap().pending_scan_start(),
@@ -83,18 +83,83 @@ fn program_bridge_extends_cpu_budget_while_awaiting_scan_result() {
     assert_eq!(
         simulation.robot(0).actions_done()[6],
         1,
-        "extended CPU budget should finish the scan read and reach mine()"
+        "mine should run once oreDistance() finishes waiting for the scan"
     );
+    // StartScan + consume + scan_time await ticks + compare/branch need more than
+    // scan_time mining cycles when cpu_speed is 1.
     assert!(
-        turns_until_mine >= 2,
-        "mine should not run on the first cycle when cpu_speed=1 and scan_time=6"
+        turns_until_mine > 6,
+        "oreDistance() must wait out scan_time across mining cycles, not finish early; took {turns_until_mine}"
     );
     assert!(
         matches!(
             simulation.robot(0).scan_state,
             crate::ground::ScanState::Complete(_)
         ),
-        "scan should complete once oreDistance() is evaluated"
+        "scan should complete once oreDistance() finishes waiting"
+    );
+}
+
+#[test]
+fn program_bridge_ore_type_waits_full_scan_time_across_cycles() {
+    let source = "scan(); bool found = false; if (oreType() == 1) { mine(); }";
+    let program = robominer_program::compile_executable_source(source)
+        .expect("scan oreType wait program should compile");
+
+    let mut ground = Ground::new(10, 10);
+    ground.add_ore_heap(4, 4, 0, 2, 2);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.cpu_speed = 10;
+    spec.scan_time = 50;
+    spec.scan_distance = 50;
+    spec.max_turns = 20;
+    let max_turns = spec.max_turns;
+
+    let mut simulation = Simulation::new(
+        ground,
+        max_turns,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    simulation.prepare_test_run();
+
+    for _ in 0..3 {
+        simulation.advance_test_turn();
+    }
+
+    assert!(
+        matches!(
+            simulation.robot(0).scan_state,
+            crate::ground::ScanState::Scanning { .. }
+        ),
+        "scan must still be in progress after 3 mining cycles with scan_time=50 and cpu_speed=10"
+    );
+    assert_eq!(
+        simulation.robot(0).actions_done()[6],
+        0,
+        "mine must not run before the full scan countdown"
+    );
+
+    while simulation.robot(0).actions_done()[6] == 0 && simulation.time() < max_turns {
+        simulation.advance_test_turn();
+    }
+
+    assert!(
+        simulation.time() >= 5,
+        "oreType() wait should span multiple mining cycles; finished at time {}",
+        simulation.time()
+    );
+    assert_eq!(
+        simulation.robot(0).actions_done()[6],
+        1,
+        "mine should run after oreType() waits out the scan"
+    );
+    assert!(
+        matches!(
+            simulation.robot(0).scan_state,
+            crate::ground::ScanState::Complete(_)
+        ),
+        "scan should be complete once oreType() returns"
     );
 }
 
@@ -111,7 +176,7 @@ fn scan_bridge_reads_ore_type_after_scan_completes() {
     spec.cpu_speed = 1;
     spec.scan_time = 6;
     spec.scan_distance = 50;
-    spec.max_turns = 6;
+    spec.max_turns = 20;
     let max_turns = spec.max_turns;
 
     let mut simulation = Simulation::new(

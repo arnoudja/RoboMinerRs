@@ -91,14 +91,14 @@
 //! - **`start_scan`** — called on `StartScan`; sets `Scanning` with
 //!   `cycles_remaining = robot.spec.scan_time`, increments scan action counter,
 //!   sets `action_results[i] = Some(scan_time)`.
-//! - **`tick_scan`** — called on every `ProgramStep::Cpu` in the CPU loop; decrements
-//!   `cycles_remaining` and ray-marches when it reaches zero.
-//! - **`complete_scan_now`** — called on `AwaitScanResult`; ray-marches immediately
-//!   and sets `Complete`, charging `cpu_used += cycles_remaining.max(1)`.
+//! - **`tick_scan`** — called on every `ProgramStep::Cpu` and on each
+//!   `AwaitScanResult` step in the CPU loop; decrements `cycles_remaining` and
+//!   ray-marches when it reaches zero.
 //!
 //! Passive countdown (`tick_scan` on CPU steps) and active wait (`AwaitScanResult`)
-//! can both finish a scan. Programs that call `oreDistance()` while a scan is still
-//! `Scanning` take the active path so the read does not return stale data.
+//! share the same countdown. Programs that call `oreDistance()` / `oreType()` while
+//! a scan is still `Scanning` emit `AwaitScanResult` each CPU tick until the scan
+//! completes, so the read never returns mid-countdown data and never finishes early.
 //!
 //! ### Scan end-to-end flow
 //!
@@ -111,41 +111,30 @@
 //!
 //! oreDistance();                   // while Scanning
 //! ────────────────────────────────
-//! 4. Runner sees !scan_complete → Action(AwaitScanResult)
-//! 5. Sim complete_scan_now → Complete, cpu_used += remaining cycles
-//! 6. Runner continues eval; context.scan_complete true → pushes distance
+//! 4. Runner sees !scan_complete → Action(AwaitScanResult) (work index not advanced)
+//! 5. Sim tick_scan once, cpu_used += 1; loop continues or ends at cpu_speed
+//! 6. Repeat across mining cycles until ScanState::Complete
+//! 7. Runner sees scan_complete → pushes distance
 //!
 //! oreDistance();                   // with no prior scan
 //! ────────────────────────────────
 //! → pushes -1.0 without emitting an action (scan_started false)
 //! ```
 //!
-//! ### CPU budget and cross-cycle scan results
+//! ### CPU budget and cross-cycle scan waits
 //!
-//! Each mining cycle runs at most `robot.spec.cpu_speed` program instructions unless
-//! the CPU loop sets `extend_budget`:
-//!
-//! ```text
-//! extend_budget =
-//!     runner.awaits_scan_result()
-//!     || runner.has_pending_scan_completion()
-//! ```
-//!
-//! - **`awaits_scan_result`** — `pending_action == AwaitScanResult` after step (4).
-//! - **`has_pending_scan_completion`** — ongoing expression eval is at
-//!   `PushOreDistance` or `PushOreType` (about to read scan results).
-//!
-//! Extend the budget while a read is pending so `oreDistance()` / `oreType()` can
-//! finish in the same mining cycle even after `AwaitScanResult` sets
-//! `ScanState::Complete` (extend must not require `Scanning`; completion happens
-//! before the read consumes context).
+//! Each mining cycle runs at most `robot.spec.cpu_speed` program instructions.
+//! Mid-scan `oreDistance()` / `oreType()` wait by re-emitting `AwaitScanResult`
+//! (expression work index stays on `PushOreDistance` / `PushOreType`). Each await
+//! burns one CPU and advances the shared `tick_scan` countdown; when the budget is
+//! exhausted the mining cycle returns `Wait`/`Cpu` and the wait resumes next cycle.
+//! There is no lump-sum finish and no CPU-budget extension past `cpu_speed`.
 //!
 //! When `cpu_speed` is exhausted mid-`scan()`, the runner keeps
 //! `pending_action == StartScan` and the sim keeps `action_results = Some(scan_time)`.
 //! **`should_preserve_program_action_result`** prevents `process_robot_action(Wait)`
 //! from clearing that result so the next mining cycle can consume it and advance
-//! past the `scan()` statement. The same preservation applies while
-//! `awaits_scan_result()` is true.
+//! past the `scan()` statement.
 //!
 //! ## Await kinds
 //!
@@ -206,7 +195,7 @@
 //! - Runner: `pending_await`, `pending_program_motion`, `start_pending_program_motion`, `handle_continue_program_motion`
 //! - Runner scan eval: `expression_eval::step` (`PushStartScan`, `PushOreDistance`, `PushOreType`)
 //! - Motion chunking: [`motion`]
-//! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`, `complete_scan_now`,
+//! - Sim bridge: `run_program_cpu_loop`, `start_scan`, `tick_scan`,
 //!   `build_execution_context`
 //! - Sim pending motion: `map_awaiting_executable`, `pending_sim_motion_chunks`,
 //!   `record_action_result`, `should_preserve_program_action_result`, `next_robot_action`

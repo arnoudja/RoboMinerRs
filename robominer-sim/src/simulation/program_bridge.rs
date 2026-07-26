@@ -64,21 +64,6 @@ impl Simulation {
         }
     }
 
-    fn complete_scan_now(&mut self, robot_index: usize) -> i32 {
-        match &self.robots[robot_index].scan_state {
-            ScanState::Scanning {
-                direction,
-                cycles_remaining,
-            } => {
-                let remaining = *cycles_remaining;
-                let result = self.perform_scan(robot_index, *direction);
-                self.robots[robot_index].scan_state = ScanState::Complete(result);
-                remaining
-            }
-            _ => 0,
-        }
-    }
-
     fn build_execution_context(&self, robot_index: usize) -> ExecutionContext {
         let robot = &self.robots[robot_index];
         let snapshot = robot.scan_snapshot();
@@ -127,17 +112,17 @@ impl Simulation {
         let mut cpu_steps = Vec::new();
 
         loop {
-            let extend_budget = {
-                let ActionSource::Program { runner, .. } = &self.action_sources[robot_index] else {
-                    self.action_result_expected[robot_index] = false;
-                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
-                };
-                runner.awaits_scan_result() || runner.has_pending_scan_completion()
-            };
-
-            if cpu_used >= cpu_speed && !extend_budget {
+            if cpu_used >= cpu_speed {
                 self.action_result_expected[robot_index] = false;
                 return (RobotAction::Wait, Some(RobotCycleStatus::Cpu), cpu_steps);
+            }
+
+            if !matches!(
+                &self.action_sources[robot_index],
+                ActionSource::Program { .. }
+            ) {
+                self.action_result_expected[robot_index] = false;
+                return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
             }
 
             let span_before = self
@@ -190,10 +175,12 @@ impl Simulation {
                     if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
-                    let remaining = self.complete_scan_now(robot_index);
+                    // Wait out the real scan countdown: one tick per CPU, spanning
+                    // mining cycles when remaining work exceeds cpu_speed.
+                    self.tick_scan(robot_index);
                     self.action_results[robot_index] = None;
                     self.action_result_expected[robot_index] = false;
-                    cpu_used += remaining.max(1);
+                    cpu_used += 1;
                 }
                 ProgramStep::Action(action) => {
                     if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {

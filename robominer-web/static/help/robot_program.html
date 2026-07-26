@@ -234,7 +234,7 @@
                 </tr>
             </table></div>
             <h3>oreDistance()</h3>
-            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.
+            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple mining cycles).
                 When the robot is already standing on ore, the distance is 0.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
@@ -249,7 +249,7 @@
                 </tr>
             </table></div>
             <h3>oreType()</h3>
-            <p class="helptext">Returns the ore quality index from the most recent scan. If a scan is still in progress, the remaining scan cycles are consumed first.</p>
+            <p class="helptext">Returns the ore quality index from the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple mining cycles).</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>

@@ -186,13 +186,5 @@
         }
       ]
     }
-  ],
-  "animation_contains": [
-    "\"v\":2",
-    "\"robots\":{\"robot\":[",
-    "\"ground\":{\"sizeX\":20,\"sizeY\":20,\"positions\":[",
-    "\"oreTypes\":{",
-    "\"depotMaxA\":",
-    "\"DA\":"
   ]
 }

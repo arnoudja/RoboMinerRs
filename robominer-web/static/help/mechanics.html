@@ -143,10 +143,11 @@
             <p class="helptext">
                 Scanning is special. scan() starts a scanner job and counts as initiating work
                 (it returns the scanner's scan time in CPU cycles). The scan then completes after
-                that many CPU cycles in the background. oreDistance() and oreType() are not free
-                reads while a scan is still running: they finish the remaining scan cycles first,
-                which can cost a large share of your CPU budget for that mining cycle.
-                Budget CPU speed with scanTime in mind when you scan often.
+                that many CPU cycles (passive countdown on other CPU work, or while
+                oreDistance() / oreType() wait). oreDistance() and oreType() do not return while
+                a scan is still running: they wait until the full scan countdown finishes, which
+                can span multiple mining cycles at your CPU speed. Budget CPU speed with scanTime
+                in mind when you scan often.
             </p>
             <p class="helptext">
                 The Physical actions are also called Cycles.

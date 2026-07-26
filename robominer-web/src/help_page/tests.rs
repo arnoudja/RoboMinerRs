@@ -141,7 +141,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             r#"<h2 id="depot">Depot</h2>"#,
             "personal ore bank for each ore type",
             r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#,
-            "finish the remaining scan cycles first",
+            "wait until the full scan countdown finishes",
             r#"<div class="help-table-wrap"><table class="helptable">"#,
             "<h1>RoboMiner Mechanics</h1>",
         ],
