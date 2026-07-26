@@ -101,21 +101,6 @@
     text-shadow: 0 0 10px rgba(0, 255, 157, 0.45);
 }
 
-.claim-banner-label {
-    font-weight: bold;
-    margin-right: 6px;
-}
-
-.claim-banner-rewards {
-    display: inline;
-}
-
-.claim-banner-reward-amount {
-    color: var(--mq-success);
-    font-family: Consolas, "Courier New", monospace;
-    text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
-}
-
 .mining-queue-error,
 .mining-queue-page p.error.mining-queue-error {
     background: rgba(255, 92, 122, 0.12);

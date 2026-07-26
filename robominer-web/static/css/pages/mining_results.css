@@ -65,17 +65,13 @@
     padding: 10px 14px;
 }
 
-.mining-results-claim-banner a,
-.edit-code-claim-banner a,
-.robot-claim-banner a {
+.mining-results-claim-banner a {
     color: var(--mq-success);
     font-weight: bold;
     text-decoration: none;
 }
 
-.mining-results-claim-banner a:hover,
-.edit-code-claim-banner a:hover,
-.robot-claim-banner a:hover {
+.mining-results-claim-banner a:hover {
     text-shadow: 0 0 10px rgba(0, 255, 157, 0.45);
 }
 

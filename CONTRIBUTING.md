@@ -107,7 +107,8 @@ the last argument to `html::layout`, or call the helper directly for auth/logoff
 When adding a page: create `static/css/pages/<name>.css`, add a `PageStylesheet` variant, and
 link only that variant (do not reintroduce “load every CSS file” in layout). Shared strips used by
 more than one page (for example `PageStylesheet::PageWallet` → `page_wallet.css`) are requested
-alongside the page file, not baked into every layout.
+alongside the page file, not baked into every layout. Truly cross-page chrome that every page may
+show (help hints, claim-banner label/amount innards) belongs in `layout_shell.css`.
 
 | Page / shell | Stylesheets |
 |--------------|-------------|

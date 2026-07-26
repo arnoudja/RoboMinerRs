@@ -522,22 +522,3 @@
     font-size: 0.82rem;
 }
 
-.rally-view-back-link {
-    background: rgba(10, 16, 26, 0.95);
-    border: 1px solid rgba(0, 229, 255, 0.45);
-    border-radius: 6px;
-    box-shadow: 0 0 14px rgba(0, 229, 255, 0.12);
-    color: var(--mq-accent);
-    font-size: 0.88rem;
-    padding: 8px 14px;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.rally-view-back-link:hover {
-    border-color: rgba(0, 229, 255, 0.65);
-    box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
-    color: #7eeeff;
-}
-
-

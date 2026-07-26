@@ -547,5 +547,27 @@ p.success {
     color: #fff3bf;
 }
 
+/******************************************************
+ * Cross-page claim banner innards
+ *
+ * Outer banner classes stay page-local (mining-queue-claim-banner,
+ * edit-code-claim-banner, …); shared label/amount markup is here.
+ ******************************************************/
+
+.claim-banner-label {
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+.claim-banner-rewards {
+    display: inline;
+}
+
+.claim-banner-reward-amount {
+    color: #00ff9d;
+    font-family: Consolas, "Courier New", monospace;
+    text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
+}
+
 
 

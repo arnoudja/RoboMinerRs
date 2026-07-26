@@ -215,6 +215,30 @@ mod tests {
     }
 
     #[test]
+    fn rally_stylesheet_owns_back_link_not_activity() {
+        assert!(
+            RALLY_CSS.contains(".rally-view-back-link"),
+            "rally.css should style the rally view back link"
+        );
+        assert!(
+            !ACTIVITY_CSS.contains(".rally-view-back-link"),
+            "activity.css must not own rally-view-back-link (page-scoped CSS)"
+        );
+    }
+
+    #[test]
+    fn layout_shell_owns_shared_claim_banner_innards() {
+        assert!(
+            LAYOUT_SHELL_CSS.contains(".claim-banner-label"),
+            "layout_shell.css should style shared claim-banner innards"
+        );
+        assert!(
+            !MINING_QUEUE_CSS.contains(".claim-banner-label"),
+            "mining_queue.css must not own shared claim-banner innards"
+        );
+    }
+
+    #[test]
     fn robominer_stylesheet_tags_dedupe_repeated_pages() {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::Shop, PageStylesheet::Shop]);
         assert_eq!(tags.matches(r#"href="css/pages/shop.css?v="#).count(), 1);
