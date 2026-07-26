@@ -1279,9 +1279,9 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
                                            values (5,             12,   4,     15000);
 
 
--- Achievements - More robots
+-- Achievements - Second robot
 insert into Achievement (id, title,         description)
-                 values (6,  'More robots', 'Earn an extra robot')
+                 values (6,  'Second robot', 'Earn a second robot')
 ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description);
 
 insert into AchievementPredecessor (predecessorId, predecessorStep, successorId)
@@ -1647,6 +1647,27 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            12,   8,     75000);
 
+
+-- Achievements - One more robot
+insert into Achievement (id, title,         description)
+                 values (11,  'One more robot', 'Earn your third robot')
+ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description);
+
+insert into AchievementPredecessor (predecessorId, predecessorStep, successorId)
+                            values (10,            1,               11);
+
+insert into AchievementStep (achievementId, step, achievementPoints, robotReward)
+                     values (11,            1,    10,                3);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (11,            1,    5,     30000),
+                                                  (11,            1,    6,     25000),
+                                                  (11,            1,    7,     15000),
+                                                  (11,            1,    8,     5000);
+insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
+                                           values (11,            1,    1402,         990.0),
+                                                  (11,            1,    1502,         990.0),
+                                                  (11,            1,    1602,         950.0),
+                                                  (11,            1,    1701,         950.0);
 
 
 -- Calculate the tier levels
