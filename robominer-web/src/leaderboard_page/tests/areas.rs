@@ -1,6 +1,8 @@
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
 use super::super::render::render_leaderboard_page;
+use super::super::render_areas::render_leaderboard_area_section;
+use super::super::{LEADERBOARD_PAGE_SIZE, LeaderboardQuery, LeaderboardTab};
 use super::fixtures::{areas_leaderboard_query, sample_leaderboard_state};
 
 #[test]
@@ -145,4 +147,48 @@ fn leaderboard_rendering_shows_climb_hints_and_metric_glossary() {
             "Best single-run score per robot in a mining area.",
         ],
     );
+}
+
+#[test]
+fn leaderboard_areas_empty_ranked_shows_queue_cta() {
+    let html = render_leaderboard_page(
+        "Player".to_string(),
+        None,
+        LeaderboardQuery {
+            tab: LeaderboardTab::Areas,
+            area_id: None,
+            limit: LEADERBOARD_PAGE_SIZE,
+        },
+        &sample_leaderboard_state(vec![], vec![], vec![], vec![], None),
+    );
+
+    assert_contains_all(
+        &html,
+        &[
+            "No area scores yet. Queue mining runs to start climbing the board.",
+            r#"href="miningQueue""#,
+            r#"href="helpTutorial?step=1""#,
+        ],
+    );
+}
+
+#[test]
+fn leaderboard_areas_without_selected_area_prompts_choice() {
+    let mut body = String::new();
+    render_leaderboard_area_section(
+        &mut body,
+        LeaderboardQuery {
+            tab: LeaderboardTab::Areas,
+            area_id: None,
+            limit: LEADERBOARD_PAGE_SIZE,
+        },
+        &[&robominer_db::LeaderboardMiningAreaRecord {
+            id: 3,
+            area_name: "Crystal Cave".to_string(),
+        }],
+        &[],
+        "Player",
+    );
+
+    assert_html_contains(&body, "Choose a mining area to view its leaderboard.");
 }

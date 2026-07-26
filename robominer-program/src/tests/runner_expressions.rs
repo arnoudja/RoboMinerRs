@@ -152,3 +152,28 @@ fn expression_unary_not_in_while_condition() {
     );
     assert_eq!(runner.next_action(&mut context), None);
 }
+
+#[test]
+fn expression_dynamic_dump_awaits_sim_result_then_continues() {
+    let program = compile_executable_source("int slot = 1; if (dump(slot) >= 0) { mine(); }")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(10, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(1))
+    );
+
+    // Pending dump re-emits until the sim supplies an action_result.
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(1))
+    );
+
+    let mut after_dump = test_context(10, Some(2.0));
+    assert_eq!(
+        runner.next_action(&mut after_dump),
+        Some(ExecutableAction::Mine)
+    );
+}

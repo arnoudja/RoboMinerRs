@@ -39,3 +39,30 @@ fn unparse_round_trip_named_seed_programs() {
         assert_eq!(program.requires_runtime(), recompiled.requires_runtime());
     }
 }
+
+#[test]
+fn unparse_preserves_decrement_and_unusual_dump_forms() {
+    for source in [
+        "int value = 3; --value; value--;",
+        "dump(9);",
+        "int slot = 1 + 2; dump(slot);",
+        "dump(1 + 2);",
+    ] {
+        let program = compile_executable_source(source).unwrap_or_else(|error| {
+            panic!("compile failed for {source:?}: {error}");
+        });
+        let unparsed = unparse_program(&program);
+        let recompiled = compile_executable_source(&unparsed).unwrap_or_else(|error| {
+            panic!("recompile failed for {source:?}\n---\n{unparsed}\n---\n{error}");
+        });
+        assert_eq!(
+            program.actions(),
+            recompiled.actions(),
+            "action drift for {source:?}\n--- unparsed ---\n{unparsed}"
+        );
+        assert!(
+            unparsed.contains("--") || unparsed.contains("dump"),
+            "unexpected unparsed form for {source:?}: {unparsed}"
+        );
+    }
+}

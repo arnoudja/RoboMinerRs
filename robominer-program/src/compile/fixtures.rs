@@ -177,6 +177,36 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         expected_error_contains: Some("Unknown robot property"),
     },
     CompatibilityFixture {
+        name: "invalid_bare_pre_increment",
+        source: "++;",
+        expected_size: None,
+        expected_error_contains: Some("Variable expected"),
+    },
+    CompatibilityFixture {
+        name: "invalid_bare_pre_decrement",
+        source: "--;",
+        expected_size: None,
+        expected_error_contains: Some("Variable expected"),
+    },
+    CompatibilityFixture {
+        name: "invalid_empty_robot_property",
+        source: "move(robot.);",
+        expected_size: None,
+        expected_error_contains: Some("Robot property expected"),
+    },
+    CompatibilityFixture {
+        name: "pre_and_post_decrement",
+        source: "int value = 3; --value; value--;",
+        expected_size: Some(7),
+        expected_error_contains: None,
+    },
+    CompatibilityFixture {
+        name: "dynamic_dump_expression",
+        source: "int slot = 1; dump(slot);",
+        expected_size: None,
+        expected_error_contains: None,
+    },
+    CompatibilityFixture {
         name: "invalid_while_missing_paren",
         source: "while mine();",
         expected_size: None,

@@ -218,3 +218,58 @@ async fn set_valid_and_invalid_program_source_flags() {
 
     fixture.cleanup(&pool).await;
 }
+
+#[tokio::test]
+#[serial]
+async fn get_program_source_and_verification_cover_states() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db program source test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = ProgramSourceFixture::create(&pool).await;
+
+    let source = robominer_db::get_program_source(&pool, fixture.program_source_id)
+        .await
+        .expect("get source")
+        .expect("source exists");
+    assert!(!source.is_empty());
+
+    assert!(
+        robominer_db::get_program_source(&pool, -1)
+            .await
+            .expect("missing source query")
+            .is_none()
+    );
+
+    let verified = robominer_db::get_program_source_verification(&pool, fixture.program_source_id)
+        .await
+        .expect("get verification")
+        .expect("verification exists");
+    assert!(verified.verified);
+    assert!(verified.compiled_size >= 0);
+    assert!(verified.error_description.is_empty());
+
+    robominer_db::set_invalid_program_source(&pool, fixture.program_source_id, "syntax boom")
+        .await
+        .expect("set_invalid");
+    let invalid = robominer_db::get_program_source_verification(&pool, fixture.program_source_id)
+        .await
+        .expect("get invalid verification")
+        .expect("verification exists");
+    assert!(!invalid.verified);
+    assert_eq!(invalid.compiled_size, -1);
+    assert_eq!(invalid.error_description, "syntax boom");
+
+    assert!(
+        robominer_db::get_program_source_verification(&pool, -1)
+            .await
+            .expect("missing verification query")
+            .is_none()
+    );
+
+    fixture.cleanup(&pool).await;
+}

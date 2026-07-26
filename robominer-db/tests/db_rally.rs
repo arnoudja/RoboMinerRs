@@ -170,3 +170,83 @@ async fn cleanup_old_claimed_mining_queue_items_trims_beyond_retention() {
         .await;
     fixture.cleanup(&pool).await;
 }
+
+#[tokio::test]
+#[serial]
+async fn list_mining_result_states_for_robot_returns_claimed_only() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = RallyFixture::create(&pool).await;
+    let rally_result_id = insert_row_id(
+        &pool,
+        sqlx::query("INSERT INTO RallyResult (resultData) VALUES ('robot-stats-rally')"),
+    )
+    .await;
+
+    let claimed_id = insert_claimed_mining_queue(
+        &pool,
+        fixture.mining_area_id,
+        fixture.queued_robot_id,
+        rally_result_id,
+    )
+    .await;
+    sqlx::query("UPDATE MiningQueue SET score = 12.5 WHERE id = ?")
+        .bind(claimed_id)
+        .execute(&pool)
+        .await
+        .expect("set claimed score");
+    sqlx::query(
+        "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, tax) VALUES (?, ?, 8, 2)",
+    )
+    .bind(claimed_id)
+    .bind(fixture.ore_id)
+    .execute(&pool)
+    .await
+    .expect("insert ore haul");
+
+    // Fixture queue is unclaimed; ensure it stays unclaimed and does not appear.
+    sqlx::query("UPDATE MiningQueue SET claimed = false WHERE id = ?")
+        .bind(fixture.mining_queue_id)
+        .execute(&pool)
+        .await
+        .expect("keep fixture queue unclaimed");
+
+    let states =
+        robominer_db::list_mining_result_states_for_robot(&pool, fixture.queued_robot_id, 5)
+            .await
+            .expect("list result states");
+    assert_eq!(states.len(), 1);
+    assert_eq!(states[0].mining_queue_id, claimed_id);
+    assert_eq!(states[0].rally_result_id, Some(rally_result_id));
+    assert_eq!(states[0].score, 12.5);
+    assert_eq!(states[0].total_ore_mined, 8);
+    assert_eq!(states[0].total_tax, 2);
+    assert_eq!(states[0].total_reward, 6);
+    assert!(!states[0].mining_area_name.is_empty());
+
+    let limited =
+        robominer_db::list_mining_result_states_for_robot(&pool, fixture.queued_robot_id, 0)
+            .await
+            .expect("limit 0");
+    assert!(limited.is_empty());
+
+    let _ = sqlx::query("DELETE FROM MiningOreResult WHERE miningQueueId = ?")
+        .bind(claimed_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
+        .bind(claimed_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM RallyResult WHERE id = ?")
+        .bind(rally_result_id)
+        .execute(&pool)
+        .await;
+    fixture.cleanup(&pool).await;
+}

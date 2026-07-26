@@ -222,6 +222,40 @@ mod tests {
     }
 
     #[test]
+    fn response_builders_cover_common_error_statuses() {
+        let bad = Response::bad_request("missing field");
+        assert_eq!(bad.status, 400);
+        assert_eq!(bad.reason, "Bad Request");
+        assert_eq!(String::from_utf8_lossy(&bad.body), "missing field");
+
+        let method = Response::method_not_allowed();
+        assert_eq!(method.status, 405);
+        assert_eq!(method.reason, "Method Not Allowed");
+        assert_eq!(
+            method.headers,
+            vec![("Allow", "GET, HEAD, POST".to_string())]
+        );
+
+        let internal = Response::internal_error();
+        assert_eq!(internal.status, 500);
+        assert_eq!(internal.reason, "Internal Server Error");
+        assert_eq!(
+            String::from_utf8_lossy(&internal.body),
+            "Internal server error"
+        );
+    }
+
+    #[test]
+    fn percent_decode_handles_plus_and_invalid_escapes() {
+        let (path, query) = split_target("/page?name=hello+world&bad=%ZZ&cut=%A&ok=%2F");
+        assert_eq!(path, "/page");
+        assert_eq!(query.get("name").map(String::as_str), Some("hello world"));
+        assert_eq!(query.get("bad").map(String::as_str), Some("%ZZ"));
+        assert_eq!(query.get("cut").map(String::as_str), Some("%A"));
+        assert_eq!(query.get("ok").map(String::as_str), Some("/"));
+    }
+
+    #[test]
     fn parse_form_body_values_only_accepts_urlencoded_content_type() {
         let mut headers = HashMap::new();
         headers.insert(

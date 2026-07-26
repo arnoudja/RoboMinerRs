@@ -118,3 +118,59 @@ async fn run_pool_until_complete_persists_until_required_runs() {
     fixture.assert_cli_persisted(&pool).await;
     fixture.cleanup(&pool).await;
 }
+
+#[tokio::test]
+#[serial]
+async fn run_pool_dry_run_does_not_persist() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = TestPoolFixture::create(&pool).await;
+
+    let before = sqlx::query("SELECT totalScore, runsDone FROM PoolItem WHERE id = ?")
+        .bind(fixture.pool_item_id)
+        .fetch_one(&pool)
+        .await
+        .expect("load pool item before dry run");
+    let before_score: f64 = before.try_get("totalScore").unwrap();
+    let before_runs: i32 = before.try_get("runsDone").unwrap();
+
+    let output = run_engine(&[
+        "--database-url".to_string(),
+        database_url,
+        "rally".to_string(),
+        "pool".to_string(),
+        "--pool-id".to_string(),
+        fixture.pool_id.to_string(),
+        "--seed".to_string(),
+        "0".to_string(),
+    ]);
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(
+        output.status.success(),
+        "expected rally pool dry run to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stdout.contains("Dry run: no database writes performed"),
+        "unexpected stdout:\n{stdout}"
+    );
+    assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
+
+    let after = sqlx::query("SELECT totalScore, runsDone FROM PoolItem WHERE id = ?")
+        .bind(fixture.pool_item_id)
+        .fetch_one(&pool)
+        .await
+        .expect("load pool item after dry run");
+    let after_score: f64 = after.try_get("totalScore").unwrap();
+    let after_runs: i32 = after.try_get("runsDone").unwrap();
+    assert_eq!(after_score, before_score);
+    assert_eq!(after_runs, before_runs);
+
+    fixture.cleanup(&pool).await;
+}
