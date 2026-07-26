@@ -203,6 +203,18 @@ mod tests {
     }
 
     #[test]
+    fn help_stylesheet_owns_help_page_rules_not_auth() {
+        assert!(
+            HELP_CSS.contains(".help-page"),
+            "help.css should define modern help-page styles"
+        );
+        assert!(
+            !AUTH_CSS.contains(".help-page"),
+            "auth.css must not own help-page styles (page-scoped CSS)"
+        );
+    }
+
+    #[test]
     fn robominer_stylesheet_tags_dedupe_repeated_pages() {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::Shop, PageStylesheet::Shop]);
         assert_eq!(tags.matches(r#"href="css/pages/shop.css?v="#).count(), 1);
