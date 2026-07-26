@@ -26,6 +26,7 @@ pub(crate) async fn dispatch_rally(
                 seed,
                 persist,
                 result_data_file,
+                quiet_when_empty: false,
             };
             validate_run_rally_options(&options)?;
 

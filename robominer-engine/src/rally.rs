@@ -7,6 +7,8 @@ pub(crate) struct RunRallyOptions {
     pub(crate) seed: u64,
     pub(crate) persist: bool,
     pub(crate) result_data_file: Option<PathBuf>,
+    /// When true, skip logging for areas with no ready rally (poll loop).
+    pub(crate) quiet_when_empty: bool,
 }
 
 pub(crate) struct RunPoolOptions {
@@ -40,7 +42,9 @@ pub(crate) async fn run_rally(
             )
         })?;
     let Some(loadout) = loadout else {
-        println!("No ready rally for mining area {}", options.mining_area_id);
+        if !options.quiet_when_empty {
+            println!("No ready rally for mining area {}", options.mining_area_id);
+        }
         return Ok(false);
     };
 
@@ -206,7 +210,6 @@ pub(crate) async fn run_rallies(
 
         loop {
             cycle += 1;
-            println!("Starting rally poll cycle {cycle}");
             let summary = run_rallies_cycle(pool, &options, cycle).await?;
             println!(
                 "Completed rally poll cycle {cycle}: ran={} skipped={} persist={}",
@@ -250,14 +253,7 @@ async fn run_rallies_cycle(
     let mut ran = 0;
     let mut skipped = 0;
 
-    println!("Processing {} mining areas", mining_areas.len());
-
     for mining_area in mining_areas {
-        println!(
-            "Processing mining area {} ({})",
-            mining_area.id, mining_area.area_name
-        );
-
         let did_run = run_rally(
             pool,
             RunRallyOptions {
@@ -268,6 +264,7 @@ async fn run_rallies_cycle(
                     .wrapping_add(mining_area.id as u64),
                 persist: options.persist,
                 result_data_file: None,
+                quiet_when_empty: true,
             },
         )
         .await

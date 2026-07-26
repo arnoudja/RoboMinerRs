@@ -55,11 +55,6 @@ async fn run_rallies_once_persist_advances_ready_queue() {
         .await
         .expect("failed to connect to test database");
     let fixture = TestRallyFixture::create(&pool).await;
-    let area_name: String = sqlx::query_scalar("SELECT areaName FROM MiningArea WHERE id = ?")
-        .bind(fixture.mining_area_id)
-        .fetch_one(&pool)
-        .await
-        .expect("failed to load mining area name");
 
     // Let miningTime/recharge windows elapse so the queue is rally-ready before polling.
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -85,11 +80,12 @@ async fn run_rallies_once_persist_advances_ready_queue() {
         "unexpected stdout:\n{stdout}"
     );
     assert!(
-        stdout.contains(&format!(
-            "Processing mining area {} ({area_name})",
-            fixture.mining_area_id
-        )),
-        "rally rallies should visit the fixture mining area\nstdout:\n{stdout}"
+        stdout.contains("Rally complete") && stdout.contains("Persisted rally result"),
+        "rally rallies should run and persist the fixture queue\nstdout:\n{stdout}"
+    );
+    assert!(
+        !stdout.contains("Processing mining area"),
+        "poll loop should not log per-area processing noise\nstdout:\n{stdout}"
     );
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 
