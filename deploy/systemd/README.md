@@ -22,6 +22,31 @@ deploy/systemd/install-engine.sh
 deploy/systemd/install-web.sh
 ```
 
+### Debian package (host or Raspberry Pi)
+
+From a development machine with Rust and `cargo-deb`:
+
+```bash
+cargo install cargo-deb --locked   # once
+resources/scripts/build-deb.sh
+```
+
+That builds a native `robominer_*.deb` and, when the host is not already
+`aarch64`, a cross-built Pi package (needs `gcc-aarch64-linux-gnu` and the
+`aarch64-unknown-linux-gnu` Rust target).
+
+On the target system:
+
+```bash
+sudo apt install ./robominer_*.deb
+```
+
+The package installs binaries under `/opt/robominer`, static assets, systemd
+units, and sysusers. It does **not** create `/etc/robominer/robominer.conf`.
+When that config already exists, `postinst` runs `migrate apply`, applies
+`/usr/share/robominer/gameData.sql`, and starts `robominer-engine` /
+`robominer-web`.
+
 Set `ROBOMINER_DB_SERVER`, `ROBOMINER_DB_USER`, `ROBOMINER_DB_PASSWORD`, and
 `ROBOMINER_DB_DATABASE` to create `/etc/robominer/robominer.conf` automatically.
 Set `ROBOMINER_SESSION_SECRET` before install to add a web session signing key.

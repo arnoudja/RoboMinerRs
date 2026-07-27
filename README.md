@@ -39,6 +39,25 @@ Build native release binaries and cross-compile for 64-bit Raspberry Pi
 resources/scripts/build-release.sh
 ```
 
+Build installable Debian packages for this machine and for 64-bit Raspberry Pi
+(requires [`cargo-deb`](https://crates.io/crates/cargo-deb) and `dpkg-deb`;
+Pi builds also need `gcc-aarch64-linux-gnu`):
+
+```sh
+cargo install cargo-deb --locked   # once
+resources/scripts/build-deb.sh
+```
+
+Install on the target host (example for a native build artifact):
+
+```sh
+sudo apt install ./target/debian/robominer_*.deb
+```
+
+On a Pi, copy the `aarch64` `.deb` from the build output and install the same way.
+If `/etc/robominer/robominer.conf` already exists, the package `postinst` runs
+`migrate apply`, applies `gameData.sql`, and starts the systemd units.
+
 The main binaries are:
 
 - `target/debug/robominer-engine`
@@ -272,9 +291,16 @@ Install the engine and web host for production with:
 deploy/systemd/install-robominer.sh --migrate --enable
 ```
 
+Or install from a Debian package built with `resources/scripts/build-deb.sh`:
+
+```sh
+sudo apt install ./target/debian/robominer_*.deb
+```
+
 Omit `--migrate` only if you will apply schema changes yourself afterward
 (`robominer-engine migrate apply`). The install script prints a reminder when it
-skips that step.
+skips that step. The `.deb` `postinst` migrates and reloads `gameData.sql`
+automatically when `/etc/robominer/robominer.conf` is already present.
 
 For HTTPS, put Caddy or nginx in front of the web host. See
 `deploy/reverse-proxy/README.md` for example configs and

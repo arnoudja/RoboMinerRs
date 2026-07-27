@@ -3,7 +3,7 @@ name = "robominer-engine"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-
+description = "RoboMiner engine and web host"
 [lib]
 name = "robominer_engine"
 path = "src/lib.rs"
@@ -25,3 +25,41 @@ tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread", "signal"]
 robominer-test-support = { version = "0.1.0", path = "../robominer-test-support" }
 serial_test = "3.2.0"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+
+[package.metadata.deb]
+name = "robominer"
+maintainer = "RoboMiner maintainers"
+copyright = "RoboMiner contributors"
+maintainer-scripts = "debian/"
+depends = "$auto, systemd, default-mysql-client | mariadb-client | mysql-client"
+section = "games"
+priority = "optional"
+assets = [
+    ["target/release/robominer-engine", "opt/robominer/bin/", "755"],
+    ["target/release/robominer-web", "opt/robominer/bin/", "755"],
+    [
+        "../deploy/systemd/wait-web-health.sh",
+        "opt/robominer/bin/robominer-wait-web-health",
+        "755",
+    ],
+    ["../robominer-web/static/**/*", "opt/robominer/static/", "644"],
+    [
+        "../deploy/systemd/robominer-engine.sysusers",
+        "usr/lib/sysusers.d/robominer.conf",
+        "644",
+    ],
+    [
+        "../resources/database/gameData.sql",
+        "usr/share/robominer/gameData.sql",
+        "644",
+    ],
+    [
+        "../deploy/systemd/README.md",
+        "opt/robominer/deploy/systemd/README.md",
+        "644",
+    ],
+]
+systemd-units = [
+    { unit-scripts = "../deploy/systemd", unit-name = "robominer-engine", enable = true, start = false },
+    { unit-scripts = "../deploy/systemd", unit-name = "robominer-web", enable = true, start = false },
+]

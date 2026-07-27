@@ -1,0 +1,110 @@
+#!/bin/sh
+set -e
+
+CONFIG_FILE=/etc/robominer/robominer.conf
+ENGINE_BIN=/opt/robominer/bin/robominer-engine
+GAMEDATA_SQL=/usr/share/robominer/gameData.sql
+SYSUSERS_FILE=/usr/lib/sysusers.d/robominer.conf
+INSTALL_PREFIX=/opt/robominer
+
+conf_value() {
+    key="$1"
+    # Match "key value" lines; ignore comments and blanks.
+    sed -n "s/^${key}[[:space:]]\{1,\}//p" "$CONFIG_FILE" | head -n 1
+}
+
+ensure_service_user() {
+    if command -v systemd-sysusers >/dev/null 2>&1 && [ -f "$SYSUSERS_FILE" ]; then
+        systemd-sysusers "$SYSUSERS_FILE" || true
+    fi
+
+    if getent passwd robominer >/dev/null 2>&1; then
+        mkdir -p "$INSTALL_PREFIX" /var/lib/robominer
+        chown robominer:robominer /var/lib/robominer 2>/dev/null || true
+        chown robominer:robominer "$INSTALL_PREFIX" 2>/dev/null || true
+        if [ -d "$INSTALL_PREFIX/static" ]; then
+            chown -R robominer:robominer "$INSTALL_PREFIX/static" 2>/dev/null || true
+        fi
+    fi
+}
+
+apply_database_updates() {
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo "RoboMiner: $CONFIG_FILE not found; skipping migrate/gameData."
+        echo "Create the config, initialize MySQL, then: systemctl start robominer-engine robominer-web"
+        return 0
+    fi
+
+    if [ ! -x "$ENGINE_BIN" ]; then
+        echo "RoboMiner: engine binary missing at $ENGINE_BIN" >&2
+        exit 1
+    fi
+
+    echo "RoboMiner: applying schema migrations..."
+    "$ENGINE_BIN" --config "$CONFIG_FILE" migrate apply
+    "$ENGINE_BIN" --config "$CONFIG_FILE" migrate status --check
+
+    dbserver=$(conf_value dbserver)
+    dbuser=$(conf_value dbuser)
+    dbpassword=$(conf_value dbpassword)
+    dbdatabase=$(conf_value dbdatabase)
+
+    if [ -z "$dbserver" ] || [ -z "$dbuser" ] || [ -z "$dbdatabase" ]; then
+        echo "RoboMiner: $CONFIG_FILE is missing dbserver/dbuser/dbdatabase" >&2
+        exit 1
+    fi
+
+    if [ ! -f "$GAMEDATA_SQL" ]; then
+        echo "RoboMiner: game data SQL missing at $GAMEDATA_SQL" >&2
+        exit 1
+    fi
+
+    if ! command -v mysql >/dev/null 2>&1; then
+        echo "RoboMiner: mysql client not found; cannot apply gameData.sql" >&2
+        exit 1
+    fi
+
+    echo "RoboMiner: applying gameData.sql..."
+    MYSQL_PWD="$dbpassword" mysql \
+        --protocol=TCP \
+        -h "$dbserver" \
+        -u "$dbuser" \
+        "$dbdatabase" < "$GAMEDATA_SQL"
+}
+
+start_services_if_configured() {
+    if [ ! -f "$CONFIG_FILE" ]; then
+        return 0
+    fi
+    if [ ! -d /run/systemd/system ]; then
+        return 0
+    fi
+
+    for unit in robominer-engine.service robominer-web.service; do
+        if systemctl is-enabled "$unit" >/dev/null 2>&1; then
+            # Prefer restart on upgrade so a running daemon picks up new binaries.
+            if systemctl is-active --quiet "$unit"; then
+                systemctl try-restart "$unit" || systemctl restart "$unit"
+            else
+                systemctl start "$unit" || true
+            fi
+        fi
+    done
+}
+
+case "$1" in
+    configure|abort-upgrade|abort-deconfigure|abort-remove)
+        ensure_service_user
+        apply_database_updates
+        ;;
+esac
+
+#DEBHELPER#
+
+case "$1" in
+    configure|abort-upgrade|abort-deconfigure|abort-remove)
+        start_services_if_configured
+        ;;
+esac
+
+exit 0
