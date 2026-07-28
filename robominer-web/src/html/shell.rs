@@ -110,13 +110,16 @@ fn account_nav_link(selected: bool, username: &str) -> String {
     )
 }
 
-pub(crate) fn page_footer() -> &'static str {
-    r#"<footer class="app-shell-footer">
+pub(crate) fn page_footer() -> String {
+    format!(
+        r#"<footer class="app-shell-footer">
     <div class="app-shell-inner app-shell-footer-inner">
-        <p class="app-shell-footer-brand">RoboMiner · <a class="app-shell-footer-link" href="https://opensource.org/license/mit" rel="license noopener noreferrer" target="_blank">MIT</a> OR <a class="app-shell-footer-link" href="https://www.apache.org/licenses/LICENSE-2.0" rel="license noopener noreferrer" target="_blank">Apache-2.0</a></p>
+        <p class="app-shell-footer-brand">RoboMiner v{} · <a class="app-shell-footer-link" href="https://opensource.org/license/mit" rel="license noopener noreferrer" target="_blank">MIT</a> OR <a class="app-shell-footer-link" href="https://www.apache.org/licenses/LICENSE-2.0" rel="license noopener noreferrer" target="_blank">Apache-2.0</a></p>
         <nav class="app-shell-footer-nav" aria-label="Footer">
             <a class="app-shell-footer-link" href="help">Help</a>
         </nav>
     </div>
-</footer>"#
+</footer>"#,
+        env!("CARGO_PKG_VERSION")
+    )
 }

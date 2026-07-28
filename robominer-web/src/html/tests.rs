@@ -126,6 +126,7 @@ fn app_shell_footer_includes_help_link() {
         &[PageStylesheet::Help],
     );
 
+    let brand_version = format!("RoboMiner v{}", env!("CARGO_PKG_VERSION"));
     assert_contains_all(
         &html,
         &[
@@ -133,6 +134,7 @@ fn app_shell_footer_includes_help_link() {
             r#"class="app-shell-footer-link" href="help">Help</a>"#,
             r#"href="https://opensource.org/license/mit""#,
             r#"href="https://www.apache.org/licenses/LICENSE-2.0""#,
+            &brand_version,
         ],
     );
     assert_html_not_contains(&html, r#"class="app-shell-footer-link" href="miningQueue""#);
