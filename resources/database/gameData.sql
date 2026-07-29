@@ -719,8 +719,7 @@ insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMo
                 values (1201, 'Lithabine-Small', 12001,      35,    35,    200,      60,         25,      3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1201,         1,     10,     8),
-                                (1201,         2,     8,      6),
-                                (1201,         3,     6,      5),
+                                (1201,         2,     8,      4),
                                 (1201,         3,     6,      4),
                                 (1201,         3,     6,      4);
 
