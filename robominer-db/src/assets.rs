@@ -157,8 +157,31 @@ pub(crate) async fn refund_half_ore_costs(
     user_id: i64,
     costs: &[OrePriceCost],
 ) -> Result<(), sqlx::Error> {
+    let half_costs: Vec<OrePriceCost> = costs
+        .iter()
+        .map(|cost| OrePriceCost {
+            ore_id: cost.ore_id,
+            amount: cost.amount / 2,
+        })
+        .collect();
+    refund_ore_costs(transaction, user_id, &half_costs).await
+}
+
+pub(crate) async fn refund_full_ore_costs(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    costs: &[OrePriceCost],
+) -> Result<(), sqlx::Error> {
+    refund_ore_costs(transaction, user_id, costs).await
+}
+
+async fn refund_ore_costs(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    costs: &[OrePriceCost],
+) -> Result<(), sqlx::Error> {
     for cost in costs {
-        let refund = cost.amount / 2;
+        let refund = cost.amount;
         let asset: Option<(i32, i32)> = sqlx::query_as(
             "SELECT amount, maxAllowed \
              FROM UserOreAsset \

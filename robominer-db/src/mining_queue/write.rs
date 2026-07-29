@@ -3,7 +3,9 @@ use sqlx::MySqlPool;
 use crate::users::touch_user_last_login_time;
 
 use super::read::mining_queue_item_cancelable;
-use crate::assets::{can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts};
+use crate::assets::{
+    can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_full_ore_costs,
+};
 use crate::{
     CancelMiningQueueRejection, CancelMiningQueueRequest, CanceledMiningQueue,
     EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining,
@@ -79,10 +81,10 @@ pub async fn cancel_mining_queue(
 ) -> Result<Result<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    let Some((robot_id, owner_id, rally_result_id, mining_end_time_is_null)) =
-        sqlx::query_as::<_, (i64, i64, Option<i64>, bool)>(
+    let Some((robot_id, owner_id, rally_result_id, mining_end_time_is_null, mining_area_id)) =
+        sqlx::query_as::<_, (i64, i64, Option<i64>, bool, i64)>(
             "SELECT MiningQueue.robotId, Robot.userId, MiningQueue.rallyResultId, \
-                    MiningQueue.miningEndTime IS NULL \
+                    MiningQueue.miningEndTime IS NULL, MiningQueue.miningAreaId \
              FROM MiningQueue \
              INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
              WHERE MiningQueue.id = ? \
@@ -121,6 +123,18 @@ pub async fn cancel_mining_queue(
         transaction.rollback().await?;
         return Ok(Err(CancelMiningQueueRejection::NotCancelable));
     }
+
+    let Some((ore_price_id,)) =
+        sqlx::query_as::<_, (i64,)>("SELECT orePriceId FROM MiningArea WHERE id = ?")
+            .bind(mining_area_id)
+            .fetch_optional(&mut *transaction)
+            .await?
+    else {
+        transaction.rollback().await?;
+        return Ok(Err(CancelMiningQueueRejection::UnknownQueue));
+    };
+    let costs = list_ore_price_amounts(&mut transaction, ore_price_id).await?;
+    refund_full_ore_costs(&mut transaction, request.user_id, &costs).await?;
 
     sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
         .bind(request.mining_queue_id)
