@@ -8,6 +8,6 @@ echo "### Copying to robopi ###"
 rsync -a --delete ./target/aarch64-unknown-linux-gnu/debian/ robopi:/home/arnoud/deploy/
 
 echo "### Installing the package ###"
-ssh robopi "sudo apt-get install /home/arnoud/deploy/robominer_*_arm64.deb"
+ssh -t robopi "sudo apt-get install /home/arnoud/deploy/robominer_*_arm64.deb"
 
 echo "### Done ###"
