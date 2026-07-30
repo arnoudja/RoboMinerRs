@@ -1586,7 +1586,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
                                            values (10,            3,    8,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
-                     values (10,            4,    10,                1602);
+                     values (10,            4,    10,                1702);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (10,            4,    1701,         650.0);
 
@@ -1692,3 +1692,17 @@ set depotMaxAllowed = COALESCE(
  and UserAchievement.userId = UserOreAsset.userId
  and AchievementStep.maxDepotReward is not null
 ), 0);
+
+
+-- Update mining area access
+insert into UserMiningArea (userId, miningAreaId)
+select UserAchievement.userId, AchievementStep.miningAreaId
+from AchievementStep, UserAchievement
+where AchievementStep.achievementId = UserAchievement.achievementId
+and AchievementStep.step <= UserAchievement.stepsClaimed
+and AchievementStep.miningAreaId is not null
+and not exists (
+       select 1
+       from UserMiningArea
+       where UserMiningArea.userId = UserAchievement.userId
+       and UserMiningArea.miningAreaId = AchievementStep.miningAreaId);
