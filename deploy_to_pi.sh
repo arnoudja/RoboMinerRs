@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-echo "### Buidling RoboMiner ###"
-resources/scripts/build-release.sh
+echo "### Building the package ###"
+rm -f ./target/aarch64-unknown-linux-gnu/debian/robominer_*_arm64.deb
+resources/scripts/build-deb.sh
 
 echo "### Copying to robopi ###"
-scp -r target/aarch64-unknown-linux-gnu/release/robominer-engine target/aarch64-unknown-linux-gnu/release/robominer-web robominer-web/static resources/database/*.sql deploy/systemd robominer_deploy.sh robopi:/home/arnoud/deploy/
+rsync -a --delete ./target/aarch64-unknown-linux-gnu/debian/ robopi:/home/arnoud/deploy/
 
-echo "### Running the deploy ###"
-ssh -t robopi /home/arnoud/deploy/robominer_deploy.sh
+echo "### Installing the package ###"
+ssh robopi "sudo apt-get install /home/arnoud/deploy/robominer_*_arm64.deb"
 
 echo "### Done ###"
