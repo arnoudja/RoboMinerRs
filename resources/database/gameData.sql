@@ -1662,7 +1662,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
                                            values (11,            1,    5,     30000),
                                                   (11,            1,    6,     25000),
                                                   (11,            1,    7,     15000),
-                                                  (11,            1,    8,     5000);
+                                                  (11,            1,    8,     6000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (11,            1,    1402,         990.0),
                                                   (11,            1,    1502,         990.0),
