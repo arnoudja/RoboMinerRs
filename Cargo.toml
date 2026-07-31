@@ -10,3 +10,16 @@ members = [
     "robominer-web",
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.2.0"
+
+[workspace.dependencies]
+robominer-db = { path = "robominer-db" }
+robominer-domain = { path = "robominer-domain" }
+robominer-engine = { path = "robominer-engine" }
+robominer-optimize = { path = "robominer-optimize" }
+robominer-program = { path = "robominer-program" }
+robominer-sim = { path = "robominer-sim" }
+robominer-test-support = { path = "robominer-test-support" }
+robominer-web = { path = "robominer-web" }
