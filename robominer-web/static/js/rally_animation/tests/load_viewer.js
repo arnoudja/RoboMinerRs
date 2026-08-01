@@ -142,6 +142,7 @@ function loadRallyViewer(options = {}) {
                 elements.delete('rallySourceCode');
                 elements.delete('rallySourceLine1');
                 elements.delete('rallySourceStepResult');
+                elements.delete('rallySourceVariables');
                 const lineMatch = html.match(
                     /id="rallySourceLine1"[\s\S]*?<code class="rally-view-source-text">([^<]*)<\/code>/
                 );
@@ -151,6 +152,28 @@ function loadRallyViewer(options = {}) {
                         id: 'rallySourceStepResult',
                         textContent: '',
                     });
+                }
+                if (html.includes('id="rallySourceVariables"')) {
+                    const variablesEl = {
+                        id: 'rallySourceVariables',
+                        childNodes: [],
+                        get firstChild() {
+                            return this.childNodes[0] || null;
+                        },
+                        appendChild(child) {
+                            this.childNodes.push(child);
+                        },
+                        removeChild(child) {
+                            const idx = this.childNodes.indexOf(child);
+                            if (idx >= 0) {
+                                this.childNodes.splice(idx, 1);
+                            } else if (this.childNodes.length) {
+                                this.childNodes.shift();
+                            }
+                            return child;
+                        },
+                    };
+                    register('rallySourceVariables', variablesEl);
                 }
                 const codeEl = {
                     className: 'rally-view-source-text',
@@ -255,17 +278,20 @@ function loadRallyViewer(options = {}) {
             return null;
         },
         createElement(tag) {
-            return {
+            const el = {
                 tagName: tag,
                 className: '',
                 textContent: '',
                 children: [],
+                childNodes: [],
                 nodeType: 1,
                 setAttribute() {},
                 appendChild(child) {
                     this.children.push(child);
+                    this.childNodes.push(child);
                 },
             };
+            return el;
         },
         createTextNode(text) {
             return { nodeType: 3, textContent: String(text) };

@@ -91,9 +91,60 @@ function updateRallySourceStepResult(result)
 
 
 /**
+ * Show visible program locals for the selected CPU step, or clear when absent.
+ * @param {Object.<string,{k?:string,v?:number}>|null|undefined} variables
+ */
+function updateRallySourceVariables(variables)
+{
+    var el = document.getElementById('rallySourceVariables');
+    if (!el)
+    {
+        return;
+    }
+
+    while (el.firstChild)
+    {
+        el.removeChild(el.firstChild);
+    }
+
+    if (!variables || typeof variables !== 'object')
+    {
+        return;
+    }
+
+    var names = Object.keys(variables).sort();
+    for (var i = 0; i < names.length; i++)
+    {
+        var name = names[i];
+        var formatted = formatRallySourceStepResult(variables[name]);
+        if (!formatted)
+        {
+            continue;
+        }
+
+        var row = document.createElement('div');
+        row.className = 'rally-view-source-var';
+        row.setAttribute('role', 'listitem');
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'rally-view-source-var-name';
+        nameEl.textContent = name;
+
+        var valueEl = document.createElement('span');
+        valueEl.className = 'rally-view-source-var-value';
+        valueEl.textContent = formatted;
+
+        row.appendChild(nameEl);
+        row.appendChild(valueEl);
+        el.appendChild(row);
+    }
+}
+
+
+/**
  * Highlight a source line, optionally wrapping columns [c, e) (1-based inclusive start,
- * exclusive end) in a token span. When `r` is present, show the typed return value.
- * @param {number|{l?:number,c?:number,e?:number,r?:{k?:string,v?:number}}} highlight
+ * exclusive end) in a token span. When `r`/`vs` are present, update return value and locals.
+ * @param {number|{l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}} highlight
  */
 function updateRallySourceHighlight(highlight)
 {
@@ -101,6 +152,7 @@ function updateRallySourceHighlight(highlight)
     if (!sourceCode)
     {
         updateRallySourceStepResult(null);
+        updateRallySourceVariables(null);
         return;
     }
 
@@ -108,6 +160,7 @@ function updateRallySourceHighlight(highlight)
     var startCol = typeof highlight === 'object' && highlight ? highlight.c : undefined;
     var endCol = typeof highlight === 'object' && highlight ? highlight.e : undefined;
     var result = typeof highlight === 'object' && highlight ? highlight.r : undefined;
+    var variables = typeof highlight === 'object' && highlight ? highlight.vs : undefined;
 
     if (myRallySourceHighlightLine !== null)
     {
@@ -124,6 +177,7 @@ function updateRallySourceHighlight(highlight)
     if (typeof line !== 'number' || isNaN(line) || line < 1)
     {
         updateRallySourceStepResult(null);
+        updateRallySourceVariables(null);
         return;
     }
 
@@ -131,6 +185,7 @@ function updateRallySourceHighlight(highlight)
     if (!current)
     {
         updateRallySourceStepResult(null);
+        updateRallySourceVariables(null);
         return;
     }
 
@@ -171,6 +226,7 @@ function updateRallySourceHighlight(highlight)
     }
 
     updateRallySourceStepResult(result);
+    updateRallySourceVariables(variables);
     scrollRallySourceLineIntoView(sourceCode, current);
 }
 

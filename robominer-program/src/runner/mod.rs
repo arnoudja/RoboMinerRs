@@ -92,6 +92,11 @@ impl ExecutableRunner {
         self.variables.get(name)
     }
 
+    /// Flattened name → typed value map of currently visible locals.
+    pub fn runtime_variables_snapshot(&self) -> std::collections::BTreeMap<String, CpuStepResult> {
+        self.variables.snapshot()
+    }
+
     pub fn awaits_scan_result(&self) -> bool {
         self.pending_action == Some(ExecutableAction::AwaitScanResult)
     }

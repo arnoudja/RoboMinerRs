@@ -61,7 +61,8 @@ function rallyRebuildCpuTimeline()
                     l: cpu[i].l,
                     c: cpu[i].c,
                     e: cpu[i].e,
-                    r: cpu[i].r
+                    r: cpu[i].r,
+                    vs: cpu[i].vs
                 });
             }
         }
@@ -72,7 +73,8 @@ function rallyRebuildCpuTimeline()
                 l: loc.l,
                 c: undefined,
                 e: undefined,
-                r: undefined
+                r: undefined,
+                vs: undefined
             });
         }
     }

@@ -88,4 +88,18 @@ impl RuntimeVariables {
             previous
         }
     }
+
+    /// Flattened visible bindings (outer→inner so inner shadows outer).
+    pub(crate) fn snapshot(&self) -> BTreeMap<String, CpuStepResult> {
+        let mut out = BTreeMap::new();
+        for scope in &self.scopes {
+            for (name, binding) in scope {
+                out.insert(
+                    name.clone(),
+                    CpuStepResult::from_value_type(binding.value_type, binding.value),
+                );
+            }
+        }
+        out
+    }
 }

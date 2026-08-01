@@ -23,12 +23,13 @@ pub struct OreAnimationData {
 }
 
 /// One program CPU instruction within a mining cycle (for replay stepping/highlight).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RecordedCpuStep {
     pub line: u16,
     pub start_col: u16,
     pub end_col: u16,
     pub result: Option<robominer_program::CpuStepResult>,
+    pub variables: BTreeMap<String, robominer_program::CpuStepResult>,
 }
 
 impl RecordedCpuStep {
@@ -41,12 +42,33 @@ impl RecordedCpuStep {
             start_col: span.start_col,
             end_col: span.end_col,
             result: None,
+            variables: BTreeMap::new(),
         })
     }
 
     pub fn with_result(mut self, result: Option<robominer_program::CpuStepResult>) -> Self {
         self.result = result;
         self
+    }
+
+    pub fn with_variables(
+        mut self,
+        variables: BTreeMap<String, robominer_program::CpuStepResult>,
+    ) -> Self {
+        self.variables = variables;
+        self
+    }
+}
+
+fn animation_cpu_step_result(result: robominer_program::CpuStepResult) -> AnimationCpuStepResult {
+    let k = match result.kind {
+        robominer_program::CpuStepResultKind::Bool => "b",
+        robominer_program::CpuStepResultKind::Int => "i",
+        robominer_program::CpuStepResultKind::Float => "f",
+    };
+    AnimationCpuStepResult {
+        k: k.to_string(),
+        v: result.value,
     }
 }
 
@@ -56,17 +78,17 @@ impl From<RecordedCpuStep> for AnimationCpuStep {
             l: step.line,
             c: None,
             e: None,
-            r: step.result.map(|result| {
-                let k = match result.kind {
-                    robominer_program::CpuStepResultKind::Bool => "b",
-                    robominer_program::CpuStepResultKind::Int => "i",
-                    robominer_program::CpuStepResultKind::Float => "f",
-                };
-                AnimationCpuStepResult {
-                    k: k.to_string(),
-                    v: result.value,
-                }
-            }),
+            r: step.result.map(animation_cpu_step_result),
+            vs: if step.variables.is_empty() {
+                None
+            } else {
+                Some(
+                    step.variables
+                        .into_iter()
+                        .map(|(name, result)| (name, animation_cpu_step_result(result)))
+                        .collect(),
+                )
+            },
         };
         if step.start_col > 0 && step.end_col > step.start_col {
             entry.c = Some(step.start_col);
@@ -369,7 +391,7 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
             location.cpu = Some(
                 step.cpu_steps
                     .iter()
-                    .copied()
+                    .cloned()
                     .map(AnimationCpuStep::from)
                     .collect(),
             );

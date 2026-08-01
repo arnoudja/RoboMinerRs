@@ -135,7 +135,7 @@ impl Simulation {
 
             let mut context = self.build_execution_context(robot_index);
 
-            let (step, step_result, step_span) = {
+            let (step, step_result, step_span, variables) = {
                 let ActionSource::Program {
                     program: _, runner, ..
                 } = &mut self.action_sources[robot_index]
@@ -145,14 +145,15 @@ impl Simulation {
                 let step = runner.step(&mut context);
                 let step_result = runner.take_last_step_result();
                 let step_span = runner.take_last_step_span().or(span_before);
-                (step, step_result, step_span)
+                let variables = runner.runtime_variables_snapshot();
+                (step, step_result, step_span, variables)
             };
 
             match step {
                 ProgramStep::Cpu => {
                     if let Some(step) = step_span
                         .and_then(RecordedCpuStep::from_span)
-                        .map(|step| step.with_result(step_result))
+                        .map(|step| step.with_result(step_result).with_variables(variables))
                     {
                         cpu_steps.push(step);
                     }
@@ -176,6 +177,7 @@ impl Simulation {
                         step.with_result(Some(robominer_program::CpuStepResult::int_value(
                             scan_time as f64,
                         )))
+                        .with_variables(variables)
                     }) {
                         cpu_steps.push(step);
                     }
@@ -185,7 +187,10 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
-                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span) {
+                    if let Some(step) = step_span
+                        .and_then(RecordedCpuStep::from_span)
+                        .map(|step| step.with_variables(variables))
+                    {
                         cpu_steps.push(step);
                     }
                     // Wait out the real scan countdown: one tick per CPU, spanning
@@ -198,7 +203,10 @@ impl Simulation {
                 ProgramStep::Action(action) => {
                     // Issuing an awaiting action has no return yet; leave result unset.
                     let _ = step_result;
-                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span) {
+                    if let Some(step) = step_span
+                        .and_then(RecordedCpuStep::from_span)
+                        .map(|step| step.with_variables(variables))
+                    {
                         cpu_steps.push(step);
                     }
                     let awaits = {

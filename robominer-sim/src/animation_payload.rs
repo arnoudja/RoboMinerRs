@@ -126,6 +126,9 @@ pub struct AnimationCpuStep {
     /// Typed return value for this micro-step (`k`: `i`|`f`|`b`, `v`: number).
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub r: Option<AnimationCpuStepResult>,
+    /// Visible locals at this micro-step (name → typed `{k,v}`).
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub vs: Option<BTreeMap<String, AnimationCpuStepResult>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

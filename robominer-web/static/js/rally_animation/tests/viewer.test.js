@@ -40,7 +40,7 @@ function validPayload(overrides = {}) {
                             DA: 0,
                             DB: 0,
                             DC: 0,
-                            cpu: [{ l: 1, c: 1, e: 7, r: { k: 'i', v: 4 } }],
+                            cpu: [{ l: 1, c: 1, e: 7, r: { k: 'i', v: 4 }, vs: { x: { k: 'i', v: 4 } } }],
                         },
                         {
                             x: 1,
@@ -316,6 +316,7 @@ describe('rally animation viewer', () => {
         assert.equal(context.rallyCpuIndexAtTime(0), 0);
         assert.equal(context.rallyPoseTimeForRender(0, { miningCycle: 0 }), 0);
         assert.deepEqual(context.myRallyCpuTimeline[0].r, { k: 'i', v: 4 });
+        assert.deepEqual(context.myRallyCpuTimeline[0].vs, { x: { k: 'i', v: 4 } });
         assert.deepEqual(context.myRallyCpuTimeline[1].r, { k: 'f', v: 1.42 });
         assert.deepEqual(context.myRallyCpuTimeline[2].r, { k: 'b', v: 1 });
         assert.equal(context.myRallyCpuTimeline[3].r, undefined);
@@ -399,5 +400,42 @@ describe('rally animation viewer', () => {
 
         context.updateRallySourceHighlight({ l: 1, c: 9, e: 10 });
         assert.equal(result.textContent, '');
+    });
+
+    it('shows typed program variables under Return value', () => {
+        const { context, document } = loadRallyViewer();
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">int count = 3;</code>
+              </div>
+            </div>
+            <output id="rallySourceStepResult"></output>
+            <div id="rallySourceVariables"></div>
+        `;
+        const variables = document.getElementById('rallySourceVariables');
+
+        context.updateRallySourceHighlight({
+            l: 1,
+            c: 1,
+            e: 14,
+            r: { k: 'i', v: 3 },
+            vs: {
+                found: { k: 'b', v: 1 },
+                count: { k: 'i', v: 3 },
+                speed: { k: 'f', v: 1.5 },
+            },
+        });
+        assert.equal(variables.childNodes.length, 3);
+        assert.equal(variables.childNodes[0].children[0].textContent, 'count');
+        assert.equal(variables.childNodes[0].children[1].textContent, '3');
+        assert.equal(variables.childNodes[1].children[0].textContent, 'found');
+        assert.equal(variables.childNodes[1].children[1].textContent, 'true');
+        assert.equal(variables.childNodes[2].children[0].textContent, 'speed');
+        assert.equal(variables.childNodes[2].children[1].textContent, '1.50');
+
+        context.updateRallySourceHighlight({ l: 1, c: 1, e: 4 });
+        assert.equal(variables.childNodes.length, 0);
     });
 });
