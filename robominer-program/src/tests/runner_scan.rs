@@ -30,6 +30,27 @@ fn executable_ore_distance_waits_for_in_progress_scan() {
 }
 
 #[test]
+fn executable_ore_distance_returns_typed_double() {
+    let program = compile_executable_source("oreDistance();").expect("oreDistance should compile");
+    let mut runner = program.runner();
+    let mut context = scan_context(10, None, 6, true, true, 3.5, 1.0);
+
+    loop {
+        match runner.step(&mut context) {
+            ProgramStep::Cpu => {
+                if let Some(result) = runner.take_last_step_result() {
+                    assert_eq!(result.kind, CpuStepResultKind::Float);
+                    assert!((result.value - 3.5).abs() < 1e-9);
+                    return;
+                }
+            }
+            ProgramStep::Done => panic!("finished without oreDistance result"),
+            ProgramStep::Action(_) => {}
+        }
+    }
+}
+
+#[test]
 fn executable_search_loop_starts_with_scan() {
     let program = compile_executable_source("scan(); while (oreType() == 0) { move(1); scan(); }")
         .expect("search loop should compile");

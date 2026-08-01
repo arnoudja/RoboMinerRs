@@ -152,7 +152,12 @@ impl ExecutableRunner {
                     0.0
                 };
                 let eval = self.expression_eval.as_mut().expect("expression eval");
-                eval.values.push(CpuStepResult::int_value(value));
+                eval.values
+                    .push(if matches!(work, ExpressionWork::PushOreDistance) {
+                        CpuStepResult::float_value(value)
+                    } else {
+                        CpuStepResult::int_value(value)
+                    });
                 eval.index += 1;
                 return self.complete_expression_work_if_done();
             }
@@ -169,7 +174,12 @@ impl ExecutableRunner {
                 context.scan_ore_type
             };
             let eval = self.expression_eval.as_mut().expect("expression eval");
-            eval.values.push(CpuStepResult::int_value(value));
+            eval.values
+                .push(if matches!(work, ExpressionWork::PushOreDistance) {
+                    CpuStepResult::float_value(value)
+                } else {
+                    CpuStepResult::int_value(value)
+                });
             eval.index += 1;
             return self.complete_expression_work_if_done();
         }
