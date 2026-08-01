@@ -224,7 +224,7 @@ function rallySetSpeed(speed)
 }
 
 
-/** Step one CPU instruction (paused arrow keys). Syncs pose to that mining cycle. */
+/** Step one CPU instruction (paused arrow keys). Syncs pose to that step's motion segment. */
 function rallySeekByCycles(deltaCycles)
 {
     if (!rallyHasAnimationData())

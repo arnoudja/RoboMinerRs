@@ -329,6 +329,19 @@ describe('rally animation viewer', () => {
             1
         );
         assert.equal(context.myRallyPlayer.elapsedMs, 50);
+        // Expression CPUs on locations[1] show the pre-move pose (start of segment 0→1).
+        assert.equal(
+            context.rallyPoseTimeForRender(50, context.myRallyCpuTimeline[1]),
+            0
+        );
+
+        context.rallySeekByCycles(1);
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, 2);
+        // Last CPU of the cycle (action) shows mid-motion.
+        assert.equal(
+            context.rallyPoseTimeForRender(50, context.myRallyCpuTimeline[2]),
+            25
+        );
 
         context.rallySeekByMiningCycles(1);
         assert.equal(
@@ -351,6 +364,9 @@ describe('rally animation viewer', () => {
         assert.equal(context.rallyPoseTimeForRender(25, { miningCycle: 0 }), 25);
         assert.equal(context.rallyLastCpuIndexForMiningCycle(0), 0);
         assert.equal(context.rallyLastCpuIndexForMiningCycle(1), 2);
+        // During segment 0→1, highlight CPUs recorded on locations[1] (destination).
+        assert.equal(context.rallyCpuIndexAtTime(25), 2);
+        assert.equal(context.rallyCpuEntryAtTime(25).miningCycle, 1);
     });
 
     it('highlights a token span within a source line', () => {

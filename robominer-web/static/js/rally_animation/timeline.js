@@ -192,12 +192,27 @@ function rallyCpuIndexAtTime(time)
     var cycle = rallyMiningCycleAtTime(time);
     var stepTime = rallyStepTime();
     var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    // At the exact start of a mining cycle (incl. replay start), show the first CPU step.
+    var maxCycle = Math.max(0, rallyTotalMiningCycles() - 1);
+
+    // Recording stores CPUs that produced locations[m] on that same sample, while pose
+    // interpolates locations[m-1] → locations[m] during clock cycle m-1. Highlight the
+    // destination sample's CPUs so move() lines up with visible travel.
+    // At t=0 keep locations[0] so program-entry CPUs are not skipped.
+    var highlightCycle;
+    if (phase <= 0 && cycle === 0)
+    {
+        highlightCycle = 0;
+    }
+    else
+    {
+        highlightCycle = Math.min(cycle + 1, maxCycle);
+    }
+
     if (phase <= 0)
     {
-        return rallyFirstCpuIndexForMiningCycle(cycle);
+        return rallyFirstCpuIndexForMiningCycle(highlightCycle);
     }
-    return rallyLastCpuIndexForMiningCycle(cycle);
+    return rallyLastCpuIndexForMiningCycle(highlightCycle);
 }
 
 
@@ -219,9 +234,21 @@ function rallyPoseTimeForRender(time, entry)
     {
         return time;
     }
-    // Paused CPU scrub: show the recorded pose for that mining cycle (locations[m]).
+    // Paused CPU scrub: CPUs on locations[m] drove the motion animated in [m-1, m).
+    // Show the pre-action pose for expression steps; mid-motion for the last (action) step.
     var miningCycle = entry && typeof entry.miningCycle === 'number' ? entry.miningCycle : 0;
-    return miningCycle * rallyStepTime();
+    if (miningCycle <= 0)
+    {
+        return 0;
+    }
+    var stepTime = rallyStepTime();
+    var segmentStart = (miningCycle - 1) * stepTime;
+    var lastIdx = rallyLastCpuIndexForMiningCycle(miningCycle);
+    if (myRallyPlayer.pausedCpuIndex === lastIdx)
+    {
+        return segmentStart + stepTime * 0.5;
+    }
+    return segmentStart;
 }
 
 
