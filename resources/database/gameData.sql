@@ -859,6 +859,7 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1602,         3,     15,     15),
                                 (1602,         5,     15,     15),
                                 (1602,         7,     4,      4),
+                                (1602,         7,     4,      4),
                                 (1602,         7,     4,      4);
 
 -- Dipolir
@@ -919,9 +920,9 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1802,         3,     15,     15),
                                 (1802,         3,     15,     15),
                                 (1802,         5,     15,     15),
-                                (1802,         9,     3,      4),
-                                (1802,         9,     3,      4),
-                                (1802,         9,     3,      4);
+                                (1802,         9,     4,      4),
+                                (1802,         9,     4,      4),
+                                (1802,         9,     4,      4);
 
 -- Baratiem
 insert into OrePrice (id, description) values (19001, 'Mining Area Baratiem-Small price') ON DUPLICATE KEY UPDATE description = VALUES(description);
