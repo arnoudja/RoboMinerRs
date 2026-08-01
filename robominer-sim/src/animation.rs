@@ -47,6 +47,11 @@ impl RecordedCpuStep {
         })
     }
 
+    /// True when this step has a token column range (matches [`SourceSpan::has_columns`]).
+    pub fn has_columns(&self) -> bool {
+        self.start_col > 0 && self.end_col > self.start_col
+    }
+
     pub fn with_result(mut self, result: Option<robominer_program::CpuStepResult>) -> Self {
         self.result = result;
         self
@@ -70,6 +75,7 @@ fn animation_cpu_step_result(result: robominer_program::CpuStepResult) -> Animat
 
 impl From<RecordedCpuStep> for AnimationCpuStep {
     fn from(step: RecordedCpuStep) -> Self {
+        let has_columns = step.has_columns();
         let mut entry = AnimationCpuStep {
             l: step.line,
             c: None,
@@ -86,7 +92,7 @@ impl From<RecordedCpuStep> for AnimationCpuStep {
                 )
             },
         };
-        if step.start_col > 0 && step.end_col > step.start_col {
+        if has_columns {
             entry.c = Some(step.start_col);
             entry.e = Some(step.end_col);
         }

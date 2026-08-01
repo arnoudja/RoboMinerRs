@@ -119,7 +119,7 @@ function robotTurnsRemaining(robot, step)
 }
 
 
-function updateRobotDebugPanel(robot, step, cpuEntry)
+function updateRobotDebugPanel(robot, step)
 {
     var turnsEl = document.getElementById('robotTurns' + robot.robotnr);
     var batteryEl = document.getElementById('robotBattery' + robot.robotnr);
@@ -253,13 +253,23 @@ function updateRobotDebugPanel(robot, step, cpuEntry)
             card.classList.remove('rally-view-player-depleted');
         }
     }
+}
 
-    if (typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot)
+
+/**
+ * Viewer-robot source highlight + edit-link (not per player-card).
+ * @param {{l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}|null|undefined} entry
+ * @param {object|null|undefined} viewerRobot
+ */
+function updateRallyViewerSourceDebug(entry, viewerRobot)
+{
+    if (typeof myRallyViewerSlot !== 'number' || !viewerRobot)
     {
-        var highlight = cpuEntry && typeof cpuEntry.l === 'number'
-            ? cpuEntry
-            : { l: robot.l };
-        updateRallySourceHighlight(highlight);
-        updateRallyEditCodeLink(highlight.l);
+        return;
     }
+    var highlight = entry && typeof entry.l === 'number'
+        ? entry
+        : { l: viewerRobot.l };
+    updateRallySourceHighlight(highlight);
+    updateRallyEditCodeLink(highlight.l);
 }

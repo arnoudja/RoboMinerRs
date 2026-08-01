@@ -6,6 +6,7 @@ use crate::cpu_step_result::CpuStepResult;
 #[derive(Debug, Clone, PartialEq)]
 struct RuntimeBinding {
     value: f64,
+    /// Display/type kind from declaration; sticky across later assigns/updates.
     value_type: ValueType,
 }
 
@@ -68,6 +69,7 @@ impl RuntimeVariables {
             .find(|scope| scope.contains_key(name))
         {
             if let Some(binding) = scope.get_mut(name) {
+                // Value updates do not re-infer kind; declaration type stays sticky.
                 binding.value = value;
             }
         } else {

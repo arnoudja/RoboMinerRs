@@ -6,8 +6,9 @@ function rallyPaintRobots(scale, cycle, poseTime, stepTime, entry)
         drawRobot(myRobots.robot[i], scale, cycle);
         drawRobotOre(myRobots.robot[i]);
         drawRobotDepot(myRobots.robot[i]);
-        updateRobotDebugPanel(myRobots.robot[i], cycle, entry);
+        updateRobotDebugPanel(myRobots.robot[i], cycle);
     }
+    updateRallyViewerSourceDebug(entry, rallyViewerRobot());
 }
 
 
@@ -71,6 +72,8 @@ function runanimation()
     myRallyPlayer.finished = false;
     myRallyPlayer.speed = 1;
     myRallyPlayer.pausedCpuIndex = null;
+    myRallySourceHighlightKey = null;
+    myRallySourceHighlightLine = null;
 
     for (var i = 0; i < myRobots.robot.length; i++)
     {

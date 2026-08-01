@@ -25,6 +25,20 @@ fn animation_action_index(action: RobotAction, robot: &Robot, scanned_this_cycle
     }
 }
 
+/// Carry forward the last known statement highlight (and refreshed locals) for
+/// pending multi-cycle motion or battery-idle cycles that produce no new CPU steps.
+fn sticky_cpu_highlight(
+    previous: &RecordedCpuStep,
+    runner: Option<&ExecutableRunner>,
+) -> RecordedCpuStep {
+    let mut sticky = previous.clone();
+    sticky.result = None;
+    if let Some(runner) = runner {
+        sticky.variables = runner.runtime_variables_snapshot();
+    }
+    sticky
+}
+
 pub struct Simulation {
     ground: Ground,
     ore_ids: Vec<i64>,
@@ -212,10 +226,13 @@ impl Simulation {
                     if !cycle_cpu_steps[index].is_empty() {
                         // Prefer `cpu` spans; omit redundant sticky `l` for this cycle.
                         cycle_source_lines[index] = None;
+                        // Prefer column spans; fall back to line-only (e.g. GP) so sticky
+                        // pending-motion cycles still have a highlight seed.
                         if let Some(step) = cycle_cpu_steps[index]
                             .iter()
                             .rev()
-                            .find(|step| step.start_col > 0 && step.end_col > step.start_col)
+                            .find(|step| step.has_columns())
+                            .or_else(|| cycle_cpu_steps[index].last())
                         {
                             self.last_cpu_highlight[index] = Some(step.clone());
                         }
@@ -226,12 +243,8 @@ impl Simulation {
                     {
                         // Pending multi-cycle move/rotate (and similar): record a sticky
                         // cpu micro-step with the issuing statement's span and locals.
-                        let mut sticky = previous.clone();
-                        sticky.result = None;
-                        if let Some(runner) = self.program_runner(index) {
-                            sticky.variables = runner.runtime_variables_snapshot();
-                        }
-                        cycle_cpu_steps[index].push(sticky);
+                        cycle_cpu_steps[index]
+                            .push(sticky_cpu_highlight(previous, self.program_runner(index)));
                         cycle_source_lines[index] = None;
                     }
                     *pending_result = self.process_robot_action(index, action);
@@ -249,12 +262,8 @@ impl Simulation {
                             .as_ref()
                             .filter(|step| step.line == line)
                     {
-                        let mut sticky = previous.clone();
-                        sticky.result = None;
-                        if let Some(runner) = self.program_runner(index) {
-                            sticky.variables = runner.runtime_variables_snapshot();
-                        }
-                        cycle_cpu_steps[index].push(sticky);
+                        cycle_cpu_steps[index]
+                            .push(sticky_cpu_highlight(previous, self.program_runner(index)));
                         cycle_source_lines[index] = None;
                     }
                 }

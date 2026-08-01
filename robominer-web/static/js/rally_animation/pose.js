@@ -127,6 +127,16 @@ function applyRobotActionHighlight(robot, loc1, loc2, t1, dt)
 function updateRobotPosition(robotIndex, time, stepTime)
 {
     var robot = myRobots.robot[robotIndex];
+    if (!(stepTime > 0))
+    {
+        updateRobotTo(robotIndex, 0);
+        if (robot.locations && robot.locations.length > 0)
+        {
+            applyRobotPoseFromLocation(robot, robot.locations[0]);
+        }
+        return;
+    }
+
     var t1 = Math.floor(time / stepTime);
     var t2 = t1 + 1;
 

@@ -15,7 +15,7 @@
         "orientation": 30
       },
       "ore": [
-        13,
+        12,
         0,
         0,
         0,
@@ -26,15 +26,15 @@
         0,
         0
       ],
-      "score": 390.0,
+      "score": 360.0,
       "actions_done": [
         12,
-        3,
+        4,
         21,
         0,
         38,
         12,
-        24,
+        23,
         2
       ]
     },
@@ -148,11 +148,11 @@
       "mining_area_id": 1003,
       "player_number": 0,
       "mining_end_seconds_from_now": 9,
-      "score": 390.0,
+      "score": 360.0,
       "ore_results": [
         {
           "ore_id": 1,
-          "amount": 13
+          "amount": 12
         }
       ],
       "action_results": [
@@ -162,7 +162,7 @@
         },
         {
           "action_type": 1,
-          "amount": 3
+          "amount": 4
         },
         {
           "action_type": 2,
@@ -178,7 +178,7 @@
         },
         {
           "action_type": 6,
-          "amount": 24
+          "amount": 23
         },
         {
           "action_type": 7,

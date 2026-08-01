@@ -407,6 +407,12 @@ impl ExecutableRunner {
             self.last_step_span = span;
             match self.finish_expression(resume, result.value) {
                 StepOutcome::Continue => StepOutcome::Cpu,
+                StepOutcome::Action(action) => {
+                    // Issuing an action has no return yet; the expression value was the
+                    // argument (e.g. move distance), not a completed action result.
+                    self.last_step_result = None;
+                    StepOutcome::Action(action)
+                }
                 other => other,
             }
         } else {

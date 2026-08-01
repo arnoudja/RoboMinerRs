@@ -100,6 +100,12 @@ function rallyBindKeyboardControls()
 
 function rallyBindTransportControls()
 {
+    if (window.__rallyTransportBound)
+    {
+        return;
+    }
+    window.__rallyTransportBound = true;
+
     var playPause = document.getElementById('rallyPlayPause');
     if (playPause)
     {

@@ -277,6 +277,10 @@ function loadRallyViewer(options = {}) {
             }
             return null;
         },
+        querySelectorAll() {
+            return [];
+        },
+        addEventListener() {},
         createElement(tag) {
             const el = {
                 tagName: tag,

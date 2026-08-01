@@ -51,6 +51,8 @@ impl CpuStepResult {
         }
     }
 
+    /// Display heuristic for bare numeric literals: whole numbers as int, otherwise float.
+    /// Not an assign/typechecking truth source — declaration and AST types own semantics.
     pub fn for_number_literal(value: f64) -> Self {
         if (value - value.round()).abs() < 1e-9 {
             Self::int_value(value)

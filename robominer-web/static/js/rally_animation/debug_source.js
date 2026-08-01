@@ -107,7 +107,8 @@ function formatRallySourceStepResult(result)
     {
         return String(Math.round(result.v));
     }
-    return '';
+    var kind = typeof result.k === 'string' ? result.k : '?';
+    return kind + ':' + result.v;
 }
 
 

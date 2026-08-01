@@ -170,6 +170,8 @@ impl Simulation {
                     };
                     **runner = program.runner();
                     self.action_results[robot_index] = None;
+                    // Empty programs restart immediately; charge budget so we cannot spin forever.
+                    cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
                     // Prefer the runner's typed step result when present; fall back to
@@ -206,7 +208,10 @@ impl Simulation {
                 }
                 ProgramStep::Action(action) => {
                     // Issuing an awaiting move/rotate/mine/dump has no return yet; omit `r`.
-                    let _ = step_result;
+                    debug_assert!(
+                        step_result.is_none(),
+                        "awaiting Action issue should not produce a step result"
+                    );
                     if let Some(step) = step_span
                         .and_then(RecordedCpuStep::from_span)
                         .map(|step| step.with_variables(variables))

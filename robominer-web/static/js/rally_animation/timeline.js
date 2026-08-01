@@ -7,6 +7,8 @@
  * - cpu[].c/e are 1-based half-open [c, e) source columns; omit when unknown.
  * - Emit either sticky l or non-empty cpu per location, not both.
  * - vs is a full locals snapshot (not a delta). r is omitted while an action is still awaiting.
+ * - frame.cycle is the pose clock (sprite/ground); entry.miningCycle is the highlight sample.
+ * - Clock length is viewer-robot only; peers with fewer locations freeze at their last pose.
  */
 
 var myRallyPlayer = {
@@ -24,6 +26,8 @@ var myRallyPlayer = {
 
 /** @type {RallyCpuTimelineEntry[]|null} */
 var myRallyCpuTimeline = null;
+/** @type {{first:number[], last:number[]}} */
+var myRallyCpuCycleIndex = { first: [], last: [] };
 
 
 function rallyHasAnimationData()
@@ -61,9 +65,20 @@ function rallyViewerRobot()
 }
 
 
+function rallyRecordCpuCycleIndex(miningCycle, timelineIndex)
+{
+    if (typeof myRallyCpuCycleIndex.first[miningCycle] !== 'number')
+    {
+        myRallyCpuCycleIndex.first[miningCycle] = timelineIndex;
+    }
+    myRallyCpuCycleIndex.last[miningCycle] = timelineIndex;
+}
+
+
 function rallyRebuildCpuTimeline()
 {
     myRallyCpuTimeline = null;
+    myRallyCpuCycleIndex = { first: [], last: [] };
     var robot = rallyViewerRobot();
     if (!robot || !robot.locations)
     {
@@ -79,6 +94,7 @@ function rallyRebuildCpuTimeline()
         {
             for (var i = 0; i < cpu.length; i++)
             {
+                rallyRecordCpuCycleIndex(m, timeline.length);
                 timeline.push({
                     miningCycle: m,
                     l: cpu[i].l,
@@ -123,6 +139,7 @@ function rallyRebuildCpuTimeline()
                     break;
                 }
             }
+            rallyRecordCpuCycleIndex(m, timeline.length);
             timeline.push(sticky);
         }
     }
@@ -190,6 +207,10 @@ function rallyFirstCpuIndexForMiningCycle(miningCycle)
     {
         return Math.max(0, miningCycle);
     }
+    if (typeof myRallyCpuCycleIndex.first[miningCycle] === 'number')
+    {
+        return myRallyCpuCycleIndex.first[miningCycle];
+    }
     for (var i = 0; i < myRallyCpuTimeline.length; i++)
     {
         if (myRallyCpuTimeline[i].miningCycle === miningCycle)
@@ -211,23 +232,32 @@ function rallyLastCpuIndexForMiningCycle(miningCycle)
     {
         return Math.max(0, miningCycle);
     }
-    var found = -1;
-    for (var i = 0; i < myRallyCpuTimeline.length; i++)
+    if (typeof myRallyCpuCycleIndex.last[miningCycle] === 'number')
     {
-        if (myRallyCpuTimeline[i].miningCycle === miningCycle)
-        {
-            found = i;
-        }
-        else if (myRallyCpuTimeline[i].miningCycle > miningCycle)
-        {
-            break;
-        }
-    }
-    if (found >= 0)
-    {
-        return found;
+        return myRallyCpuCycleIndex.last[miningCycle];
     }
     return rallyFirstCpuIndexForMiningCycle(miningCycle);
+}
+
+
+/**
+ * Mining-cycle sample used for source highlight at wall-clock `time`.
+ * Recording stores CPUs that produced locations[m] on that same sample, while pose
+ * interpolates locations[m-1] → locations[m] during clock cycle m-1. Highlight the
+ * destination sample's CPUs so move() lines up with visible travel.
+ * At t=0 keep locations[0] so program-entry CPUs are not skipped.
+ */
+function rallyHighlightMiningCycle(time)
+{
+    var cycle = rallyMiningCycleAtTime(time);
+    var stepTime = rallyStepTime();
+    var phase = stepTime > 0 ? time - cycle * stepTime : 0;
+    var maxCycle = Math.max(0, rallyTotalMiningCycles() - 1);
+    if (phase <= 0 && cycle === 0)
+    {
+        return 0;
+    }
+    return Math.min(cycle + 1, maxCycle);
 }
 
 
@@ -241,21 +271,7 @@ function rallyCpuIndexAtTime(time)
     var cycle = rallyMiningCycleAtTime(time);
     var stepTime = rallyStepTime();
     var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    var maxCycle = Math.max(0, rallyTotalMiningCycles() - 1);
-
-    // Recording stores CPUs that produced locations[m] on that same sample, while pose
-    // interpolates locations[m-1] → locations[m] during clock cycle m-1. Highlight the
-    // destination sample's CPUs so move() lines up with visible travel.
-    // At t=0 keep locations[0] so program-entry CPUs are not skipped.
-    var highlightCycle;
-    if (phase <= 0 && cycle === 0)
-    {
-        highlightCycle = 0;
-    }
-    else
-    {
-        highlightCycle = Math.min(cycle + 1, maxCycle);
-    }
+    var highlightCycle = rallyHighlightMiningCycle(time);
 
     if (phase <= 0)
     {
@@ -323,11 +339,9 @@ function rallyFrameTiming()
 
     var cpuIndex = rallyCpuIndexAtTime(time);
     var entry = rallyCpuEntryAtTime(time);
-    var cycle = entry.miningCycle;
-    if (myRallyPlayer.playing || myRallyPlayer.pausedCpuIndex === null)
-    {
-        cycle = rallyMiningCycleAtTime(time);
-    }
+    // Transport/ground cycle follows the sprite pose clock (not the highlight sample).
+    var poseTime = rallyPoseTimeForRender(time, entry);
+    var cycle = rallyMiningCycleAtTime(poseTime);
     var totalCycles = rallyTotalMiningCycles();
     if (totalCycles <= 0)
     {
@@ -345,6 +359,6 @@ function rallyFrameTiming()
         cpuIndex: cpuIndex,
         entry: entry,
         cycle: cycle,
-        poseTime: rallyPoseTimeForRender(time, entry)
+        poseTime: poseTime
     };
 }

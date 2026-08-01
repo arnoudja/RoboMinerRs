@@ -286,10 +286,35 @@ describe('rally animation viewer', () => {
             'updateRobotPosition',
             'drawRobot',
             'updateRobotDebugPanel',
+            'updateRallyViewerSourceDebug',
         ]) {
             assert.equal(typeof context[name], 'function', name);
         }
         assert.ok(context.RALLY_VIEWER_HIGHLIGHT_PADDING);
+    });
+
+    it('binds transport controls only once', () => {
+        const { context, document, elements } = loadRallyViewer();
+        let playClicks = 0;
+        context.rallyTogglePlayPause = function rallyTogglePlayPause() {
+            playClicks += 1;
+        };
+        const listeners = [];
+        elements.set('rallyPlayPause', {
+            addEventListener(_type, fn) {
+                listeners.push(fn);
+            },
+        });
+        document.querySelectorAll = function querySelectorAll() {
+            return [];
+        };
+
+        context.rallyBindTransportControls();
+        context.rallyBindTransportControls();
+        assert.equal(listeners.length, 1);
+        listeners[0]({ type: 'click' });
+        assert.equal(playClicks, 1);
+        assert.equal(context.window.__rallyTransportBound, true);
     });
 
     it('resolves viewer robot by robotnr and clock length from that robot', () => {
@@ -384,6 +409,12 @@ describe('rally animation viewer', () => {
         );
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
         assert.equal(context.myRallyPlayer.elapsedMs, 100);
+
+        // Paused scrub: transport cycle follows poseTime, not the highlight sample.
+        const frame = context.rallyFrameTiming();
+        assert.equal(frame.cycle, context.rallyMiningCycleAtTime(frame.poseTime));
+        assert.equal(frame.entry.miningCycle, 2);
+        assert.equal(frame.cycle, 1);
     });
 
     it('interpolates pose on the mining-cycle clock while playing', () => {
@@ -503,6 +534,9 @@ describe('rally animation viewer', () => {
 
         context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'b', v: 0 } });
         assert.equal(result.textContent, 'false');
+
+        context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'x', v: 9 } });
+        assert.equal(result.textContent, 'x:9');
 
         context.updateRallySourceHighlight({ l: 1, c: 9, e: 10 });
         assert.equal(result.textContent, '');
