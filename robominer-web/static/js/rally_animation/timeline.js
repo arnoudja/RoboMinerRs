@@ -68,14 +68,40 @@ function rallyRebuildCpuTimeline()
         }
         else
         {
-            timeline.push({
+            // Sticky `l` cycles (pending multi-cycle move/rotate, scan wait, battery)
+            // omit token spans and locals. Reuse the latest same-line micro-step so the
+            // statement stays highlighted and variables remain visible until it finishes.
+            var sticky = {
                 miningCycle: m,
                 l: loc.l,
                 c: undefined,
                 e: undefined,
                 r: undefined,
                 vs: undefined
-            });
+            };
+            for (var j = timeline.length - 1; j >= 0; j--)
+            {
+                var prev = timeline[j];
+                if (typeof sticky.l === 'number' &&
+                    prev.l === sticky.l &&
+                    typeof prev.c === 'number' &&
+                    typeof prev.e === 'number')
+                {
+                    sticky.c = prev.c;
+                    sticky.e = prev.e;
+                    sticky.vs = prev.vs;
+                    break;
+                }
+                if (typeof sticky.l === 'undefined' && typeof prev.l === 'number')
+                {
+                    sticky.l = prev.l;
+                    sticky.c = prev.c;
+                    sticky.e = prev.e;
+                    sticky.vs = prev.vs;
+                    break;
+                }
+            }
+            timeline.push(sticky);
         }
     }
     myRallyCpuTimeline = timeline;

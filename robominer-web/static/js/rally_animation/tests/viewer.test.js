@@ -319,7 +319,10 @@ describe('rally animation viewer', () => {
         assert.deepEqual(context.myRallyCpuTimeline[0].vs, { x: { k: 'i', v: 4 } });
         assert.deepEqual(context.myRallyCpuTimeline[1].r, { k: 'f', v: 1.42 });
         assert.deepEqual(context.myRallyCpuTimeline[2].r, { k: 'b', v: 1 });
+        // Sticky location carries token span (not return value) from the prior same-line step.
         assert.equal(context.myRallyCpuTimeline[3].r, undefined);
+        assert.equal(context.myRallyCpuTimeline[3].c, 9);
+        assert.equal(context.myRallyCpuTimeline[3].e, 16);
 
         context.rallySeekByCycles(1);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
@@ -367,6 +370,62 @@ describe('rally animation viewer', () => {
         // During segment 0→1, highlight CPUs recorded on locations[1] (destination).
         assert.equal(context.rallyCpuIndexAtTime(25), 2);
         assert.equal(context.rallyCpuEntryAtTime(25).miningCycle, 1);
+    });
+
+    it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {
+        const { context } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            {
+                x: 0,
+                y: 0,
+                o: 45,
+                A: 0,
+                B: 0,
+                C: 0,
+                DA: 0,
+                DB: 0,
+                DC: 0,
+                cpu: [
+                    {
+                        l: 2,
+                        c: 12,
+                        e: 34,
+                        vs: { found: { k: 'b', v: 0 } },
+                    },
+                ],
+            },
+            {
+                x: 1,
+                y: 0,
+                o: 45,
+                // Continuation chunk: sticky line only (multi-cycle move).
+                l: 2,
+            },
+            {
+                x: 2,
+                y: 0,
+                o: 45,
+                l: 2,
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.rallyRebuildCpuTimeline();
+
+        assert.equal(context.myRallyCpuTimeline.length, 3);
+        assert.equal(context.myRallyCpuTimeline[0].c, 12);
+        assert.equal(context.myRallyCpuTimeline[0].e, 34);
+        assert.deepEqual(context.myRallyCpuTimeline[0].vs, { found: { k: 'b', v: 0 } });
+
+        assert.equal(context.myRallyCpuTimeline[1].l, 2);
+        assert.equal(context.myRallyCpuTimeline[1].c, 12);
+        assert.equal(context.myRallyCpuTimeline[1].e, 34);
+        assert.deepEqual(context.myRallyCpuTimeline[1].vs, { found: { k: 'b', v: 0 } });
+        assert.equal(context.myRallyCpuTimeline[1].r, undefined);
+
+        assert.equal(context.myRallyCpuTimeline[2].c, 12);
+        assert.equal(context.myRallyCpuTimeline[2].e, 34);
+        assert.deepEqual(context.myRallyCpuTimeline[2].vs, { found: { k: 'b', v: 0 } });
     });
 
     it('highlights a token span within a source line', () => {
