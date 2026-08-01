@@ -25,7 +25,8 @@ pub(crate) struct PendingProgramMotion {
 pub(crate) enum ContinueProgramMotion {
     NotActive,
     Reemit,
-    StatementComplete,
+    /// Statement move/rotate finished; value is travel distance / rotation amount for debug `r`.
+    StatementComplete(f64),
     ExpressionComplete(f64),
 }
 
@@ -60,10 +61,7 @@ impl PendingProgramMotion {
 
         let completed = pending.take().expect("pending_program_motion");
         match completed.completion {
-            ProgramMotionCompletion::Statement => {
-                let _ = value;
-                ContinueProgramMotion::StatementComplete
-            }
+            ProgramMotionCompletion::Statement => ContinueProgramMotion::StatementComplete(value),
             ProgramMotionCompletion::Expression => ContinueProgramMotion::ExpressionComplete(value),
         }
     }
@@ -102,16 +100,16 @@ mod tests {
     }
 
     #[test]
-    fn continue_action_statement_complete_clears_pending_and_discards_value() {
+    fn continue_action_statement_complete_clears_pending_and_returns_value() {
         let mut pending = Some(PendingProgramMotion::start(
             ExecutableAction::Move(2.0),
             ProgramMotionCompletion::Statement,
         ));
-        let mut action_result = Some(0.0);
+        let mut action_result = Some(1.5);
 
         assert_eq!(
             PendingProgramMotion::continue_action(&mut pending, &mut action_result),
-            ContinueProgramMotion::StatementComplete
+            ContinueProgramMotion::StatementComplete(1.5)
         );
         assert!(pending.is_none());
         assert_eq!(action_result, None);

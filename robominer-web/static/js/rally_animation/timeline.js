@@ -7,7 +7,7 @@
  * - cpu[].c/e are 1-based half-open [c, e) source columns; omit when unknown.
  * - Emit either sticky l or non-empty cpu per location, not both.
  * - vs is a full locals snapshot (not a delta). r is omitted while an action is still awaiting.
- * - frame.cycle is the pose clock (sprite/ground); entry.miningCycle is the highlight sample.
+ * - frame.poseCycle is the pose clock (sprite/ground); entry.miningCycle is the highlight sample.
  * - Clock length is viewer-robot only; peers with fewer locations freeze at their last pose.
  */
 
@@ -120,19 +120,13 @@ function rallyRebuildCpuTimeline()
             for (var j = timeline.length - 1; j >= 0; j--)
             {
                 var prev = timeline[j];
+                // Only carry columns/vs when this sample has an explicit same-line `l`.
+                // Do not invent a line from prior cycles for sparse dump/ore-only samples.
                 if (typeof sticky.l === 'number' &&
                     prev.l === sticky.l &&
                     typeof prev.c === 'number' &&
                     typeof prev.e === 'number')
                 {
-                    sticky.c = prev.c;
-                    sticky.e = prev.e;
-                    sticky.vs = prev.vs;
-                    break;
-                }
-                if (typeof sticky.l === 'undefined' && typeof prev.l === 'number')
-                {
-                    sticky.l = prev.l;
                     sticky.c = prev.c;
                     sticky.e = prev.e;
                     sticky.vs = prev.vs;
@@ -341,15 +335,15 @@ function rallyFrameTiming()
     var entry = rallyCpuEntryAtTime(time);
     // Transport/ground cycle follows the sprite pose clock (not the highlight sample).
     var poseTime = rallyPoseTimeForRender(time, entry);
-    var cycle = rallyMiningCycleAtTime(poseTime);
+    var poseCycle = rallyMiningCycleAtTime(poseTime);
     var totalCycles = rallyTotalMiningCycles();
     if (totalCycles <= 0)
     {
-        cycle = 0;
+        poseCycle = 0;
     }
-    else if (cycle >= totalCycles)
+    else if (poseCycle >= totalCycles)
     {
-        cycle = totalCycles - 1;
+        poseCycle = totalCycles - 1;
     }
 
     return {
@@ -358,7 +352,7 @@ function rallyFrameTiming()
         completed: completed,
         cpuIndex: cpuIndex,
         entry: entry,
-        cycle: cycle,
+        poseCycle: poseCycle,
         poseTime: poseTime
     };
 }

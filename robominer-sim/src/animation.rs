@@ -49,7 +49,7 @@ impl RecordedCpuStep {
 
     /// True when this step has a token column range (matches [`SourceSpan::has_columns`]).
     pub fn has_columns(&self) -> bool {
-        self.start_col > 0 && self.end_col > self.start_col
+        self.line != 0 && self.start_col > 0 && self.end_col > self.start_col
     }
 
     pub fn with_result(mut self, result: Option<robominer_program::CpuStepResult>) -> Self {

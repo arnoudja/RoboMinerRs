@@ -623,6 +623,27 @@ fn animation_data_records_sticky_cpu_span_for_multi_cycle_move() {
         sticky_cpu_locations >= 1,
         "multi-cycle move should record sticky cpu spans without r: {data}"
     );
+
+    // Final completion step of statement move(3) should record accumulated travel in `r`.
+    let mut saw_completion_travel = false;
+    for location in locations {
+        if let Some(cpu) = location.get("cpu").and_then(|value| value.as_array()) {
+            for step in cpu {
+                if let Some(v) = step
+                    .get("r")
+                    .and_then(|r| r.get("v"))
+                    .and_then(|v| v.as_f64())
+                    && (v - 3.0).abs() < 1e-6
+                {
+                    saw_completion_travel = true;
+                }
+            }
+        }
+    }
+    assert!(
+        saw_completion_travel,
+        "statement move(3) completion should record travel r≈3: {data}"
+    );
 }
 
 #[test]
@@ -648,6 +669,80 @@ fn animation_data_empty_program_finishes_without_hanging() {
     assert!(
         locations.len() >= 2,
         "empty program should still record mining-cycle samples: {data}"
+    );
+}
+
+#[test]
+fn animation_data_empty_program_stays_finite_under_high_cpu_speed() {
+    let program = seeded_program("{}");
+    let ground = Ground::new(4, 4);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 5;
+    spec.cpu_speed = 10_000;
+
+    let mut simulation = Simulation::new(
+        ground,
+        5,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("high-cpu empty program should finish");
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations");
+    assert_eq!(
+        locations.len(),
+        6,
+        "Done must charge CPU so empty programs cannot livelock: {data}"
+    );
+}
+
+#[test]
+fn animation_data_records_battery_sticky_cpu_without_r() {
+    let program = seeded_program("mine();");
+    let mut ground = Ground::new(4, 4);
+    ground.at_mut(0, 0).add_ore(0, 40);
+
+    let mut short_spec = RobotSpec::test_robot();
+    short_spec.max_turns = 1;
+    short_spec.cpu_speed = 72;
+    short_spec.mining_speed = 4;
+
+    // A longer-lived peer keeps total_moves above the short robot's battery so
+    // depleted cycles are actually simulated (run caps total_moves to max max_turns).
+    let mut long_spec = RobotSpec::test_robot();
+    long_spec.max_turns = 4;
+    long_spec.cpu_speed = 4;
+
+    let mut simulation = Simulation::new(
+        ground,
+        4,
+        vec![
+            ScriptedRobot::from_executable_program(short_spec, &program),
+            ScriptedRobot::from_executable_program(long_spec, &seeded_program("{}")),
+        ],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("battery sticky animation should finish");
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations");
+
+    let battery_sticky = locations.iter().any(|location| {
+        location.get("s").and_then(|s| s.as_str()) == Some("battery")
+            && location
+                .get("cpu")
+                .and_then(|value| value.as_array())
+                .is_some_and(|cpu| {
+                    !cpu.is_empty() && cpu.iter().all(|step| step.get("r").is_none())
+                })
+    });
+    assert!(
+        battery_sticky,
+        "battery cycles should keep sticky cpu without r: {data}"
     );
 }
 

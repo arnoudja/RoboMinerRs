@@ -56,6 +56,33 @@ pub struct Simulation {
 }
 
 impl Simulation {
+    /// When a cycle produced no new CPU steps, optionally emit a sticky highlight.
+    /// Prefer pending multi-cycle motion chunks; otherwise match battery/idle by source line.
+    fn maybe_push_sticky_cpu(
+        &mut self,
+        index: usize,
+        cycle_cpu_steps: &mut [Vec<RecordedCpuStep>],
+        cycle_source_lines: &mut [Option<u16>],
+    ) {
+        if !cycle_cpu_steps[index].is_empty() {
+            return;
+        }
+        let seed = if self.pending_sim_motion_chunks[index].is_some() {
+            self.last_cpu_highlight[index].clone()
+        } else if let Some(line) = cycle_source_lines[index] {
+            self.last_cpu_highlight[index]
+                .clone()
+                .filter(|step| step.line == line)
+        } else {
+            None
+        };
+        if let Some(previous) = seed {
+            cycle_cpu_steps[index]
+                .push(sticky_cpu_highlight(&previous, self.program_runner(index)));
+            cycle_source_lines[index] = None;
+        }
+    }
+
     pub fn new(ground: Ground, total_moves: i32, robots: Vec<ScriptedRobot>) -> Self {
         Self::new_with_ore_ids(ground, total_moves, robots, Vec::new())
     }
@@ -236,16 +263,12 @@ impl Simulation {
                         {
                             self.last_cpu_highlight[index] = Some(step.clone());
                         }
-                    } else if let Some(line) = cycle_source_lines[index]
-                        && let Some(previous) = self.last_cpu_highlight[index]
-                            .as_ref()
-                            .filter(|step| step.line == line)
-                    {
-                        // Pending multi-cycle move/rotate (and similar): record a sticky
-                        // cpu micro-step with the issuing statement's span and locals.
-                        cycle_cpu_steps[index]
-                            .push(sticky_cpu_highlight(previous, self.program_runner(index)));
-                        cycle_source_lines[index] = None;
+                    } else {
+                        self.maybe_push_sticky_cpu(
+                            index,
+                            &mut cycle_cpu_steps,
+                            &mut cycle_source_lines,
+                        );
                     }
                     *pending_result = self.process_robot_action(index, action);
                 } else {
@@ -257,15 +280,11 @@ impl Simulation {
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
-                    if let Some(line) = cycle_source_lines[index]
-                        && let Some(previous) = self.last_cpu_highlight[index]
-                            .as_ref()
-                            .filter(|step| step.line == line)
-                    {
-                        cycle_cpu_steps[index]
-                            .push(sticky_cpu_highlight(previous, self.program_runner(index)));
-                        cycle_source_lines[index] = None;
-                    }
+                    self.maybe_push_sticky_cpu(
+                        index,
+                        &mut cycle_cpu_steps,
+                        &mut cycle_source_lines,
+                    );
                 }
             }
 

@@ -119,12 +119,12 @@ function robotTurnsRemaining(robot, step)
 }
 
 
-function updateRobotDebugPanel(robot, step)
+function updateRobotDebugPanel(robot, poseCycle, sourceLine)
 {
     var turnsEl = document.getElementById('robotTurns' + robot.robotnr);
     var batteryEl = document.getElementById('robotBattery' + robot.robotnr);
     var batteryFillEl = document.getElementById('robotBatteryFill' + robot.robotnr);
-    var remainingTurns = robotTurnsRemaining(robot, step);
+    var remainingTurns = robotTurnsRemaining(robot, poseCycle);
     var depleted = remainingTurns === 0;
     var maxTurns = typeof robot.maxturns === 'number' && !isNaN(robot.maxturns)
         ? Math.floor(robot.maxturns)
@@ -201,14 +201,16 @@ function updateRobotDebugPanel(robot, step)
         {
             label = actionName;
         }
-        else if (robotLooksIdle(robot, step))
+        else if (robotLooksIdle(robot, poseCycle))
         {
             label = 'Idle';
         }
 
-        if (label && typeof robot.l === 'number')
+        // undefined → peer cards use pose robot.l; null/number → highlight authority.
+        var lineForLabel = typeof sourceLine === 'undefined' ? robot.l : sourceLine;
+        if (label && typeof lineForLabel === 'number')
         {
-            label += ' · L' + robot.l;
+            label += ' · L' + lineForLabel;
         }
 
         actionEl.textContent = label || '—';
@@ -217,7 +219,7 @@ function updateRobotDebugPanel(robot, step)
     var card = document.getElementById('rallyPlayer' + robot.robotnr);
     if (card)
     {
-        if (robotLooksIdle(robot, step))
+        if (robotLooksIdle(robot, poseCycle))
         {
             card.classList.add('rally-view-player-idle');
         }

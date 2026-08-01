@@ -2,7 +2,10 @@
 //!
 //! Implements the simulation side of [`robominer_program::pending_action_protocol`].
 
-use robominer_program::{ExecutableAction, ExecutionContext, ProgramStep};
+use robominer_program::{
+    CpuStepResult, ExecutableAction, ExecutionContext, ProgramStep, SourceSpan,
+};
+use std::collections::BTreeMap;
 
 use crate::action_mapping::{
     map_awaiting_executable, robot_action_from_executable, status_for_wait_from_executable,
@@ -13,6 +16,20 @@ use crate::physics::ActionResult;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, RobotAction};
 
 use super::Simulation;
+
+fn push_recorded_cpu_step(
+    cpu_steps: &mut Vec<RecordedCpuStep>,
+    span: Option<SourceSpan>,
+    result: Option<CpuStepResult>,
+    variables: BTreeMap<String, CpuStepResult>,
+) {
+    if let Some(step) = span
+        .and_then(RecordedCpuStep::from_span)
+        .map(|step| step.with_result(result).with_variables(variables))
+    {
+        cpu_steps.push(step);
+    }
+}
 
 impl Simulation {
     fn perform_scan(
@@ -151,12 +168,7 @@ impl Simulation {
 
             match step {
                 ProgramStep::Cpu => {
-                    if let Some(step) = step_span
-                        .and_then(RecordedCpuStep::from_span)
-                        .map(|step| step.with_result(step_result).with_variables(variables))
-                    {
-                        cpu_steps.push(step);
-                    }
+                    push_recorded_cpu_step(&mut cpu_steps, step_span, step_result, variables);
                     self.action_results[robot_index] = context.action_result;
                     cpu_used += 1;
                     self.tick_scan(robot_index);
@@ -170,22 +182,17 @@ impl Simulation {
                     };
                     **runner = program.runner();
                     self.action_results[robot_index] = None;
+                    // Restart clears sticky highlight seed so stale lines cannot rematch.
+                    self.last_cpu_highlight[robot_index] = None;
                     // Empty programs restart immediately; charge budget so we cannot spin forever.
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
-                    // Prefer the runner's typed step result when present; fall back to
-                    // scan_time as int (StartScan return value).
+                    // StartScan returns scan_time synchronously on issue (unlike move/mine).
+                    let _ = step_result;
                     let scan_time = self.start_scan(robot_index, direction);
-                    let result = step_result.unwrap_or_else(|| {
-                        robominer_program::CpuStepResult::int_value(scan_time as f64)
-                    });
-                    if let Some(step) = step_span
-                        .and_then(RecordedCpuStep::from_span)
-                        .map(|step| step.with_result(Some(result)).with_variables(variables))
-                    {
-                        cpu_steps.push(step);
-                    }
+                    let result = CpuStepResult::int_value(scan_time as f64);
+                    push_recorded_cpu_step(&mut cpu_steps, step_span, Some(result), variables);
                     self.robots[robot_index].actions_done[ROBOT_ACTION_TYPE_SCAN] += 1;
                     self.action_results[robot_index] = Some(scan_time as f64);
                     self.action_result_expected[robot_index] = false;
@@ -193,12 +200,7 @@ impl Simulation {
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
                     // Mid-scan wait: no completed return yet (`r` omitted).
-                    if let Some(step) = step_span
-                        .and_then(RecordedCpuStep::from_span)
-                        .map(|step| step.with_variables(variables))
-                    {
-                        cpu_steps.push(step);
-                    }
+                    push_recorded_cpu_step(&mut cpu_steps, step_span, None, variables);
                     // Wait out the real scan countdown: one tick per CPU, spanning
                     // mining cycles when remaining work exceeds cpu_speed.
                     self.tick_scan(robot_index);
@@ -212,12 +214,7 @@ impl Simulation {
                         step_result.is_none(),
                         "awaiting Action issue should not produce a step result"
                     );
-                    if let Some(step) = step_span
-                        .and_then(RecordedCpuStep::from_span)
-                        .map(|step| step.with_variables(variables))
-                    {
-                        cpu_steps.push(step);
-                    }
+                    push_recorded_cpu_step(&mut cpu_steps, step_span, None, variables);
                     let awaits = {
                         let ActionSource::Program { runner, .. } =
                             &self.action_sources[robot_index]

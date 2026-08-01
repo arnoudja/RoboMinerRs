@@ -1,12 +1,18 @@
-function rallyPaintRobots(scale, cycle, poseTime, stepTime, entry)
+function rallyPaintRobots(scale, poseCycle, poseTime, stepTime, entry)
 {
     for (var i = 0; i < myRobots.robot.length; i++)
     {
+        var robot = myRobots.robot[i];
         updateRobotPosition(i, poseTime, stepTime);
-        drawRobot(myRobots.robot[i], scale, cycle);
-        drawRobotOre(myRobots.robot[i]);
-        drawRobotDepot(myRobots.robot[i]);
-        updateRobotDebugPanel(myRobots.robot[i], cycle);
+        drawRobot(robot, scale, poseCycle);
+        drawRobotOre(robot);
+        drawRobotDepot(robot);
+        var isViewer = typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot;
+        // Viewer panel line follows CPU-timeline highlight; peers keep pose `robot.l`.
+        var sourceLine = isViewer
+            ? (entry && typeof entry.l === 'number' ? entry.l : null)
+            : undefined;
+        updateRobotDebugPanel(robot, poseCycle, sourceLine);
     }
     updateRallyViewerSourceDebug(entry, rallyViewerRobot());
 }
@@ -16,7 +22,7 @@ function rallyPrepareFrame()
 {
     rallyEnsureCpuTimeline();
     var frame = rallyFrameTiming();
-    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.cycle);
+    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.poseCycle);
     return frame;
 }
 
@@ -32,11 +38,11 @@ function renderRallyFrame()
     var scale = myRallyPlayer.scale;
     for (var i = 0; i < myRobots.robot.length; i++)
     {
-        eraseRobot(myRobots.robot[i], scale, frame.cycle);
+        eraseRobot(myRobots.robot[i], scale, frame.poseCycle);
     }
 
-    drawDepotHomes(scale, frame.cycle);
-    rallyPaintRobots(scale, frame.cycle, frame.poseTime, frame.stepTime, frame.entry);
+    drawDepotHomes(scale, frame.poseCycle);
+    rallyPaintRobots(scale, frame.poseCycle, frame.poseTime, frame.stepTime, frame.entry);
 }
 
 
@@ -49,9 +55,9 @@ function redrawRallyScene()
 
     var frame = rallyPrepareFrame();
     var scale = myRallyPlayer.scale;
-    drawFullGroundAt(frame.cycle, scale);
-    drawDepotHomes(scale, frame.cycle);
-    rallyPaintRobots(scale, frame.cycle, frame.poseTime, frame.stepTime, frame.entry);
+    drawFullGroundAt(frame.poseCycle, scale);
+    drawDepotHomes(scale, frame.poseCycle);
+    rallyPaintRobots(scale, frame.poseCycle, frame.poseTime, frame.stepTime, frame.entry);
 }
 
 

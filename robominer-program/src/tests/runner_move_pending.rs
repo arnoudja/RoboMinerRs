@@ -207,3 +207,44 @@ fn dynamic_expression_move_below_epsilon_completes_without_pending() {
     );
     assert!(!runner.has_pending_program_motion());
 }
+
+#[test]
+fn statement_move_completion_records_travel_step_result() {
+    let program = compile_executable_source("move(2);").expect("program should compile");
+    let mut runner = program.runner();
+    assert_eq!(
+        runner.step(&mut test_context(5, None)),
+        ProgramStep::Action(ExecutableAction::Move(2.0))
+    );
+    assert!(runner.take_last_step_result().is_none());
+
+    assert_eq!(
+        runner.step(&mut test_context(5, Some(2.0))),
+        ProgramStep::Cpu
+    );
+    let result = runner
+        .take_last_step_result()
+        .expect("statement move completion should expose travel as r");
+    assert!((result.value - 2.0).abs() < 1e-9);
+}
+
+#[test]
+fn dynamic_move_action_issue_omits_step_result() {
+    let program =
+        compile_executable_source("double d = 1.5; move(d);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+    for _ in 0..32 {
+        let step = runner.step(&mut context);
+        let result = runner.take_last_step_result();
+        if let ProgramStep::Action(ExecutableAction::Move(distance)) = step {
+            assert!((distance - 1.5).abs() < 1e-9);
+            assert!(
+                result.is_none(),
+                "Action issue must not expose the move argument as r"
+            );
+            return;
+        }
+    }
+    panic!("expected dynamic move Action issue");
+}

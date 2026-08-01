@@ -369,12 +369,14 @@ impl ExecutableRunner {
                         .action,
                 ))
             }
-            ContinueProgramMotion::StatementComplete => {
+            ContinueProgramMotion::StatementComplete(value) => {
                 let frame = self
                     .stack
                     .last_mut()
                     .expect("chunked action requires an active frame");
                 frame.index += 1;
+                let action = pending_action.unwrap_or(ExecutableAction::Move(0.0));
+                self.last_step_result = Some(CpuStepResult::for_action(action, value));
                 self.last_step_span = self.active_source_span;
                 Some(StepOutcome::Cpu)
             }

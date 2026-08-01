@@ -149,6 +149,13 @@ function rallyPlay()
     }
 
     // Leave CPU scrub mode so pose interpolates smoothly across mining cycles.
+    // Sync wall-clock to the scrub pose first so play does not jump the sprite.
+    if (myRallyPlayer.pausedCpuIndex !== null)
+    {
+        rallyEnsureCpuTimeline();
+        var scrubFrame = rallyFrameTiming();
+        myRallyPlayer.elapsedMs = scrubFrame.poseTime;
+    }
     myRallyPlayer.pausedCpuIndex = null;
     myRallyPlayer.playing = true;
     myRallyPlayer.lastFrameTime = null;
@@ -252,17 +259,10 @@ function rallySeekByCpuSteps(deltaSteps)
             ? myRallyCpuTimeline[targetIndex]
             : { miningCycle: targetIndex };
         myRallyPlayer.elapsedMs = (entry.miningCycle || 0) * rallyStepTime();
-        myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime() &&
-            targetIndex >= totalCpu - 1;
+        // Last CPU maps to the last mining-cycle sample, not totalTime; mark finished explicitly.
+        myRallyPlayer.finished = targetIndex >= totalCpu - 1;
     }, { fullRedraw: true });
 }
-
-/** @deprecated Use rallySeekByCpuSteps. */
-function rallySeekByCycles(deltaCycles)
-{
-    rallySeekByCpuSteps(deltaCycles);
-}
-
 
 function rallySeekByMiningCycles(deltaMiningCycles)
 {
@@ -283,8 +283,8 @@ function rallySeekByMiningCycles(deltaMiningCycles)
 
         var targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaMiningCycles));
         myRallyPlayer.elapsedMs = targetMining * rallyStepTime();
-        myRallyPlayer.finished = targetMining >= maxMining &&
-            myRallyPlayer.elapsedMs >= rallyTotalTime();
+        // Last mining-cycle sample is n-1; totalTime is n*stepTime — mark finished explicitly.
+        myRallyPlayer.finished = targetMining >= maxMining;
         // Land on the first CPU step of that mining cycle when scrubbing while paused.
         myRallyPlayer.pausedCpuIndex = wasPlaying
             ? null

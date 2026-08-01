@@ -279,7 +279,6 @@ describe('rally animation viewer', () => {
             'runanimation',
             'rallySeekToRatio',
             'rallySeekByCpuSteps',
-            'rallySeekByCycles',
             'rallyWithPausedSeek',
             'rallyRebuildCpuTimeline',
             'rallyViewerRobot',
@@ -290,6 +289,7 @@ describe('rally animation viewer', () => {
         ]) {
             assert.equal(typeof context[name], 'function', name);
         }
+        assert.equal(typeof context.rallySeekByCycles, 'undefined');
         assert.ok(context.RALLY_VIEWER_HIGHLIGHT_PADDING);
     });
 
@@ -315,6 +315,20 @@ describe('rally animation viewer', () => {
         listeners[0]({ type: 'click' });
         assert.equal(playClicks, 1);
         assert.equal(context.window.__rallyTransportBound, true);
+    });
+
+    it('binds keyboard controls only once', () => {
+        const { context, document } = loadRallyViewer();
+        const keyListeners = [];
+        document.addEventListener = function addEventListener(type, fn) {
+            if (type === 'keydown') {
+                keyListeners.push(fn);
+            }
+        };
+        context.rallyBindKeyboardControls();
+        context.rallyBindKeyboardControls();
+        assert.equal(keyListeners.length, 1);
+        assert.equal(context.window.__rallyKeyboardBound, true);
     });
 
     it('resolves viewer robot by robotnr and clock length from that robot', () => {
@@ -412,9 +426,80 @@ describe('rally animation viewer', () => {
 
         // Paused scrub: transport cycle follows poseTime, not the highlight sample.
         const frame = context.rallyFrameTiming();
-        assert.equal(frame.cycle, context.rallyMiningCycleAtTime(frame.poseTime));
+        assert.equal(frame.poseCycle, context.rallyMiningCycleAtTime(frame.poseTime));
         assert.equal(frame.entry.miningCycle, 2);
-        assert.equal(frame.cycle, 1);
+        assert.equal(frame.poseCycle, 1);
+    });
+
+    it('resumes play from scrub poseTime without jumping', () => {
+        const { context } = loadRallyViewer();
+        assert.equal(context.applyRallyResultPayload(validPayload()), null);
+        context.myRallyViewerSlot = 0;
+        context.myRallyPlayer.baseStepTime = 50;
+        context.myRallyPlayer.speed = 1;
+        context.redrawRallyScene = function redrawRallyScene() {};
+        context.renderRallyFrame = function renderRallyFrame() {};
+        context.requestAnimFrame = function requestAnimFrame() {
+            return 1;
+        };
+        context.cancelAnimationFrame = function cancelAnimationFrame() {};
+
+        context.rallySeekByCpuSteps(2);
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, 2);
+        const scrubPose = context.rallyFrameTiming().poseTime;
+        assert.equal(scrubPose, 25);
+
+        context.rallyPlay();
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, null);
+        assert.equal(context.myRallyPlayer.elapsedMs, scrubPose);
+        assert.equal(context.myRallyPlayer.playing, true);
+    });
+
+    it('marks finished when seeking to the last CPU step', () => {
+        const { context } = loadRallyViewer();
+        assert.equal(context.applyRallyResultPayload(validPayload()), null);
+        context.myRallyViewerSlot = 0;
+        context.myRallyPlayer.baseStepTime = 50;
+        context.redrawRallyScene = function redrawRallyScene() {};
+        context.renderRallyFrame = function renderRallyFrame() {};
+
+        context.rallySeekByCpuSteps(100);
+        assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
+        assert.equal(context.myRallyPlayer.finished, true);
+
+        context.myRallyPlayer.finished = false;
+        context.rallySeekByMiningCycles(100);
+        assert.equal(context.myRallyPlayer.finished, true);
+    });
+
+    it('does not invent a source line for sparse sticky samples', () => {
+        const { context } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            {
+                x: 0,
+                y: 0,
+                o: 45,
+                A: 0,
+                B: 0,
+                C: 0,
+                DA: 0,
+                DB: 0,
+                DC: 0,
+                cpu: [{ l: 1, c: 1, e: 7 }],
+            },
+            {
+                // Sparse dump sample with no l — must not inherit prior line.
+                A: 0,
+                DA: 4,
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.rallyRebuildCpuTimeline();
+        assert.equal(context.myRallyCpuTimeline.length, 2);
+        assert.equal(context.myRallyCpuTimeline[0].l, 1);
+        assert.equal(context.myRallyCpuTimeline[1].l, undefined);
+        assert.equal(context.myRallyCpuTimeline[1].c, undefined);
     });
 
     it('interpolates pose on the mining-cycle clock while playing', () => {
