@@ -35,7 +35,8 @@ function fillLocationDeltaFromPrevious(current, previous)
     copyDefinedField(current, previous, 'DB', false);
     copyDefinedField(current, previous, 'DC', false);
     copyDefinedField(current, previous, 'a', false);
-    copyDefinedField(current, previous, 'l', false);
+    // Do not fill-forward `l`: source-line is debug metadata; sparse samples must stay unset
+    // so the CPU timeline does not invent sticky highlights.
 }
 
 

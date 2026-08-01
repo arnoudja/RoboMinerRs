@@ -184,6 +184,8 @@ impl Simulation {
                     self.action_results[robot_index] = None;
                     // Restart clears sticky highlight seed so stale lines cannot rematch.
                     self.last_cpu_highlight[robot_index] = None;
+                    // Ignore pre-Done recorded steps when reseeding after this CPU loop.
+                    self.cpu_highlight_seed_floor[robot_index] = cpu_steps.len();
                     // Empty programs restart immediately; charge budget so we cannot spin forever.
                     cpu_used += 1;
                 }
@@ -231,6 +233,10 @@ impl Simulation {
                         let (pending, robot_action) =
                             map_awaiting_executable(action, self.robots[robot_index].spec());
                         self.pending_sim_motion_chunks[robot_index] = pending;
+                        // Pin sticky seed to the issuing Action step (not an earlier micro-step).
+                        if let Some(step) = cpu_steps.last() {
+                            self.last_cpu_highlight[robot_index] = Some(step.clone());
+                        }
                         let status = if matches!(robot_action, RobotAction::Wait) {
                             Some(status_for_wait_from_executable(action))
                         } else {

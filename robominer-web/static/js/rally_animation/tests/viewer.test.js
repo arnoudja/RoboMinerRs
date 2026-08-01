@@ -455,24 +455,37 @@ describe('rally animation viewer', () => {
         assert.equal(context.myRallyPlayer.playing, true);
     });
 
-    it('marks finished when seeking to the last CPU step', () => {
+    it('marks finished only at clock end, not mid last-cycle scrub', () => {
         const { context } = loadRallyViewer();
         assert.equal(context.applyRallyResultPayload(validPayload()), null);
         context.myRallyViewerSlot = 0;
         context.myRallyPlayer.baseStepTime = 50;
         context.redrawRallyScene = function redrawRallyScene() {};
         context.renderRallyFrame = function renderRallyFrame() {};
+        context.requestAnimFrame = function requestAnimFrame() {
+            return 1;
+        };
+        context.cancelAnimationFrame = function cancelAnimationFrame() {};
 
         context.rallySeekByCpuSteps(100);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
-        assert.equal(context.myRallyPlayer.finished, true);
+        assert.equal(context.myRallyPlayer.finished, false);
 
-        context.myRallyPlayer.finished = false;
         context.rallySeekByMiningCycles(100);
+        assert.equal(context.myRallyPlayer.finished, false);
+
+        // Play from scrub inside last cycle must continue, not restart.
+        const scrubPose = context.rallyFrameTiming().poseTime;
+        context.rallyPlay();
+        assert.equal(context.myRallyPlayer.elapsedMs, scrubPose);
+        assert.equal(context.myRallyPlayer.playing, true);
+        assert.equal(context.myRallyPlayer.finished, false);
+
+        context.rallySeekToRatio(1);
         assert.equal(context.myRallyPlayer.finished, true);
     });
 
-    it('does not invent a source line for sparse sticky samples', () => {
+    it('does not invent a source line for sparse sticky samples after expand', () => {
         const { context } = loadRallyViewer();
         const payload = validPayload();
         payload.robots.robot[0].locations = [
@@ -495,11 +508,48 @@ describe('rally animation viewer', () => {
             },
         ];
         assert.equal(context.applyRallyResultPayload(payload), null);
+        context.expandAllRobotLocationDeltas();
         context.rallyRebuildCpuTimeline();
         assert.equal(context.myRallyCpuTimeline.length, 2);
         assert.equal(context.myRallyCpuTimeline[0].l, 1);
+        assert.equal(typeof context.myRobots.robot[0].locations[1].l, 'undefined');
         assert.equal(context.myRallyCpuTimeline[1].l, undefined);
         assert.equal(context.myRallyCpuTimeline[1].c, undefined);
+    });
+
+    it('clears source highlight when timeline entry has no line', () => {
+        const { context, document, elements } = loadRallyViewer();
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">mine();</code>
+              </div>
+            </div>
+        `;
+        elements.set('rallyEditCodeLink', {
+            href: '/edit',
+            getAttribute(name) {
+                return name === 'data-edit-href' ? '/edit' : null;
+            },
+        });
+        context.myRallyViewerSlot = 0;
+        context.updateRallySourceHighlight({ l: 1, c: 1, e: 5 });
+        assert.ok(
+            document.getElementById('rallySourceLine1').classList.contains(
+                'rally-view-source-line-active'
+            )
+        );
+
+        const viewerRobot = { robotnr: 0, l: 9 };
+        context.updateRallyViewerSourceDebug({ miningCycle: 1 }, viewerRobot);
+        assert.equal(
+            document.getElementById('rallySourceLine1').classList.contains(
+                'rally-view-source-line-active'
+            ),
+            false
+        );
+        assert.equal(document.getElementById('rallyEditCodeLink').href, '/edit');
     });
 
     it('interpolates pose on the mining-cycle clock while playing', () => {

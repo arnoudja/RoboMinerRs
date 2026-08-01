@@ -65,6 +65,13 @@ function rallyStopPlayback()
 }
 
 
+/** True when wall-clock has reached the end of the viewer robot's timeline. */
+function rallyIsPlaybackFinished()
+{
+    return rallyTotalTime() > 0 && myRallyPlayer.elapsedMs >= rallyTotalTime();
+}
+
+
 /**
  * Pause, run a seek mutation, redraw, then resume if playback was active.
  * mutateFn may set finished / pausedCpuIndex / elapsedMs / speed.
@@ -75,6 +82,7 @@ function rallyWithPausedSeek(mutateFn, options)
     var wasPlaying = myRallyPlayer.playing;
     rallyStopPlayback();
     mutateFn(wasPlaying);
+    myRallyPlayer.finished = rallyIsPlaybackFinished();
 
     if (options.fullRedraw)
     {
@@ -194,7 +202,6 @@ function rallySeekToRatio(ratio)
     rallyWithPausedSeek(function() {
         ratio = Math.min(1, Math.max(0, ratio));
         myRallyPlayer.elapsedMs = ratio * rallyTotalTime();
-        myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime();
         // Slider seeks on the mining-cycle clock; clear CPU scrub so pose matches time.
         myRallyPlayer.pausedCpuIndex = null;
     }, { fullRedraw: true });
@@ -212,7 +219,6 @@ function rallySetSpeed(speed)
     rallyWithPausedSeek(function() {
         myRallyPlayer.speed = speed;
         myRallyPlayer.elapsedMs = fraction * rallyTotalTime();
-        myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime();
 
         var speedButtons = document.querySelectorAll('.rally-view-speed-button');
         for (var b = 0; b < speedButtons.length; b++)
@@ -259,8 +265,7 @@ function rallySeekByCpuSteps(deltaSteps)
             ? myRallyCpuTimeline[targetIndex]
             : { miningCycle: targetIndex };
         myRallyPlayer.elapsedMs = (entry.miningCycle || 0) * rallyStepTime();
-        // Last CPU maps to the last mining-cycle sample, not totalTime; mark finished explicitly.
-        myRallyPlayer.finished = targetIndex >= totalCpu - 1;
+        // finished is set by rallyWithPausedSeek from clock end only.
     }, { fullRedraw: true });
 }
 
@@ -283,12 +288,11 @@ function rallySeekByMiningCycles(deltaMiningCycles)
 
         var targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaMiningCycles));
         myRallyPlayer.elapsedMs = targetMining * rallyStepTime();
-        // Last mining-cycle sample is n-1; totalTime is n*stepTime — mark finished explicitly.
-        myRallyPlayer.finished = targetMining >= maxMining;
         // Land on the first CPU step of that mining cycle when scrubbing while paused.
         myRallyPlayer.pausedCpuIndex = wasPlaying
             ? null
             : rallyFirstCpuIndexForMiningCycle(targetMining);
+        // finished is set by rallyWithPausedSeek from clock end only.
     }, { fullRedraw: true });
 }
 

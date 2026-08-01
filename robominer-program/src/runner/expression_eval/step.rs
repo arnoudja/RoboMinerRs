@@ -407,12 +407,22 @@ impl ExecutableRunner {
             self.expression_eval = None;
             self.last_step_result = Some(result);
             self.last_step_span = span;
+            let dynamic_call = matches!(
+                resume,
+                ExpressionResume::DynamicMove
+                    | ExpressionResume::DynamicRotate
+                    | ExpressionResume::DynamicDump
+            );
             match self.finish_expression(resume, result.value) {
                 StepOutcome::Continue => StepOutcome::Cpu,
                 StepOutcome::Action(action) => {
                     // Issuing an action has no return yet; the expression value was the
                     // argument (e.g. move distance), not a completed action result.
                     self.last_step_result = None;
+                    // Dynamic move/rotate/dump: highlight the call/statement, not the arg token.
+                    if dynamic_call {
+                        self.last_step_span = self.active_source_span;
+                    }
                     StepOutcome::Action(action)
                 }
                 other => other,

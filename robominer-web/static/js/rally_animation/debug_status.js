@@ -269,9 +269,13 @@ function updateRallyViewerSourceDebug(entry, viewerRobot)
     {
         return;
     }
-    var highlight = entry && typeof entry.l === 'number'
-        ? entry
-        : { l: viewerRobot.l };
-    updateRallySourceHighlight(highlight);
-    updateRallyEditCodeLink(highlight.l);
+    // Highlight authority is the CPU timeline entry only — never pose robot.l.
+    if (entry && typeof entry.l === 'number')
+    {
+        updateRallySourceHighlight(entry);
+        updateRallyEditCodeLink(entry.l);
+        return;
+    }
+    updateRallySourceHighlight(null);
+    updateRallyEditCodeLink(null);
 }

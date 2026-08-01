@@ -51,6 +51,8 @@ pub struct Simulation {
     pending_sim_motion_chunks: Vec<Option<PendingSimMotionChunk>>,
     /// Last CPU step with a known span per robot, reused for sticky pending-motion cycles.
     last_cpu_highlight: Vec<Option<RecordedCpuStep>>,
+    /// Only seed `last_cpu_highlight` from `cycle_cpu_steps[floor..]` after a Done restart.
+    cpu_highlight_seed_floor: Vec<usize>,
     time: i32,
     animation: Option<AnimationRecorder>,
 }
@@ -105,6 +107,7 @@ impl Simulation {
         let action_result_expected = vec![false; action_sources.len()];
         let pending_sim_motion_chunks = vec![None; action_sources.len()];
         let last_cpu_highlight = vec![None; action_sources.len()];
+        let cpu_highlight_seed_floor = vec![0; action_sources.len()];
         let robots = robots
             .into_iter()
             .map(|robot| {
@@ -124,6 +127,7 @@ impl Simulation {
             action_result_expected,
             pending_sim_motion_chunks,
             last_cpu_highlight,
+            cpu_highlight_seed_floor,
             time: 0,
             animation: None,
         }
@@ -253,17 +257,21 @@ impl Simulation {
                     if !cycle_cpu_steps[index].is_empty() {
                         // Prefer `cpu` spans; omit redundant sticky `l` for this cycle.
                         cycle_source_lines[index] = None;
+                        let floor = self.cpu_highlight_seed_floor[index];
+                        self.cpu_highlight_seed_floor[index] = 0;
+                        let seed_steps = cycle_cpu_steps[index].get(floor..).unwrap_or(&[]);
                         // Prefer column spans; fall back to line-only (e.g. GP) so sticky
                         // pending-motion cycles still have a highlight seed.
-                        if let Some(step) = cycle_cpu_steps[index]
+                        if let Some(step) = seed_steps
                             .iter()
                             .rev()
                             .find(|step| step.has_columns())
-                            .or_else(|| cycle_cpu_steps[index].last())
+                            .or_else(|| seed_steps.last())
                         {
                             self.last_cpu_highlight[index] = Some(step.clone());
                         }
                     } else {
+                        self.cpu_highlight_seed_floor[index] = 0;
                         self.maybe_push_sticky_cpu(
                             index,
                             &mut cycle_cpu_steps,
@@ -275,6 +283,7 @@ impl Simulation {
                     self.action_results[index] = None;
                     self.action_result_expected[index] = false;
                     self.pending_sim_motion_chunks[index] = None;
+                    self.cpu_highlight_seed_floor[index] = 0;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
                     // Keep the last statement highlight after the battery expires.
                     cycle_source_lines[index] = self

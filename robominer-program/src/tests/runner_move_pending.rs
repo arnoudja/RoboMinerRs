@@ -243,6 +243,13 @@ fn dynamic_move_action_issue_omits_step_result() {
                 result.is_none(),
                 "Action issue must not expose the move argument as r"
             );
+            let span = runner
+                .take_last_step_span()
+                .expect("dynamic move issue should expose the call span");
+            assert!(
+                span.has_columns() && span.end_col - span.start_col > 1,
+                "call span should cover move(d), not only the identifier: {span:?}"
+            );
             return;
         }
     }

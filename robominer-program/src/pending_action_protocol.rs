@@ -69,8 +69,11 @@
 //! | Dynamic statement | `move(robot.yPos);` | `ProgramMotionCompletion::Statement` |
 //! | Expression | `if (move(2) >= 1)` | `ProgramMotionCompletion::Expression` |
 //!
-//! Literal moves in expressions (`move(1.5)`) and dynamic moves (`move(x)`) both use
-//! the expression completion path via `step_expression_move_or_rotate`.
+//! Argument evaluation for dynamic statements (`move(x)`) runs through expression
+//! work, then `ExecutableRunner::step` wraps the issued Action as
+//! `ProgramMotionCompletion::Statement` so completion advances the statement index.
+//! Literal or dynamic moves *inside* expressions (`if (move(2) >= 1)`, `if (move(x) >= 1)`)
+//! use `ProgramMotionCompletion::Expression` via `step_expression_move_or_rotate`.
 //!
 //! ## Scan coordination
 //!
