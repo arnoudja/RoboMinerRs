@@ -2,9 +2,9 @@ use std::collections::BTreeMap;
 
 use crate::MAX_ORE_TYPES;
 use crate::animation_payload::{
-    AnimationCpuStep, AnimationCpuStepResult, AnimationGround, AnimationGroundChange,
-    AnimationGroundPosition, AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot,
-    AnimationRobots,
+    AnimationCpuStep, AnimationCpuStepResult, AnimationCpuStepResultKind, AnimationGround,
+    AnimationGroundChange, AnimationGroundPosition, AnimationLocation, AnimationOreType,
+    AnimationPayload, AnimationRobot, AnimationRobots,
 };
 use crate::ground::Ground;
 use crate::position::Position;
@@ -14,7 +14,8 @@ use crate::robot::Robot;
 /// `RallyResult.resultData`. Older executable JavaScript rows (`var myRobots = …`)
 /// are no longer played by the web viewer.
 ///
-/// Version 2 adds optional per-mining-cycle `cpu` arrays of instruction spans.
+/// Version 2 adds optional per-mining-cycle `cpu` arrays of instruction spans,
+/// typed step results (`r`), and locals snapshots (`vs`).
 pub const ANIMATION_PAYLOAD_VERSION: u32 = 2;
 
 pub struct OreAnimationData {
@@ -61,13 +62,8 @@ impl RecordedCpuStep {
 }
 
 fn animation_cpu_step_result(result: robominer_program::CpuStepResult) -> AnimationCpuStepResult {
-    let k = match result.kind {
-        robominer_program::CpuStepResultKind::Bool => "b",
-        robominer_program::CpuStepResultKind::Int => "i",
-        robominer_program::CpuStepResultKind::Float => "f",
-    };
     AnimationCpuStepResult {
-        k: k.to_string(),
+        k: AnimationCpuStepResultKind::from(result.kind),
         v: result.value,
     }
 }
@@ -388,6 +384,10 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
         location.action_index = step.action_index;
 
         if !step.cpu_steps.is_empty() {
+            debug_assert!(
+                step.source_line.is_none(),
+                "location must not emit both sticky l and cpu"
+            );
             location.cpu = Some(
                 step.cpu_steps
                     .iter()

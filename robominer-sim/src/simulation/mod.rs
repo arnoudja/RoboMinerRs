@@ -35,6 +35,8 @@ pub struct Simulation {
     action_result_expected: Vec<bool>,
     /// Per-cycle move/rotate chunks; see `robominer_program::pending_action_protocol`.
     pending_sim_motion_chunks: Vec<Option<PendingSimMotionChunk>>,
+    /// Last CPU step with a known span per robot, reused for sticky pending-motion cycles.
+    last_cpu_highlight: Vec<Option<RecordedCpuStep>>,
     time: i32,
     animation: Option<AnimationRecorder>,
 }
@@ -61,6 +63,7 @@ impl Simulation {
         let action_results = vec![None; action_sources.len()];
         let action_result_expected = vec![false; action_sources.len()];
         let pending_sim_motion_chunks = vec![None; action_sources.len()];
+        let last_cpu_highlight = vec![None; action_sources.len()];
         let robots = robots
             .into_iter()
             .map(|robot| {
@@ -79,6 +82,7 @@ impl Simulation {
             action_results,
             action_result_expected,
             pending_sim_motion_chunks,
+            last_cpu_highlight,
             time: 0,
             animation: None,
         }
@@ -208,6 +212,27 @@ impl Simulation {
                     if !cycle_cpu_steps[index].is_empty() {
                         // Prefer `cpu` spans; omit redundant sticky `l` for this cycle.
                         cycle_source_lines[index] = None;
+                        if let Some(step) = cycle_cpu_steps[index]
+                            .iter()
+                            .rev()
+                            .find(|step| step.start_col > 0 && step.end_col > step.start_col)
+                        {
+                            self.last_cpu_highlight[index] = Some(step.clone());
+                        }
+                    } else if let Some(line) = cycle_source_lines[index]
+                        && let Some(previous) = self.last_cpu_highlight[index]
+                            .as_ref()
+                            .filter(|step| step.line == line)
+                    {
+                        // Pending multi-cycle move/rotate (and similar): record a sticky
+                        // cpu micro-step with the issuing statement's span and locals.
+                        let mut sticky = previous.clone();
+                        sticky.result = None;
+                        if let Some(runner) = self.program_runner(index) {
+                            sticky.variables = runner.runtime_variables_snapshot();
+                        }
+                        cycle_cpu_steps[index].push(sticky);
+                        cycle_source_lines[index] = None;
                     }
                     *pending_result = self.process_robot_action(index, action);
                 } else {
@@ -215,10 +240,23 @@ impl Simulation {
                     self.action_result_expected[index] = false;
                     self.pending_sim_motion_chunks[index] = None;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
-                    // Keep the last statement highlight after the battery expires (`l` only).
+                    // Keep the last statement highlight after the battery expires.
                     cycle_source_lines[index] = self
                         .program_runner(index)
                         .and_then(ExecutableRunner::current_source_line);
+                    if let Some(line) = cycle_source_lines[index]
+                        && let Some(previous) = self.last_cpu_highlight[index]
+                            .as_ref()
+                            .filter(|step| step.line == line)
+                    {
+                        let mut sticky = previous.clone();
+                        sticky.result = None;
+                        if let Some(runner) = self.program_runner(index) {
+                            sticky.variables = runner.runtime_variables_snapshot();
+                        }
+                        cycle_cpu_steps[index].push(sticky);
+                        cycle_source_lines[index] = None;
+                    }
                 }
             }
 

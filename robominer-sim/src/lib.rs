@@ -17,9 +17,9 @@ pub use animation::{
     ANIMATION_PAYLOAD_VERSION, OreAnimationData, RecordedCpuStep, is_legacy_javascript_result_data,
 };
 pub use animation_payload::{
-    AnimationCpuStep, AnimationCpuStepResult, AnimationGround, AnimationGroundChange,
-    AnimationGroundPosition, AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot,
-    AnimationRobots,
+    AnimationCpuStep, AnimationCpuStepResult, AnimationCpuStepResultKind, AnimationGround,
+    AnimationGroundChange, AnimationGroundPosition, AnimationLocation, AnimationOreType,
+    AnimationPayload, AnimationRobot, AnimationRobots,
 };
 pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot};
 pub use position::Position;

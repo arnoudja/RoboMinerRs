@@ -1,4 +1,8 @@
 //! Typed return value for one program CPU micro-step (rally replay debug).
+//!
+//! Display kinds are UI-oriented and map from AST [`ValueType`] (`Double` ≡ [`CpuStepResultKind::Float`])
+//! and expression heuristics (`for_number_literal`, `for_action`, …). Wire format uses
+//! `b`/`i`/`f` via `AnimationCpuStepResultKind` in robominer-sim.
 
 use crate::ast::{ExecutableAction, Operator, RobotProperty, ValueType};
 
@@ -53,6 +57,14 @@ impl CpuStepResult {
         } else {
             Self::float_value(value)
         }
+    }
+
+    pub fn for_ore_distance(value: f64) -> Self {
+        Self::float_value(value)
+    }
+
+    pub fn for_ore_type(value: f64) -> Self {
+        Self::int_value(value)
     }
 
     pub fn for_action(action: ExecutableAction, value: f64) -> Self {

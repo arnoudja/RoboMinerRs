@@ -1,3 +1,14 @@
+/**
+ * @typedef {{miningCycle:number,l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}} RallyCpuTimelineEntry
+ *
+ * Wire contract (see AnimationLocation / AnimationCpuStep in robominer-sim):
+ * - locations[m] is the pose after mining cycle m; cpu[] on that sample drove the motion
+ *   animated during clock segment [m-1, m).
+ * - cpu[].c/e are 1-based half-open [c, e) source columns; omit when unknown.
+ * - Emit either sticky l or non-empty cpu per location, not both.
+ * - vs is a full locals snapshot (not a delta). r is omitted while an action is still awaiting.
+ */
+
 var myRallyPlayer = {
     scale: 1,
     baseStepTime: 50,
@@ -11,28 +22,40 @@ var myRallyPlayer = {
     pausedCpuIndex: null
 };
 
-/** Flat CPU-instruction timeline for the viewer robot: [{miningCycle,l,c,e}, ...] */
+/** @type {RallyCpuTimelineEntry[]|null} */
 var myRallyCpuTimeline = null;
 
 
 function rallyHasAnimationData()
 {
-    return typeof myRobots !== 'undefined' &&
-        myRobots.robot &&
-        myRobots.robot.length > 0 &&
-        myRobots.robot[0].locations;
+    if (typeof myRobots === 'undefined' || !myRobots.robot || myRobots.robot.length === 0)
+    {
+        return false;
+    }
+    var robot = rallyViewerRobot();
+    return !!(robot && robot.locations && robot.locations.length > 0);
 }
 
 
+/**
+ * Viewer robot by `robotnr` (matches draw/debug), not array index.
+ * @returns {object|null}
+ */
 function rallyViewerRobot()
 {
-    if (!rallyHasAnimationData())
+    if (typeof myRobots === 'undefined' || !myRobots.robot || myRobots.robot.length === 0)
     {
         return null;
     }
-    if (typeof myRallyViewerSlot === 'number' && myRobots.robot[myRallyViewerSlot])
+    if (typeof myRallyViewerSlot === 'number')
     {
-        return myRobots.robot[myRallyViewerSlot];
+        for (var i = 0; i < myRobots.robot.length; i++)
+        {
+            if (myRobots.robot[i].robotnr === myRallyViewerSlot)
+            {
+                return myRobots.robot[i];
+            }
+        }
     }
     return myRobots.robot[0];
 }
@@ -68,9 +91,8 @@ function rallyRebuildCpuTimeline()
         }
         else
         {
-            // Sticky `l` cycles (pending multi-cycle move/rotate, scan wait, battery)
-            // omit token spans and locals. Reuse the latest same-line micro-step so the
-            // statement stays highlighted and variables remain visible until it finishes.
+            // Legacy sticky `l` only (older payloads without recorded sticky cpu spans).
+            // Carry prior same-line c/e/vs so multi-cycle move/rotate stays highlighted.
             var sticky = {
                 miningCycle: m,
                 l: loc.l,
@@ -110,11 +132,12 @@ function rallyRebuildCpuTimeline()
 
 function rallyTotalMiningCycles()
 {
-    if (!rallyHasAnimationData())
+    var robot = rallyViewerRobot();
+    if (!robot || !robot.locations)
     {
         return 0;
     }
-    return myRobots.robot[0].locations.length;
+    return robot.locations.length;
 }
 
 
@@ -305,9 +328,14 @@ function rallyFrameTiming()
     {
         cycle = rallyMiningCycleAtTime(time);
     }
-    if (cycle > rallyTotalMiningCycles())
+    var totalCycles = rallyTotalMiningCycles();
+    if (totalCycles <= 0)
     {
-        cycle = rallyTotalMiningCycles();
+        cycle = 0;
+    }
+    else if (cycle >= totalCycles)
+    {
+        cycle = totalCycles - 1;
     }
 
     return {

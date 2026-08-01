@@ -11,6 +11,15 @@ function rallyPaintRobots(scale, cycle, poseTime, stepTime, entry)
 }
 
 
+function rallyPrepareFrame()
+{
+    rallyEnsureCpuTimeline();
+    var frame = rallyFrameTiming();
+    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.cycle);
+    return frame;
+}
+
+
 function renderRallyFrame()
 {
     if (!rallyHasAnimationData())
@@ -18,10 +27,7 @@ function renderRallyFrame()
         return;
     }
 
-    rallyEnsureCpuTimeline();
-    var frame = rallyFrameTiming();
-    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.cycle);
-
+    var frame = rallyPrepareFrame();
     var scale = myRallyPlayer.scale;
     for (var i = 0; i < myRobots.robot.length; i++)
     {
@@ -40,10 +46,7 @@ function redrawRallyScene()
         return;
     }
 
-    rallyEnsureCpuTimeline();
-    var frame = rallyFrameTiming();
-    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.cycle);
-
+    var frame = rallyPrepareFrame();
     var scale = myRallyPlayer.scale;
     drawFullGroundAt(frame.cycle, scale);
     drawDepotHomes(scale, frame.cycle);

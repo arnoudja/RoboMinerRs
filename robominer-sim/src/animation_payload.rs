@@ -77,13 +77,27 @@ pub struct AnimationRobot {
 
 /// One mining-cycle sample. Unchanged fields may be omitted (delta compression).
 ///
-/// Source highlighting uses two optional channels; emit at most one per location:
-/// - **`cpu`**: preferred when present with entries — ordered micro-steps `{l,c?,e?}` for
-///   token-level replay scrubbing.
-/// - **`l` (`source_line`)**: legacy/fallback — a single 1-based line when there are no CPU
-///   micro-steps (sticky highlights during pending motion, scan waits, battery expiry, etc.).
+/// # Source highlighting
 ///
-/// Viewers should prefer `cpu` when non-empty and fall back to `l`.
+/// Emit at most one of these channels per location (`l` XOR non-empty `cpu`):
+/// - **`cpu`**: ordered micro-steps for token-level replay scrubbing. Prefer this when
+///   present. Continuation cycles for multi-cycle `move`/`rotate` should repeat the
+///   issuing step's `{l,c,e,vs}` with `r` omitted (sticky cpu), not bare `l`.
+/// - **`l` (`source_line`)**: legacy/fallback single 1-based line when there are no CPU
+///   micro-steps (older payloads, program entry, etc.).
+///
+/// # Pose vs CPU clock
+///
+/// `locations[m]` stores the pose **after** mining cycle `m`. The `cpu` entries on that
+/// sample are the micro-steps that produced the motion animated during clock segment
+/// `[m-1, m)` (viewer highlights destination-sample CPUs while interpolating into `m`).
+///
+/// # CPU step fields
+///
+/// - `c`/`e`: 1-based half-open `[c, e)` source columns; omit when unknown.
+/// - `r`: typed return `{k,v}` when the micro-step completed a value; omit while awaiting
+///   physics (issued `move`/`rotate`) or on sticky continuation steps.
+/// - `vs`: full visible-locals snapshot (not a delta); omit when empty.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct AnimationLocation {
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -123,7 +137,7 @@ pub struct AnimationCpuStep {
     pub c: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub e: Option<u16>,
-    /// Typed return value for this micro-step (`k`: `i`|`f`|`b`, `v`: number).
+    /// Typed return value for this micro-step.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub r: Option<AnimationCpuStepResult>,
     /// Visible locals at this micro-step (name → typed `{k,v}`).
@@ -131,9 +145,30 @@ pub struct AnimationCpuStep {
     pub vs: Option<BTreeMap<String, AnimationCpuStepResult>>,
 }
 
+/// Wire display kind: `b` bool, `i` int, `f` float (AST `Double` ≡ float).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AnimationCpuStepResultKind {
+    #[serde(rename = "b")]
+    Bool,
+    #[serde(rename = "i")]
+    Int,
+    #[serde(rename = "f")]
+    Float,
+}
+
+impl From<robominer_program::CpuStepResultKind> for AnimationCpuStepResultKind {
+    fn from(kind: robominer_program::CpuStepResultKind) -> Self {
+        match kind {
+            robominer_program::CpuStepResultKind::Bool => Self::Bool,
+            robominer_program::CpuStepResultKind::Int => Self::Int,
+            robominer_program::CpuStepResultKind::Float => Self::Float,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AnimationCpuStepResult {
-    pub k: String,
+    pub k: AnimationCpuStepResultKind,
     pub v: f64,
 }
 

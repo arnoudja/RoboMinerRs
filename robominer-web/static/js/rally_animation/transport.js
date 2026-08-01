@@ -225,7 +225,7 @@ function rallySetSpeed(speed)
 
 
 /** Step one CPU instruction (paused arrow keys). Syncs pose to that step's motion segment. */
-function rallySeekByCycles(deltaCycles)
+function rallySeekByCpuSteps(deltaSteps)
 {
     if (!rallyHasAnimationData())
     {
@@ -245,7 +245,7 @@ function rallySeekByCycles(deltaCycles)
         {
             currentIndex = rallyCpuIndexAtTime(myRallyPlayer.elapsedMs);
         }
-        var targetIndex = Math.min(totalCpu - 1, Math.max(0, currentIndex + deltaCycles));
+        var targetIndex = Math.min(totalCpu - 1, Math.max(0, currentIndex + deltaSteps));
         myRallyPlayer.pausedCpuIndex = targetIndex;
 
         var entry = myRallyCpuTimeline && myRallyCpuTimeline[targetIndex]
@@ -255,6 +255,12 @@ function rallySeekByCycles(deltaCycles)
         myRallyPlayer.finished = myRallyPlayer.elapsedMs >= rallyTotalTime() &&
             targetIndex >= totalCpu - 1;
     }, { fullRedraw: true });
+}
+
+/** @deprecated Use rallySeekByCpuSteps. */
+function rallySeekByCycles(deltaCycles)
+{
+    rallySeekByCpuSteps(deltaCycles);
 }
 
 

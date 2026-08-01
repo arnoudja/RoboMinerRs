@@ -1,7 +1,7 @@
 /** Fill sparse location deltas forward from the previous recorded pose. */
-function updateRobotTo(robotNr, step)
+function updateRobotTo(robotIndex, step)
 {
-    var robot = myRobots.robot[robotNr];
+    var robot = myRobots.robot[robotIndex];
     if (!robot.locations || robot.locations.length === 0)
     {
         return;
@@ -124,13 +124,13 @@ function applyRobotActionHighlight(robot, loc1, loc2, t1, dt)
 }
 
 
-function updateRobotPosition(robotNr, time, stepTime)
+function updateRobotPosition(robotIndex, time, stepTime)
 {
-    var robot = myRobots.robot[robotNr];
+    var robot = myRobots.robot[robotIndex];
     var t1 = Math.floor(time / stepTime);
     var t2 = t1 + 1;
 
-    updateRobotTo(robotNr, t2);
+    updateRobotTo(robotIndex, t2);
 
     if (t2 >= robot.locations.length)
     {

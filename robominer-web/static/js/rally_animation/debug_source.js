@@ -1,5 +1,41 @@
 var myRallySourceHighlightLine = null;
-var myRallySourceHighlightToken = null;
+/** @type {{l?:number,c?:number,e?:number,rKey?:string,rVal?:number,vsKey?:string}|null} */
+var myRallySourceHighlightKey = null;
+
+
+function rallySourceHighlightKey(line, startCol, endCol, result, variables)
+{
+    var rKey = result && typeof result.k === 'string' ? result.k : '';
+    var rVal = result && typeof result.v === 'number' ? result.v : '';
+    var vsKey = '';
+    if (variables && typeof variables === 'object')
+    {
+        vsKey = Object.keys(variables).sort().map(function(name) {
+            var entry = variables[name];
+            return name + ':' + (entry && entry.k) + '=' + (entry && entry.v);
+        }).join('|');
+    }
+    return {
+        l: line,
+        c: startCol,
+        e: endCol,
+        rKey: rKey,
+        rVal: rVal,
+        vsKey: vsKey
+    };
+}
+
+
+function rallySourceHighlightKeysEqual(a, b)
+{
+    return !!(a && b
+        && a.l === b.l
+        && a.c === b.c
+        && a.e === b.e
+        && a.rKey === b.rKey
+        && a.rVal === b.rVal
+        && a.vsKey === b.vsKey);
+}
 
 
 function updateRallyEditCodeLink(line)
@@ -149,6 +185,7 @@ function updateRallySourceHighlight(highlight)
     var sourceCode = document.getElementById('rallySourceCode');
     if (!sourceCode)
     {
+        myRallySourceHighlightKey = null;
         updateRallySourceStepResult(null);
         updateRallySourceVariables(null);
         return;
@@ -159,6 +196,11 @@ function updateRallySourceHighlight(highlight)
     var endCol = typeof highlight === 'object' && highlight ? highlight.e : undefined;
     var result = typeof highlight === 'object' && highlight ? highlight.r : undefined;
     var variables = typeof highlight === 'object' && highlight ? highlight.vs : undefined;
+    var nextKey = rallySourceHighlightKey(line, startCol, endCol, result, variables);
+    if (rallySourceHighlightKeysEqual(myRallySourceHighlightKey, nextKey))
+    {
+        return;
+    }
 
     if (myRallySourceHighlightLine !== null)
     {
@@ -169,11 +211,11 @@ function updateRallySourceHighlight(highlight)
             clearRallySourceTokenHighlight(previous);
         }
         myRallySourceHighlightLine = null;
-        myRallySourceHighlightToken = null;
     }
 
     if (typeof line !== 'number' || isNaN(line) || line < 1)
     {
+        myRallySourceHighlightKey = nextKey;
         updateRallySourceStepResult(null);
         updateRallySourceVariables(null);
         return;
@@ -182,6 +224,7 @@ function updateRallySourceHighlight(highlight)
     var current = document.getElementById('rallySourceLine' + line);
     if (!current)
     {
+        myRallySourceHighlightKey = nextKey;
         updateRallySourceStepResult(null);
         updateRallySourceVariables(null);
         return;
@@ -219,10 +262,10 @@ function updateRallySourceHighlight(highlight)
             {
                 code.appendChild(document.createTextNode(text.slice(end)));
             }
-            myRallySourceHighlightToken = token;
         }
     }
 
+    myRallySourceHighlightKey = nextKey;
     updateRallySourceStepResult(result);
     updateRallySourceVariables(variables);
     scrollRallySourceLineIntoView(sourceCode, current);

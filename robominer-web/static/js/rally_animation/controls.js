@@ -63,7 +63,7 @@ function rallyBindKeyboardControls()
             }
             else
             {
-                rallySeekByCycles(-1);
+                rallySeekByCpuSteps(-1);
             }
             return;
         }
@@ -77,7 +77,7 @@ function rallyBindKeyboardControls()
             }
             else
             {
-                rallySeekByCycles(1);
+                rallySeekByCpuSteps(1);
             }
             return;
         }

@@ -172,13 +172,16 @@ impl Simulation {
                     self.action_results[robot_index] = None;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
+                    // Prefer the runner's typed step result when present; fall back to
+                    // scan_time as int (StartScan return value).
                     let scan_time = self.start_scan(robot_index, direction);
-                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span).map(|step| {
-                        step.with_result(Some(robominer_program::CpuStepResult::int_value(
-                            scan_time as f64,
-                        )))
-                        .with_variables(variables)
-                    }) {
+                    let result = step_result.unwrap_or_else(|| {
+                        robominer_program::CpuStepResult::int_value(scan_time as f64)
+                    });
+                    if let Some(step) = step_span
+                        .and_then(RecordedCpuStep::from_span)
+                        .map(|step| step.with_result(Some(result)).with_variables(variables))
+                    {
                         cpu_steps.push(step);
                     }
                     self.robots[robot_index].actions_done[ROBOT_ACTION_TYPE_SCAN] += 1;
@@ -187,6 +190,7 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
+                    // Mid-scan wait: no completed return yet (`r` omitted).
                     if let Some(step) = step_span
                         .and_then(RecordedCpuStep::from_span)
                         .map(|step| step.with_variables(variables))
@@ -201,7 +205,7 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(action) => {
-                    // Issuing an awaiting action has no return yet; leave result unset.
+                    // Issuing an awaiting move/rotate/mine/dump has no return yet; omit `r`.
                     let _ = step_result;
                     if let Some(step) = step_span
                         .and_then(RecordedCpuStep::from_span)

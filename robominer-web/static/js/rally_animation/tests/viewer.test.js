@@ -278,9 +278,11 @@ describe('rally animation viewer', () => {
             'applyRallyResultPayload',
             'runanimation',
             'rallySeekToRatio',
+            'rallySeekByCpuSteps',
             'rallySeekByCycles',
             'rallyWithPausedSeek',
             'rallyRebuildCpuTimeline',
+            'rallyViewerRobot',
             'updateRobotPosition',
             'drawRobot',
             'updateRobotDebugPanel',
@@ -288,6 +290,35 @@ describe('rally animation viewer', () => {
             assert.equal(typeof context[name], 'function', name);
         }
         assert.ok(context.RALLY_VIEWER_HIGHLIGHT_PADDING);
+    });
+
+    it('resolves viewer robot by robotnr and clock length from that robot', () => {
+        const { context } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot = [
+            {
+                ...payload.robots.robot[0],
+                robotnr: 0,
+                locations: [
+                    { x: 0, y: 0, o: 0, A: 0, B: 0, C: 0, DA: 0, DB: 0, DC: 0, cpu: [{ l: 9 }] },
+                ],
+            },
+            {
+                ...payload.robots.robot[0],
+                robotnr: 2,
+                locations: [
+                    { x: 1, y: 1, o: 0, A: 0, B: 0, C: 0, DA: 0, DB: 0, DC: 0, cpu: [{ l: 1 }] },
+                    { x: 2, y: 1, o: 0, A: 0, B: 0, C: 0, DA: 0, DB: 0, DC: 0, l: 1 },
+                    { x: 3, y: 1, o: 0, A: 0, B: 0, C: 0, DA: 0, DB: 0, DC: 0, l: 1 },
+                ],
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.myRallyViewerSlot = 2;
+        context.rallyRebuildCpuTimeline();
+        assert.equal(context.rallyViewerRobot().robotnr, 2);
+        assert.equal(context.rallyTotalMiningCycles(), 3);
+        assert.equal(context.myRallyCpuTimeline[0].l, 1);
     });
 
     it('builds a CPU timeline and seeks by CPU vs mining cycle', () => {
@@ -324,7 +355,7 @@ describe('rally animation viewer', () => {
         assert.equal(context.myRallyCpuTimeline[3].c, 9);
         assert.equal(context.myRallyCpuTimeline[3].e, 16);
 
-        context.rallySeekByCycles(1);
+        context.rallySeekByCpuSteps(1);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
         assert.equal(context.rallyCpuIndexAtTime(context.myRallyPlayer.elapsedMs), 1);
         assert.equal(
@@ -338,7 +369,7 @@ describe('rally animation viewer', () => {
             0
         );
 
-        context.rallySeekByCycles(1);
+        context.rallySeekByCpuSteps(1);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 2);
         // Last CPU of the cycle (action) shows mid-motion.
         assert.equal(

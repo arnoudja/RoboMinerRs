@@ -79,6 +79,10 @@ impl ExecutableRunner {
     }
 
     /// Take the typed result of the last [`Self::step`], if that step produced one.
+    ///
+    /// Callers (e.g. animation recording) must take at most once per `step`. `None` is
+    /// expected when the step issued an awaiting action, continued internally, or had
+    /// no displayable value.
     pub fn take_last_step_result(&mut self) -> Option<CpuStepResult> {
         self.last_step_result.take()
     }

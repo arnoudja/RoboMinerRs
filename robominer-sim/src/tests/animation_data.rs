@@ -584,6 +584,48 @@ fn animation_data_records_source_line_for_program_actions() {
 }
 
 #[test]
+fn animation_data_records_sticky_cpu_span_for_multi_cycle_move() {
+    let program = seeded_program("move(3);");
+    let ground = Ground::new(8, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 6;
+    spec.cpu_speed = 72;
+    spec.forward_speed = 1.0;
+
+    let mut simulation = Simulation::new(
+        ground,
+        6,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations");
+
+    let sticky_cpu_locations = locations
+        .iter()
+        .filter(|location| {
+            location
+                .get("cpu")
+                .and_then(|value| value.as_array())
+                .is_some_and(|cpu| {
+                    cpu.len() == 1
+                        && cpu[0].get("c").is_some()
+                        && cpu[0].get("e").is_some()
+                        && cpu[0].get("r").is_none()
+                })
+        })
+        .count();
+    assert!(
+        sticky_cpu_locations >= 1,
+        "multi-cycle move should record sticky cpu spans without r: {data}"
+    );
+}
+
+#[test]
 fn animation_data_attributes_while_recheck_to_while_line() {
     let program = seeded_program("while (move(1) >= 1)\n{\nmine();\n}");
     let mut ground = Ground::new(6, 6);
