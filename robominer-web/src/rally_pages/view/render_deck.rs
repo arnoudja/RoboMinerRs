@@ -139,7 +139,7 @@ fn render_rally_view_source(
             }
             body.push_str("</div>");
             body.push_str(
-                r#"<div class="rally-view-source-return"><span class="rally-view-source-return-label">Return value</span><output class="rally-view-source-result" id="rallySourceStepResult" for="rallySourceCode" aria-live="polite"></output></div>"#,
+                r#"<div class="rally-view-source-return"><label class="rally-view-source-return-label" for="rallySourceStepResult">Return value</label><output class="rally-view-source-result" id="rallySourceStepResult" for="rallySourceCode" aria-live="polite"></output></div>"#,
             );
         }
         _ => {

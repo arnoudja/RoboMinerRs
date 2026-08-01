@@ -576,31 +576,35 @@
 }
 
 .rally-view-source-return {
-    align-items: baseline;
-    background: rgba(4, 8, 14, 0.9);
-    border: 1px solid rgba(42, 58, 92, 0.75);
-    border-radius: 4px;
+    align-items: center;
     display: flex;
     gap: 10px;
     margin: 8px 0 0;
-    min-height: 1.45em;
-    padding: 6px 10px;
 }
 
 .rally-view-source-return-label {
-    color: #6a7a94;
+    color: var(--mq-text-muted);
     flex: 0 0 auto;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
 }
 
 .rally-view-source-result {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 4px;
+    box-sizing: border-box;
     color: #c5d4ea;
-    flex: 1 1 auto;
+    display: inline-block;
+    flex: 0 0 auto;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.72rem;
+    line-height: 1.45;
     margin: 0;
-    min-height: 1.2em;
+    /* border-box: include padding + border so empty and filled states match */
+    min-height: calc(1.45em + 8px + 2px);
+    /* Fits bool `false`, ints, and floats like -999999.99 */
+    padding: 4px 8px;
+    width: 12ch;
 }
 
 .rally-view-source-unavailable {
