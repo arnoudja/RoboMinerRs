@@ -412,7 +412,7 @@ describe('rally animation viewer', () => {
               </div>
             </div>
             <output id="rallySourceStepResult"></output>
-            <div id="rallySourceVariables"></div>
+            <table><tbody id="rallySourceVariables"></tbody></table>
         `;
         const variables = document.getElementById('rallySourceVariables');
 
@@ -428,11 +428,11 @@ describe('rally animation viewer', () => {
             },
         });
         assert.equal(variables.childNodes.length, 3);
-        assert.equal(variables.childNodes[0].children[0].textContent, 'count');
+        assert.equal(variables.childNodes[0].children[0].textContent, 'count:');
         assert.equal(variables.childNodes[0].children[1].textContent, '3');
-        assert.equal(variables.childNodes[1].children[0].textContent, 'found');
+        assert.equal(variables.childNodes[1].children[0].textContent, 'found:');
         assert.equal(variables.childNodes[1].children[1].textContent, 'true');
-        assert.equal(variables.childNodes[2].children[0].textContent, 'speed');
+        assert.equal(variables.childNodes[2].children[0].textContent, 'speed:');
         assert.equal(variables.childNodes[2].children[1].textContent, '1.50');
 
         context.updateRallySourceHighlight({ l: 1, c: 1, e: 4 });

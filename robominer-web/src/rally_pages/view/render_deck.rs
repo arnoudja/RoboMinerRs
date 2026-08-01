@@ -142,7 +142,7 @@ fn render_rally_view_source(
                 r#"<div class="rally-view-source-return"><label class="rally-view-source-return-label" for="rallySourceStepResult">Return value</label><output class="rally-view-source-result" id="rallySourceStepResult" for="rallySourceCode" aria-live="polite"></output></div>"#,
             );
             body.push_str(
-                r#"<div class="rally-view-source-variables"><div class="rally-view-source-variables-label" id="rallySourceVariablesLabel">Variables</div><div class="rally-view-source-variables-list" id="rallySourceVariables" role="list" aria-labelledby="rallySourceVariablesLabel" aria-live="polite"></div></div>"#,
+                r#"<div class="rally-view-source-variables"><div class="rally-view-source-variables-label" id="rallySourceVariablesLabel">Variables</div><table class="rally-view-source-variables-table" aria-labelledby="rallySourceVariablesLabel"><tbody id="rallySourceVariables" aria-live="polite"></tbody></table></div>"#,
             );
         }
         _ => {

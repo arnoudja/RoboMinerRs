@@ -122,15 +122,13 @@ function updateRallySourceVariables(variables)
             continue;
         }
 
-        var row = document.createElement('div');
-        row.className = 'rally-view-source-var';
-        row.setAttribute('role', 'listitem');
+        var row = document.createElement('tr');
 
-        var nameEl = document.createElement('span');
+        var nameEl = document.createElement('td');
         nameEl.className = 'rally-view-source-var-name';
-        nameEl.textContent = name;
+        nameEl.textContent = name + ':';
 
-        var valueEl = document.createElement('span');
+        var valueEl = document.createElement('td');
         valueEl.className = 'rally-view-source-var-value';
         valueEl.textContent = formatted;
 

@@ -582,10 +582,13 @@
     margin: 8px 0 0;
 }
 
-.rally-view-source-return-label {
+.rally-view-source-return-label,
+.rally-view-source-variables-label {
+    box-sizing: border-box;
     color: var(--mq-text-muted);
-    flex: 0 0 auto;
+    flex: 0 0 12ch;
     font-size: 0.75rem;
+    width: 12ch;
 }
 
 .rally-view-source-result {
@@ -608,41 +611,43 @@
 }
 
 .rally-view-source-variables {
+    align-items: flex-start;
+    display: flex;
+    gap: 10px;
     margin: 8px 0 0;
 }
 
 .rally-view-source-variables-label {
-    color: var(--mq-text-muted);
-    font-size: 0.75rem;
-    margin: 0 0 4px;
-}
-
-.rally-view-source-variables-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
     margin: 0;
-    min-height: 0;
+    /* Match first table row so the label sits level with the top cell */
+    padding-top: 2px;
 }
 
-.rally-view-source-var {
-    align-items: baseline;
-    display: flex;
-    gap: 12px;
+table.rally-view-source-variables-table {
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid var(--mq-border);
+    flex: 0 0 auto;
+    margin: 0;
+    width: auto;
+}
+
+.rally-view-page table.rally-view-source-variables-table td {
+    border-color: rgba(42, 58, 92, 0.85);
+    color: var(--mq-text);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.72rem;
     line-height: 1.45;
+    padding: 1px 7px;
+    vertical-align: baseline;
 }
 
-.rally-view-source-var-name {
+.rally-view-page table.rally-view-source-variables-table td.rally-view-source-var-name {
     color: #8a9bb8;
-    flex: 0 0 auto;
-    min-width: 6ch;
+    white-space: nowrap;
 }
 
-.rally-view-source-var-value {
+.rally-view-page table.rally-view-source-variables-table td.rally-view-source-var-value {
     color: #c5d4ea;
-    flex: 0 0 auto;
 }
 
 .rally-view-source-unavailable {
