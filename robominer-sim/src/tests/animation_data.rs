@@ -52,6 +52,74 @@ fn animation_data_uses_versioned_json_payload_shape() {
 }
 
 #[test]
+fn animation_data_records_typed_cpu_step_return_values() {
+    let program = seeded_program("int x = 3 + 4;\nbool y = true;\ndouble z = 1.5;");
+    let ground = Ground::new(4, 4);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 1;
+    spec.cpu_speed = 72;
+
+    let mut simulation = Simulation::new(
+        ground,
+        1,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+
+    let mut kinds = Vec::new();
+    let mut values = Vec::new();
+    for location in payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations")
+    {
+        if let Some(cpu) = location.get("cpu").and_then(|value| value.as_array()) {
+            for step in cpu {
+                if let Some(result) = step.get("r") {
+                    kinds.push(
+                        result
+                            .get("k")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("")
+                            .to_string(),
+                    );
+                    values.push(
+                        result
+                            .get("v")
+                            .and_then(|value| value.as_f64())
+                            .unwrap_or(0.0),
+                    );
+                }
+            }
+        }
+    }
+
+    assert!(
+        kinds.iter().any(|kind| kind == "i")
+            && values.iter().any(|value| (*value - 7.0).abs() < 1e-9),
+        "should record int 3+4 result: {data}"
+    );
+    assert!(
+        kinds.iter().any(|kind| kind == "b")
+            && values
+                .iter()
+                .zip(kinds.iter())
+                .any(|(value, kind)| kind == "b" && (*value - 1.0).abs() < 1e-9),
+        "should record bool true: {data}"
+    );
+    assert!(
+        kinds.iter().any(|kind| kind == "f")
+            && values
+                .iter()
+                .zip(kinds.iter())
+                .any(|(value, kind)| kind == "f" && (*value - 1.5).abs() < 1e-9),
+        "should record float 1.5: {data}"
+    );
+}
+
+#[test]
 fn animation_data_includes_depot_when_capacity_is_unlocked() {
     let program = seeded_program("mine(); dump(0);");
     let mut ground = Ground::new(4, 4);
@@ -504,5 +572,57 @@ fn animation_data_attributes_while_recheck_to_while_line() {
     assert!(
         saw_move_on_while_line_after_mine,
         "expected later move cycles to attribute to while line 1 in {data}"
+    );
+}
+
+#[test]
+fn animation_data_cpu_span_matches_bool_literal_after_scan() {
+    let program = seeded_program("scan();\nbool found = false;");
+    let ground = Ground::new(4, 4);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 2;
+    spec.scan_time = 5;
+    spec.cpu_speed = 72;
+
+    let mut simulation = Simulation::new(
+        ground,
+        2,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+
+    let mut steps = Vec::new();
+    for location in payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations")
+    {
+        if let Some(cpu) = location.get("cpu").and_then(|value| value.as_array()) {
+            for step in cpu {
+                steps.push(step.clone());
+            }
+        }
+    }
+
+    let bool_step = steps.iter().find(|step| {
+        step.get("r")
+            .and_then(|result| result.get("k"))
+            .and_then(|kind| kind.as_str())
+            == Some("b")
+    });
+    let bool_step = bool_step.unwrap_or_else(|| panic!("expected a bool return step: {data}"));
+    assert_eq!(
+        bool_step.get("l").and_then(|value| value.as_u64()),
+        Some(2),
+        "bool literal should highlight line 2, got {bool_step:?} in {data}"
+    );
+    // `bool found = false;` — `false` starts after "bool found = ".
+    let start = bool_step.get("c").and_then(|value| value.as_u64());
+    let end = bool_step.get("e").and_then(|value| value.as_u64());
+    assert!(
+        start.is_some_and(|c| c > 1) && end.is_some_and(|e| e > start.unwrap()),
+        "bool literal should have a token span, got c={start:?} e={end:?} in {data}"
     );
 }

@@ -17,6 +17,7 @@ pub(crate) enum ExpressionResume {
     },
     Declare {
         name: String,
+        value_type: ValueType,
     },
     Assign {
         name: String,
@@ -102,8 +103,8 @@ impl ExecutableRunner {
                     ExpressionComplete::Continue
                 }
             }
-            ExpressionResume::Declare { name } => {
-                self.variables.declare(name, value);
+            ExpressionResume::Declare { name, value_type } => {
+                self.variables.declare(name, value, value_type);
                 let frame = self
                     .stack
                     .last_mut()

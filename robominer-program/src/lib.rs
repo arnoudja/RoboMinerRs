@@ -7,6 +7,7 @@ mod ast;
 mod ast_visit;
 mod compile;
 mod compile_error;
+mod cpu_step_result;
 pub mod gp;
 pub mod motion;
 pub mod pending_action_protocol;
@@ -26,6 +27,7 @@ pub use compile::{
     compatibility_fixtures, compile_cache_stats, compile_executable_source, compile_source,
     verify_source,
 };
+pub use cpu_step_result::{CpuStepResult, CpuStepResultKind};
 pub use gp::{
     RngLike, crossover_programs, mutate_program, recompile_program, seed_program_sources,
 };
@@ -35,7 +37,7 @@ pub use runner::ExecutableRunner;
 pub use types::{
     CompileError, ExecutableAction, ExecutableActionExpression, ExecutableExpression,
     ExecutableExpressionKind, ExecutableProgram, ExecutableStatement, ExecutableStatementKind,
-    ExecutionContext, Operator, ProgramStep, RobotProperties, RobotProperty, SourceSpan,
+    ExecutionContext, Operator, ProgramStep, RobotProperties, RobotProperty, SourceSpan, ValueType,
     VariableOperator,
 };
 pub use unparse::unparse_program;

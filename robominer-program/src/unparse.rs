@@ -1,6 +1,7 @@
 use crate::types::{
     ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableExpressionKind,
-    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, Operator, VariableOperator,
+    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, Operator, ValueType,
+    VariableOperator,
 };
 
 /// Emit Edit-code-legal source for an executable program AST.
@@ -39,8 +40,16 @@ fn unparse_statement(statement: &ExecutableStatement, out: &mut String) {
             }
             out.push('}');
         }
-        ExecutableStatementKind::Declare { name, value } => {
-            out.push_str("int ");
+        ExecutableStatementKind::Declare {
+            name,
+            value_type,
+            value,
+        } => {
+            out.push_str(match value_type {
+                ValueType::Int => "int ",
+                ValueType::Double => "double ",
+                ValueType::Bool => "bool ",
+            });
             out.push_str(name);
             if let Some(value) = value {
                 out.push_str(" = ");
@@ -166,6 +175,8 @@ fn unparse_dynamic_action(action: &ExecutableActionExpression, out: &mut String)
 fn unparse_expression(expression: &ExecutableExpression, out: &mut String, parent_priority: usize) {
     match &expression.kind {
         ExecutableExpressionKind::Number(value) => unparse_number(*value, out),
+        ExecutableExpressionKind::Bool(true) => out.push_str("true"),
+        ExecutableExpressionKind::Bool(false) => out.push_str("false"),
         ExecutableExpressionKind::Variable(name) => out.push_str(name),
         ExecutableExpressionKind::VariableUpdate { name, operator } => match operator {
             VariableOperator::None => out.push_str(name),

@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 
 use crate::MAX_ORE_TYPES;
 use crate::animation_payload::{
-    AnimationCpuStep, AnimationGround, AnimationGroundChange, AnimationGroundPosition,
-    AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot, AnimationRobots,
+    AnimationCpuStep, AnimationCpuStepResult, AnimationGround, AnimationGroundChange,
+    AnimationGroundPosition, AnimationLocation, AnimationOreType, AnimationPayload, AnimationRobot,
+    AnimationRobots,
 };
 use crate::ground::Ground;
 use crate::position::Position;
@@ -22,11 +23,12 @@ pub struct OreAnimationData {
 }
 
 /// One program CPU instruction within a mining cycle (for replay stepping/highlight).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RecordedCpuStep {
     pub line: u16,
     pub start_col: u16,
     pub end_col: u16,
+    pub result: Option<robominer_program::CpuStepResult>,
 }
 
 impl RecordedCpuStep {
@@ -38,7 +40,13 @@ impl RecordedCpuStep {
             line: span.line,
             start_col: span.start_col,
             end_col: span.end_col,
+            result: None,
         })
+    }
+
+    pub fn with_result(mut self, result: Option<robominer_program::CpuStepResult>) -> Self {
+        self.result = result;
+        self
     }
 }
 
@@ -48,6 +56,17 @@ impl From<RecordedCpuStep> for AnimationCpuStep {
             l: step.line,
             c: None,
             e: None,
+            r: step.result.map(|result| {
+                let k = match result.kind {
+                    robominer_program::CpuStepResultKind::Bool => "b",
+                    robominer_program::CpuStepResultKind::Int => "i",
+                    robominer_program::CpuStepResultKind::Float => "f",
+                };
+                AnimationCpuStepResult {
+                    k: k.to_string(),
+                    v: result.value,
+                }
+            }),
         };
         if step.start_col > 0 && step.end_col > step.start_col {
             entry.c = Some(step.start_col);

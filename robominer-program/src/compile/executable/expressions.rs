@@ -102,11 +102,11 @@ fn parse_single_expression_kind(
     }
 
     if input.use_next_word("true") {
-        return Ok(Some(ExecutableExpressionKind::Number(1.0)));
+        return Ok(Some(ExecutableExpressionKind::Bool(true)));
     }
 
     if input.use_next_word("false") {
-        return Ok(Some(ExecutableExpressionKind::Number(0.0)));
+        return Ok(Some(ExecutableExpressionKind::Bool(false)));
     }
 
     if input.use_next_word("mine") {

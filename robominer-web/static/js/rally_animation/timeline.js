@@ -60,7 +60,8 @@ function rallyRebuildCpuTimeline()
                     miningCycle: m,
                     l: cpu[i].l,
                     c: cpu[i].c,
-                    e: cpu[i].e
+                    e: cpu[i].e,
+                    r: cpu[i].r
                 });
             }
         }
@@ -70,7 +71,8 @@ function rallyRebuildCpuTimeline()
                 miningCycle: m,
                 l: loc.l,
                 c: undefined,
-                e: undefined
+                e: undefined,
+                r: undefined
             });
         }
     }

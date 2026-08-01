@@ -14,6 +14,7 @@ pub(crate) struct ExpressionWorkItem {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum ExpressionWork {
     PushNumber(f64),
+    PushBool(bool),
     PushVariable(String),
     PushVariableUpdate {
         name: String,
@@ -45,6 +46,9 @@ pub(crate) fn schedule_expression(
     match &expression.kind {
         ExecutableExpressionKind::Number(value) => {
             push(work, ExpressionWork::PushNumber(*value));
+        }
+        ExecutableExpressionKind::Bool(value) => {
+            push(work, ExpressionWork::PushBool(*value));
         }
         ExecutableExpressionKind::Variable(name) => {
             push(work, ExpressionWork::PushVariable(name.clone()));

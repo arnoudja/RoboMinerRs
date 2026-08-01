@@ -575,6 +575,34 @@
     margin: 0 0 8px;
 }
 
+.rally-view-source-return {
+    align-items: baseline;
+    background: rgba(4, 8, 14, 0.9);
+    border: 1px solid rgba(42, 58, 92, 0.75);
+    border-radius: 4px;
+    display: flex;
+    gap: 10px;
+    margin: 8px 0 0;
+    min-height: 1.45em;
+    padding: 6px 10px;
+}
+
+.rally-view-source-return-label {
+    color: #6a7a94;
+    flex: 0 0 auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+}
+
+.rally-view-source-result {
+    color: #c5d4ea;
+    flex: 1 1 auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    margin: 0;
+    min-height: 1.2em;
+}
+
 .rally-view-source-unavailable {
     color: #d7e2f5;
     font-size: 0.85rem;

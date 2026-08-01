@@ -1,5 +1,6 @@
 mod expression_eval;
 
+use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::{PendingProgramMotion, ProgramMotionCompletion};
 
 use crate::types::*;
@@ -35,6 +36,12 @@ pub struct ExecutableRunner {
     active_source_line: Option<u16>,
     /// Same statement as [`Self::active_source_line`], with columns for replay highlighting.
     active_source_span: Option<SourceSpan>,
+    /// Typed result produced by the most recent CPU micro-step, if any.
+    last_step_result: Option<CpuStepResult>,
+    /// Source span of the work that produced the most recent step (may differ from
+    /// [`Self::current_source_span`] taken before `step`, when one call Continues into
+    /// expression evaluation).
+    last_step_span: Option<SourceSpan>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -62,11 +69,23 @@ impl ExecutableRunner {
             expression_eval: None,
             active_source_line: None,
             active_source_span: None,
+            last_step_result: None,
+            last_step_span: None,
         }
     }
 
     pub fn awaits_action_result(&self) -> bool {
         self.awaits_action_result
+    }
+
+    /// Take the typed result of the last [`Self::step`], if that step produced one.
+    pub fn take_last_step_result(&mut self) -> Option<CpuStepResult> {
+        self.last_step_result.take()
+    }
+
+    /// Take the source span of the work executed by the last [`Self::step`], if known.
+    pub fn take_last_step_span(&mut self) -> Option<SourceSpan> {
+        self.last_step_span.take()
     }
 
     pub fn runtime_variable(&self, name: &str) -> f64 {
@@ -136,6 +155,8 @@ impl ExecutableRunner {
 
     pub fn step(&mut self, context: &mut ExecutionContext) -> ProgramStep {
         self.awaits_action_result = false;
+        self.last_step_result = None;
+        self.last_step_span = None;
         let mut action_result = context.action_result;
 
         let step = loop {
@@ -215,6 +236,7 @@ impl ExecutableRunner {
 
         match statement.kind {
             ExecutableStatementKind::Action(action) => {
+                self.last_step_span = Some(statement.source_span);
                 if !PendingProgramMotion::is_chunked(action) {
                     frame.index += 1;
                 }
@@ -236,16 +258,25 @@ impl ExecutableRunner {
             }
             ExecutableStatementKind::Sequence(statements) => {
                 frame.index += 1;
+                self.last_step_span = Some(statement.source_span);
                 self.push_frame(statements, None, None, true);
                 StepOutcome::Cpu
             }
-            ExecutableStatementKind::Declare { name, value } => {
+            ExecutableStatementKind::Declare {
+                name,
+                value_type,
+                value,
+            } => {
                 if let Some(value) = value {
-                    self.start_expression_evaluation(value, ExpressionResume::Declare { name });
+                    self.start_expression_evaluation(
+                        value,
+                        ExpressionResume::Declare { name, value_type },
+                    );
                     StepOutcome::Continue
                 } else {
-                    self.variables.declare(name, 0.0);
+                    self.variables.declare(name, 0.0, value_type);
                     frame.index += 1;
+                    self.last_step_span = Some(statement.source_span);
                     StepOutcome::Cpu
                 }
             }

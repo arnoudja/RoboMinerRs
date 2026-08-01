@@ -135,19 +135,25 @@ impl Simulation {
 
             let mut context = self.build_execution_context(robot_index);
 
-            let step = {
+            let (step, step_result, step_span) = {
                 let ActionSource::Program {
                     program: _, runner, ..
                 } = &mut self.action_sources[robot_index]
                 else {
                     unreachable!("ActionSource::Program checked above");
                 };
-                runner.step(&mut context)
+                let step = runner.step(&mut context);
+                let step_result = runner.take_last_step_result();
+                let step_span = runner.take_last_step_span().or(span_before);
+                (step, step_result, step_span)
             };
 
             match step {
                 ProgramStep::Cpu => {
-                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
+                    if let Some(step) = step_span
+                        .and_then(RecordedCpuStep::from_span)
+                        .map(|step| step.with_result(step_result))
+                    {
                         cpu_steps.push(step);
                     }
                     self.action_results[robot_index] = context.action_result;
@@ -165,17 +171,21 @@ impl Simulation {
                     self.action_results[robot_index] = None;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
-                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
+                    let scan_time = self.start_scan(robot_index, direction);
+                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span).map(|step| {
+                        step.with_result(Some(robominer_program::CpuStepResult::int_value(
+                            scan_time as f64,
+                        )))
+                    }) {
                         cpu_steps.push(step);
                     }
-                    let scan_time = self.start_scan(robot_index, direction);
                     self.robots[robot_index].actions_done[ROBOT_ACTION_TYPE_SCAN] += 1;
                     self.action_results[robot_index] = Some(scan_time as f64);
                     self.action_result_expected[robot_index] = false;
                     cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
-                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
+                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     // Wait out the real scan countdown: one tick per CPU, spanning
@@ -186,7 +196,9 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Action(action) => {
-                    if let Some(step) = span_before.and_then(RecordedCpuStep::from_span) {
+                    // Issuing an awaiting action has no return yet; leave result unset.
+                    let _ = step_result;
+                    if let Some(step) = step_span.and_then(RecordedCpuStep::from_span) {
                         cpu_steps.push(step);
                     }
                     let awaits = {

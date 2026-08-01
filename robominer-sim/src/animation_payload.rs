@@ -116,13 +116,22 @@ pub struct AnimationLocation {
     pub time_fraction: Option<f64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AnimationCpuStep {
     pub l: u16,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub c: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub e: Option<u16>,
+    /// Typed return value for this micro-step (`k`: `i`|`f`|`b`, `v`: number).
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub r: Option<AnimationCpuStepResult>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AnimationCpuStepResult {
+    pub k: String,
+    pub v: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -48,21 +48,66 @@ function clearRallySourceTokenHighlight(lineEl)
 
 
 /**
+ * Format a typed CPU-step return value for the Return value field.
+ * @param {{k?:string,v?:number}|null|undefined} result
+ * @returns {string}
+ */
+function formatRallySourceStepResult(result)
+{
+    if (!result || typeof result.v !== 'number' || !isFinite(result.v))
+    {
+        return '';
+    }
+
+    if (result.k === 'b')
+    {
+        return result.v !== 0 ? 'true' : 'false';
+    }
+    if (result.k === 'f')
+    {
+        return result.v.toFixed(2);
+    }
+    if (result.k === 'i')
+    {
+        return String(Math.round(result.v));
+    }
+    return '';
+}
+
+
+/**
+ * Show the selected CPU step's typed return value, or leave empty when absent.
+ * @param {{k?:string,v?:number}|null|undefined} result
+ */
+function updateRallySourceStepResult(result)
+{
+    var el = document.getElementById('rallySourceStepResult');
+    if (!el)
+    {
+        return;
+    }
+    el.textContent = formatRallySourceStepResult(result);
+}
+
+
+/**
  * Highlight a source line, optionally wrapping columns [c, e) (1-based inclusive start,
- * exclusive end) in a token span.
- * @param {number|{l?:number,c?:number,e?:number}} highlight
+ * exclusive end) in a token span. When `r` is present, show the typed return value.
+ * @param {number|{l?:number,c?:number,e?:number,r?:{k?:string,v?:number}}} highlight
  */
 function updateRallySourceHighlight(highlight)
 {
     var sourceCode = document.getElementById('rallySourceCode');
     if (!sourceCode)
     {
+        updateRallySourceStepResult(null);
         return;
     }
 
     var line = typeof highlight === 'number' ? highlight : (highlight && highlight.l);
     var startCol = typeof highlight === 'object' && highlight ? highlight.c : undefined;
     var endCol = typeof highlight === 'object' && highlight ? highlight.e : undefined;
+    var result = typeof highlight === 'object' && highlight ? highlight.r : undefined;
 
     if (myRallySourceHighlightLine !== null)
     {
@@ -78,12 +123,14 @@ function updateRallySourceHighlight(highlight)
 
     if (typeof line !== 'number' || isNaN(line) || line < 1)
     {
+        updateRallySourceStepResult(null);
         return;
     }
 
     var current = document.getElementById('rallySourceLine' + line);
     if (!current)
     {
+        updateRallySourceStepResult(null);
         return;
     }
 
@@ -123,6 +170,7 @@ function updateRallySourceHighlight(highlight)
         }
     }
 
+    updateRallySourceStepResult(result);
     scrollRallySourceLineIntoView(sourceCode, current);
 }
 

@@ -37,6 +37,7 @@ impl ExecutableExpression {
             | ExecutableExpressionKind::OreType
             | ExecutableExpressionKind::RobotProperty(_) => None,
             ExecutableExpressionKind::Number(_)
+            | ExecutableExpressionKind::Bool(_)
             | ExecutableExpressionKind::Variable(_)
             | ExecutableExpressionKind::VariableUpdate { .. }
             | ExecutableExpressionKind::Time => None,

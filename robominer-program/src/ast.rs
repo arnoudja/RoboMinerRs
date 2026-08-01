@@ -113,6 +113,7 @@ pub enum ExecutableStatementKind {
     Sequence(Vec<ExecutableStatement>),
     Declare {
         name: String,
+        value_type: ValueType,
         value: Option<ExecutableExpression>,
     },
     Assign {
@@ -189,6 +190,7 @@ impl ExecutableExpression {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutableExpressionKind {
     Number(f64),
+    Bool(bool),
     Variable(String),
     VariableUpdate {
         name: String,

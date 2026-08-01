@@ -250,7 +250,11 @@ fn parse_executable_variable_statement(
 
         return Ok(Some(ExecutableStatement::at(
             input.span_from(mark),
-            ExecutableStatementKind::Declare { name, value },
+            ExecutableStatementKind::Declare {
+                name,
+                value_type,
+                value,
+            },
         )));
     }
 

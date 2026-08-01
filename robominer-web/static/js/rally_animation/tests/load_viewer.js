@@ -141,10 +141,17 @@ function loadRallyViewer(options = {}) {
                 // Very small HTML subset for source-highlight tests.
                 elements.delete('rallySourceCode');
                 elements.delete('rallySourceLine1');
+                elements.delete('rallySourceStepResult');
                 const lineMatch = html.match(
                     /id="rallySourceLine1"[\s\S]*?<code class="rally-view-source-text">([^<]*)<\/code>/
                 );
                 const codeText = lineMatch ? lineMatch[1] : '';
+                if (html.includes('id="rallySourceStepResult"')) {
+                    register('rallySourceStepResult', {
+                        id: 'rallySourceStepResult',
+                        textContent: '',
+                    });
+                }
                 const codeEl = {
                     className: 'rally-view-source-text',
                     textContent: codeText,

@@ -40,7 +40,7 @@ function validPayload(overrides = {}) {
                             DA: 0,
                             DB: 0,
                             DC: 0,
-                            cpu: [{ l: 1, c: 1, e: 7 }],
+                            cpu: [{ l: 1, c: 1, e: 7, r: { k: 'i', v: 4 } }],
                         },
                         {
                             x: 1,
@@ -51,8 +51,8 @@ function validPayload(overrides = {}) {
                             C: 0,
                             a: 6,
                             cpu: [
-                                { l: 1, c: 1, e: 7 },
-                                { l: 1, c: 9, e: 16 },
+                                { l: 1, c: 1, e: 7, r: { k: 'f', v: 1.42 } },
+                                { l: 1, c: 9, e: 16, r: { k: 'b', v: 1 } },
                             ],
                         },
                         { A: 0, DA: 4, a: 7, l: 1 },
@@ -315,6 +315,10 @@ describe('rally animation viewer', () => {
         assert.equal(context.rallyTotalTime(), 150);
         assert.equal(context.rallyCpuIndexAtTime(0), 0);
         assert.equal(context.rallyPoseTimeForRender(0, { miningCycle: 0 }), 0);
+        assert.deepEqual(context.myRallyCpuTimeline[0].r, { k: 'i', v: 4 });
+        assert.deepEqual(context.myRallyCpuTimeline[1].r, { k: 'f', v: 1.42 });
+        assert.deepEqual(context.myRallyCpuTimeline[2].r, { k: 'b', v: 1 });
+        assert.equal(context.myRallyCpuTimeline[3].r, undefined);
 
         context.rallySeekByCycles(1);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
@@ -357,6 +361,7 @@ describe('rally animation viewer', () => {
                 <code class="rally-view-source-text">mine(); dumpA();</code>
               </div>
             </div>
+            <output id="rallySourceStepResult"></output>
         `;
         context.updateRallySourceHighlight({ l: 1, c: 9, e: 16 });
         const line = document.getElementById('rallySourceLine1');
@@ -364,5 +369,35 @@ describe('rally animation viewer', () => {
         const token = line.querySelector('.rally-view-source-token-active');
         assert.ok(token);
         assert.equal(token.textContent, 'dumpA()');
+        assert.equal(document.getElementById('rallySourceStepResult').textContent, '');
+    });
+
+    it('formats typed CPU step return values in the Return value field', () => {
+        const { context, document } = loadRallyViewer();
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">int x = 3 + 4;</code>
+              </div>
+            </div>
+            <output id="rallySourceStepResult"></output>
+        `;
+        const result = document.getElementById('rallySourceStepResult');
+
+        context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'i', v: 4 } });
+        assert.equal(result.textContent, '4');
+
+        context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'f', v: 1.42 } });
+        assert.equal(result.textContent, '1.42');
+
+        context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'b', v: 1 } });
+        assert.equal(result.textContent, 'true');
+
+        context.updateRallySourceHighlight({ l: 1, c: 13, e: 14, r: { k: 'b', v: 0 } });
+        assert.equal(result.textContent, 'false');
+
+        context.updateRallySourceHighlight({ l: 1, c: 9, e: 10 });
+        assert.equal(result.textContent, '');
     });
 });
