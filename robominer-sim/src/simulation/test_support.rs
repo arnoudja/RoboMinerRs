@@ -49,4 +49,11 @@ impl Simulation {
     ) {
         self.pending_sim_motion_chunks[robot_index] = pending;
     }
+
+    pub(crate) fn test_last_cpu_highlight(
+        &self,
+        robot_index: usize,
+    ) -> Option<&crate::animation::RecordedCpuStep> {
+        self.last_cpu_highlight[robot_index].as_ref()
+    }
 }

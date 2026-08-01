@@ -113,6 +113,14 @@ impl ExecutableRunner {
         self.pending_program_motion.is_some()
     }
 
+    /// Drop pending motion/action wait state without consuming an `action_result`.
+    /// Used when the sim cannot finish the handshake (e.g. battery expired mid-move).
+    pub fn clear_pending_action_handshake(&mut self) {
+        self.awaits_action_result = false;
+        self.pending_action = None;
+        self.pending_program_motion = None;
+    }
+
     /// 1-based source line of the statement currently executing, if any.
     pub fn current_source_line(&self) -> Option<u16> {
         if let Some(span) = self.active_source_span.filter(|span| span.is_known()) {

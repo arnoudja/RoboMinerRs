@@ -261,7 +261,7 @@ function updateRobotDebugPanel(robot, poseCycle, sourceLine)
 /**
  * Viewer-robot source highlight + edit-link (not per player-card).
  * @param {{l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}|null|undefined} entry
- * @param {object|null|undefined} viewerRobot
+ * @param {object|null|undefined} viewerRobot Presence check only — highlight uses `entry`, not pose fields.
  */
 function updateRallyViewerSourceDebug(entry, viewerRobot)
 {

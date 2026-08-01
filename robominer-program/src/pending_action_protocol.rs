@@ -202,3 +202,21 @@
 //!   `build_execution_context`
 //! - Sim pending motion: `map_awaiting_executable`, `pending_sim_motion_chunks`,
 //!   `record_action_result`, `should_preserve_program_action_result`, `next_robot_action`
+//!
+//! ## Sticky CPU highlight / seed floor / end-hold
+//!
+//! Replay highlights for multi-cycle motion and battery-idle cycles reuse
+//! `Simulation::last_cpu_highlight`:
+//!
+//! - **Pin on pending:** when `map_awaiting_executable` assigns
+//!   `pending_sim_motion_chunks[i]`, the issuing Action's recorded step is pinned into
+//!   `last_cpu_highlight` (including line-only GP issuers).
+//! - **Skip reseed while pending:** `process_step` must not overwrite that pin from
+//!   earlier micro-steps in the same cycle (column preference would otherwise win).
+//! - **Done seed floor:** `ProgramStep::Done` clears the seed and sets
+//!   `cpu_highlight_seed_floor` so pre-Done steps in the same mining cycle are ignored
+//!   when reseeding after restart.
+//! - **Sticky omit-`r`:** sticky copies drop `result` so continued motion/battery cycles
+//!   do not re-show a completion return value.
+//! - **Viewer end-hold:** animation wall-clock is `n * stepTime` with a final hold on the
+//!   last pose; scrubbing the last CPU sample is not playback-finished until the clock ends.

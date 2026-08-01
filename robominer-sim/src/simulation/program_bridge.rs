@@ -3,7 +3,7 @@
 //! Implements the simulation side of [`robominer_program::pending_action_protocol`].
 
 use robominer_program::{
-    CpuStepResult, ExecutableAction, ExecutionContext, ProgramStep, SourceSpan,
+    CpuStepResult, ExecutableAction, ExecutableRunner, ExecutionContext, ProgramStep, SourceSpan,
 };
 use std::collections::BTreeMap;
 
@@ -22,13 +22,28 @@ fn push_recorded_cpu_step(
     span: Option<SourceSpan>,
     result: Option<CpuStepResult>,
     variables: BTreeMap<String, CpuStepResult>,
+    fallback_line: Option<u16>,
 ) {
-    if let Some(step) = span
-        .and_then(RecordedCpuStep::from_span)
-        .map(|step| step.with_result(result).with_variables(variables))
-    {
-        cpu_steps.push(step);
+    if let Some(step) = span.and_then(RecordedCpuStep::from_span) {
+        cpu_steps.push(step.with_result(result).with_variables(variables));
+        return;
     }
+    // Unknown/GP spans still burn CPU — record a line-only placeholder when we know
+    // the current statement line so the timeline stays visible.
+    if let Some(line) = fallback_line.filter(|&line| line != 0) {
+        cpu_steps.push(RecordedCpuStep {
+            line,
+            start_col: 0,
+            end_col: 0,
+            result,
+            variables,
+        });
+        return;
+    }
+    debug_assert!(
+        span.is_none_or(|span| !span.is_known()),
+        "dropped CPU step with unknown span and no current source line"
+    );
 }
 
 impl Simulation {
@@ -149,6 +164,9 @@ impl Simulation {
             let span_before = self
                 .program_runner(robot_index)
                 .and_then(|runner| runner.current_source_span());
+            let fallback_line = self
+                .program_runner(robot_index)
+                .and_then(ExecutableRunner::current_source_line);
 
             let mut context = self.build_execution_context(robot_index);
 
@@ -165,10 +183,21 @@ impl Simulation {
                 let variables = runner.runtime_variables_snapshot();
                 (step, step_result, step_span, variables)
             };
+            // Prefer the line after step (active statement may have advanced into the work).
+            let fallback_line = self
+                .program_runner(robot_index)
+                .and_then(ExecutableRunner::current_source_line)
+                .or(fallback_line);
 
             match step {
                 ProgramStep::Cpu => {
-                    push_recorded_cpu_step(&mut cpu_steps, step_span, step_result, variables);
+                    push_recorded_cpu_step(
+                        &mut cpu_steps,
+                        step_span,
+                        step_result,
+                        variables,
+                        fallback_line,
+                    );
                     self.action_results[robot_index] = context.action_result;
                     cpu_used += 1;
                     self.tick_scan(robot_index);
@@ -194,7 +223,13 @@ impl Simulation {
                     let _ = step_result;
                     let scan_time = self.start_scan(robot_index, direction);
                     let result = CpuStepResult::int_value(scan_time as f64);
-                    push_recorded_cpu_step(&mut cpu_steps, step_span, Some(result), variables);
+                    push_recorded_cpu_step(
+                        &mut cpu_steps,
+                        step_span,
+                        Some(result),
+                        variables,
+                        fallback_line,
+                    );
                     self.robots[robot_index].actions_done[ROBOT_ACTION_TYPE_SCAN] += 1;
                     self.action_results[robot_index] = Some(scan_time as f64);
                     self.action_result_expected[robot_index] = false;
@@ -202,7 +237,13 @@ impl Simulation {
                 }
                 ProgramStep::Action(ExecutableAction::AwaitScanResult) => {
                     // Mid-scan wait: no completed return yet (`r` omitted).
-                    push_recorded_cpu_step(&mut cpu_steps, step_span, None, variables);
+                    push_recorded_cpu_step(
+                        &mut cpu_steps,
+                        step_span,
+                        None,
+                        variables,
+                        fallback_line,
+                    );
                     // Wait out the real scan countdown: one tick per CPU, spanning
                     // mining cycles when remaining work exceeds cpu_speed.
                     self.tick_scan(robot_index);
@@ -216,7 +257,13 @@ impl Simulation {
                         step_result.is_none(),
                         "awaiting Action issue should not produce a step result"
                     );
-                    push_recorded_cpu_step(&mut cpu_steps, step_span, None, variables);
+                    push_recorded_cpu_step(
+                        &mut cpu_steps,
+                        step_span,
+                        None,
+                        variables,
+                        fallback_line,
+                    );
                     let awaits = {
                         let ActionSource::Program { runner, .. } =
                             &self.action_sources[robot_index]

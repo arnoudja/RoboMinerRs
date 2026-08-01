@@ -201,3 +201,108 @@ fn dynamic_move_program_uses_robot_speed_from_execution_context() {
     assert_eq!(simulation.robot(0).actions_done()[2], 1);
     assert_eq!(simulation.robot(0).position().orientation, 45);
 }
+
+#[test]
+fn pending_pin_keeps_line_only_issuer_over_columned_reseed() {
+    use robominer_program::{
+        ExecutableAction, ExecutableExpression, ExecutableExpressionKind, ExecutableProgram,
+        ExecutableStatement, ExecutableStatementKind, SourceSpan, ValueType,
+    };
+
+    // Columned declare + line-only Move: without skip-reseed, process_step would prefer
+    // the declare span over the pinned Action issuer.
+    let program = ExecutableProgram {
+        statements: vec![
+            ExecutableStatement::at(
+                SourceSpan {
+                    line: 1,
+                    start_col: 1,
+                    end_col: 12,
+                },
+                ExecutableStatementKind::Declare {
+                    name: "x".into(),
+                    value_type: ValueType::Double,
+                    value: Some(ExecutableExpression::new(
+                        SourceSpan {
+                            line: 1,
+                            start_col: 14,
+                            end_col: 15,
+                        },
+                        ExecutableExpressionKind::Number(1.0),
+                    )),
+                },
+            ),
+            ExecutableStatement::at(
+                SourceSpan::line_only(2),
+                ExecutableStatementKind::Action(ExecutableAction::Move(2.0)),
+            ),
+        ],
+        actions: vec![],
+        requires_runtime: true,
+    };
+
+    let mut spec = RobotSpec::test_robot();
+    spec.forward_speed = 1.0;
+    spec.max_turns = 3;
+    spec.cpu_speed = 72;
+
+    let mut simulation = Simulation::new(
+        Ground::new(10, 10),
+        3,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    simulation.prepare_test_run();
+    simulation.advance_test_turn();
+
+    assert!(
+        simulation.pending_sim_motion_chunk(0).is_some(),
+        "move should still be chunking"
+    );
+    let seed = simulation
+        .test_last_cpu_highlight(0)
+        .expect("pending assign should pin sticky seed");
+    assert_eq!(
+        seed.line, 2,
+        "sticky seed must stay on the Move issuer line"
+    );
+    assert!(
+        !seed.has_columns(),
+        "line-only issuer must win over earlier columned declare: {seed:?}"
+    );
+}
+
+#[test]
+fn battery_mid_move_force_completes_sim_and_runner_pending() {
+    let mut simulation = protocol_simulation("if (move(2.0) > 0) { rotate(90); }", 1);
+    simulation.prepare_test_run();
+    simulation.advance_test_turn();
+
+    assert!(
+        simulation.pending_sim_motion_chunk(0).is_some(),
+        "first cycle should leave sim motion pending"
+    );
+    assert!(
+        simulation
+            .program_runner(0)
+            .unwrap()
+            .has_pending_program_motion(),
+        "runner should still await motion completion"
+    );
+
+    // time=2 > max_turns=1 → battery branch
+    simulation.advance_test_turn();
+
+    assert!(
+        simulation.pending_sim_motion_chunk(0).is_none(),
+        "battery must clear sim pending motion"
+    );
+    let runner = simulation.program_runner(0).unwrap();
+    assert!(
+        !runner.has_pending_program_motion(),
+        "battery must clear runner pending_program_motion"
+    );
+    assert!(
+        !runner.awaits_action_result(),
+        "battery must clear awaits_action_result"
+    );
+}

@@ -168,6 +168,11 @@ function rallyStepTime()
 }
 
 
+/**
+ * Wall-clock length of the mining-cycle timeline (`n * stepTime`).
+ * Includes a final hold on the last pose, so scrubbing the last-cycle CPU sample is
+ * not `finished` until the clock reaches this end.
+ */
 function rallyTotalTime()
 {
     return rallyTotalMiningCycles() * rallyStepTime();
@@ -325,11 +330,6 @@ function rallyFrameTiming()
     var time = myRallyPlayer.elapsedMs;
     var stepTime = rallyStepTime();
     var totalTime = rallyTotalTime();
-    var completed = totalTime > 0 ? time / totalTime : 0;
-    if (completed > 1)
-    {
-        completed = 1;
-    }
 
     var cpuIndex = rallyCpuIndexAtTime(time);
     var entry = rallyCpuEntryAtTime(time);
@@ -344,6 +344,19 @@ function rallyFrameTiming()
     else if (poseCycle >= totalCycles)
     {
         poseCycle = totalCycles - 1;
+    }
+
+    // While CPU-scrubbed, progress follows poseTime so the bar matches the sprite and
+    // Play syncing elapsedMs → poseTime does not jump the fill backward.
+    var progressTime = myRallyPlayer.pausedCpuIndex !== null ? poseTime : time;
+    var completed = totalTime > 0 ? progressTime / totalTime : 0;
+    if (completed > 1)
+    {
+        completed = 1;
+    }
+    else if (completed < 0)
+    {
+        completed = 0;
     }
 
     return {

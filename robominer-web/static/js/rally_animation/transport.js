@@ -74,7 +74,7 @@ function rallyIsPlaybackFinished()
 
 /**
  * Pause, run a seek mutation, redraw, then resume if playback was active.
- * mutateFn may set finished / pausedCpuIndex / elapsedMs / speed.
+ * mutateFn may set pausedCpuIndex / elapsedMs / speed; finished is always recomputed.
  */
 function rallyWithPausedSeek(mutateFn, options)
 {
@@ -119,6 +119,9 @@ function rallyAnimationLoop(timestamp)
     if (myRallyPlayer.elapsedMs >= rallyTotalTime())
     {
         myRallyPlayer.elapsedMs = rallyTotalTime();
+    }
+    if (rallyIsPlaybackFinished())
+    {
         myRallyPlayer.playing = false;
         myRallyPlayer.finished = true;
     }

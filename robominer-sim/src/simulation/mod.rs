@@ -259,16 +259,20 @@ impl Simulation {
                         cycle_source_lines[index] = None;
                         let floor = self.cpu_highlight_seed_floor[index];
                         self.cpu_highlight_seed_floor[index] = 0;
-                        let seed_steps = cycle_cpu_steps[index].get(floor..).unwrap_or(&[]);
-                        // Prefer column spans; fall back to line-only (e.g. GP) so sticky
-                        // pending-motion cycles still have a highlight seed.
-                        if let Some(step) = seed_steps
-                            .iter()
-                            .rev()
-                            .find(|step| step.has_columns())
-                            .or_else(|| seed_steps.last())
-                        {
-                            self.last_cpu_highlight[index] = Some(step.clone());
+                        // Sticky pin from pending-motion assign wins over cycle reseed
+                        // (e.g. line-only Action issuer must not lose to an earlier column span).
+                        if self.pending_sim_motion_chunks[index].is_none() {
+                            let seed_steps = cycle_cpu_steps[index].get(floor..).unwrap_or(&[]);
+                            // Prefer column spans; fall back to line-only (e.g. GP) so sticky
+                            // pending-motion cycles still have a highlight seed.
+                            if let Some(step) = seed_steps
+                                .iter()
+                                .rev()
+                                .find(|step| step.has_columns())
+                                .or_else(|| seed_steps.last())
+                            {
+                                self.last_cpu_highlight[index] = Some(step.clone());
+                            }
                         }
                     } else {
                         self.cpu_highlight_seed_floor[index] = 0;
@@ -280,9 +284,17 @@ impl Simulation {
                     }
                     *pending_result = self.process_robot_action(index, action);
                 } else {
-                    self.action_results[index] = None;
+                    // Battery expired: force-complete in-flight motion so the runner is
+                    // not left awaiting a result that will never arrive.
+                    if self.pending_sim_motion_chunks[index].is_some() {
+                        self.record_action_result(index, ActionResult::None);
+                    } else {
+                        self.action_results[index] = None;
+                    }
                     self.action_result_expected[index] = false;
-                    self.pending_sim_motion_chunks[index] = None;
+                    if let ActionSource::Program { runner, .. } = &mut self.action_sources[index] {
+                        runner.clear_pending_action_handshake();
+                    }
                     self.cpu_highlight_seed_floor[index] = 0;
                     cycle_statuses[index] = Some(RobotCycleStatus::Battery);
                     // Keep the last statement highlight after the battery expires.

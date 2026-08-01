@@ -111,9 +111,8 @@ function applyRobotActionHighlight(robot, loc1, loc2, t1, dt)
     }
     else if (dt <= 0 && t1 === 0)
     {
-        // Legacy replays omit locations[0].l — still show program entry.
+        // Legacy replays omit locations[0].l — leave line unset; CPU timeline owns highlight.
         robot.a = loc1.a;
-        robot.l = 1;
         robot.s = loc1.s;
     }
     else

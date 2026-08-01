@@ -429,6 +429,10 @@ describe('rally animation viewer', () => {
         assert.equal(frame.poseCycle, context.rallyMiningCycleAtTime(frame.poseTime));
         assert.equal(frame.entry.miningCycle, 2);
         assert.equal(frame.poseCycle, 1);
+        assert.ok(
+            Math.abs(frame.completed - frame.poseTime / context.rallyTotalTime()) < 1e-9,
+            `scrub completed should track poseTime, got ${frame.completed}`
+        );
     });
 
     it('resumes play from scrub poseTime without jumping', () => {
@@ -446,13 +450,19 @@ describe('rally animation viewer', () => {
 
         context.rallySeekByCpuSteps(2);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 2);
-        const scrubPose = context.rallyFrameTiming().poseTime;
+        const scrubFrame = context.rallyFrameTiming();
+        const scrubPose = scrubFrame.poseTime;
         assert.equal(scrubPose, 25);
+        const scrubCompleted = scrubFrame.completed;
 
         context.rallyPlay();
         assert.equal(context.myRallyPlayer.pausedCpuIndex, null);
         assert.equal(context.myRallyPlayer.elapsedMs, scrubPose);
         assert.equal(context.myRallyPlayer.playing, true);
+        assert.ok(
+            Math.abs(context.rallyFrameTiming().completed - scrubCompleted) < 1e-9,
+            'Play sync to poseTime must not jump progress backward'
+        );
     });
 
     it('marks finished only at clock end, not mid last-cycle scrub', () => {
