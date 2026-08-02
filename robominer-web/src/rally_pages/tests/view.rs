@@ -333,6 +333,16 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
     );
     assert_html_not_contains(&html, "<pre class=\"rally-view-source-code\"");
     assert_html_not_contains(&html, "Source snapshot unavailable.");
+    let source_pos = html
+        .find(r#"class="rally-view-source""#)
+        .expect("source panel missing");
+    let players_pos = html
+        .find(r#"class="rally-view-players""#)
+        .expect("players panel missing");
+    assert!(
+        source_pos < players_pos,
+        "debug source panel should render above player cards"
+    );
 }
 
 #[test]
