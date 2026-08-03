@@ -385,6 +385,51 @@ async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
 
 #[tokio::test]
 #[serial]
+async fn ore_refund_fits_without_clamp_detects_wallet_cap() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-db-refund-fit");
+    let user_id = insert_user_with_credentials(
+        &pool,
+        &format!("{prefix}-user"),
+        &format!("{prefix}@example.invalid"),
+        "test-password",
+    )
+    .await;
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    insert_user_ore_asset(&pool, user_id, fixture.inner.ore_id, 10, 10).await;
+
+    let fits =
+        robominer_db::ore_refund_fits_without_clamp(&pool, user_id, &[(fixture.inner.ore_id, 1)])
+            .await
+            .expect("headroom check should not fail");
+    assert!(!fits, "refund of 1 into a full wallet should not fit");
+
+    sqlx::query(
+        "UPDATE UserOreAsset SET amount = 9, maxAllowed = 10 WHERE userId = ? AND oreId = ?",
+    )
+    .bind(user_id)
+    .bind(fixture.inner.ore_id)
+    .execute(&pool)
+    .await
+    .expect("wallet update should succeed");
+    let fits_after =
+        robominer_db::ore_refund_fits_without_clamp(&pool, user_id, &[(fixture.inner.ore_id, 1)])
+            .await
+            .expect("headroom check should not fail");
+    assert!(fits_after, "refund of 1 into 9/10 should fit");
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test]
+#[serial]
 async fn create_program_source_rejects_empty_source_name() {
     let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
         eprintln!("skipping robominer-db program source test: ROBOMINER_DATABASE_URL is not set");

@@ -175,6 +175,44 @@ pub(crate) async fn refund_full_ore_costs(
     refund_ore_costs(transaction, user_id, costs).await
 }
 
+/// Returns true when refunding `costs` would not clamp any ore against `maxAllowed`.
+///
+/// Missing wallet rows are treated like a new asset capped at [`INITIAL_ORE_WALLET_MAX`].
+pub async fn ore_refund_fits_without_clamp(
+    pool: &MySqlPool,
+    user_id: i64,
+    costs: &[(i64, i32)],
+) -> Result<bool, sqlx::Error> {
+    use std::collections::HashMap;
+
+    let mut projected: HashMap<i64, (i32, i32)> = HashMap::new();
+    for &(ore_id, refund) in costs {
+        let entry = if let Some(existing) = projected.get(&ore_id).copied() {
+            existing
+        } else {
+            let asset: Option<(i32, i32)> = sqlx::query_as(
+                "SELECT amount, maxAllowed \
+                 FROM UserOreAsset \
+                 WHERE userId = ? AND oreId = ?",
+            )
+            .bind(user_id)
+            .bind(ore_id)
+            .fetch_optional(pool)
+            .await?;
+            match asset {
+                Some((amount, max_allowed)) => (amount, max_allowed),
+                None => (0, INITIAL_ORE_WALLET_MAX),
+            }
+        };
+        let (amount, max_allowed) = entry;
+        if amount.saturating_add(refund) > max_allowed {
+            return Ok(false);
+        }
+        projected.insert(ore_id, (amount + refund, max_allowed));
+    }
+    Ok(true)
+}
+
 async fn refund_ore_costs(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,

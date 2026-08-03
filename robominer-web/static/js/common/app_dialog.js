@@ -3,14 +3,16 @@
     var title = document.getElementById('robominerDialogTitle');
     var message = document.getElementById('robominerDialogMessage');
     var cancelButton = document.getElementById('robominerDialogCancel');
+    var altButton = document.getElementById('robominerDialogAlt');
     var confirmButton = document.getElementById('robominerDialogConfirm');
     var backdrop = document.getElementById('robominerDialogBackdrop');
-    if (!dialog || !title || !message || !cancelButton || !confirmButton || !backdrop) {
+    if (!dialog || !title || !message || !cancelButton || !altButton || !confirmButton || !backdrop) {
         return;
     }
 
     var pendingCallback = null;
     var alertMode = false;
+    var choiceMode = false;
     var lastFocusedElement = null;
 
     function finish(result) {
@@ -19,6 +21,8 @@
         var callback = pendingCallback;
         pendingCallback = null;
         alertMode = false;
+        choiceMode = false;
+        altButton.hidden = true;
         if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
             lastFocusedElement.focus();
         }
@@ -30,10 +34,17 @@
 
     function openDialog(options) {
         alertMode = !!options.alert;
+        choiceMode = !!options.choice;
         title.textContent = options.title;
         message.textContent = options.message;
         cancelButton.hidden = alertMode;
         confirmButton.textContent = options.confirmLabel;
+        if (choiceMode) {
+            altButton.hidden = false;
+            altButton.textContent = options.altLabel || 'Other';
+        } else {
+            altButton.hidden = true;
+        }
         pendingCallback = options.onResult;
         lastFocusedElement = document.activeElement;
         dialog.hidden = false;
@@ -44,6 +55,7 @@
     window.robominerConfirm = function(dialogMessage, onResult) {
         openDialog({
             alert: false,
+            choice: false,
             title: 'Confirm',
             message: dialogMessage,
             confirmLabel: 'Confirm',
@@ -51,9 +63,22 @@
         });
     };
 
+    window.robominerConfirmChoice = function(dialogMessage, labels, onResult) {
+        openDialog({
+            alert: false,
+            choice: true,
+            title: 'Confirm',
+            message: dialogMessage,
+            confirmLabel: (labels && labels.confirmLabel) || 'Confirm',
+            altLabel: (labels && labels.altLabel) || 'Other',
+            onResult: onResult
+        });
+    };
+
     window.robominerAlert = function(dialogMessage, onDismiss) {
         openDialog({
             alert: true,
+            choice: false,
             title: 'Notice',
             message: dialogMessage,
             confirmLabel: 'OK',
@@ -69,8 +94,13 @@
             finish(false);
         }
     });
+    altButton.addEventListener('click', function() {
+        if (choiceMode) {
+            finish('alt');
+        }
+    });
     confirmButton.addEventListener('click', function() {
-        finish(true);
+        finish(choiceMode ? 'confirm' : true);
     });
     document.addEventListener('keydown', function(event) {
         if (dialog.hidden) {

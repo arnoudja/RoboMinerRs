@@ -85,6 +85,7 @@ fn app_shell_header_marks_active_page_and_includes_atlas() {
             r#"id="app-shell-nav-panel""#,
             r#"href="miningQueue" aria-current="page">Mining queue</a>"#,
             r#"class="robominer-dialog""#,
+            r#"id="robominerDialogAlt""#,
             r#"src="js/common/app_dialog.js?v="#,
         ],
     );

@@ -149,6 +149,20 @@ pub(super) fn render_robot_card(
     body.push_str(&format!(
         r#"<button type="submit" class="mining-queue-btn" name="submitType" value="fill"{disabled_attr}{title_attr}>Fill queue</button>"#
     ));
+    let clearable_count = queue_items.len().saturating_sub(1);
+    let clear_disabled = if clearable_count == 0 {
+        " disabled"
+    } else {
+        ""
+    };
+    let clear_title = if clearable_count == 0 {
+        r#" title="No queued runs to clear""#
+    } else {
+        ""
+    };
+    body.push_str(&format!(
+        r#"<button type="button" class="mining-queue-btn mining-queue-clear-btn" data-clearable-count="{clearable_count}"{clear_disabled}{clear_title}>Clear queue</button>"#
+    ));
     body.push_str(
         r#"<p class="mining-queue-action-help">Fill queue adds runs until this robot's slots are full.</p>"#,
     );
@@ -176,8 +190,9 @@ pub(super) fn render_queue_run_row(
     body.push_str(r#"<div class="mining-queue-run-row">"#);
     if show_remove_button {
         body.push_str(&format!(
-            r#"<button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
+            r#"<button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
             item.mining_queue_id,
+            item.mining_area_id,
             escape_html(&item.area_name)
         ));
     }

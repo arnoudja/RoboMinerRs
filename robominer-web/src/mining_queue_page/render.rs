@@ -144,6 +144,7 @@ pub(super) fn render_mining_queue_page(
     }
 
     body.push_str("</table></div></div>");
+    render_mining_queue_clear_config(&mut body, state);
     body.push_str(&super::scripts::mining_queue_page_script_tag());
     body.push_str("</div>");
 
@@ -155,4 +156,38 @@ pub(super) fn render_mining_queue_page(
         &body,
         &[PageStylesheet::PageWallet, PageStylesheet::MiningQueue],
     )
+}
+
+fn render_mining_queue_clear_config(body: &mut String, state: &MiningQueuePageState) {
+    let mut ores = serde_json::Map::new();
+    for asset in &state.ore_assets {
+        ores.insert(
+            asset.ore_id.to_string(),
+            serde_json::json!({
+                "amount": asset.amount,
+                "maxAllowed": asset.max_allowed,
+            }),
+        );
+    }
+    let mut area_costs = serde_json::Map::new();
+    for cost in &state.costs {
+        let key = cost.mining_area_id.to_string();
+        let entry = area_costs
+            .entry(key)
+            .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+        if let Some(list) = entry.as_array_mut() {
+            list.push(serde_json::json!({
+                "oreId": cost.ore_id,
+                "amount": cost.amount,
+            }));
+        }
+    }
+    let config = serde_json::json!({
+        "ores": ores,
+        "areaCosts": area_costs,
+        "initialOreWalletMax": robominer_db::INITIAL_ORE_WALLET_MAX,
+    });
+    body.push_str(r#"<script type="application/json" id="mining-queue-clear-config">"#);
+    body.push_str(&config.to_string());
+    body.push_str("</script>");
 }

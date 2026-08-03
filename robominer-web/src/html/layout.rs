@@ -52,6 +52,7 @@ fn app_dialog_markup() -> &'static str {
         <p id="robominerDialogMessage" class="robominer-dialog-message"></p>
         <div class="robominer-dialog-actions">
             <button type="button" id="robominerDialogCancel" class="robominer-dialog-btn robominer-dialog-btn-secondary">Cancel</button>
+            <button type="button" id="robominerDialogAlt" class="robominer-dialog-btn robominer-dialog-btn-secondary" hidden>Other</button>
             <button type="button" id="robominerDialogConfirm" class="robominer-dialog-btn robominer-dialog-btn-primary">Confirm</button>
         </div>
     </div>

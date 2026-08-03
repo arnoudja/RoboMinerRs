@@ -132,6 +132,59 @@ async fn load_mining_queue_page_state(
                     }
                 }
             }
+            Some("clear") => {
+                let robot_id = query_i64(request, "robotId").unwrap_or(0);
+                if robot_id > 0 {
+                    let clear_mode = request
+                        .form
+                        .get("clearMode")
+                        .map(String::as_str)
+                        .unwrap_or("all");
+                    let safe_only = clear_mode == "safe";
+                    let items = load_mining_queue_display_items(pool, user_id).await?;
+                    let costs =
+                        robominer_db::list_mining_queue_page_area_costs(pool, user_id).await?;
+                    let mut cost_map: HashMap<i64, Vec<(i64, i32)>> = HashMap::new();
+                    for cost in costs {
+                        cost_map
+                            .entry(cost.mining_area_id)
+                            .or_default()
+                            .push((cost.ore_id, cost.amount));
+                    }
+                    for item in items.iter().filter(|item| {
+                        item.robot_id == robot_id
+                            && item.status == robominer_db::MiningQueueStatus::Queued
+                    }) {
+                        let area_costs = cost_map
+                            .get(&item.mining_area_id)
+                            .map(Vec::as_slice)
+                            .unwrap_or(&[]);
+                        if safe_only
+                            && !robominer_db::ore_refund_fits_without_clamp(
+                                pool, user_id, area_costs,
+                            )
+                            .await?
+                        {
+                            continue;
+                        }
+                        match robominer_db::cancel_mining_queue(
+                            pool,
+                            robominer_db::CancelMiningQueueRequest {
+                                user_id,
+                                mining_queue_id: item.mining_queue_id,
+                            },
+                        )
+                        .await?
+                        {
+                            Ok(_) => {}
+                            Err(rejection) => {
+                                error_message =
+                                    Some(cancel_mining_rejection_message(rejection).to_string());
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
