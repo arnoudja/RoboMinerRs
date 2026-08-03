@@ -157,11 +157,19 @@
 }
 
 .rally-view-stage,
-.rally-view-sidebar {
+.rally-view-sidebar,
+.rally-view-source {
     background: linear-gradient(180deg, rgba(24, 34, 53, 0.96) 0%, rgba(16, 24, 39, 0.98) 100%);
     border: 1px solid var(--mq-border);
     border-radius: 8px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.rally-view-side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
 }
 
 .rally-view-stage {
@@ -560,7 +568,8 @@
 }
 
 .rally-view-source {
-    margin: 0 0 16px;
+    margin: 0;
+    padding: 14px 16px 16px;
 }
 
 .rally-view-source-title {

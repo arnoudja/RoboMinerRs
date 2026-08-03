@@ -57,7 +57,7 @@ pub(super) fn render_rally_view_deck(
         render_rally_view_replay_unavailable(body, payload_kind);
     }
     body.push_str("</section>");
-    body.push_str(r#"<aside class="rally-view-sidebar">"#);
+    body.push_str(r#"<div class="rally-view-side-column">"#);
     if state.viewer_player_number.is_some() {
         render_rally_view_source(
             body,
@@ -65,6 +65,7 @@ pub(super) fn render_rally_view_deck(
             state.viewer_program_source_id,
         );
     }
+    body.push_str(r#"<aside class="rally-view-sidebar">"#);
     body.push_str(r#"<h2 class="rally-view-sidebar-title">Players</h2>"#);
     body.push_str(r#"<div class="rally-view-players">"#);
     for index in 0..4 {
@@ -81,7 +82,7 @@ pub(super) fn render_rally_view_deck(
     }
     body.push_str("</div>");
     render_rally_view_legend(body);
-    body.push_str("</aside></div>");
+    body.push_str("</aside></div></div>");
 }
 
 pub(super) fn rally_player_color_name(player_number: i32) -> &'static str {

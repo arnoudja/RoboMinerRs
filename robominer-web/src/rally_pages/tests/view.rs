@@ -343,6 +343,17 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         source_pos < players_pos,
         "debug source panel should render above player cards"
     );
+    assert!(
+        html.contains(r#"class="rally-view-side-column""#),
+        "source and players should sit in a side column of separate boxes"
+    );
+    let sidebar_pos = html
+        .find(r#"class="rally-view-sidebar""#)
+        .expect("players sidebar missing");
+    assert!(
+        source_pos < sidebar_pos,
+        "debug source box should be outside and above the players sidebar box"
+    );
 }
 
 #[test]
