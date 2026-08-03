@@ -59,13 +59,6 @@ pub(super) fn render_rally_view_deck(
     body.push_str("</section>");
     body.push_str(r#"<div class="rally-view-side-column">"#);
     let show_panel_order = state.viewer_player_number.is_some();
-    if show_panel_order {
-        render_rally_view_source(
-            body,
-            state.viewer_source_code.as_deref(),
-            state.viewer_program_source_id,
-        );
-    }
     body.push_str(r#"<aside class="rally-view-sidebar" id="rallyViewPlayersPanel">"#);
     body.push_str(r#"<div class="rally-view-panel-header">"#);
     body.push_str(r#"<h2 class="rally-view-sidebar-title">Players</h2>"#);
@@ -90,7 +83,15 @@ pub(super) fn render_rally_view_deck(
     }
     body.push_str("</div>");
     render_rally_view_legend(body);
-    body.push_str("</aside></div></div>");
+    body.push_str("</aside>");
+    if show_panel_order {
+        render_rally_view_source(
+            body,
+            state.viewer_source_code.as_deref(),
+            state.viewer_program_source_id,
+        );
+    }
+    body.push_str("</div></div>");
 }
 
 pub(super) fn rally_player_color_name(player_number: i32) -> &'static str {

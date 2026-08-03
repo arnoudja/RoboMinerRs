@@ -7,16 +7,16 @@ function rallyReadSidePanelOrder()
     try
     {
         var stored = window.localStorage.getItem(RALLY_SIDE_PANEL_ORDER_KEY);
-        if (stored === RALLY_SIDE_PANEL_ORDER_PLAYERS)
+        if (stored === RALLY_SIDE_PANEL_ORDER_PROGRAM)
         {
-            return RALLY_SIDE_PANEL_ORDER_PLAYERS;
+            return RALLY_SIDE_PANEL_ORDER_PROGRAM;
         }
     }
     catch (error)
     {
         // Ignore storage access failures (private mode, disabled storage).
     }
-    return RALLY_SIDE_PANEL_ORDER_PROGRAM;
+    return RALLY_SIDE_PANEL_ORDER_PLAYERS;
 }
 
 function rallyWriteSidePanelOrder(order)
@@ -57,9 +57,9 @@ function rallyApplySidePanelOrder(order)
     }
 
     var preferred = order || rallyReadSidePanelOrder();
-    if (preferred !== RALLY_SIDE_PANEL_ORDER_PLAYERS)
+    if (preferred !== RALLY_SIDE_PANEL_ORDER_PROGRAM)
     {
-        preferred = RALLY_SIDE_PANEL_ORDER_PROGRAM;
+        preferred = RALLY_SIDE_PANEL_ORDER_PLAYERS;
     }
 
     if (preferred === RALLY_SIDE_PANEL_ORDER_PLAYERS)

@@ -350,8 +350,8 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         .find(r#"class="rally-view-players""#)
         .expect("players panel missing");
     assert!(
-        source_pos < players_pos,
-        "debug source panel should render above player cards"
+        players_pos < source_pos,
+        "player cards should render above the debug source panel by default"
     );
     assert!(
         html.contains(r#"class="rally-view-side-column""#),
@@ -361,8 +361,8 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         .find(r#"class="rally-view-sidebar""#)
         .expect("players sidebar missing");
     assert!(
-        source_pos < sidebar_pos,
-        "debug source box should be outside and above the players sidebar box"
+        sidebar_pos < source_pos,
+        "players sidebar box should be outside and above the debug source box"
     );
 }
 
