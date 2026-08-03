@@ -172,6 +172,51 @@
     min-width: 0;
 }
 
+.rally-view-panel-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin: 0 0 12px;
+}
+
+.rally-view-panel-header .rally-view-sidebar-title,
+.rally-view-panel-header .rally-view-source-title,
+.rally-view-panel-header .rally-view-legend-title {
+    margin: 0;
+}
+
+.rally-view-panel-order-button {
+    appearance: none;
+    background: rgba(10, 16, 26, 0.95);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    border-radius: 6px;
+    color: #c5d4ea;
+    cursor: pointer;
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+}
+
+.rally-view-panel-order-button:hover:not(:disabled) {
+    border-color: rgba(0, 229, 255, 0.55);
+    color: #e8f4ff;
+}
+
+.rally-view-panel-order-button:focus-visible {
+    border-color: rgba(0, 229, 255, 0.85);
+    box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.35);
+    color: #e8f4ff;
+    outline: none;
+}
+
+.rally-view-panel-order-button:disabled {
+    border-color: rgba(42, 58, 92, 0.7);
+    color: var(--mq-text-muted);
+    cursor: default;
+    opacity: 0.55;
+}
+
 .rally-view-stage {
     padding: 12px;
 }

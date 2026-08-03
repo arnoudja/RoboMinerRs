@@ -11,6 +11,7 @@ const TIMELINE_JS: &str = include_str!("../static/js/rally_animation/timeline.js
 const POSE_JS: &str = include_str!("../static/js/rally_animation/pose.js");
 const TRANSPORT_JS: &str = include_str!("../static/js/rally_animation/transport.js");
 const CONTROLS_JS: &str = include_str!("../static/js/rally_animation/controls.js");
+const SIDE_PANELS_JS: &str = include_str!("../static/js/rally_animation/side_panels.js");
 const PLAYER_JS: &str = include_str!("../static/js/rally_animation/player.js");
 const BOOTSTRAP_JS: &str = include_str!("../static/js/rally_animation/bootstrap.js");
 
@@ -26,6 +27,7 @@ pub fn rally_animation_script_tags() -> String {
         ("js/rally_animation/pose.js", POSE_JS),
         ("js/rally_animation/transport.js", TRANSPORT_JS),
         ("js/rally_animation/controls.js", CONTROLS_JS),
+        ("js/rally_animation/side_panels.js", SIDE_PANELS_JS),
         ("js/rally_animation/player.js", PLAYER_JS),
     ])
 }
@@ -52,6 +54,7 @@ mod tests {
             "js/rally_animation/pose.js",
             "js/rally_animation/transport.js",
             "js/rally_animation/controls.js",
+            "js/rally_animation/side_panels.js",
             "js/rally_animation/player.js",
         ] {
             assert!(
@@ -69,6 +72,8 @@ mod tests {
         assert!(TRANSPORT_JS.contains("function rallySeekToRatio("));
         assert!(TRANSPORT_JS.contains("function rallyWithPausedSeek("));
         assert!(CONTROLS_JS.contains("function rallyBindKeyboardControls("));
+        assert!(SIDE_PANELS_JS.contains("function rallyApplySidePanelOrder("));
+        assert!(SIDE_PANELS_JS.contains("function rallyBindSidePanelOrder("));
         assert!(TIMELINE_JS.contains("function rallyRebuildCpuTimeline("));
         assert!(POSE_JS.contains("function updateRobotPosition("));
         assert!(PAYLOAD_JS.contains("function applyRallyResultPayload("));
@@ -78,5 +83,7 @@ mod tests {
         assert!(DRAW_GROUND_JS.contains("function drawGroundAt("));
         assert!(DEBUG_SOURCE_JS.contains("function updateRallySourceHighlight("));
         assert!(BOOTSTRAP_JS.contains("runanimation()"));
+        assert!(BOOTSTRAP_JS.contains("rallyApplySidePanelOrder()"));
+        assert!(BOOTSTRAP_JS.contains("rallyBindSidePanelOrder()"));
     }
 }

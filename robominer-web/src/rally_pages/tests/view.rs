@@ -49,6 +49,9 @@ fn rally_view_rendering_refuses_legacy_javascript_result_data() {
             "This rally was stored in an older executable format that is no longer played for security reasons.",
         ],
     );
+    assert_html_not_contains(&html, r#"class="rally-view-panel-order-button""#);
+    assert_html_not_contains(&html, r#"id="rallyViewProgramPanel""#);
+    assert_html_contains(&html, r#"id="rallyViewPlayersPanel""#);
 }
 
 #[test]
@@ -314,6 +317,7 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
             r#"class="rally-view-source-line" data-line="2""#,
             "js/rally_animation/debug_status.js",
             "js/rally_animation/debug_source.js",
+            "js/rally_animation/side_panels.js",
             "Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.",
             r#"id="rallySourceStepResult""#,
             r#"class="rally-view-source-return""#,
@@ -329,6 +333,12 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
             r#"href="miningQueue?robotId=7">Mining queue</a>"#,
             r#"href="robot?robotId=7">Robot workshop</a>"#,
             r#"href="miningAreaOverview">Compare areas</a>"#,
+            r#"id="rallyViewProgramPanel""#,
+            r#"id="rallyViewPlayersPanel""#,
+            r#"data-rally-panel="program""#,
+            r#"data-rally-panel="players""#,
+            r#"class="rally-view-panel-order-button""#,
+            r#"class="rally-view-panel-header""#,
         ],
     );
     assert_html_not_contains(&html, "<pre class=\"rally-view-source-code\"");

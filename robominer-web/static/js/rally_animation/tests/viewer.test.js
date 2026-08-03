@@ -286,6 +286,8 @@ describe('rally animation viewer', () => {
             'drawRobot',
             'updateRobotDebugPanel',
             'updateRallyViewerSourceDebug',
+            'rallyApplySidePanelOrder',
+            'rallyBindSidePanelOrder',
         ]) {
             assert.equal(typeof context[name], 'function', name);
         }
@@ -722,5 +724,120 @@ describe('rally animation viewer', () => {
 
         context.updateRallySourceHighlight({ l: 1, c: 1, e: 4 });
         assert.equal(variables.childNodes.length, 0);
+    });
+
+    function installSidePanelDom(document, elements, order = 'program') {
+        const children = [];
+        const column = {
+            className: 'rally-view-side-column',
+            get children() {
+                return children.slice();
+            },
+            appendChild(child) {
+                const idx = children.indexOf(child);
+                if (idx >= 0) {
+                    children.splice(idx, 1);
+                }
+                children.push(child);
+                return child;
+            },
+        };
+
+        function makeButton(panel) {
+            return {
+                className: 'rally-view-panel-order-button',
+                disabled: panel === order,
+                attributes: { 'data-rally-panel': panel },
+                getAttribute(name) {
+                    return this.attributes[name] || null;
+                },
+                closest(sel) {
+                    if (sel === '.rally-view-panel-order-button[data-rally-panel]') {
+                        return this;
+                    }
+                    return null;
+                },
+            };
+        }
+
+        const programButton = makeButton('program');
+        const playersButton = makeButton('players');
+        const programPanel = {
+            id: 'rallyViewProgramPanel',
+            orderButton: programButton,
+        };
+        const playersPanel = {
+            id: 'rallyViewPlayersPanel',
+            orderButton: playersButton,
+        };
+
+        if (order === 'players') {
+            children.push(playersPanel, programPanel);
+        } else {
+            children.push(programPanel, playersPanel);
+        }
+
+        elements.set('rallyViewProgramPanel', programPanel);
+        elements.set('rallyViewPlayersPanel', playersPanel);
+
+        document.querySelector = function querySelector(sel) {
+            if (sel === '.rally-view-side-column') {
+                return column;
+            }
+            if (sel === '.rally-view-stage') {
+                return elements.get('rally-view-stage');
+            }
+            return null;
+        };
+        document.querySelectorAll = function querySelectorAll(sel) {
+            if (sel === '.rally-view-panel-order-button[data-rally-panel]') {
+                return [programButton, playersButton];
+            }
+            return [];
+        };
+
+        return { column, programPanel, playersPanel, programButton, playersButton };
+    }
+
+    it('applies players-first side panel order from storage', () => {
+        const { context, document, elements } = loadRallyViewer();
+        context.localStorage.setItem('robominer.rallySidePanelOrder', 'players');
+        const { column, programPanel, playersPanel, programButton, playersButton } =
+            installSidePanelDom(document, elements);
+
+        context.rallyApplySidePanelOrder();
+
+        assert.equal(column.children[0], playersPanel);
+        assert.equal(column.children[1], programPanel);
+        assert.equal(playersButton.disabled, true);
+        assert.equal(programButton.disabled, false);
+    });
+
+    it('Move up puts players panel first and persists preference', () => {
+        const { context, document, elements } = loadRallyViewer();
+        const { column, programPanel, playersPanel, programButton, playersButton } =
+            installSidePanelDom(document, elements, 'program');
+        const clickListeners = [];
+        document.addEventListener = function addEventListener(type, fn) {
+            if (type === 'click') {
+                clickListeners.push(fn);
+            }
+        };
+
+        context.rallyApplySidePanelOrder('program');
+        context.rallyBindSidePanelOrder();
+        context.rallyBindSidePanelOrder();
+        assert.equal(clickListeners.length, 1);
+
+        clickListeners[0]({ target: playersButton });
+
+        assert.equal(
+            context.localStorage.getItem('robominer.rallySidePanelOrder'),
+            'players'
+        );
+        assert.equal(column.children[0], playersPanel);
+        assert.equal(column.children[1], programPanel);
+        assert.equal(playersButton.disabled, true);
+        assert.equal(programButton.disabled, false);
     });
 });

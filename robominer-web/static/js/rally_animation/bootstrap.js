@@ -1,4 +1,11 @@
 (function() {
+    if (typeof rallyApplySidePanelOrder === 'function') {
+        rallyApplySidePanelOrder();
+    }
+    if (typeof rallyBindSidePanelOrder === 'function') {
+        rallyBindSidePanelOrder();
+    }
+
     function getOreNameFromConfig(oreId, oreNames) {
         if (!oreNames) {
             return '';

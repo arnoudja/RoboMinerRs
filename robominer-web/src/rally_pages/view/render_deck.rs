@@ -58,15 +58,23 @@ pub(super) fn render_rally_view_deck(
     }
     body.push_str("</section>");
     body.push_str(r#"<div class="rally-view-side-column">"#);
-    if state.viewer_player_number.is_some() {
+    let show_panel_order = state.viewer_player_number.is_some();
+    if show_panel_order {
         render_rally_view_source(
             body,
             state.viewer_source_code.as_deref(),
             state.viewer_program_source_id,
         );
     }
-    body.push_str(r#"<aside class="rally-view-sidebar">"#);
+    body.push_str(r#"<aside class="rally-view-sidebar" id="rallyViewPlayersPanel">"#);
+    body.push_str(r#"<div class="rally-view-panel-header">"#);
     body.push_str(r#"<h2 class="rally-view-sidebar-title">Players</h2>"#);
+    if show_panel_order {
+        body.push_str(
+            r#"<button type="button" class="rally-view-panel-order-button" data-rally-panel="players" aria-label="Move players panel above program">Move up</button>"#,
+        );
+    }
+    body.push_str("</div>");
     body.push_str(r#"<div class="rally-view-players">"#);
     for index in 0..4 {
         let is_viewer = state
@@ -118,8 +126,15 @@ fn render_rally_view_source(
     source: Option<&str>,
     program_source_id: Option<i64>,
 ) {
-    body.push_str(r#"<section class="rally-view-source" aria-label="Your program">"#);
+    body.push_str(
+        r#"<section class="rally-view-source" id="rallyViewProgramPanel" aria-label="Your program">"#,
+    );
+    body.push_str(r#"<div class="rally-view-panel-header">"#);
     body.push_str(r#"<h2 class="rally-view-source-title">Your program</h2>"#);
+    body.push_str(
+        r#"<button type="button" class="rally-view-panel-order-button" data-rally-panel="program" aria-label="Move program panel above players">Move up</button>"#,
+    );
+    body.push_str("</div>");
     match source {
         Some(source) if !source.is_empty() => {
             body.push_str(

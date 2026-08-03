@@ -15,6 +15,7 @@ const SCRIPT_FILES = [
     'pose.js',
     'transport.js',
     'controls.js',
+    'side_panels.js',
     'player.js',
 ];
 
@@ -73,6 +74,24 @@ function createCanvas(width, height) {
         height,
         getContext() {
             return createRecordingContext2d();
+        },
+    };
+}
+
+function createMemoryLocalStorage() {
+    const store = new Map();
+    return {
+        getItem(key) {
+            return store.has(key) ? store.get(key) : null;
+        },
+        setItem(key, value) {
+            store.set(String(key), String(value));
+        },
+        removeItem(key) {
+            store.delete(String(key));
+        },
+        clear() {
+            store.clear();
         },
     };
 }
@@ -332,6 +351,7 @@ function loadRallyViewer(options = {}) {
             finished: false,
             speed: 1,
         },
+        localStorage: createMemoryLocalStorage(),
         ...options.globals,
     };
 
