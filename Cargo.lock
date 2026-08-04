@@ -1162,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-db"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "argon2",
  "robominer-test-support",
@@ -1175,7 +1175,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-domain"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "robominer-db",
  "robominer-program",
@@ -1190,7 +1190,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-engine"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1206,7 +1206,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-optimize"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1221,11 +1221,11 @@ dependencies = [
 
 [[package]]
 name = "robominer-program"
-version = "0.4.0"
+version = "0.5.0"
 
 [[package]]
 name = "robominer-sim"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "robominer-program",
  "serde",
@@ -1234,7 +1234,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-test-support"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "robominer-db",
  "robominer-domain",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "robominer-web"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "axum",
  "clap",

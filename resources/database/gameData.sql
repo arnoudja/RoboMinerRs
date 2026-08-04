@@ -643,7 +643,12 @@ values (1102, 1, 'AI-Oxaria', 'if (move(1.5) >= 1) { while (mine()); } else { mo
 
 insert into Robot (id, userId, robotName, sourceCode,
  rechargeTime, maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, robotSize)
-values (1202, 1, 'AI-Lithabine', 'if (move(1.5) >= 1) { while (mine()); } else { move(-1); rotate(41); }',
+values (1202, 1, 'AI-Lithabine',
+'scan(); bool found = false; if (oreType() == 1) { move(oreDistance()); found = true; while (mine()); }
+scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; while (mine()); }
+scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
+if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(robot.rotateSpeed); }
+} else { dump(2); dump(3); }',
  0,            25,     2,           200,      8,        3.0,          1.0,           36,          2.01) ON DUPLICATE KEY UPDATE userId = VALUES(userId), robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), rechargeTime = VALUES(rechargeTime), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), robotSize = VALUES(robotSize);
 
 insert into Robot (id, userId, robotName,
