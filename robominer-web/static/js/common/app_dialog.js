@@ -1,3 +1,9 @@
+/**
+ * App dialogs:
+ * - robominerConfirm(message, cb) -> cb(true|false)
+ * - robominerConfirmChoice(message, {confirmLabel, altLabel}, cb) -> cb('confirm'|'alt'|false)
+ * - robominerAlert(message, cb?) -> cb(true) on dismiss
+ */
 (function() {
     var dialog = document.getElementById('robominerDialog');
     var title = document.getElementById('robominerDialogTitle');
@@ -8,6 +14,11 @@
     var backdrop = document.getElementById('robominerDialogBackdrop');
     if (!dialog || !title || !message || !cancelButton || !altButton || !confirmButton || !backdrop) {
         return;
+    }
+
+    var panel = dialog.querySelector('.robominer-dialog-panel');
+    if (panel && !panel.getAttribute('aria-describedby')) {
+        panel.setAttribute('aria-describedby', 'robominerDialogMessage');
     }
 
     var pendingCallback = null;

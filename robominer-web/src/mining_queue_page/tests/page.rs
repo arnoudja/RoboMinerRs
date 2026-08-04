@@ -148,6 +148,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#""initialOreWalletMax":5"#,
             r#"class="mining-queue-deck""#,
             "Fill queue adds runs until this robot's slots are full.",
+            r#"src="js/mining_queue/clear_wallet.js?v="#,
             r#"src="js/mining_queue/page.js?v="#,
             r#"id="miningArea1" name="miningArea1" class="tableitem mining-queue-area-select""#,
             r#"<input type="hidden" name="infoMiningAreaId" value="20"/>"#,

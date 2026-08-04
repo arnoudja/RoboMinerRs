@@ -60,6 +60,7 @@ pub(crate) async fn dispatch_mining(
                 robominer_db::CancelMiningQueueRequest {
                     user_id,
                     mining_queue_id,
+                    require_refund_fits: false,
                 },
             )
             .await

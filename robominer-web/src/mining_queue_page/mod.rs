@@ -30,6 +30,14 @@ pub(super) struct MiningQueueDisplayItem {
     pub(super) time_left_seconds: i64,
 }
 
+#[derive(Debug, Default)]
+struct CancelBatchResult {
+    cleared: usize,
+    skipped: usize,
+    failed: usize,
+    last_rejection: Option<robominer_db::CancelMiningQueueRejection>,
+}
+
 pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) -> Response {
     let session = match crate::page_context::PageSession::require(
         request,
@@ -109,80 +117,38 @@ async fn load_mining_queue_page_state(
                 let robot_id = query_i64(request, "robotId").unwrap_or(0);
                 if robot_id > 0 {
                     let items = load_mining_queue_display_items(pool, user_id).await?;
-                    for item in items.iter().filter(|item| {
-                        item.robot_id == robot_id
-                            && item.status == robominer_db::MiningQueueStatus::Queued
-                            && selected_queue_item_ids.contains(&item.mining_queue_id)
-                    }) {
-                        match robominer_db::cancel_mining_queue(
-                            pool,
-                            robominer_db::CancelMiningQueueRequest {
-                                user_id,
-                                mining_queue_id: item.mining_queue_id,
-                            },
-                        )
-                        .await?
-                        {
-                            Ok(_) => {}
-                            Err(rejection) => {
-                                error_message =
-                                    Some(cancel_mining_rejection_message(rejection).to_string());
-                            }
-                        }
-                    }
+                    let queue_ids: Vec<i64> = items
+                        .iter()
+                        .filter(|item| {
+                            item.robot_id == robot_id
+                                && item.status == robominer_db::MiningQueueStatus::Queued
+                                && selected_queue_item_ids.contains(&item.mining_queue_id)
+                        })
+                        .map(|item| item.mining_queue_id)
+                        .collect();
+                    let batch = cancel_queued_items(pool, user_id, &queue_ids, false).await?;
+                    error_message = format_cancel_batch_message(&batch);
                 }
             }
             Some("clear") => {
                 let robot_id = query_i64(request, "robotId").unwrap_or(0);
                 if robot_id > 0 {
-                    let clear_mode = request
+                    let require_refund_fits = request
                         .form
                         .get("clearMode")
-                        .map(String::as_str)
-                        .unwrap_or("all");
-                    let safe_only = clear_mode == "safe";
+                        .is_some_and(|value| value == "safe");
                     let items = load_mining_queue_display_items(pool, user_id).await?;
-                    let costs =
-                        robominer_db::list_mining_queue_page_area_costs(pool, user_id).await?;
-                    let mut cost_map: HashMap<i64, Vec<(i64, i32)>> = HashMap::new();
-                    for cost in costs {
-                        cost_map
-                            .entry(cost.mining_area_id)
-                            .or_default()
-                            .push((cost.ore_id, cost.amount));
-                    }
-                    for item in items.iter().filter(|item| {
-                        item.robot_id == robot_id
-                            && item.status == robominer_db::MiningQueueStatus::Queued
-                    }) {
-                        let area_costs = cost_map
-                            .get(&item.mining_area_id)
-                            .map(Vec::as_slice)
-                            .unwrap_or(&[]);
-                        if safe_only
-                            && !robominer_db::ore_refund_fits_without_clamp(
-                                pool, user_id, area_costs,
-                            )
-                            .await?
-                        {
-                            continue;
-                        }
-                        match robominer_db::cancel_mining_queue(
-                            pool,
-                            robominer_db::CancelMiningQueueRequest {
-                                user_id,
-                                mining_queue_id: item.mining_queue_id,
-                            },
-                        )
-                        .await?
-                        {
-                            Ok(_) => {}
-                            Err(rejection) => {
-                                error_message =
-                                    Some(cancel_mining_rejection_message(rejection).to_string());
-                            }
-                        }
-                    }
+                    let queue_ids: Vec<i64> = items
+                        .iter()
+                        .filter(|item| {
+                            item.robot_id == robot_id
+                                && item.status == robominer_db::MiningQueueStatus::Queued
+                        })
+                        .map(|item| item.mining_queue_id)
+                        .collect();
+                    let batch =
+                        cancel_queued_items(pool, user_id, &queue_ids, require_refund_fits).await?;
+                    error_message = format_cancel_batch_message(&batch);
                 }
             }
             _ => {}
@@ -217,6 +183,82 @@ async fn load_mining_queue_page_state(
         error_message,
         claimed_results: claim_result,
     })
+}
+
+async fn cancel_queued_items(
+    pool: &robominer_db::MySqlPool,
+    user_id: i64,
+    mining_queue_ids: &[i64],
+    require_refund_fits: bool,
+) -> Result<CancelBatchResult, crate::page_context::PageLoadError> {
+    let mut batch = CancelBatchResult::default();
+    for &mining_queue_id in mining_queue_ids {
+        match robominer_db::cancel_mining_queue(
+            pool,
+            robominer_db::CancelMiningQueueRequest {
+                user_id,
+                mining_queue_id,
+                require_refund_fits,
+            },
+        )
+        .await?
+        {
+            Ok(_) => batch.cleared += 1,
+            Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp) => {
+                batch.skipped += 1;
+            }
+            Err(rejection) => {
+                batch.failed += 1;
+                batch.last_rejection = Some(rejection);
+            }
+        }
+    }
+    Ok(batch)
+}
+
+fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<String> {
+    if batch.cleared == 0 && batch.skipped == 0 && batch.failed == 0 {
+        return None;
+    }
+    if batch.failed == 0 && batch.skipped == 0 {
+        return None;
+    }
+
+    let mut parts = Vec::new();
+    if batch.cleared > 0 {
+        parts.push(format!(
+            "Cleared {} queued run{}.",
+            batch.cleared,
+            if batch.cleared == 1 { "" } else { "s" }
+        ));
+    }
+    if batch.skipped > 0 {
+        if batch.cleared == 0 {
+            parts.push(
+                "No queued runs cleared; refunds would exceed your wallet maximum.".to_string(),
+            );
+        } else {
+            parts.push(format!(
+                "{} left in queue to avoid losing ore.",
+                batch.skipped
+            ));
+        }
+    }
+    if batch.failed > 0 {
+        let detail = batch
+            .last_rejection
+            .map(cancel_mining_rejection_message)
+            .unwrap_or("Unable to cancel mining queue item.");
+        if batch.cleared == 0 && batch.skipped == 0 {
+            parts.push(detail.to_string());
+        } else {
+            parts.push(format!(
+                "{} could not be canceled ({detail}).",
+                batch.failed
+            ));
+        }
+    }
+    Some(parts.join(" "))
 }
 
 async fn load_mining_queue_display_items(
@@ -290,4 +332,50 @@ pub(super) fn cancel_mining_rejection_message(
     rejection: robominer_db::CancelMiningQueueRejection,
 ) -> &'static str {
     robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message(rejection)
+}
+
+#[cfg(test)]
+mod batch_message_tests {
+    use super::*;
+
+    #[test]
+    fn format_cancel_batch_message_covers_partial_outcomes() {
+        assert_eq!(
+            format_cancel_batch_message(&CancelBatchResult::default()),
+            None
+        );
+        assert_eq!(
+            format_cancel_batch_message(&CancelBatchResult {
+                cleared: 2,
+                ..CancelBatchResult::default()
+            }),
+            None
+        );
+        assert_eq!(
+            format_cancel_batch_message(&CancelBatchResult {
+                cleared: 2,
+                skipped: 1,
+                ..CancelBatchResult::default()
+            })
+            .as_deref(),
+            Some("Cleared 2 queued runs. 1 left in queue to avoid losing ore.")
+        );
+        assert_eq!(
+            format_cancel_batch_message(&CancelBatchResult {
+                skipped: 2,
+                ..CancelBatchResult::default()
+            })
+            .as_deref(),
+            Some("No queued runs cleared; refunds would exceed your wallet maximum.")
+        );
+        let failed = format_cancel_batch_message(&CancelBatchResult {
+            cleared: 1,
+            failed: 1,
+            last_rejection: Some(robominer_db::CancelMiningQueueRejection::NotCancelable),
+            ..CancelBatchResult::default()
+        })
+        .expect("message");
+        assert!(failed.starts_with("Cleared 1 queued run."));
+        assert!(failed.contains("1 could not be canceled"));
+    }
 }

@@ -252,6 +252,9 @@ pub fn cancel_mining_queue_rejection_player_message(
         robominer_db::CancelMiningQueueRejection::NotCancelable => {
             "Unable to cancel mining queue item: The mining queue item is not cancelable."
         }
+        robominer_db::CancelMiningQueueRejection::RefundWouldClamp => {
+            "Unable to cancel mining queue item: refund would exceed your wallet maximum."
+        }
     }
 }
 
@@ -265,6 +268,9 @@ pub fn cancel_mining_queue_rejection_cli_message(
         }
         robominer_db::CancelMiningQueueRejection::NotCancelable => {
             "mining queue item is not cancelable"
+        }
+        robominer_db::CancelMiningQueueRejection::RefundWouldClamp => {
+            "cancel would clamp ore refund past maxAllowed"
         }
     }
 }
@@ -428,6 +434,7 @@ mod tests {
             robominer_db::CancelMiningQueueRejection::UnknownQueue,
             robominer_db::CancelMiningQueueRejection::WrongOwner,
             robominer_db::CancelMiningQueueRejection::NotCancelable,
+            robominer_db::CancelMiningQueueRejection::RefundWouldClamp,
         ] {
             assert!(!cancel_mining_queue_rejection_player_message(rejection).is_empty());
             assert!(!cancel_mining_queue_rejection_cli_message(rejection).is_empty());

@@ -269,6 +269,7 @@ async fn cancel_mining_queue_deletes_only_queued_item() {
         CancelMiningQueueRequest {
             user_id,
             mining_queue_id: fixture.queued_queue_id,
+            require_refund_fits: false,
         },
     )
     .await
@@ -320,6 +321,7 @@ async fn cancel_mining_queue_refunds_ore_cost() {
         CancelMiningQueueRequest {
             user_id,
             mining_queue_id: fixture.queued_queue_id,
+            require_refund_fits: false,
         },
     )
     .await
@@ -365,6 +367,7 @@ async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
         CancelMiningQueueRequest {
             user_id,
             mining_queue_id: fixture.queued_queue_id,
+            require_refund_fits: false,
         },
     )
     .await
@@ -379,6 +382,53 @@ async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
             .await
             .expect("ore amount should load");
     assert_eq!(amount, 10, "refund must not exceed maxAllowed");
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn cancel_mining_queue_require_refund_fits_skips_clamp() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-db-cancel-fit");
+    let user_id = insert_user_with_credentials(
+        &pool,
+        &format!("{prefix}-user"),
+        &format!("{prefix}@example.invalid"),
+        "test-password",
+    )
+    .await;
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    insert_user_ore_asset(&pool, user_id, fixture.inner.ore_id, 10, 10).await;
+
+    let result = robominer_db::cancel_mining_queue(
+        &pool,
+        CancelMiningQueueRequest {
+            user_id,
+            mining_queue_id: fixture.queued_queue_id,
+            require_refund_fits: true,
+        },
+    )
+    .await
+    .expect("cancel should not fail at sql layer");
+    assert_eq!(
+        result,
+        Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp)
+    );
+
+    let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(fixture.queued_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("queued row should remain");
+    assert_eq!(remaining, 1);
 
     fixture.inner.cleanup(&pool, true).await;
 }

@@ -178,26 +178,30 @@ pub(crate) async fn refund_full_ore_costs(
 /// Returns true when refunding `costs` would not clamp any ore against `maxAllowed`.
 ///
 /// Missing wallet rows are treated like a new asset capped at [`INITIAL_ORE_WALLET_MAX`].
-pub async fn ore_refund_fits_without_clamp(
-    pool: &MySqlPool,
+/// Must stay aligned with the client preview in `mining_queue/clear_wallet.js`.
+pub(crate) async fn ore_refund_fits_without_clamp_tx(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
-    costs: &[(i64, i32)],
+    costs: &[OrePriceCost],
 ) -> Result<bool, sqlx::Error> {
     use std::collections::HashMap;
 
     let mut projected: HashMap<i64, (i32, i32)> = HashMap::new();
-    for &(ore_id, refund) in costs {
+    for cost in costs {
+        let ore_id = cost.ore_id;
+        let refund = cost.amount;
         let entry = if let Some(existing) = projected.get(&ore_id).copied() {
             existing
         } else {
             let asset: Option<(i32, i32)> = sqlx::query_as(
                 "SELECT amount, maxAllowed \
                  FROM UserOreAsset \
-                 WHERE userId = ? AND oreId = ?",
+                 WHERE userId = ? AND oreId = ? \
+                 FOR UPDATE",
             )
             .bind(user_id)
             .bind(ore_id)
-            .fetch_optional(pool)
+            .fetch_optional(&mut **transaction)
             .await?;
             match asset {
                 Some((amount, max_allowed)) => (amount, max_allowed),
@@ -211,6 +215,22 @@ pub async fn ore_refund_fits_without_clamp(
         projected.insert(ore_id, (amount + refund, max_allowed));
     }
     Ok(true)
+}
+
+/// Pool convenience wrapper (locks then rolls back). Prefer the transactional check inside cancel.
+pub async fn ore_refund_fits_without_clamp(
+    pool: &MySqlPool,
+    user_id: i64,
+    costs: &[(i64, i32)],
+) -> Result<bool, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+    let ore_costs: Vec<OrePriceCost> = costs
+        .iter()
+        .map(|&(ore_id, amount)| OrePriceCost { ore_id, amount })
+        .collect();
+    let fits = ore_refund_fits_without_clamp_tx(&mut transaction, user_id, &ore_costs).await?;
+    transaction.rollback().await?;
+    Ok(fits)
 }
 
 async fn refund_ore_costs(

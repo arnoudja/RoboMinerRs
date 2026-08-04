@@ -149,7 +149,10 @@ pub(super) fn render_robot_card(
     body.push_str(&format!(
         r#"<button type="submit" class="mining-queue-btn" name="submitType" value="fill"{disabled_attr}{title_attr}>Fill queue</button>"#
     ));
-    let clearable_count = queue_items.len().saturating_sub(1);
+    let clearable_count = queue_items
+        .iter()
+        .filter(|item| item.status == robominer_db::MiningQueueStatus::Queued)
+        .count();
     let clear_disabled = if clearable_count == 0 {
         " disabled"
     } else {

@@ -37,4 +37,8 @@ fn cancel_mining_rejection_messages_match_legacy_copy() {
         cancel_mining_rejection_message(robominer_db::CancelMiningQueueRejection::NotCancelable),
         "Unable to cancel mining queue item: The mining queue item is not cancelable."
     );
+    assert_eq!(
+        cancel_mining_rejection_message(robominer_db::CancelMiningQueueRejection::RefundWouldClamp),
+        "Unable to cancel mining queue item: refund would exceed your wallet maximum."
+    );
 }

@@ -4,7 +4,8 @@ use crate::users::touch_user_last_login_time;
 
 use super::read::mining_queue_item_cancelable;
 use crate::assets::{
-    can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_full_ore_costs,
+    can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, ore_refund_fits_without_clamp_tx,
+    refund_full_ore_costs,
 };
 use crate::{
     CancelMiningQueueRejection, CancelMiningQueueRequest, CanceledMiningQueue,
@@ -134,6 +135,12 @@ pub async fn cancel_mining_queue(
         return Ok(Err(CancelMiningQueueRejection::UnknownQueue));
     };
     let costs = list_ore_price_amounts(&mut transaction, ore_price_id).await?;
+    if request.require_refund_fits
+        && !ore_refund_fits_without_clamp_tx(&mut transaction, request.user_id, &costs).await?
+    {
+        transaction.rollback().await?;
+        return Ok(Err(CancelMiningQueueRejection::RefundWouldClamp));
+    }
     refund_full_ore_costs(&mut transaction, request.user_id, &costs).await?;
 
     sqlx::query("DELETE FROM MiningQueue WHERE id = ?")

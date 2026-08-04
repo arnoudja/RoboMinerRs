@@ -17,6 +17,7 @@ const PAGE_SCRIPTS = [
     'edit_code/page.js',
     'robot/page.js',
     'shop/page.js',
+    'mining_queue/clear_wallet.js',
     'mining_queue/page.js',
     'mining_results/page.js',
     'mining_area_atlas/page.js',

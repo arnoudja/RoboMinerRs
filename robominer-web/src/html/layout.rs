@@ -47,7 +47,7 @@ pub(crate) fn layout(
 fn app_dialog_markup() -> &'static str {
     r#"<div id="robominerDialog" class="robominer-dialog" hidden>
     <button type="button" class="robominer-dialog-backdrop" id="robominerDialogBackdrop" aria-label="Close dialog"></button>
-    <div class="robominer-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="robominerDialogTitle">
+    <div class="robominer-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="robominerDialogTitle" aria-describedby="robominerDialogMessage">
         <h2 id="robominerDialogTitle" class="robominer-dialog-title">Confirm</h2>
         <p id="robominerDialogMessage" class="robominer-dialog-message"></p>
         <div class="robominer-dialog-actions">

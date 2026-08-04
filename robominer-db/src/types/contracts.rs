@@ -24,6 +24,8 @@ pub enum EnqueueMiningRejection {
 pub struct CancelMiningQueueRequest {
     pub user_id: i64,
     pub mining_queue_id: i64,
+    /// When true, cancel only if the full area-cost refund fits without clamping to maxAllowed.
+    pub require_refund_fits: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +38,8 @@ pub enum CancelMiningQueueRejection {
     UnknownQueue,
     WrongOwner,
     NotCancelable,
+    /// Refund would exceed wallet maxAllowed (only when `require_refund_fits` is set).
+    RefundWouldClamp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

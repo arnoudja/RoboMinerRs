@@ -134,22 +134,27 @@
         }
     }
 
-    function submitQueuedRunRemoval(form, queueItemId) {
-        var staleInputs = form.querySelectorAll('input[data-mining-queue-remove="true"]');
+    function submitFormWithHiddenFields(form, markerAttr, fields) {
+        var staleInputs = form.querySelectorAll('input[' + markerAttr + '="true"]');
         for (var staleIndex = 0; staleIndex < staleInputs.length; staleIndex += 1) {
             staleInputs[staleIndex].remove();
         }
-        function addHidden(name, value) {
+        Object.keys(fields).forEach(function(name) {
             var input = document.createElement('input');
             input.type = 'hidden';
             input.name = name;
-            input.value = value;
-            input.setAttribute('data-mining-queue-remove', 'true');
+            input.value = fields[name];
+            input.setAttribute(markerAttr, 'true');
             form.appendChild(input);
-        }
-        addHidden('selectedQueueItemId', queueItemId);
-        addHidden('submitType', 'remove');
+        });
         form.submit();
+    }
+
+    function submitQueuedRunRemoval(form, queueItemId) {
+        submitFormWithHiddenFields(form, 'data-mining-queue-remove', {
+            selectedQueueItemId: queueItemId,
+            submitType: 'remove'
+        });
     }
 
     function removeQueuedRun(button) {
@@ -180,114 +185,27 @@
     }
 
     function readClearConfig() {
+        var empty = { ores: {}, areaCosts: {}, initialOreWalletMax: 0 };
         var configEl = document.getElementById('mining-queue-clear-config');
         if (!configEl) {
-            return { ores: {}, areaCosts: {}, initialOreWalletMax: 5 };
+            return empty;
         }
         try {
-            return JSON.parse(configEl.textContent || '{}');
+            var parsed = JSON.parse(configEl.textContent || '{}');
+            if (!parsed || typeof parsed !== 'object') {
+                return empty;
+            }
+            return parsed;
         } catch (error) {
-            return { ores: {}, areaCosts: {}, initialOreWalletMax: 5 };
+            return empty;
         }
-    }
-
-    function cloneWallet(config) {
-        var wallet = {};
-        var ores = config.ores || {};
-        Object.keys(ores).forEach(function(oreId) {
-            var ore = ores[oreId] || {};
-            wallet[oreId] = {
-                amount: Number(ore.amount) || 0,
-                maxAllowed: Number(ore.maxAllowed) || 0
-            };
-        });
-        return wallet;
-    }
-
-    function areaCostsFor(config, areaId) {
-        var areaCosts = config.areaCosts || {};
-        return areaCosts[String(areaId)] || [];
-    }
-
-    function refundFitsWallet(wallet, costs, initialMax) {
-        var projected = {};
-        for (var index = 0; index < costs.length; index += 1) {
-            var cost = costs[index];
-            var oreId = String(cost.oreId);
-            var refund = Number(cost.amount) || 0;
-            var current = projected[oreId];
-            if (!current) {
-                if (wallet[oreId]) {
-                    current = {
-                        amount: wallet[oreId].amount,
-                        maxAllowed: wallet[oreId].maxAllowed
-                    };
-                } else {
-                    current = {
-                        amount: 0,
-                        maxAllowed: Number(initialMax) || 5
-                    };
-                }
-            }
-            if (current.amount + refund > current.maxAllowed) {
-                return false;
-            }
-            projected[oreId] = {
-                amount: current.amount + refund,
-                maxAllowed: current.maxAllowed
-            };
-        }
-        return true;
-    }
-
-    function applyRefundToWallet(wallet, costs, initialMax) {
-        for (var index = 0; index < costs.length; index += 1) {
-            var cost = costs[index];
-            var oreId = String(cost.oreId);
-            var refund = Number(cost.amount) || 0;
-            if (!wallet[oreId]) {
-                wallet[oreId] = {
-                    amount: 0,
-                    maxAllowed: Number(initialMax) || 5
-                };
-            }
-            wallet[oreId].amount = Math.min(
-                wallet[oreId].maxAllowed,
-                wallet[oreId].amount + refund
-            );
-        }
-    }
-
-    function clearingAllWouldLoseOre(config, clearButtons) {
-        var wallet = cloneWallet(config);
-        var initialMax = config.initialOreWalletMax;
-        for (var index = 0; index < clearButtons.length; index += 1) {
-            var areaId = clearButtons[index].getAttribute('data-mining-area-id');
-            var costs = areaCostsFor(config, areaId);
-            if (!refundFitsWallet(wallet, costs, initialMax)) {
-                return true;
-            }
-            applyRefundToWallet(wallet, costs, initialMax);
-        }
-        return false;
     }
 
     function submitQueueClear(form, clearMode) {
-        var staleInputs = form.querySelectorAll('input[data-mining-queue-clear="true"]');
-        for (var staleIndex = 0; staleIndex < staleInputs.length; staleIndex += 1) {
-            staleInputs[staleIndex].remove();
-        }
-        function addHidden(name, value) {
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = value;
-            input.setAttribute('data-mining-queue-clear', 'true');
-            form.appendChild(input);
-        }
-        addHidden('submitType', 'clear');
-        addHidden('clearMode', clearMode);
-        form.submit();
+        submitFormWithHiddenFields(form, 'data-mining-queue-clear', {
+            submitType: 'clear',
+            clearMode: clearMode
+        });
     }
 
     function clearQueuedRuns(button) {
@@ -299,8 +217,16 @@
         if (!removeButtons.length) {
             return;
         }
+        var clearHelpers = window.RoboMinerMiningQueueClear;
+        if (!clearHelpers) {
+            return;
+        }
         var config = readClearConfig();
-        var wouldLoseOre = clearingAllWouldLoseOre(config, removeButtons);
+        var areaIds = [];
+        for (var buttonIndex = 0; buttonIndex < removeButtons.length; buttonIndex += 1) {
+            areaIds.push(removeButtons[buttonIndex].getAttribute('data-mining-area-id'));
+        }
+        var wouldLoseOre = clearHelpers.clearingAllWouldLoseOre(config, areaIds);
 
         function proceed(clearMode) {
             submitQueueClear(form, clearMode);
@@ -309,6 +235,8 @@
         if (wouldLoseOre) {
             var lossMessage =
                 'Clearing this queue would refund ore past your wallet maximum, so some ore would be lost. Clear all queued runs anyway, or only clear runs that fit without losing ore?';
+            // Three-way choice requires robominerConfirmChoice; do not degrade to
+            // window.confirm (that cannot offer the safe-clear path).
             if (typeof window.robominerConfirmChoice === 'function') {
                 window.robominerConfirmChoice(
                     lossMessage,
@@ -324,10 +252,6 @@
                         }
                     }
                 );
-                return;
-            }
-            if (window.confirm(lossMessage + '\n\nOK = Clear all, Cancel = abort')) {
-                proceed('all');
             }
             return;
         }
