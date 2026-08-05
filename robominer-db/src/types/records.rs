@@ -208,6 +208,7 @@ pub struct MiningAreaRecord {
     pub max_moves: i32,
     pub mining_time: i32,
     pub tax_rate: i32,
+    pub score_ore_target: i32,
     pub ai_robot_id: i64,
 }
 

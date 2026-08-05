@@ -379,7 +379,7 @@ fn process_dump_at_home_fills_depot_up_to_capacity() {
     assert_eq!(ground.at(0, 0).ore_at(0), 0);
     assert!(change.is_none());
     assert_eq!(robot.result_ore()[0], 7);
-    assert!(robot.calculate_score() > 0.0);
+    assert!(robot.calculate_score(30) > 0.0);
 }
 
 #[test]

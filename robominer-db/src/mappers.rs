@@ -4,7 +4,7 @@ use sqlx::mysql::MySqlRow;
 use crate::types::*;
 
 pub(crate) type ProgramSourceRow = (i64, i64, String, Option<String>, bool, i32, Option<String>);
-pub(crate) type MiningAreaRow = (i64, String, i64, i32, i32, i32, i32, i32, i64);
+pub(crate) type MiningAreaRow = (i64, String, i64, i32, i32, i32, i32, i32, i32, i64);
 pub(crate) type PoolRow = (i64, i64, i32);
 pub(crate) type PoolItemRow = (i64, i64, i64, String, f64, i32);
 pub(crate) type MiningRallyQueueRow = (
@@ -187,6 +187,7 @@ pub(crate) fn mining_area_record(
         max_moves,
         mining_time,
         tax_rate,
+        score_ore_target,
         ai_robot_id,
     ): MiningAreaRow,
 ) -> MiningAreaRecord {
@@ -199,6 +200,7 @@ pub(crate) fn mining_area_record(
         max_moves,
         mining_time,
         tax_rate,
+        score_ore_target,
         ai_robot_id,
     }
 }

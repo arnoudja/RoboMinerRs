@@ -22,6 +22,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "004_ore_depot_capacity",
         include_str!("../../resources/database/migrations/004_ore_depot_capacity.sql"),
     ),
+    (
+        "005_mining_area_score_ore_target",
+        include_str!("../../resources/database/migrations/005_mining_area_score_ore_target.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -263,7 +267,8 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
     let has_scan_speed = column_exists(pool, "Robot", "scanSpeed").await?;
     let has_scan_time = column_exists(pool, "Robot", "scanTime").await?;
     let has_session_version = column_exists(pool, "User", "sessionVersion").await?;
-    Ok(!has_scan_speed && has_scan_time && has_session_version)
+    let has_score_ore_target = column_exists(pool, "MiningArea", "scoreOreTarget").await?;
+    Ok(!has_scan_speed && has_scan_time && has_session_version && has_score_ore_target)
 }
 
 async fn table_exists(pool: &MySqlPool, table_name: &str) -> Result<bool, MigrateError> {

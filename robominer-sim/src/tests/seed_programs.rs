@@ -130,9 +130,9 @@ fn seeded_multi_robot_rally_mines_scores_and_avoids_overlap() {
     assert!(simulation.robot(2).ore_at(2) > 0);
     assert_eq!(simulation.ground().at(1, 1).ore_at(0), 0);
     assert_eq!(simulation.ground().at(1, 6).ore_at(1), 0);
-    assert!(simulation.robot(0).calculate_score() > 0.0);
-    assert!(simulation.robot(1).calculate_score() > 0.0);
-    assert!(simulation.robot(2).calculate_score() > 0.0);
+    assert!(simulation.robot(0).calculate_score(30) > 0.0);
+    assert!(simulation.robot(1).calculate_score(30) > 0.0);
+    assert!(simulation.robot(2).calculate_score(30) > 0.0);
 
     for robot in 0..3 {
         assert!(

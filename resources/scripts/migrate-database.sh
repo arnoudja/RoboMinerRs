@@ -101,7 +101,8 @@ column_exists() {
 schema_already_current() {
     mysql_app -N -e "SELECT 1 FROM User LIMIT 1" >/dev/null 2>&1 \
         && column_exists Robot scanTime \
-        && ! column_exists Robot scanSpeed
+        && ! column_exists Robot scanSpeed \
+        && column_exists MiningArea scoreOreTarget
 }
 
 is_applied() {

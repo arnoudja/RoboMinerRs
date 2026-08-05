@@ -56,7 +56,24 @@ fn dump_all_returns_carried_ore_to_current_ground_unit() {
 fn score_matches_legacy_ore_tiers() {
     let ore = ore_amounts(&[(0, 35), (1, 100), (2, 500)]);
 
-    assert_close(calculate_score(ore), 999.99);
+    assert_close(calculate_score(ore, 30), 999.99);
+}
+
+#[test]
+fn score_scales_with_ore_target() {
+    let ore = ore_amounts(&[(0, 35), (1, 100), (2, 500)]);
+
+    assert_close(calculate_score(ore, 30), 999.99);
+    assert_ne!(
+        calculate_score(ore, 15),
+        calculate_score(ore, 30),
+        "halving the ore target must change the score"
+    );
+
+    // With T=15, 15 high ore fills the 900-point tier; 20 overflow doubles into mid.
+    let half_target = ore_amounts(&[(0, 15)]);
+    assert_close(calculate_score(half_target, 15), 900.0);
+    assert_close(calculate_score(half_target, 30), 450.0);
 }
 
 #[test]

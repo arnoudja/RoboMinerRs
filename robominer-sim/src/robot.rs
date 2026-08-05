@@ -203,8 +203,8 @@ impl Robot {
         &self.actions_done
     }
 
-    pub fn calculate_score(&self) -> f64 {
-        calculate_score(self.result_ore())
+    pub fn calculate_score(&self, score_ore_target: i32) -> f64 {
+        calculate_score(self.result_ore(), score_ore_target)
     }
 
     pub(crate) fn is_at_home(&self) -> bool {

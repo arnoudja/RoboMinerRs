@@ -184,7 +184,11 @@ pub(crate) fn simulate_source_file(options: SimulateSourceOptions) -> Result<()>
             position.orientation
         );
         println!("robot {} ore: {:?}", index + 1, robot.ore());
-        println!("robot {} score: {:.3}", index + 1, robot.calculate_score());
+        println!(
+            "robot {} score: {:.3}",
+            index + 1,
+            robot.calculate_score(30)
+        );
         println!(
             "robot {} actions: wait={} forward={} backward={} rotate_right={} rotate_left={} mine={} dump={}",
             index + 1,

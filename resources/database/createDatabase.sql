@@ -215,6 +215,7 @@ sizeY INT NOT NULL,
 maxMoves INT NOT NULL,
 miningTime INT NOT NULL,
 taxRate INT NOT NULL,
+scoreOreTarget INT NOT NULL DEFAULT 30,
 aiRobotId INT NOT NULL REFERENCES Robot (id)
 );
 

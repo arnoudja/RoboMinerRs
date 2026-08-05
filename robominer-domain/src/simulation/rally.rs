@@ -73,7 +73,12 @@ fn run_rally_simulation(
     };
 
     Ok(RallyRun {
-        outcome: rally_outcome(loadout.mining_area.area.id, simulation, participants),
+        outcome: rally_outcome(
+            loadout.mining_area.area.id,
+            loadout.mining_area.area.score_ore_target,
+            simulation,
+            participants,
+        ),
         result_data,
     })
 }
@@ -121,6 +126,7 @@ struct RallyParticipant {
 
 fn rally_outcome(
     mining_area_id: i64,
+    score_ore_target: i32,
     simulation: Simulation,
     participants: Vec<RallyParticipant>,
 ) -> RallyOutcome {
@@ -137,7 +143,7 @@ fn rally_outcome(
                 is_ai: participant.is_ai,
                 position: robot.position(),
                 ore: robot.result_ore(),
-                score: robot.calculate_score(),
+                score: robot.calculate_score(score_ore_target),
                 actions_done: *robot.actions_done(),
             }
         })

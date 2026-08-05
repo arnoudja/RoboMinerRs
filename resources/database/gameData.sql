@@ -663,8 +663,8 @@ values (3, 1, 'AI-3',
 -- Cerbonium
 insert into OrePrice (id, description) values (10001, 'Mining Area Cerbonium-mini price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 -- No OrePriceAmount values, Cerbonium-mini mining is deliberately free
-insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1001, 'Cerbonium-mini', 10001,      10,    10,    20,       5,          25,      1002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1001, 'Cerbonium-mini', 10001,      10,    10,    20,       5,          25,      5,              1002) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1001,         1,     4,      4);
 

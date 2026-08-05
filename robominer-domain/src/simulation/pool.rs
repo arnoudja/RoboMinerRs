@@ -97,7 +97,7 @@ fn pool_rally_outcome(
                 player_number,
                 pool_item_id: item.item.id,
                 robot_id: item.robot.robot.id,
-                score: robot.calculate_score(),
+                score: robot.calculate_score(loadout.mining_area.area.score_ore_target),
                 ore_results: pool_item_ore_results(&ore_ids, &robot.result_ore()),
             }
         })
