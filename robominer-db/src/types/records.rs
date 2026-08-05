@@ -263,6 +263,7 @@ pub struct MiningQueuePageAreaRecord {
     pub max_moves: i32,
     pub size_x: i32,
     pub size_y: i32,
+    pub score_ore_target: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

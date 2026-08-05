@@ -71,11 +71,13 @@ pub(super) fn render_mining_area_details(
         r#"<tr><td>Mining time:</td><td colspan="3">{}</td></tr>
 <tr><td>Mining cycles:</td><td colspan="3">{}</td></tr>
 <tr><td>Area size:</td><td colspan="3">{} x {}</td></tr>
+<tr><td>Ore target:</td><td colspan="3">{}</td></tr>
 <tr><td colspan="4">Available ore:</td></tr>"#,
         format_period(area.mining_time),
         area.max_moves,
         area.size_x,
-        area.size_y
+        area.size_y,
+        area.score_ore_target
     ));
     for supply in supplies {
         body.push_str(&format!(

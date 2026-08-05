@@ -59,6 +59,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     max_moves: 50,
                     size_x: 10,
                     size_y: 11,
+                    score_ore_target: 30,
                 },
                 robominer_db::MiningQueuePageAreaRecord {
                     mining_area_id: 21,
@@ -68,6 +69,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     max_moves: 20,
                     size_x: 6,
                     size_y: 7,
+                    score_ore_target: 15,
                 },
             ],
             costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
@@ -159,6 +161,9 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"class="mining-queue-area-panel mining-queue-area-panel-active"><tr><td colspan="4">Upfront costs:</td></tr>"#,
             r#"Upfront costs:</td></tr><tr><td></td><td>Ore &amp; Two:</td><td>30</td>"#,
             r#"class="mining-queue-area-panel"><tr><td>Tax rate:</td><td colspan="3">5%</td></tr>"#,
+            r#"Area size:</td><td colspan="3">10 x 11</td></tr>
+<tr><td>Ore target:</td><td colspan="3">30</td></tr>
+<tr><td colspan="4">Available ore:</td></tr>"#,
             r#"class="mining-queue-page" data-area-storage-key="#,
             r#"class="page-wallet mining-queue-wallet""#,
             r#"class="mining-queue-card""#,
@@ -229,6 +234,7 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
                 max_moves: 10,
                 size_x: 5,
                 size_y: 5,
+                score_ore_target: 30,
             }],
             costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
                 mining_area_id: 20,
@@ -300,6 +306,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     max_moves: 10,
                     size_x: 5,
                     size_y: 5,
+                    score_ore_target: 30,
                 },
                 robominer_db::MiningQueuePageAreaRecord {
                     mining_area_id: 21,
@@ -309,6 +316,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     max_moves: 10,
                     size_x: 5,
                     size_y: 5,
+                    score_ore_target: 30,
                 },
             ],
             costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
