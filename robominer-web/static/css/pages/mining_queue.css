@@ -221,7 +221,7 @@
     align-items: center;
     display: grid;
     gap: 8px 12px;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
     max-width: 100%;
     min-width: 0;
     width: 100%;
@@ -229,6 +229,14 @@
 
 .mining-queue-run-active .mining-queue-run-row {
     grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.mining-queue-item-check {
+    accent-color: var(--mq-accent);
+    cursor: pointer;
+    height: 1rem;
+    margin: 0;
+    width: 1rem;
 }
 
 .mining-queue-progress {

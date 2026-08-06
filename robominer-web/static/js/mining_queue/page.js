@@ -140,14 +140,27 @@
             staleInputs[staleIndex].remove();
         }
         Object.keys(fields).forEach(function(name) {
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = fields[name];
-            input.setAttribute(markerAttr, 'true');
-            form.appendChild(input);
+            var value = fields[name];
+            var values = Array.isArray(value) ? value : [value];
+            for (var valueIndex = 0; valueIndex < values.length; valueIndex += 1) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = values[valueIndex];
+                input.setAttribute(markerAttr, 'true');
+                form.appendChild(input);
+            }
         });
         form.submit();
+    }
+
+    function updateClearButtonLabel(form) {
+        var clearButton = form.querySelector('.mining-queue-clear-btn');
+        if (!clearButton) {
+            return;
+        }
+        var checked = form.querySelectorAll('.mining-queue-item-check:checked');
+        clearButton.textContent = checked.length > 0 ? 'Clear selected' : 'Clear queue';
     }
 
     function submitQueuedRunRemoval(form, queueItemId) {
@@ -201,11 +214,15 @@
         }
     }
 
-    function submitQueueClear(form, clearMode) {
-        submitFormWithHiddenFields(form, 'data-mining-queue-clear', {
+    function submitQueueClear(form, clearMode, selectedQueueItemIds) {
+        var fields = {
             submitType: 'clear',
             clearMode: clearMode
-        });
+        };
+        if (selectedQueueItemIds && selectedQueueItemIds.length > 0) {
+            fields.selectedQueueItemId = selectedQueueItemIds;
+        }
+        submitFormWithHiddenFields(form, 'data-mining-queue-clear', fields);
     }
 
     function clearQueuedRuns(button) {
@@ -213,8 +230,12 @@
         if (!form || button.disabled) {
             return;
         }
-        var removeButtons = form.querySelectorAll('.mining-queue-remove-btn[data-queue-item-id]');
-        if (!removeButtons.length) {
+        var checked = form.querySelectorAll('.mining-queue-item-check:checked');
+        var selectedOnly = checked.length > 0;
+        var targets = selectedOnly
+            ? checked
+            : form.querySelectorAll('.mining-queue-remove-btn[data-queue-item-id]');
+        if (!targets.length) {
             return;
         }
         var clearHelpers = window.RoboMinerMiningQueueClear;
@@ -223,25 +244,30 @@
         }
         var config = readClearConfig();
         var areaIds = [];
-        for (var buttonIndex = 0; buttonIndex < removeButtons.length; buttonIndex += 1) {
-            areaIds.push(removeButtons[buttonIndex].getAttribute('data-mining-area-id'));
+        var selectedQueueItemIds = [];
+        for (var targetIndex = 0; targetIndex < targets.length; targetIndex += 1) {
+            areaIds.push(targets[targetIndex].getAttribute('data-mining-area-id'));
+            if (selectedOnly) {
+                selectedQueueItemIds.push(targets[targetIndex].getAttribute('data-queue-item-id'));
+            }
         }
         var wouldLoseOre = clearHelpers.clearingAllWouldLoseOre(config, areaIds);
 
         function proceed(clearMode) {
-            submitQueueClear(form, clearMode);
+            submitQueueClear(form, clearMode, selectedOnly ? selectedQueueItemIds : null);
         }
 
         if (wouldLoseOre) {
-            var lossMessage =
-                'Clearing this queue would refund ore past your wallet maximum, so some ore would be lost. Clear all queued runs anyway, or only clear runs that fit without losing ore?';
+            var lossMessage = selectedOnly
+                ? 'Clearing the selected runs would refund ore past your wallet maximum, so some ore would be lost. Clear selected runs anyway, or only clear runs that fit without losing ore?'
+                : 'Clearing this queue would refund ore past your wallet maximum, so some ore would be lost. Clear all queued runs anyway, or only clear runs that fit without losing ore?';
             // Three-way choice requires robominerConfirmChoice; do not degrade to
             // window.confirm (that cannot offer the safe-clear path).
             if (typeof window.robominerConfirmChoice === 'function') {
                 window.robominerConfirmChoice(
                     lossMessage,
                     {
-                        confirmLabel: 'Clear all',
+                        confirmLabel: selectedOnly ? 'Clear selected' : 'Clear all',
                         altLabel: 'Clear without losing ore'
                     },
                     function(result) {
@@ -256,7 +282,9 @@
             return;
         }
 
-        var message = 'Clear all queued runs for this robot?';
+        var message = selectedOnly
+            ? 'Clear selected queued runs for this robot?'
+            : 'Clear all queued runs for this robot?';
         if (typeof window.robominerConfirm === 'function') {
             window.robominerConfirm(message, function(confirmed) {
                 if (!confirmed) {
@@ -270,6 +298,17 @@
             proceed('all');
         }
     }
+
+    document.addEventListener('change', function(event) {
+        var checkbox = event.target.closest('.mining-queue-item-check');
+        if (!checkbox) {
+            return;
+        }
+        var form = checkbox.closest('.mining-queue-card');
+        if (form) {
+            updateClearButtonLabel(form);
+        }
+    });
 
     document.addEventListener('click', function(event) {
         var removeButton = event.target.closest('.mining-queue-remove-btn');

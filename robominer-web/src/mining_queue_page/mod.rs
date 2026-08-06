@@ -143,6 +143,8 @@ async fn load_mining_queue_page_state(
                         .filter(|item| {
                             item.robot_id == robot_id
                                 && item.status == robominer_db::MiningQueueStatus::Queued
+                                && (selected_queue_item_ids.is_empty()
+                                    || selected_queue_item_ids.contains(&item.mining_queue_id))
                         })
                         .map(|item| item.mining_queue_id)
                         .collect();

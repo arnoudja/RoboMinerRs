@@ -139,6 +139,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"mining-queue-status-queued">Waiting for rally</span>"#,
             r#"type="button" class="mining-queue-remove-btn" data-queue-item-id="101" data-mining-area-id="21""#,
             r#"aria-label="Remove queued run in Area &lt;Queued&gt;""#,
+            r#"class="mining-queue-item-check" data-queue-item-id="101" data-mining-area-id="21""#,
             r#"class="mining-queue-remove-icon""#,
             r#"<input type="hidden" name="robotId" value="1"/>"#,
             r#"name="submitType" value="add">Add to queue</button>"#,

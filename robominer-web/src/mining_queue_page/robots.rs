@@ -193,7 +193,10 @@ pub(super) fn render_queue_run_row(
     body.push_str(r#"<div class="mining-queue-run-row">"#);
     if show_remove_button {
         body.push_str(&format!(
-            r#"<button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
+            r#"<input type="checkbox" class="mining-queue-item-check" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Select queued run in {}"/><button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
+            item.mining_queue_id,
+            item.mining_area_id,
+            escape_html(&item.area_name),
             item.mining_queue_id,
             item.mining_area_id,
             escape_html(&item.area_name)

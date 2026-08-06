@@ -342,6 +342,84 @@ async fn mining_queue_clear_all_post_deletes_queued_items() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
+async fn mining_queue_clear_selected_post_deletes_only_selected_queued_item() {
+    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
+        eprintln!(
+            "skipping mining queue clear-selected web test: ROBOMINER_DATABASE_URL is not set"
+        );
+        return;
+    }
+
+    ensure_session_configured();
+
+    let pool =
+        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
+            .await
+            .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-queue-clear-sel");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    let second_queued = robominer_test_support::insert_mining_queue(
+        &pool,
+        fixture.inner.mining_area_id,
+        fixture.inner.robot_id,
+    )
+    .await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut form = HashMap::new();
+    form.insert("submitType".to_string(), "clear".to_string());
+    form.insert("clearMode".to_string(), "all".to_string());
+    form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
+    form.insert(
+        "selectedQueueItemId".to_string(),
+        fixture.queued_queue_id.to_string(),
+    );
+    form.insert(
+        format!("miningArea{}", fixture.inner.robot_id),
+        fixture.inner.mining_area_id.to_string(),
+    );
+    form.insert(
+        "infoMiningAreaId".to_string(),
+        fixture.inner.mining_area_id.to_string(),
+    );
+
+    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
+    assert_eq!(response.status, 200, "mining queue page should render");
+
+    let selected_remaining: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+            .bind(fixture.queued_queue_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to count selected queued row");
+    assert_eq!(selected_remaining, 0);
+
+    let other_remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(second_queued)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count other queued row");
+    assert_eq!(other_remaining, 1);
+
+    let active_remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(fixture.active_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count active mining queue row");
+    assert_eq!(active_remaining, 1);
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn mining_queue_clear_safe_skips_overflow_and_keeps_later_safe_items() {
     if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
         eprintln!("skipping mining queue clear-safe web test: ROBOMINER_DATABASE_URL is not set");
