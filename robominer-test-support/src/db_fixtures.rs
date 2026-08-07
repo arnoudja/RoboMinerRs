@@ -92,6 +92,22 @@ pub async fn insert_robot(
     .await
 }
 
+pub async fn insert_ai_robot(pool: &MySqlPool, name: &str, source: &str, max_turns: i32) -> i64 {
+    insert_row_id(
+        pool,
+        sqlx::query(
+            "INSERT INTO AIRobot \
+             (robotName, sourceCode, maxOre, miningSpeed, maxTurns, cpuSpeed, \
+              forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance) \
+             VALUES (?, ?, 100, 4, ?, 1, 1.0, 1.0, 90, 1.0, 0, 0)",
+        )
+        .bind(name)
+        .bind(source)
+        .bind(max_turns),
+    )
+    .await
+}
+
 pub async fn insert_mining_area(
     pool: &MySqlPool,
     prefix: &str,
@@ -318,10 +334,23 @@ pub async fn cleanup_claimed_queue_fixture(
         }
     }
 
+    let ai_robot_id: Option<i64> =
+        sqlx::query_scalar("SELECT aiRobotId FROM MiningArea WHERE id = ?")
+            .bind(mining_area_id)
+            .fetch_optional(pool)
+            .await
+            .expect("failed to load mining area ai robot");
+
     let _ = sqlx::query("DELETE FROM MiningArea WHERE id = ?")
         .bind(mining_area_id)
         .execute(pool)
         .await;
+    if let Some(ai_robot_id) = ai_robot_id {
+        let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+            .bind(ai_robot_id)
+            .execute(pool)
+            .await;
+    }
     let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
         .bind(robot_id)
         .execute(pool)

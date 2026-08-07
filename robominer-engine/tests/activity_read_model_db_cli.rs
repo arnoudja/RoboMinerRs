@@ -40,18 +40,6 @@ async fn activity_states_report_recent_users_and_rallies() {
         .bind(rally_result_id),
     )
     .await;
-    insert_row_id(
-        &pool,
-        sqlx::query(
-            "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime) \
-             VALUES (?, ?, ?, 1, TIMESTAMPADD(SECOND, -10, NOW()))",
-        )
-        .bind(fixture.mining_area_id)
-        .bind(fixture.ai_robot_id)
-        .bind(rally_result_id),
-    )
-    .await;
 
     let output = run_engine(&[
         "--database-url".to_string(),
@@ -85,9 +73,13 @@ async fn activity_states_report_recent_users_and_rallies() {
     assert!(rally_line[4].ends_with("-robot"));
     assert!(rally_line[5].ends_with("-user"));
 
-    let participant_line = find_prefixed_line(&stdout, &format!("P\t{player_zero_queue_id}\t1\t"));
-    assert!(participant_line[3].ends_with("-ai"));
-    assert!(participant_line[4].ends_with("-user"));
+    // AI opponents are not MiningQueue participants after the AIRobot split.
+    assert!(
+        !stdout
+            .lines()
+            .any(|line| line.starts_with(&format!("P\t{player_zero_queue_id}\t"))),
+        "unexpected AI MiningQueue participant rows:\n{stdout}"
+    );
 
     fixture.cleanup(&pool).await;
 }

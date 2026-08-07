@@ -53,6 +53,7 @@ async fn leaderboard_states_report_ranked_rows() {
     .await
     .expect("failed to insert robot lifetime result");
 
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let mining_area_id = insert_row_id(
         &pool,
         sqlx::query(
@@ -62,7 +63,7 @@ async fn leaderboard_states_report_ranked_rows() {
         )
         .bind(format!("{prefix}-area"))
         .bind(ore_price_id)
-        .bind(robot_id),
+        .bind(ai_robot_id),
     )
     .await;
     sqlx::query(
@@ -115,6 +116,10 @@ async fn leaderboard_states_report_ranked_rows() {
         .await;
     let _ = sqlx::query("DELETE FROM MiningArea WHERE id = ?")
         .bind(mining_area_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+        .bind(ai_robot_id)
         .execute(&pool)
         .await;
     let _ = sqlx::query("DELETE FROM RobotLifetimeResult WHERE robotId = ?")

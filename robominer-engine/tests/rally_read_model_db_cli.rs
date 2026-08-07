@@ -34,18 +34,6 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
         .bind(rally_result_id),
     )
     .await;
-    insert_row_id(
-        &pool,
-        sqlx::query(
-            "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime) \
-             VALUES (?, ?, ?, 1, TIMESTAMPADD(SECOND, -10, NOW()))",
-        )
-        .bind(fixture.mining_area_id)
-        .bind(fixture.ai_robot_id)
-        .bind(rally_result_id),
-    )
-    .await;
 
     let output = run_engine(&[
         "--database-url".to_string(),
@@ -79,11 +67,11 @@ async fn rally_view_state_reports_animation_legend_and_slots() {
 
     let player_one_line = find_prefixed_line(&stdout, "S\t1\t");
     assert!(player_one_line[2].ends_with("-ai"));
-    assert!(player_one_line[3].ends_with("-user"));
+    assert_eq!(player_one_line[3], "AI");
 
     let ai_fallback_line = find_prefixed_line(&stdout, "S\t2\t");
     assert!(ai_fallback_line[2].ends_with("-ai"));
-    assert!(ai_fallback_line[3].ends_with("-user"));
+    assert_eq!(ai_fallback_line[3], "AI");
 
     let denied = run_engine(&[
         "--database-url".to_string(),

@@ -1,6 +1,6 @@
 use robominer_db::MySqlPool;
 use robominer_test_support::{
-    insert_area_supply, insert_committed_pending_changes, insert_finished_queue,
+    insert_ai_robot, insert_area_supply, insert_committed_pending_changes, insert_finished_queue,
     insert_mining_area, insert_ore, insert_ore_price, insert_ore_result, insert_robot,
     insert_unfinished_queue, insert_user, insert_user_ore_asset,
     unique_prefix as shared_unique_prefix,
@@ -70,7 +70,7 @@ async fn single_queue_tax25(pool: &MySqlPool) -> ClaimScenario {
     let secondary_ore_id = insert_ore(pool, &format!("{prefix}-secondary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 25).await;
 
@@ -99,7 +99,7 @@ async fn dual_queue_batch_claim(pool: &MySqlPool) -> ClaimScenario {
     let primary_ore_id = insert_ore(pool, &format!("{prefix}-primary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 25).await;
 
@@ -128,7 +128,7 @@ async fn skips_unfinished_queue(pool: &MySqlPool) -> ClaimScenario {
     let primary_ore_id = insert_ore(pool, &format!("{prefix}-primary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 25).await;
 
@@ -156,7 +156,7 @@ async fn claim_cap_limited(pool: &MySqlPool) -> ClaimScenario {
     let primary_ore_id = insert_ore(pool, &format!("{prefix}-primary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 25).await;
 
@@ -183,7 +183,7 @@ async fn claim_zero_tax(pool: &MySqlPool) -> ClaimScenario {
     let primary_ore_id = insert_ore(pool, &format!("{prefix}-primary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 0).await;
 
@@ -211,7 +211,7 @@ async fn claim_multiple_ore_types(pool: &MySqlPool) -> ClaimScenario {
     let secondary_ore_id = insert_ore(pool, &format!("{prefix}-secondary")).await;
     let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(pool, &prefix).await;
-    let ai_robot_id = insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(pool, &prefix, ore_price_id, ai_robot_id, 25).await;
 
@@ -276,8 +276,11 @@ pub async fn cleanup(pool: &MySqlPool, scenario: &ClaimScenario) {
         .bind(scenario.mining_area_id)
         .execute(pool)
         .await;
-    let _ = sqlx::query("DELETE FROM Robot WHERE id IN (?, ?)")
+    let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
         .bind(scenario.ai_robot_id)
+        .execute(pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
         .bind(scenario.robot_id)
         .execute(pool)
         .await;

@@ -10,6 +10,7 @@ pub struct RobotConfigFixture {
     pub robot_part_type_id: i64,
     pub program_source_id: i64,
     pub robot_id: i64,
+    pub ai_robot_id: Option<i64>,
     pub mining_area_id: Option<i64>,
     pub mining_queue_id: Option<i64>,
     pub current_part_ids: [i64; 7],
@@ -120,7 +121,9 @@ impl RobotConfigFixture {
         )
         .await;
 
-        let (mining_area_id, mining_queue_id) = if queued {
+        let (ai_robot_id, mining_area_id, mining_queue_id) = if queued {
+            let ai_robot_id =
+                crate::insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
             let mining_area_id = insert_row_id(
                 pool,
                 sqlx::query(
@@ -130,7 +133,7 @@ impl RobotConfigFixture {
                 )
                 .bind(format!("{prefix}-area"))
                 .bind(ore_price_id)
-                .bind(robot_id),
+                .bind(ai_robot_id),
             )
             .await;
             let mining_queue_id = insert_row_id(
@@ -143,9 +146,13 @@ impl RobotConfigFixture {
                 .bind(robot_id),
             )
             .await;
-            (Some(mining_area_id), Some(mining_queue_id))
+            (
+                Some(ai_robot_id),
+                Some(mining_area_id),
+                Some(mining_queue_id),
+            )
         } else {
-            (None, None)
+            (None, None, None)
         };
 
         Self {
@@ -155,6 +162,7 @@ impl RobotConfigFixture {
             robot_part_type_id,
             program_source_id,
             robot_id,
+            ai_robot_id,
             mining_area_id,
             mining_queue_id,
             current_part_ids,
@@ -389,6 +397,12 @@ impl RobotConfigFixture {
         if let Some(mining_area_id) = self.mining_area_id {
             let _ = sqlx::query("DELETE FROM MiningArea WHERE id = ?")
                 .bind(mining_area_id)
+                .execute(pool)
+                .await;
+        }
+        if let Some(ai_robot_id) = self.ai_robot_id {
+            let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+                .bind(ai_robot_id)
                 .execute(pool)
                 .await;
         }

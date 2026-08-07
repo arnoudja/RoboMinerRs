@@ -24,6 +24,7 @@ drop table if exists MiningAreaOreSupply;
 drop table if exists MiningArea;
 drop table if exists PendingRobotChanges;
 drop table if exists Robot;
+drop table if exists AIRobot;
 drop table if exists UserRobotPartAsset;
 drop table if exists RobotPart;
 drop table if exists RobotPartType;
@@ -170,6 +171,24 @@ INDEX (userId, id)
 );
 
 
+create table AIRobot
+(
+id INT AUTO_INCREMENT PRIMARY KEY,
+robotName VARCHAR(255) NOT NULL,
+sourceCode TEXT NOT NULL,
+maxOre INT NOT NULL,
+miningSpeed INT NOT NULL,
+maxTurns INT NOT NULL,
+cpuSpeed INT NOT NULL,
+forwardSpeed DOUBLE NOT NULL,
+backwardSpeed DOUBLE NOT NULL,
+rotateSpeed INT NOT NULL,
+robotSize DOUBLE NOT NULL,
+scanTime INT NOT NULL DEFAULT 0,
+scanDistance INT NOT NULL DEFAULT 0
+);
+
+
 create table PendingRobotChanges
 (
 robotId INT PRIMARY KEY REFERENCES Robot (id) ON DELETE CASCADE,
@@ -216,7 +235,7 @@ maxMoves INT NOT NULL,
 miningTime INT NOT NULL,
 taxRate INT NOT NULL,
 scoreOreTarget INT NOT NULL DEFAULT 30,
-aiRobotId INT NOT NULL REFERENCES Robot (id)
+aiRobotId INT NOT NULL REFERENCES AIRobot (id)
 );
 
 

@@ -81,18 +81,6 @@ async fn rally_view_renders_from_mining_results_and_activity() {
         .bind(rally_result_id),
     )
     .await;
-    insert_row_id(
-        &pool,
-        sqlx::query(
-            "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime) \
-             VALUES (?, ?, ?, 1, TIMESTAMPADD(SECOND, -10, NOW()))",
-        )
-        .bind(fixture.mining_area_id)
-        .bind(fixture.ai_robot_id)
-        .bind(rally_result_id),
-    )
-    .await;
 
     let config = server_config(pool.clone());
     let username = sqlx::query_scalar::<_, String>("SELECT username FROM User WHERE id = ?")

@@ -142,6 +142,71 @@ pub async fn get_robot(
     row.map(robot_record).transpose()
 }
 
+pub async fn get_ai_robot(
+    pool: &MySqlPool,
+    robot_id: i64,
+) -> Result<Option<crate::AIRobotRecord>, sqlx::Error> {
+    sqlx::query_as::<
+        _,
+        (
+            i64,
+            String,
+            String,
+            i32,
+            i32,
+            i32,
+            i32,
+            f64,
+            f64,
+            i32,
+            f64,
+            i32,
+            i32,
+        ),
+    >(
+        "SELECT id, robotName, sourceCode, maxOre, miningSpeed, maxTurns, cpuSpeed, \
+                forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance \
+         FROM AIRobot \
+         WHERE id = ?",
+    )
+    .bind(robot_id)
+    .fetch_optional(pool)
+    .await
+    .map(|row| {
+        row.map(
+            |(
+                id,
+                robot_name,
+                source_code,
+                max_ore,
+                mining_speed,
+                max_turns,
+                cpu_speed,
+                forward_speed,
+                backward_speed,
+                rotate_speed,
+                robot_size,
+                scan_time,
+                scan_distance,
+            )| crate::AIRobotRecord {
+                id,
+                robot_name,
+                source_code,
+                max_ore,
+                mining_speed,
+                max_turns,
+                cpu_speed,
+                forward_speed,
+                backward_speed,
+                rotate_speed,
+                robot_size,
+                scan_time,
+                scan_distance,
+            },
+        )
+    })
+}
+
 pub async fn load_robot_stats_header(
     pool: &MySqlPool,
     robot_id: i64,

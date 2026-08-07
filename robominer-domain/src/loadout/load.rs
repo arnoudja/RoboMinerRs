@@ -37,14 +37,48 @@ pub async fn load_mining_area_loadout(
     };
 
     let ore_supplies = robominer_db::list_mining_area_ore_supplies(pool, area.id).await?;
-    let ai_robot = load_robot_loadout(pool, area.ai_robot_id).await?.ok_or(
-        DomainError::ReferencedAiRobotMissing {
+    let ai_robot = robominer_db::get_ai_robot(pool, area.ai_robot_id)
+        .await?
+        .map(ai_robot_to_loadout)
+        .ok_or(DomainError::ReferencedAiRobotMissing {
             mining_area_id: area.id,
             robot_id: area.ai_robot_id,
-        },
-    )?;
+        })?;
 
     Ok(Some(MiningAreaLoadout::new(area, ore_supplies, ai_robot)))
+}
+
+fn ai_robot_to_loadout(ai: robominer_db::AIRobotRecord) -> RobotLoadout {
+    RobotLoadout::new(
+        RobotRecord {
+            id: ai.id,
+            user_id: 0,
+            robot_name: ai.robot_name,
+            source_code: ai.source_code,
+            program_source_id: None,
+            ore_container_id: None,
+            mining_unit_id: None,
+            battery_id: None,
+            memory_module_id: None,
+            cpu_id: None,
+            engine_id: None,
+            ore_scanner_id: None,
+            recharge_time: 0,
+            max_ore: ai.max_ore,
+            mining_speed: ai.mining_speed,
+            max_turns: ai.max_turns,
+            memory_size: 0,
+            cpu_speed: ai.cpu_speed,
+            forward_speed: ai.forward_speed,
+            backward_speed: ai.backward_speed,
+            rotate_speed: ai.rotate_speed,
+            robot_size: ai.robot_size,
+            scan_time: ai.scan_time,
+            scan_distance: ai.scan_distance,
+            total_mining_runs: 0,
+        },
+        RobotLoadoutParts::empty(),
+    )
 }
 
 pub async fn load_next_rally_loadout(

@@ -141,6 +141,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
             .bind(format!("{prefix}-price")),
     )
     .await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let mining_area_id = insert_row_id(
         &pool,
         sqlx::query(
@@ -150,7 +151,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
         )
         .bind(format!("{prefix}-area"))
         .bind(ore_price_id)
-        .bind(robot_id),
+        .bind(ai_robot_id),
     )
     .await;
 
@@ -238,6 +239,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
             .bind(format!("{prefix}-price")),
     )
     .await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let mining_area_id = insert_row_id(
         &pool,
         sqlx::query(
@@ -247,7 +249,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
         )
         .bind(format!("{prefix}-area"))
         .bind(ore_price_id)
-        .bind(robot_a_id),
+        .bind(ai_robot_id),
     )
     .await;
     let shared_rally_result_id = insert_row_id(

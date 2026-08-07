@@ -3,7 +3,7 @@ use robominer_db::{
     list_mining_area_overview_ores_for_user, list_mining_area_overview_percentages_for_user,
 };
 use robominer_test_support::{
-    insert_area_supply, insert_mining_area, insert_ore, insert_ore_price, insert_robot,
+    insert_ai_robot, insert_area_supply, insert_mining_area, insert_ore, insert_ore_price,
     insert_row_id, insert_user, unique_prefix,
 };
 use serial_test::serial;
@@ -24,7 +24,7 @@ async fn list_mining_area_ore_supplies_returns_seeded_rows() {
     let secondary_ore_id = insert_ore(&pool, &format!("{prefix}-secondary")).await;
     let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(&pool, &prefix).await;
-    let ai_robot_id = insert_robot(&pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let mining_area_id = insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 0).await;
     insert_area_supply(&pool, mining_area_id, primary_ore_id, 12, 2).await;
     insert_area_supply(&pool, mining_area_id, secondary_ore_id, 3, 1).await;
@@ -73,7 +73,7 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
     let hidden_ore_id = insert_ore(&pool, &format!("{prefix}-hidden")).await;
     let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
     let user_id = insert_user(&pool, &prefix).await;
-    let ai_robot_id = insert_robot(&pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
     let granted_area_id = insert_mining_area(
         &pool,
         &format!("{prefix}-granted"),
@@ -180,7 +180,7 @@ async fn cleanup_area_fixture(
         .bind(mining_area_id)
         .execute(pool)
         .await;
-    let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
+    let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
         .bind(ai_robot_id)
         .execute(pool)
         .await;
@@ -229,7 +229,7 @@ async fn cleanup_granted_area_fixture(
         .bind(hidden_area_id)
         .execute(pool)
         .await;
-    let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
+    let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
         .bind(ai_robot_id)
         .execute(pool)
         .await;

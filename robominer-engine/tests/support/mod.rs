@@ -3,9 +3,9 @@
 use std::process::{Command, Output};
 
 pub use robominer_test_support::{
-    cleanup_claimed_queue_fixture, cleanup_created_user, insert_claimed_mining_queue,
-    insert_cli_robot as insert_robot, insert_mining_queue, insert_row_id,
-    insert_user_with_credentials, unique_prefix,
+    cleanup_claimed_queue_fixture, cleanup_created_user, insert_ai_robot,
+    insert_claimed_mining_queue, insert_cli_robot as insert_robot, insert_mining_queue,
+    insert_row_id, insert_user_with_credentials, unique_prefix,
 };
 use sqlx::MySqlPool;
 pub use sqlx::Row;

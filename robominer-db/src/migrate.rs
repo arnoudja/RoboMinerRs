@@ -26,6 +26,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "005_mining_area_score_ore_target",
         include_str!("../../resources/database/migrations/005_mining_area_score_ore_target.sql"),
     ),
+    (
+        "006_ai_robot_table",
+        include_str!("../../resources/database/migrations/006_ai_robot_table.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -252,8 +256,11 @@ async fn record_migration(pool: &MySqlPool, version: &str) -> Result<(), Migrate
 }
 
 async fn execute_sql_script(pool: &MySqlPool, sql: &str) -> Result<(), MigrateError> {
+    // Keep one connection for the whole script so session variables / PREPARE
+    // statements (used by some migrations) remain visible across statements.
+    let mut conn = pool.acquire().await?;
     for statement in split_sql_statements(sql) {
-        sqlx::query(&statement).execute(pool).await?;
+        sqlx::query(&statement).execute(&mut *conn).await?;
     }
     Ok(())
 }
@@ -268,7 +275,12 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
     let has_scan_time = column_exists(pool, "Robot", "scanTime").await?;
     let has_session_version = column_exists(pool, "User", "sessionVersion").await?;
     let has_score_ore_target = column_exists(pool, "MiningArea", "scoreOreTarget").await?;
-    Ok(!has_scan_speed && has_scan_time && has_session_version && has_score_ore_target)
+    let has_ai_robot = table_exists(pool, "AIRobot").await?;
+    Ok(!has_scan_speed
+        && has_scan_time
+        && has_session_version
+        && has_score_ore_target
+        && has_ai_robot)
 }
 
 async fn table_exists(pool: &MySqlPool, table_name: &str) -> Result<bool, MigrateError> {

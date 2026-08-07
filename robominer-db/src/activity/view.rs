@@ -9,12 +9,11 @@ pub async fn rally_view_state(
     require_user_result: bool,
 ) -> Result<Option<RallyViewStateRecord>, sqlx::Error> {
     sqlx::query_as::<_, (String, String, String)>(
-        "SELECT RallyResult.resultData, AiRobot.robotName, AiUser.username \
+        "SELECT RallyResult.resultData, AiRobot.robotName, 'AI' \
          FROM RallyResult \
          INNER JOIN MiningQueue ON MiningQueue.rallyResultId = RallyResult.id \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
-         INNER JOIN Robot AiRobot ON AiRobot.id = MiningArea.aiRobotId \
-         INNER JOIN User AiUser ON AiUser.id = AiRobot.userId \
+         INNER JOIN AIRobot AiRobot ON AiRobot.id = MiningArea.aiRobotId \
          WHERE RallyResult.id = ? \
            AND (? = 0 OR EXISTS (SELECT 1 \
                                  FROM MiningQueue UserQueue \

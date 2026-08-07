@@ -198,6 +198,23 @@ pub struct RobotRecord {
     pub total_mining_runs: i32,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct AIRobotRecord {
+    pub id: i64,
+    pub robot_name: String,
+    pub source_code: String,
+    pub max_ore: i32,
+    pub mining_speed: i32,
+    pub max_turns: i32,
+    pub cpu_speed: i32,
+    pub forward_speed: f64,
+    pub backward_speed: f64,
+    pub rotate_speed: i32,
+    pub robot_size: f64,
+    pub scan_time: i32,
+    pub scan_distance: i32,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MiningAreaRecord {
     pub id: i64,

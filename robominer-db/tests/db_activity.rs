@@ -36,18 +36,6 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
         .bind(rally_result_id),
     )
     .await;
-    insert_row_id(
-        &pool,
-        sqlx::query(
-            "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime) \
-             VALUES (?, ?, ?, 1, TIMESTAMPADD(SECOND, -10, NOW()))",
-        )
-        .bind(fixture.mining_area_id)
-        .bind(fixture.ai_robot_id)
-        .bind(rally_result_id),
-    )
-    .await;
 
     sqlx::query("UPDATE User SET lastLoginTime = TIMESTAMPADD(DAY, 1, NOW()) WHERE id = ?")
         .bind(fixture.user_id)
@@ -92,11 +80,11 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
     assert_eq!(area_rallies.len(), 1);
     assert_eq!(area_rallies[0].mining_queue_id, player_zero_queue_id);
 
+    // AI opponents live in AIRobot and are not MiningQueue rows; only other players appear here.
     let participants = list_activity_rally_participants_for_queues(&pool, &[player_zero_queue_id])
         .await
         .expect("participants should load");
-    assert_eq!(participants.len(), 1);
-    assert_eq!(participants[0].player_number, 1);
+    assert!(participants.is_empty());
 
     fixture.cleanup(&pool).await;
 }
@@ -132,23 +120,13 @@ async fn rally_view_state_requires_claimed_viewer_result_when_requested() {
         .bind(rally_result_id),
     )
     .await;
-    insert_row_id(
-        &pool,
-        sqlx::query(
-            "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime, claimed) \
-             VALUES (?, ?, ?, 1, TIMESTAMPADD(SECOND, -10, NOW()), false)",
-        )
-        .bind(fixture.mining_area_id)
-        .bind(fixture.ai_robot_id)
-        .bind(rally_result_id),
-    )
-    .await;
 
     let open_view = rally_view_state(&pool, fixture.user_id, rally_result_id, false)
         .await
         .expect("open rally view should load");
-    assert!(open_view.is_some());
+    let open_view = open_view.expect("open view present");
+    assert!(open_view.ai_robot_name.ends_with("-ai"));
+    assert_eq!(open_view.ai_username, "AI");
 
     let claimed_only = rally_view_state(&pool, fixture.user_id, rally_result_id, true)
         .await

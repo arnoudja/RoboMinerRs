@@ -182,6 +182,13 @@ async fn achievement_states_report_claimable_and_progress() {
         )),
     )
     .await;
+    let ai_robot_id = insert_ai_robot(
+        &pool,
+        &format!("achievement-state-ai-{}", fixture.achievement_id),
+        "rotate(90);",
+        1,
+    )
+    .await;
     let mining_area_id = insert_row_id(
         &pool,
         sqlx::query(
@@ -191,7 +198,7 @@ async fn achievement_states_report_claimable_and_progress() {
         )
         .bind(format!("achievement-state-area-{}", fixture.achievement_id))
         .bind(ore_price_id)
-        .bind(robot_id),
+        .bind(ai_robot_id),
     )
     .await;
     sqlx::query(
@@ -242,6 +249,11 @@ async fn achievement_states_report_claimable_and_progress() {
         .execute(&pool)
         .await
         .expect("failed to delete mining area");
+    sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+        .bind(ai_robot_id)
+        .execute(&pool)
+        .await
+        .expect("failed to delete AI robot");
     sqlx::query("DELETE FROM OrePrice WHERE id = ?")
         .bind(ore_price_id)
         .execute(&pool)
@@ -287,6 +299,13 @@ async fn achievement_page_states_report_display_model() {
         )),
     )
     .await;
+    let ai_robot_id = insert_ai_robot(
+        &pool,
+        &format!("achievement-page-state-ai-{}", fixture.achievement_id),
+        "rotate(90);",
+        1,
+    )
+    .await;
     let mining_area_id = insert_row_id(
         &pool,
         sqlx::query(
@@ -299,7 +318,7 @@ async fn achievement_page_states_report_display_model() {
             fixture.achievement_id
         ))
         .bind(ore_price_id)
-        .bind(robot_id),
+        .bind(ai_robot_id),
     )
     .await;
     sqlx::query(
@@ -396,6 +415,11 @@ async fn achievement_page_states_report_display_model() {
         .execute(&pool)
         .await
         .expect("failed to delete mining area");
+    sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+        .bind(ai_robot_id)
+        .execute(&pool)
+        .await
+        .expect("failed to delete AI robot");
     sqlx::query("DELETE FROM OrePrice WHERE id = ?")
         .bind(ore_price_id)
         .execute(&pool)

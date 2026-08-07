@@ -98,11 +98,20 @@ column_exists() {
            AND column_name = '${column}'" 2>/dev/null | grep -qx '1'
 }
 
+table_exists() {
+    local table="$1"
+    mysql_app -N -e \
+        "SELECT COUNT(*) FROM information_schema.tables
+         WHERE table_schema = DATABASE()
+           AND table_name = '${table}'" 2>/dev/null | grep -qx '1'
+}
+
 schema_already_current() {
     mysql_app -N -e "SELECT 1 FROM User LIMIT 1" >/dev/null 2>&1 \
         && column_exists Robot scanTime \
         && ! column_exists Robot scanSpeed \
-        && column_exists MiningArea scoreOreTarget
+        && column_exists MiningArea scoreOreTarget \
+        && table_exists AIRobot
 }
 
 is_applied() {

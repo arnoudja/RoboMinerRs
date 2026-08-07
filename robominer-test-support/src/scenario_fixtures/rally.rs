@@ -1,7 +1,7 @@
 use robominer_db::MySqlPool;
 use sqlx::Row;
 
-use crate::{insert_cli_robot, insert_row_id, unique_prefix};
+use crate::{insert_ai_robot, insert_cli_robot, insert_row_id, unique_prefix};
 
 pub struct RallyFixture {
     pub user_id: i64,
@@ -36,8 +36,7 @@ impl RallyFixture {
                 .bind("test-password"),
         )
         .await;
-        let ai_robot_id =
-            insert_cli_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);").await;
+        let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 600).await;
         let queued_robot_id = insert_cli_robot(
             pool,
             user_id,
@@ -197,9 +196,12 @@ impl RallyFixture {
             .bind(self.mining_area_id)
             .execute(pool)
             .await;
-        let _ = sqlx::query("DELETE FROM Robot WHERE id IN (?, ?)")
-            .bind(self.ai_robot_id)
+        let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
             .bind(self.queued_robot_id)
+            .execute(pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+            .bind(self.ai_robot_id)
             .execute(pool)
             .await;
         let _ = sqlx::query("DELETE FROM User WHERE id = ?")

@@ -1,7 +1,8 @@
 use robominer_db::MySqlPool;
 
 use crate::{
-    insert_mining_queue, insert_robot, insert_row_id, insert_user_ore_asset, unique_prefix,
+    insert_ai_robot, insert_mining_queue, insert_robot, insert_row_id, insert_user_ore_asset,
+    unique_prefix,
 };
 
 pub struct RobotMiningAreaFixture {
@@ -47,8 +48,7 @@ impl RobotMiningAreaFixture {
             insert_user_ore_asset(pool, user_id, ore_id, amount, 1000).await;
         }
 
-        let ai_robot_id =
-            insert_robot(pool, user_id, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+        let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
         let robot_id = insert_robot(pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
         let mining_area_id = insert_row_id(
             pool,
@@ -102,8 +102,11 @@ impl RobotMiningAreaFixture {
             .bind(self.mining_area_id)
             .execute(pool)
             .await;
-        let _ = sqlx::query("DELETE FROM Robot WHERE id IN (?, ?)")
+        let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
             .bind(self.robot_id)
+            .execute(pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
             .bind(self.ai_robot_id)
             .execute(pool)
             .await;
