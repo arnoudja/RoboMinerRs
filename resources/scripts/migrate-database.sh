@@ -128,8 +128,16 @@ record_applied() {
 
 apply_sql_file() {
     local sql_file="$1"
+    local version="$2"
     local sql
     sql="$(sed '/^SET storage_engine=/d' "${sql_file}")"
+
+    # Migration 006 SQL assumes the migrate runner has already dropped the
+    # aiRobotId FK and ensured aiRobotIdNew exists (sqlx cannot PREPARE).
+    if [[ "${version}" == "006_ai_robot_table" ]]; then
+        prepare_ai_robot_table_migration
+    fi
+
     if printf '%s\n' "${sql}" | mysql_app >/dev/null 2>&1; then
         return 0
     fi
@@ -139,6 +147,29 @@ apply_sql_file() {
     echo "Failed to apply ${sql_file} as ${MYSQL_USER} or root." >&2
     echo "Grant CREATE/ALTER to ${MYSQL_USER}, or run with a privileged account." >&2
     return 1
+}
+
+prepare_ai_robot_table_migration() {
+    local fk_name
+    fk_name="$(mysql_app -N -e \
+        "SELECT CONSTRAINT_NAME
+         FROM information_schema.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'MiningArea'
+           AND COLUMN_NAME = 'aiRobotId'
+           AND REFERENCED_TABLE_NAME IS NOT NULL
+         LIMIT 1" 2>/dev/null || true)"
+    if [[ -n "${fk_name}" ]]; then
+        mysql_ddl <<SQL
+ALTER TABLE MiningArea DROP FOREIGN KEY \`${fk_name}\`;
+SQL
+    fi
+
+    if ! column_exists MiningArea aiRobotIdNew; then
+        mysql_ddl <<'SQL'
+ALTER TABLE MiningArea ADD COLUMN aiRobotIdNew INT NULL;
+SQL
+    fi
 }
 
 baseline_all() {
@@ -167,7 +198,7 @@ apply_pending() {
             continue
         fi
         echo "Applying ${version}..."
-        apply_sql_file "${sql_file}"
+        apply_sql_file "${sql_file}" "${version}"
         record_applied "${version}"
         echo "${version}	applied"
     done
