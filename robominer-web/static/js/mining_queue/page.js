@@ -385,6 +385,7 @@
             return;
         }
         var refreshOnComplete = cell.getAttribute('data-refresh-on-complete') === 'true';
+        // data-seconds-left / data-progress-total already include a +1s pad for auto-refresh runs.
         var progressTotal = Number(cell.getAttribute('data-progress-total'));
         function updateProgress(secondsLeft) {
             if (!isFinite(progressTotal) || progressTotal <= 0) {

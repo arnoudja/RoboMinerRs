@@ -98,7 +98,12 @@ pub(super) fn render_robot_card(
         let progress_total = active_run_progress_total(active_item, robot, area_map);
         render_queue_run_row(body, active_item, false, true, progress_total);
         if let Some(total_seconds) = progress_total {
-            render_run_progress(body, active_item.time_left_seconds, total_seconds);
+            // Match the +1s auto-refresh pad applied in render_queue_run_row / startTimer.
+            render_run_progress(
+                body,
+                active_item.time_left_seconds.saturating_add(1),
+                total_seconds.saturating_add(1),
+            );
         }
         body.push_str("</div></div>");
     }
@@ -218,20 +223,33 @@ pub(super) fn render_queue_run_row(
         mining_queue_status_class(item.status),
         mining_queue_status_description(item.status)
     ));
-    let progress_attr = progress_total_seconds
+    let progress_total = progress_total_seconds
         .filter(|total| *total > 0)
+        .map(|total| {
+            if refresh_on_complete {
+                total.saturating_add(1)
+            } else {
+                total
+            }
+        });
+    let time_left_seconds = if refresh_on_complete {
+        item.time_left_seconds.saturating_add(1)
+    } else {
+        item.time_left_seconds
+    };
+    let progress_attr = progress_total
         .map(|total| format!(r#" data-progress-total="{}""#, total))
         .unwrap_or_default();
     body.push_str(&format!(
         r#"<span class="miningqueuetime mining-queue-run-time" data-seconds-left="{}"{}{}>{}</span>"#,
-        item.time_left_seconds,
+        time_left_seconds,
         if refresh_on_complete {
             r#" data-refresh-on-complete="true""#
         } else {
             ""
         },
         progress_attr,
-        format_queue_time_left(item.time_left_seconds)
+        format_queue_time_left(time_left_seconds)
     ));
     body.push_str("</div>");
 }
