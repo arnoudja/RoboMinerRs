@@ -84,6 +84,22 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
 }
 
 #[test]
+fn achievements_score_requirement_uses_display_rounding() {
+    let mut state = sample_achievement_state(None);
+    state.score_requirements[0].minimum_score = 900.0;
+    state.score_requirements[0].current_score = 899.96;
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert_html_contains(
+        &html,
+        r#"class="achievement-requirement-target">900.0</span>"#,
+    );
+    assert_html_contains(&html, r#"class="sufficientbalance">(900.0)</span>"#);
+    assert_html_not_contains(&html, r#"class="insufficientbalance">(900.0)"#);
+}
+
+#[test]
 fn achievements_hide_ore_and_depot_maximum_when_reward_does_not_increase() {
     let mut state = sample_achievement_state(None);
     state.achievements[0].current_ore_maximum = 100;

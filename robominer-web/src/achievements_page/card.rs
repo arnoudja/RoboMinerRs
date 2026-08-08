@@ -125,7 +125,10 @@ pub(super) fn render_achievement_card(
                 r#"<li><span>Average {} score</span><span class="achievement-requirement-target">{:.1}</span><span class="{}">({:.1})</span></li>"#,
                 escape_html(&requirement.area_name),
                 requirement.minimum_score,
-                if requirement.current_score >= requirement.minimum_score {
+                if robominer_db::achievement_score_meets_requirement(
+                    requirement.current_score,
+                    requirement.minimum_score,
+                ) {
                     "sufficientbalance"
                 } else {
                     "insufficientbalance"

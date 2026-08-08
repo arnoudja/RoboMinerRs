@@ -65,7 +65,9 @@ across all of that user's robots.
 
 `AchievementStepMiningScoreRequirement` compares against the **maximum**
 `RobotMiningAreaScore.score` any of the user's robots has reached in the given
-`miningAreaId`. Scores are updated when rallies complete.
+`miningAreaId`. Scores are updated when rallies complete. Comparison uses the
+same one-decimal rounding as the achievements UI (`900.04` and `900.0` both
+count as `900.0`), so a displayed tie meets the requirement.
 
 A step with **no** rows in either requirement table is claimable as soon as it is
 the user's next step (for example the signup reward).

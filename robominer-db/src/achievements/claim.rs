@@ -213,7 +213,7 @@ async fn achievement_requirements_met(
         .fetch_one(&mut **transaction)
         .await?;
 
-        if score < minimum_score {
+        if !crate::achievement_score_meets_requirement(score, minimum_score) {
             return Ok(false);
         }
     }

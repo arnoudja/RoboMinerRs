@@ -64,12 +64,12 @@ pub async fn list_achievement_page_states_for_user(
                           FROM AchievementStepMiningScoreRequirement \
                           WHERE AchievementStepMiningScoreRequirement.achievementId = AchievementStep.achievementId \
                             AND AchievementStepMiningScoreRequirement.step = AchievementStep.step \
-                            AND AchievementStepMiningScoreRequirement.minimumScore > \
-                              (SELECT COALESCE(MAX(RobotMiningAreaScore.score), 0.0) \
+                            AND ROUND(AchievementStepMiningScoreRequirement.minimumScore, 1) > \
+                              ROUND((SELECT COALESCE(MAX(RobotMiningAreaScore.score), 0.0) \
                                FROM RobotMiningAreaScore \
                                INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
-                                 AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId)) \
+                                 AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId), 1)) \
                      THEN 1 ELSE 0 END AS claimable \
          FROM UserAchievement \
          INNER JOIN Achievement ON Achievement.id = UserAchievement.achievementId \
