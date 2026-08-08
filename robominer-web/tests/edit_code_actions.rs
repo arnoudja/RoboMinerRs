@@ -36,7 +36,8 @@ async fn edit_code_create_post_inserts_program_source() {
 
     let mut form = HashMap::new();
     form.insert("requestType".to_string(), "update".to_string());
-    form.insert("programSourceId".to_string(), "0".to_string());
+    form.insert("programSourceId".to_string(), "-1".to_string());
+    form.insert("nextProgramSourceId".to_string(), "-1".to_string());
     form.insert("sourceName".to_string(), format!("{prefix}-program"));
     form.insert("sourceCode".to_string(), "move(1);".to_string());
 
@@ -58,6 +59,26 @@ async fn edit_code_create_post_inserts_program_source() {
     .await
     .expect("failed to count program sources");
     assert_eq!(program_count, 1);
+
+    let created_id: i64 =
+        sqlx::query_scalar("SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?")
+            .bind(user_id)
+            .bind(format!("{prefix}-program"))
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load created program source id");
+    assert!(
+        body.contains(&format!(
+            r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="{created_id}""#
+        )),
+        "created program card should be selected after save:\n{body}"
+    );
+    assert!(
+        !body.contains(
+            r#"class="edit-code-program-card edit-code-program-card-active" data-source-id="-1""#
+        ),
+        "New program draft must not stay selected after create:\n{body}"
+    );
 
     let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
         .bind(user_id)

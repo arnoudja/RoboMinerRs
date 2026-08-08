@@ -142,8 +142,12 @@ function confirmEditCodeSave(event) {
         }
         allowPageUnload = true;
         var sourceId = panel.getAttribute('data-source-id');
-        if (sourceId) {
+        // Keep selection on an existing program after save. For New program (id -1), omit
+        // the query so the server can select the created source instead of reopening draft.
+        if (sourceId && sourceId !== '-1') {
             form.action = 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId);
+        } else {
+            form.action = 'editCode';
         }
         form.setAttribute('data-robominer-confirmed', '1');
         if (typeof form.requestSubmit === 'function') {

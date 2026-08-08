@@ -129,9 +129,8 @@ async fn load_edit_code_page_state(
                     .map_err(program_source_write_page_error)?
                     {
                         Ok(created) => {
-                            if next_program_source_id.is_none_or(|source_id| source_id <= 0) {
-                                next_program_source_id = Some(created.program_source_id);
-                            }
+                            // Always select the created program (do not keep New program / -1).
+                            next_program_source_id = Some(created.program_source_id);
                             let applied =
                                 robominer_db::apply_verified_program_source_to_idle_robots(
                                     pool,

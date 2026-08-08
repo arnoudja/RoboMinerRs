@@ -66,12 +66,20 @@
 
     var preferredSourceId = editCodeUrlSourceId();
     var preferredLine = editCodeUrlLine();
-    if (preferredSourceId && document.querySelector('.edit-code-panel[data-source-id="' + preferredSourceId + '"]')) {
+    var preferredExists = preferredSourceId
+        && preferredSourceId !== '-1'
+        && document.querySelector('.edit-code-panel[data-source-id="' + preferredSourceId + '"]');
+    if (preferredExists) {
         selectProgramSource(preferredSourceId, false);
     } else {
-        var firstCard = document.querySelector('.edit-code-program-card');
-        if (firstCard) {
-            selectProgramSource(firstCard.getAttribute('data-source-id'), false);
+        // Honor server-rendered selection (e.g. after creating a program) instead of
+        // blindly picking the first card or reopening the New program draft from URL -1.
+        var activeCard = document.querySelector('.edit-code-program-card-active');
+        var fallbackCard = activeCard || document.querySelector('.edit-code-program-card');
+        if (fallbackCard) {
+            var fallbackId = fallbackCard.getAttribute('data-source-id');
+            var syncUrl = preferredSourceId === '-1' && fallbackId && fallbackId !== '-1';
+            selectProgramSource(fallbackId, syncUrl);
         }
     }
     if (preferredLine) {
