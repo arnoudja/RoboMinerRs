@@ -46,5 +46,6 @@ pub(super) fn sample_edit_code_state(
             claimed_queues: 0,
             ore_rewards: vec![],
         },
+        prefer_stored_selection: true,
     }
 }

@@ -30,6 +30,8 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
         &html,
         &[
             r#"class="edit-code-page""#,
+            r#"data-prefer-stored-selection="true""#,
+            r#"data-selection-storage-key="robominer.editCode.selectedProgramSourceId""#,
             r#"class="edit-code-summary""#,
             r#"id="eraseProgramSourceForm11""#,
             r#"id="editCodeForm11""#,
@@ -61,6 +63,7 @@ fn edit_code_rendering_preserves_forms_and_escapes_fields() {
             ">12<",
             r#"src="js/common/panel_state.js?v="#,
             r#"src="js/common/url_query.js?v="#,
+            r#"src="js/common/session_store.js?v="#,
             r#"src="js/edit_code/page.js?v="#,
             r#"class="edit-code-quick-link" href="robot""#,
             r#"class="edit-code-quick-link" href="helpRobotProgram""#,
@@ -103,6 +106,7 @@ fn edit_code_shows_success_banner_and_claim_feedback() {
                     reward: 5,
                 }],
             },
+            prefer_stored_selection: false,
         },
     );
 
@@ -131,6 +135,7 @@ fn edit_code_default_program_is_rendered_when_no_source_is_selected() {
                 claimed_queues: 0,
                 ore_rewards: vec![],
             },
+            prefer_stored_selection: true,
         },
     );
 
@@ -179,6 +184,7 @@ fn edit_code_rendering_keeps_compiled_size_line_for_invalid_program() {
                 claimed_queues: 0,
                 ore_rewards: vec![],
             },
+            prefer_stored_selection: true,
         },
     );
 
@@ -217,6 +223,7 @@ fn edit_code_shows_disabled_delete_when_program_is_linked() {
                 claimed_queues: 0,
                 ore_rewards: vec![],
             },
+            prefer_stored_selection: true,
         },
     );
 
@@ -263,6 +270,7 @@ fn edit_code_omits_manual_update_linked_robots_controls() {
                 claimed_queues: 0,
                 ore_rewards: vec![],
             },
+            prefer_stored_selection: true,
         },
     );
 

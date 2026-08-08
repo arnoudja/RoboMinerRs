@@ -7,6 +7,9 @@ pub(super) struct EditCodePageState {
     pub(super) program_sources: Vec<robominer_db::ProgramSourceStateRecord>,
     pub(super) message: Option<String>,
     pub(super) claimed_results: robominer_db::ClaimedUserResults,
+    /// When true, the page script may restore the last client-stored program selection
+    /// (GET without an explicit `nextProgramSourceId`). POST responses keep the server choice.
+    pub(super) prefer_stored_selection: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -67,6 +70,9 @@ async fn load_edit_code_page_state(
     let mut message = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
     let program_source_id = query_i64(request, "programSourceId").unwrap_or(0);
+    // Client may restore the last selected program only on plain GET navigations.
+    let prefer_stored_selection =
+        !is_post(request) && !next_program_source_id.is_some_and(|source_id| source_id > 0);
 
     if is_post(request) {
         match request.form.get("requestType").map(String::as_str) {
@@ -170,6 +176,7 @@ async fn load_edit_code_page_state(
         program_sources,
         message,
         claimed_results: claim_result,
+        prefer_stored_selection,
     })
 }
 

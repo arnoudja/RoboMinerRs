@@ -22,7 +22,14 @@ pub(super) fn render_edit_code_page(
         "New program"
     };
 
-    let mut body = String::from(r#"<div class="edit-code-page">"#);
+    let prefer_stored = if state.prefer_stored_selection {
+        "true"
+    } else {
+        "false"
+    };
+    let mut body = format!(
+        r#"<div class="edit-code-page" data-prefer-stored-selection="{prefer_stored}" data-selection-storage-key="robominer.editCode.selectedProgramSourceId">"#
+    );
     render_edit_code_summary(
         &mut body,
         state.program_sources.len(),

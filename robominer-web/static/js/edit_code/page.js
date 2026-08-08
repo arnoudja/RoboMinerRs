@@ -1,4 +1,37 @@
 (function() {
+    var pageRoot = document.querySelector('.edit-code-page');
+    var STORAGE_KEY = pageRoot
+        ? pageRoot.getAttribute('data-selection-storage-key') || 'robominer.editCode.selectedProgramSourceId'
+        : 'robominer.editCode.selectedProgramSourceId';
+    var preferStoredSelection = pageRoot
+        && pageRoot.getAttribute('data-prefer-stored-selection') === 'true';
+
+    function panelExists(sourceId) {
+        return !!(sourceId
+            && document.querySelector('.edit-code-panel[data-source-id="' + sourceId + '"]'));
+    }
+
+    function readStoredProgramSourceId() {
+        var stored = window.RoboMinerSessionStore.readJson(STORAGE_KEY);
+        if (stored == null) {
+            return null;
+        }
+        if (typeof stored === 'number' || typeof stored === 'string') {
+            return String(stored);
+        }
+        if (stored.programSourceId != null) {
+            return String(stored.programSourceId);
+        }
+        return null;
+    }
+
+    function writeStoredProgramSourceId(sourceId) {
+        if (!sourceId || sourceId === '-1') {
+            return;
+        }
+        window.RoboMinerSessionStore.writeJson(STORAGE_KEY, { programSourceId: sourceId });
+    }
+
     function updateEditCodeSummary(sourceId) {
         var summary = document.getElementById('editCodeSummarySelected');
         var linkedSummary = document.getElementById('editCodeSummaryLinkedRobots');
@@ -59,6 +92,7 @@
             }
         }
         updateEditCodeSummary(sourceId);
+        writeStoredProgramSourceId(sourceId);
         if (updateUrl) {
             syncEditCodeUrl(sourceId);
         }
@@ -68,9 +102,12 @@
     var preferredLine = editCodeUrlLine();
     var preferredExists = preferredSourceId
         && preferredSourceId !== '-1'
-        && document.querySelector('.edit-code-panel[data-source-id="' + preferredSourceId + '"]');
+        && panelExists(preferredSourceId);
+    var storedSourceId = readStoredProgramSourceId();
     if (preferredExists) {
         selectProgramSource(preferredSourceId, false);
+    } else if (preferStoredSelection && panelExists(storedSourceId)) {
+        selectProgramSource(storedSourceId, true);
     } else {
         // Honor server-rendered selection (e.g. after creating a program) instead of
         // blindly picking the first card or reopening the New program draft from URL -1.
