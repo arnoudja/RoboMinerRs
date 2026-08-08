@@ -222,9 +222,8 @@ pub(super) fn render_robot_config_panel(
     );
     body.push_str(r#"<div class="robot-stat-highlights">"#);
     push_robot_highlight(body, "Ore cap", robot.max_ore, " units");
-    push_robot_highlight(body, "Mining", robot.mining_speed, " u/c");
-    push_robot_highlight(body, "CPU", robot.cpu_speed, " i/c");
     push_robot_highlight(body, "Cycles", robot.max_turns, "");
+    push_robot_highlight(body, "Scan distance", robot.scan_distance, "");
     body.push_str("</div>");
     render_robot_memory_progress(
         body,
@@ -245,9 +244,10 @@ pub(super) fn render_robot_config_panel(
         format!("{:.2} s/c", robot.backward_speed),
     );
     add_robot_stat_entry(body, "Rotate speed:", format!("{} d/c", robot.rotate_speed));
-    add_robot_stat_entry(body, "Size:", format!("{:.2} s", robot.robot_size));
+    add_robot_stat_entry(body, "Mining:", format!("{} u/c", robot.mining_speed));
+    add_robot_stat_entry(body, "CPU:", format!("{} i/c", robot.cpu_speed));
     add_robot_stat_entry(body, "Scan time:", format!("{} cycles", robot.scan_time));
-    add_robot_stat_entry(body, "Scan distance:", format!("{}", robot.scan_distance));
+    add_robot_stat_entry(body, "Size:", format!("{:.2} s", robot.robot_size));
     add_robot_stat_entry(body, "Recharge time:", format_period(robot.recharge_time));
     body.push_str("</dl></section>");
 
