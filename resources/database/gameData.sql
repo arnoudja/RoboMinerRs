@@ -645,14 +645,28 @@ values (1202, 'AI-Lithabine',
 scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; while (mine()); }
 scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
 if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(2 *robot.rotateSpeed); }
-} else { dump(2); dump(3); }',
+} else { dumpB(); dumpC(); }',
  25,     2,           200,      8,        3.0,          1.0,           36,          3,        5,            2.01) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+values (1302, 'AI-Neudralion',
+'scan(); bool found = false; if (oreType() == 1) { move(oreDistance()); found = true; while (mine()); }
+scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; while (mine()); }
+scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
+if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(2 *robot.rotateSpeed); }
+} else { dumpB(); dumpC(); }',
+ 40,     5,           320,      10,        3.9,          1.3,           32,          6,        9,            2.22) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+
+insert into AIRobot (id, robotName, sourceCode,
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
 values (3, 'AI-3',
-'int rot = 0; while (true) { if (rot) { if (rot <= 90) { rotate(rot); } rot = rot - 10; } if (move(1.5) < 1) { move(-1); rotate(24); } while (mine()) { rot = 100; } }',
- 50,     2,           5000,     99,       3,            1,             36,          3,        5,            2.1) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+'scan(); bool found = false; if (oreType() == 1) { move(oreDistance()); found = true; while (mine()); }
+scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; while (mine()); }
+scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
+if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(2 *robot.rotateSpeed); }
+} else { dumpB(); dumpC(); }',
+ 50,     5,           5000,     99,       4,            2,             36,          8,        12,            2.9) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
 
 -- Mining areas
 
@@ -721,8 +735,8 @@ insert into OrePrice (id, description) values (12001, 'Mining Area Lithabine-Sma
 insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (12001,      1,     10),
                            (12001,      2,     2);
-insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1201, 'Lithabine-Small', 12001,      35,    35,    200,      60,         25,      3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1201, 'Lithabine-Small', 12001,      30,    30,    200,      60,         25,      20,             1102) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1201,         1,     10,     8),
                                 (1201,         2,     8,      4),
@@ -733,8 +747,8 @@ insert into OrePrice (id, description) values (12002, 'Mining Area Lithabine-Med
 insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (12002,      1,     15),
                            (12002,      2,     5);
-insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1202, 'Lithabine-Medium', 12002,      40,    40,    400,      120,        10,      3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1202, 'Lithabine-Medium', 12002,      40,    40,    400,      120,        10,      25,             1202) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1202,         1,     10,     8),
                                 (1202,         2,     8,      4),
@@ -746,8 +760,8 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (12003,      1,     20),
                            (12003,      2,     5),
                            (12003,      3,     1);
-insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1203, 'Lithabine-Large', 12003,      45,    45,    600,      180,        0,       3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1203, 'Lithabine-Large', 12003,      45,    45,    600,      180,        0,       30,             1302) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1203,         1,     20,     10),
                                 (1203,         2,     10,     8),
@@ -759,8 +773,8 @@ insert into OrePrice (id, description) values (13001, 'Mining Area Neudralion-Sm
 insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (13001,      2,     10),
                            (13001,      3,     5);
-insert into MiningArea (id,   areaName,       orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1301, 'Neudralion-Small', 13001,      50,    50,    400,      300,        40,      3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1301, 'Neudralion-Small', 13001,      50,    50,    400,      300,        40,      30,             1202) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1301,         2,     10,     10),
                                 (1301,         2,     10,     8),
@@ -774,8 +788,8 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
                     values (13002,      2,     15),
                            (13002,      3,     10),
                            (13002,      4,     1);
-insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId)
-                values (1302, 'Neudralion-Large', 13002,      70,    70,    600,      600,        20,      3) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId)
+                values (1302, 'Neudralion-Large', 13002,      70,    70,    600,      600,        20,      40,             1302) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1302,         2,     10,     8),
                                 (1302,         3,     10,     5),
@@ -1087,7 +1101,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (3,             4,    10,                1102);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (3,             4,    1101,         250.0);
+                                           values (3,             4,    1101,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (3,             4,    2,     90);
 
@@ -1106,24 +1120,32 @@ insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxO
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (3,             7,    1101,         600.0),
                                                   (3,             7,    1102,         400.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             7,    2,     300);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (3,             8,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (3,             8,    1101,         750.0),
                                                   (3,             8,    1102,         500.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             8,    2,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (3,             9,    10,                2,     1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (3,             9,    1101,         800.0),
                                                   (3,             9,    1102,         600.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             9,    2,     2000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId, miningQueueReward)
                      values (3,             10,   10,                1103,         1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (3,             10,   1101,         900.0),
                                                   (3,             10,   1102,         750.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             10,   2,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (3,             11,   10,                2,     5000,         1000);
@@ -1131,6 +1153,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                            values (3,             11,   1101,         910.0),
                                                   (3,             11,   1102,         900.0),
                                                   (3,             11,   1103,         600.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             11,   2,     10000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (3,             12,   10,                2,     9999);
@@ -1153,7 +1177,7 @@ insert into AchievementStep (achievementId, step, achievementPoints, miningAreaI
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             1,    2,     125);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             1,    1101,         90.0);
+                                           values (4,             1,    1101,         400.0);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (4,             2,    10,                3,     30);
@@ -1168,15 +1192,15 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (4,             4,    10,                1202);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             4,    1201,         150.0);
+                                           values (4,             4,    1201,         220.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             4,    3,     90);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (4,             5,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             5,    1201,         300.0),
-                                                  (4,             5,    1202,         300.0);
+                                           values (4,             5,    1201,         450.0),
+                                                  (4,             5,    1202,         350.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             5,    3,     150);
 
@@ -1188,40 +1212,51 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (4,             7,    10,                3,     500);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             7,    1201,         450.0),
-                                                  (4,             7,    1202,         450.0);
+                                           values (4,             7,    1201,         500.0),
+                                                  (4,             7,    1202,         500.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             7,    3,     300);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (4,             8,    10,                1203);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             8,    1201,         500.0),
-                                                  (4,             8,    1202,         500.0);
+                                           values (4,             8,    1201,         650.0),
+                                                  (4,             8,    1202,         550.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             8,    3,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (4,             9,    10,                3,     1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             9,    1201,         550.0),
-                                                  (4,             9,    1202,         550.0),
+                                           values (4,             9,    1201,         750.0),
+                                                  (4,             9,    1202,         650.0),
                                                   (4,             9,    1203,         550.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             9,    3,     3000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (4,             10,   10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             10,   1201,         650.0),
-                                                  (4,             10,   1202,         650.0),
+                                           values (4,             10,   1201,         800.0),
+                                                  (4,             10,   1202,         700.0),
                                                   (4,             10,   1203,         650.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             10,   3,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (4,             11,   10,                3,     5000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             11,   1201,         750.0),
+                                           values (4,             11,   1201,         850.0),
                                                   (4,             11,   1202,         750.0),
                                                   (4,             11,   1203,         750.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             11,   3,     10000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (4,             12,   10,                3,     9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
-                                           values (4,             12,   1202,         900.0),
+                                           values (4,             12,   1201,         900.0),
+                                                  (4,             12,   1202,         900.0),
                                                   (4,             12,   1203,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             12,   3,     15000);
@@ -1256,6 +1291,8 @@ insert into AchievementStep (achievementId, step, achievementPoints, miningAreaI
                      values (5,             4,    10,                1302);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             4,    1301,         400.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             4,    4,     200);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (5,             5,    10,                4,     200);
@@ -1270,36 +1307,48 @@ insert into AchievementStep (achievementId, step, achievementPoints, miningQueue
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             6,    1301,         500.0),
                                                   (5,             6,    1302,         400.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             6,    4,     500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (5,             7,    10,                4,     500,          100);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             7,    1301,         700.0),
                                                   (5,             7,    1302,         600.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             7,    4,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (5,             8,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             8,    1301,         750.0),
                                                   (5,             8,    1302,         700.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             8,    4,     2000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (5,             9,    10,                4,     1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             9,    1301,         800.0),
                                                   (5,             9,    1302,         800.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             9,    4,     3000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (5,             10,   10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             10,   1301,         850.0),
                                                   (5,             10,   1302,         800.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,            10,    4,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (5,             11,   10,                4,     5000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (5,             11,   1301,         900.0),
                                                   (5,             11,   1302,         900.0);
+insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             11,   4,     10000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (5,             12,   10,                4,     9999);
