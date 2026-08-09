@@ -42,6 +42,7 @@ fn robot_fleet_sorts_pending_robots_first() {
         cpu_name: "CPU".to_string(),
         engine_id: 601,
         engine_name: "Engine".to_string(),
+        engine_forward_capacity: 11,
         ore_scanner_id: 701,
         ore_scanner_name: "Ore Scanner".to_string(),
         recharge_time: 120,

@@ -6,9 +6,13 @@ use crate::html::escape_html;
 
 #[derive(Clone, Copy)]
 pub(super) enum PartCapacityLabel {
-    None,
     Ore,
+    Mining,
     Battery,
+    Memory,
+    Cpu,
+    Engine,
+    Scanner,
 }
 
 pub(super) struct RobotPartSelect<'a> {
@@ -24,7 +28,7 @@ pub(super) struct RobotPartSelect<'a> {
     pub(super) capacity_label: PartCapacityLabel,
     pub(super) disabled_attr: &'a str,
     pub(super) current_memory_capacity: Option<i32>,
-    pub(super) current_capacity: Option<i32>,
+    pub(super) current_capacity: i32,
 }
 
 pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelect<'_>) {
@@ -59,7 +63,7 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         escape_html(&part_option_label(
             current_part_name,
             capacity_label,
-            current_capacity.unwrap_or(0),
+            current_capacity,
         ))
     ));
     for asset in part_asset_map.get(&type_id).into_iter().flatten() {
@@ -88,9 +92,13 @@ fn asset_capacity(
     asset: &robominer_db::RobotConfigPartAssetStateRecord,
 ) -> i32 {
     match capacity_label {
-        PartCapacityLabel::None => 0,
         PartCapacityLabel::Ore => asset.ore_capacity,
+        PartCapacityLabel::Mining => asset.mining_capacity,
         PartCapacityLabel::Battery => asset.battery_capacity,
+        PartCapacityLabel::Memory => asset.memory_capacity,
+        PartCapacityLabel::Cpu => asset.cpu_capacity,
+        PartCapacityLabel::Engine => asset.forward_capacity,
+        PartCapacityLabel::Scanner => asset.scan_distance,
     }
 }
 
@@ -99,8 +107,12 @@ fn part_option_label(part_name: &str, capacity_label: PartCapacityLabel, capacit
         return part_name.to_string();
     }
     match capacity_label {
-        PartCapacityLabel::None => part_name.to_string(),
         PartCapacityLabel::Ore => format!("{part_name} ({capacity} Ore)"),
+        PartCapacityLabel::Mining => format!("{part_name} ({capacity} u/c)"),
         PartCapacityLabel::Battery => format!("{part_name} ({capacity} pc)"),
+        PartCapacityLabel::Memory => format!("{part_name} ({capacity} i)"),
+        PartCapacityLabel::Cpu => format!("{part_name} ({capacity} i/c)"),
+        PartCapacityLabel::Engine => format!("{part_name} ({capacity} fc)"),
+        PartCapacityLabel::Scanner => format!("{part_name} ({capacity} sd)"),
     }
 }

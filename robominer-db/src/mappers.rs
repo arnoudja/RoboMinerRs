@@ -130,6 +130,7 @@ pub(crate) fn robot_config_state_record(
         cpu_name: row.try_get("cpuName")?,
         engine_id: row.try_get("engineId")?,
         engine_name: row.try_get("engineName")?,
+        engine_forward_capacity: row.try_get("engineForwardCapacity")?,
         ore_scanner_id: row.try_get("oreScannerId")?,
         ore_scanner_name: row.try_get("oreScannerName")?,
         recharge_time: row.try_get("rechargeTime")?,

@@ -28,6 +28,7 @@ pub async fn list_robot_config_states(
                 Cpu.partName AS cpuName, \
                 COALESCE(PendingRobotChanges.engineId, Robot.engineId) AS engineId, \
                 Engine.partName AS engineName, \
+                Engine.forwardCapacity AS engineForwardCapacity, \
                 COALESCE(PendingRobotChanges.oreScannerId, Robot.oreScannerId) AS oreScannerId, \
                 OreScanner.partName AS oreScannerName, \
                 COALESCE(PendingRobotChanges.rechargeTime, Robot.rechargeTime) AS rechargeTime, \
@@ -73,13 +74,33 @@ pub async fn list_robot_config_part_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<RobotConfigPartAssetStateRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i64, String, i32, i32, i32, i32, i64)>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            i64,
+            i64,
+            String,
+            i32,
+            i32,
+            i32,
+            i32,
+            i32,
+            i32,
+            i32,
+            i32,
+            i64,
+        ),
+    >(
         "SELECT RobotPart.typeId, \
                 RobotPart.id, \
                 RobotPart.partName, \
                 RobotPart.oreCapacity, \
+                RobotPart.miningCapacity, \
                 RobotPart.batteryCapacity, \
                 RobotPart.memoryCapacity, \
+                RobotPart.cpuCapacity, \
+                RobotPart.forwardCapacity, \
+                RobotPart.scanDistance, \
                 UserRobotPartAsset.totalOwned, \
                 (SELECT COUNT(*) \
                  FROM Robot \
@@ -117,8 +138,12 @@ pub async fn list_robot_config_part_asset_states(
                 robot_part_id,
                 part_name,
                 ore_capacity,
+                mining_capacity,
                 battery_capacity,
                 memory_capacity,
+                cpu_capacity,
+                forward_capacity,
+                scan_distance,
                 total_owned,
                 assigned,
             )| {
@@ -127,8 +152,12 @@ pub async fn list_robot_config_part_asset_states(
                     robot_part_id,
                     part_name,
                     ore_capacity,
+                    mining_capacity,
                     battery_capacity,
                     memory_capacity,
+                    cpu_capacity,
+                    forward_capacity,
+                    scan_distance,
                     unassigned: total_owned.saturating_sub(assigned as i32),
                 }
             },

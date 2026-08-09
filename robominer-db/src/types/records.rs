@@ -144,6 +144,7 @@ pub struct RobotConfigStateRecord {
     pub cpu_name: String,
     pub engine_id: i64,
     pub engine_name: String,
+    pub engine_forward_capacity: i32,
     pub ore_scanner_id: i64,
     pub ore_scanner_name: String,
     pub recharge_time: i32,
@@ -167,8 +168,12 @@ pub struct RobotConfigPartAssetStateRecord {
     pub robot_part_id: i64,
     pub part_name: String,
     pub ore_capacity: i32,
+    pub mining_capacity: i32,
     pub battery_capacity: i32,
     pub memory_capacity: i32,
+    pub cpu_capacity: i32,
+    pub forward_capacity: i32,
+    pub scan_distance: i32,
     pub unassigned: i32,
 }
 

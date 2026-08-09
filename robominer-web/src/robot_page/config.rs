@@ -124,7 +124,7 @@ pub(super) fn render_robot_config_panel(
             capacity_label: PartCapacityLabel::Ore,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: Some(robot.max_ore),
+            current_capacity: robot.max_ore,
         },
     );
     render_robot_part_select(
@@ -138,10 +138,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.mining_unit_name,
             part_asset_map,
             memory_control: false,
-            capacity_label: PartCapacityLabel::None,
+            capacity_label: PartCapacityLabel::Mining,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: None,
+            current_capacity: robot.mining_speed,
         },
     );
     render_robot_part_select(
@@ -158,7 +158,7 @@ pub(super) fn render_robot_config_panel(
             capacity_label: PartCapacityLabel::Battery,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: Some(robot.battery_capacity),
+            current_capacity: robot.battery_capacity,
         },
     );
     render_robot_part_select(
@@ -172,10 +172,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.memory_module_name,
             part_asset_map,
             memory_control: true,
-            capacity_label: PartCapacityLabel::None,
+            capacity_label: PartCapacityLabel::Memory,
             disabled_attr,
             current_memory_capacity: Some(robot.memory_size),
-            current_capacity: None,
+            current_capacity: robot.memory_size,
         },
     );
     render_robot_part_select(
@@ -189,10 +189,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.cpu_name,
             part_asset_map,
             memory_control: false,
-            capacity_label: PartCapacityLabel::None,
+            capacity_label: PartCapacityLabel::Cpu,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: None,
+            current_capacity: robot.cpu_speed,
         },
     );
     render_robot_part_select(
@@ -206,10 +206,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.engine_name,
             part_asset_map,
             memory_control: false,
-            capacity_label: PartCapacityLabel::None,
+            capacity_label: PartCapacityLabel::Engine,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: None,
+            current_capacity: robot.engine_forward_capacity,
         },
     );
     render_robot_part_select(
@@ -223,10 +223,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.ore_scanner_name,
             part_asset_map,
             memory_control: false,
-            capacity_label: PartCapacityLabel::None,
+            capacity_label: PartCapacityLabel::Scanner,
             disabled_attr,
             current_memory_capacity: None,
-            current_capacity: None,
+            current_capacity: robot.scan_distance,
         },
     );
     body.push_str("</div></section>");
