@@ -14,8 +14,10 @@ pub(super) struct RobotPartSelect<'a> {
     pub(super) part_asset_map:
         &'a HashMap<i64, Vec<&'a robominer_db::RobotConfigPartAssetStateRecord>>,
     pub(super) memory_control: bool,
+    pub(super) show_ore_capacity: bool,
     pub(super) disabled_attr: &'a str,
     pub(super) current_memory_capacity: Option<i32>,
+    pub(super) current_ore_capacity: Option<i32>,
 }
 
 pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelect<'_>) {
@@ -28,8 +30,10 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         current_part_name,
         part_asset_map,
         memory_control,
+        show_ore_capacity,
         disabled_attr,
         current_memory_capacity,
+        current_ore_capacity,
     } = select;
     let id_attr = if memory_control {
         format!(r#" id="{field_prefix}{robot_id}""#)
@@ -45,7 +49,10 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         field_prefix,
         robot_id,
         current_part_id,
-        escape_html(current_part_name)
+        escape_html(&part_option_label(
+            current_part_name,
+            show_ore_capacity.then_some(current_ore_capacity.unwrap_or(0)),
+        ))
     ));
     for asset in part_asset_map.get(&type_id).into_iter().flatten() {
         if asset.unassigned > 0 && asset.robot_part_id != current_part_id {
@@ -57,9 +64,19 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
             body.push_str(&format!(
                 r#"<option value="{}"{capacity_attr}>{}</option>"#,
                 asset.robot_part_id,
-                escape_html(&asset.part_name)
+                escape_html(&part_option_label(
+                    &asset.part_name,
+                    show_ore_capacity.then_some(asset.ore_capacity),
+                ))
             ));
         }
     }
     body.push_str("</select></label>");
+}
+
+fn part_option_label(part_name: &str, ore_capacity: Option<i32>) -> String {
+    match ore_capacity.filter(|capacity| *capacity > 0) {
+        Some(capacity) => format!("{part_name} ({capacity} Ore)"),
+        None => part_name.to_string(),
+    }
 }

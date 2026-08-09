@@ -121,8 +121,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.ore_container_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: true,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: Some(robot.max_ore),
         },
     );
     render_robot_part_select(
@@ -136,8 +138,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.mining_unit_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: None,
         },
     );
     render_robot_part_select(
@@ -151,8 +155,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.battery_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: None,
         },
     );
     render_robot_part_select(
@@ -166,8 +172,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.memory_module_name,
             part_asset_map,
             memory_control: true,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: Some(robot.memory_size),
+            current_ore_capacity: None,
         },
     );
     render_robot_part_select(
@@ -181,8 +189,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.cpu_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: None,
         },
     );
     render_robot_part_select(
@@ -196,8 +206,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.engine_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: None,
         },
     );
     render_robot_part_select(
@@ -211,8 +223,10 @@ pub(super) fn render_robot_config_panel(
             current_part_name: &robot.ore_scanner_name,
             part_asset_map,
             memory_control: false,
+            show_ore_capacity: false,
             disabled_attr,
             current_memory_capacity: None,
+            current_ore_capacity: None,
         },
     );
     body.push_str("</div></section>");

@@ -165,6 +165,7 @@ pub struct RobotConfigPartAssetStateRecord {
     pub type_id: i64,
     pub robot_part_id: i64,
     pub part_name: String,
+    pub ore_capacity: i32,
     pub memory_capacity: i32,
     pub unassigned: i32,
 }

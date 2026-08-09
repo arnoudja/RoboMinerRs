@@ -72,10 +72,11 @@ pub async fn list_robot_config_part_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<RobotConfigPartAssetStateRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i64, String, i32, i32, i64)>(
+    let rows = sqlx::query_as::<_, (i64, i64, String, i32, i32, i32, i64)>(
         "SELECT RobotPart.typeId, \
                 RobotPart.id, \
                 RobotPart.partName, \
+                RobotPart.oreCapacity, \
                 RobotPart.memoryCapacity, \
                 UserRobotPartAsset.totalOwned, \
                 (SELECT COUNT(*) \
@@ -109,11 +110,20 @@ pub async fn list_robot_config_part_asset_states(
     Ok(rows
         .into_iter()
         .map(
-            |(type_id, robot_part_id, part_name, memory_capacity, total_owned, assigned)| {
+            |(
+                type_id,
+                robot_part_id,
+                part_name,
+                ore_capacity,
+                memory_capacity,
+                total_owned,
+                assigned,
+            )| {
                 RobotConfigPartAssetStateRecord {
                     type_id,
                     robot_part_id,
                     part_name,
+                    ore_capacity,
                     memory_capacity,
                     unassigned: total_owned.saturating_sub(assigned as i32),
                 }
