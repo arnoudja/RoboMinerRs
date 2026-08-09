@@ -123,6 +123,7 @@ pub(crate) fn robot_config_state_record(
         mining_unit_name: row.try_get("miningUnitName")?,
         battery_id: row.try_get("batteryId")?,
         battery_name: row.try_get("batteryName")?,
+        battery_capacity: row.try_get("batteryCapacity")?,
         memory_module_id: row.try_get("memoryModuleId")?,
         memory_module_name: row.try_get("memoryModuleName")?,
         cpu_id: row.try_get("cpuId")?,

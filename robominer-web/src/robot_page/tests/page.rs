@@ -61,6 +61,8 @@ fn robot_rendering_preserves_form_contract_and_escapes_fields() {
             "Source &lt;One&gt;",
             "Container &amp; Current (10 Ore)",
             "Container &lt;Spare&gt; (25 Ore)",
+            "Battery (5000 pc)",
+            "Battery &lt;Spare&gt; (9000 pc)",
             r#"id="robotName7" name="robotName7""#,
             r#"name="oreContainerId7""#,
             r#"id="memoryModuleId7" name="memoryModuleId7""#,

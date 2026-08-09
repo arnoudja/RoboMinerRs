@@ -35,6 +35,7 @@ fn robot_fleet_sorts_pending_robots_first() {
         mining_unit_name: "Mining Unit".to_string(),
         battery_id: 301,
         battery_name: "Battery".to_string(),
+        battery_capacity: 5000,
         memory_module_id: 401,
         memory_module_name: "Memory".to_string(),
         cpu_id: 501,

@@ -4,6 +4,13 @@ use std::collections::HashMap;
 
 use crate::html::escape_html;
 
+#[derive(Clone, Copy)]
+pub(super) enum PartCapacityLabel {
+    None,
+    Ore,
+    Battery,
+}
+
 pub(super) struct RobotPartSelect<'a> {
     pub(super) label: &'a str,
     pub(super) field_prefix: &'a str,
@@ -14,10 +21,10 @@ pub(super) struct RobotPartSelect<'a> {
     pub(super) part_asset_map:
         &'a HashMap<i64, Vec<&'a robominer_db::RobotConfigPartAssetStateRecord>>,
     pub(super) memory_control: bool,
-    pub(super) show_ore_capacity: bool,
+    pub(super) capacity_label: PartCapacityLabel,
     pub(super) disabled_attr: &'a str,
     pub(super) current_memory_capacity: Option<i32>,
-    pub(super) current_ore_capacity: Option<i32>,
+    pub(super) current_capacity: Option<i32>,
 }
 
 pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelect<'_>) {
@@ -30,10 +37,10 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         current_part_name,
         part_asset_map,
         memory_control,
-        show_ore_capacity,
+        capacity_label,
         disabled_attr,
         current_memory_capacity,
-        current_ore_capacity,
+        current_capacity,
     } = select;
     let id_attr = if memory_control {
         format!(r#" id="{field_prefix}{robot_id}""#)
@@ -51,7 +58,8 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         current_part_id,
         escape_html(&part_option_label(
             current_part_name,
-            show_ore_capacity.then_some(current_ore_capacity.unwrap_or(0)),
+            capacity_label,
+            current_capacity.unwrap_or(0),
         ))
     ));
     for asset in part_asset_map.get(&type_id).into_iter().flatten() {
@@ -66,7 +74,8 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
                 asset.robot_part_id,
                 escape_html(&part_option_label(
                     &asset.part_name,
-                    show_ore_capacity.then_some(asset.ore_capacity),
+                    capacity_label,
+                    asset_capacity(capacity_label, asset),
                 ))
             ));
         }
@@ -74,9 +83,24 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
     body.push_str("</select></label>");
 }
 
-fn part_option_label(part_name: &str, ore_capacity: Option<i32>) -> String {
-    match ore_capacity.filter(|capacity| *capacity > 0) {
-        Some(capacity) => format!("{part_name} ({capacity} Ore)"),
-        None => part_name.to_string(),
+fn asset_capacity(
+    capacity_label: PartCapacityLabel,
+    asset: &robominer_db::RobotConfigPartAssetStateRecord,
+) -> i32 {
+    match capacity_label {
+        PartCapacityLabel::None => 0,
+        PartCapacityLabel::Ore => asset.ore_capacity,
+        PartCapacityLabel::Battery => asset.battery_capacity,
+    }
+}
+
+fn part_option_label(part_name: &str, capacity_label: PartCapacityLabel, capacity: i32) -> String {
+    if capacity <= 0 {
+        return part_name.to_string();
+    }
+    match capacity_label {
+        PartCapacityLabel::None => part_name.to_string(),
+        PartCapacityLabel::Ore => format!("{part_name} ({capacity} Ore)"),
+        PartCapacityLabel::Battery => format!("{part_name} ({capacity} pc)"),
     }
 }

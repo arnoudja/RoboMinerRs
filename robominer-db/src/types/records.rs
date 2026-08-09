@@ -137,6 +137,7 @@ pub struct RobotConfigStateRecord {
     pub mining_unit_name: String,
     pub battery_id: i64,
     pub battery_name: String,
+    pub battery_capacity: i32,
     pub memory_module_id: i64,
     pub memory_module_name: String,
     pub cpu_id: i64,
@@ -166,6 +167,7 @@ pub struct RobotConfigPartAssetStateRecord {
     pub robot_part_id: i64,
     pub part_name: String,
     pub ore_capacity: i32,
+    pub battery_capacity: i32,
     pub memory_capacity: i32,
     pub unassigned: i32,
 }

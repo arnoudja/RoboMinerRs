@@ -21,6 +21,7 @@ pub async fn list_robot_config_states(
                 MiningUnit.partName AS miningUnitName, \
                 COALESCE(PendingRobotChanges.batteryId, Robot.batteryId) AS batteryId, \
                 Battery.partName AS batteryName, \
+                Battery.batteryCapacity AS batteryCapacity, \
                 COALESCE(PendingRobotChanges.memoryModuleId, Robot.memoryModuleId) AS memoryModuleId, \
                 MemoryModule.partName AS memoryModuleName, \
                 COALESCE(PendingRobotChanges.cpuId, Robot.cpuId) AS cpuId, \
@@ -72,11 +73,12 @@ pub async fn list_robot_config_part_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<RobotConfigPartAssetStateRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i64, String, i32, i32, i32, i64)>(
+    let rows = sqlx::query_as::<_, (i64, i64, String, i32, i32, i32, i32, i64)>(
         "SELECT RobotPart.typeId, \
                 RobotPart.id, \
                 RobotPart.partName, \
                 RobotPart.oreCapacity, \
+                RobotPart.batteryCapacity, \
                 RobotPart.memoryCapacity, \
                 UserRobotPartAsset.totalOwned, \
                 (SELECT COUNT(*) \
@@ -115,6 +117,7 @@ pub async fn list_robot_config_part_asset_states(
                 robot_part_id,
                 part_name,
                 ore_capacity,
+                battery_capacity,
                 memory_capacity,
                 total_owned,
                 assigned,
@@ -124,6 +127,7 @@ pub async fn list_robot_config_part_asset_states(
                     robot_part_id,
                     part_name,
                     ore_capacity,
+                    battery_capacity,
                     memory_capacity,
                     unassigned: total_owned.saturating_sub(assigned as i32),
                 }
