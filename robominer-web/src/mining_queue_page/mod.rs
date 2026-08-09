@@ -320,7 +320,7 @@ pub(super) fn mining_queue_status_description(
         robominer_db::MiningQueueStatus::Mining => "Mining",
         robominer_db::MiningQueueStatus::Recharging => "Recharging",
         robominer_db::MiningQueueStatus::Queued => "Waiting for rally",
-        robominer_db::MiningQueueStatus::Updating => "Starting rally",
+        robominer_db::MiningQueueStatus::Updating => "Finishing rally",
     }
 }
 
