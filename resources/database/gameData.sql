@@ -983,8 +983,10 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1501,         4,     15,     12),
                                 (1501,         6,     3,      3),
                                 (1501,         6,     3,      4),
+                                (1501,         6,     3,      4),
                                 (1501,         6,     4,      5),
-                                (1501,         6,     4,      5);
+                                (1501,         6,     5,      5),
+                                (1501,         6,     6,      5);
 
 insert into OrePrice (id, description) values (15002, 'Mining Area Prantum-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -997,9 +999,10 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1502,         3,     15,     12),
                                 (1502,         4,     15,     12),
                                 (1502,         6,     3,      3),
-                                (1502,         6,     3,      4),
-                                (1502,         6,     4,      5),
-                                (1502,         6,     4,      5);
+                                (1502,         6,     4,      4),
+                                (1502,         6,     5,      5),
+                                (1502,         6,     5,      6),
+                                (1502,         6,     6,      6);
 
 -- Raxia
 insert into OrePrice (id, description) values (16001, 'Mining Area Raxia-Small price') ON DUPLICATE KEY UPDATE description = VALUES(description);
