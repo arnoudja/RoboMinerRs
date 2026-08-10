@@ -43,7 +43,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                 ore_name: "Ore & Two".to_string(),
                 amount: 40,
                 max_allowed: 100,
-                depot_max_allowed: 0,
+                depot_max_allowed: 250,
             }],
             robots: vec![robominer_db::MiningQueuePageRobotRecord {
                 robot_id: 1,
@@ -168,7 +168,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"class="mining-queue-page" data-area-storage-key="#,
             r#"class="page-wallet mining-queue-wallet""#,
             r#"class="mining-queue-card""#,
-            r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#,
+            r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span></div><span class="page-wallet-depot">depot 250</span>"#,
             r#"href="robot?robotId=1">Bot &lt;One&gt;</a>"#,
             r#"mining-queue-status-mining">Mining</span>"#,
             r#"data-seconds-left="61" data-refresh-on-complete="true" data-progress-total="121""#,

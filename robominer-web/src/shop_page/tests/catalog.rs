@@ -43,6 +43,7 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
             r#"name="selectedRobotPartTypeId" class="tableitem shop-filter-select"><option value="10" selected>"#,
             r#"<option value="2" selected>Ore &amp; Two quality</option>"#,
             r#">Ore &amp; Two</span><span class="page-wallet-amount">40/100</span>"#,
+            r#"class="page-wallet-depot">depot 250</span>"#,
             r#"href="miningAreaOverview?sort=ore&amp;oreId=2">Areas rich in Ore &amp; Two</a>"#,
             r#"Compare all areas</a>.</p>"#,
             r#"class="shop-atlas-helper""#,

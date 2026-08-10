@@ -6,6 +6,7 @@ pub(crate) struct WalletOreLine<'a> {
     pub ore_name: &'a str,
     pub amount: i32,
     pub max_allowed: i32,
+    pub depot_max_allowed: i32,
 }
 
 /// Parameters for [`render_wallet_strip_section`].
@@ -78,15 +79,23 @@ fn render_wallet_ore_list(
             asset.amount,
             asset.max_allowed,
         );
+        let primary_class = item_row_class.unwrap_or("page-wallet-primary");
         let amounts = if wrap_amount_row {
-            let row_class = item_row_class.unwrap_or("page-wallet-item-row");
-            format!(r#"<div class="{row_class}">{amounts}</div>"#)
+            format!(r#"<div class="{primary_class}">{amounts}</div>"#)
         } else {
-            amounts
+            format!(r#"<div class="{CLASS_PREFIX}-primary">{amounts}</div>"#)
+        };
+        let depot = if asset.depot_max_allowed > 0 {
+            format!(
+                r#"<span class="{CLASS_PREFIX}-depot">depot {}</span>"#,
+                asset.depot_max_allowed
+            )
+        } else {
+            String::new()
         };
         let extra = extra_item_html(asset);
         body.push_str(&format!(
-            r#"<li class="{CLASS_PREFIX}-item {balance_class}">{amounts}{extra}</li>"#
+            r#"<li class="{CLASS_PREFIX}-item {balance_class}">{amounts}{depot}{extra}</li>"#
         ));
     }
     body.push_str("</ul>");

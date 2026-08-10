@@ -81,7 +81,7 @@ pub(super) fn sample_shop_state(message: Option<String>) -> ShopPageState {
             ore_name: "Ore & Two".to_string(),
             amount: 40,
             max_allowed: 100,
-            depot_max_allowed: 0,
+            depot_max_allowed: 250,
         }],
     }
 }

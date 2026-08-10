@@ -150,6 +150,7 @@ fn render_shop_wallet_strip(body: &mut String, state: &ShopPageState) {
             ore_name: &asset.ore_name,
             amount: asset.amount,
             max_allowed: asset.max_allowed,
+            depot_max_allowed: asset.depot_max_allowed,
         })
         .collect();
     crate::html::render_wallet_strip_section(
