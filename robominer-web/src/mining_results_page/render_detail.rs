@@ -108,7 +108,9 @@ fn render_mining_result_breakdown(
 
     if !ore_results.is_empty() {
         body.push_str(r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Ore breakdown</h3><ul class="mining-results-ore-list">"#);
-        for ore_result in ore_results {
+        let mut sorted_ores: Vec<_> = ore_results.to_vec();
+        sorted_ores.sort_by_key(|ore_result| std::cmp::Reverse(ore_result.ore_id));
+        for ore_result in sorted_ores {
             body.push_str(&format!(
                 r#"<li><span class="mining-results-ore-name">{}</span><span class="mining-results-ore-values">{} mined · {} tax · +{} net</span></li>"#,
                 escape_html(&ore_result.ore_name),

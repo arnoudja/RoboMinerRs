@@ -101,10 +101,17 @@ fn mining_result_ore_summary(ore_results: &[&robominer_db::MiningResultOreStateR
     if ore_results.is_empty() {
         return String::new();
     }
-    if ore_results.len() == 1 {
-        return ore_results[0].ore_name.clone();
+    let mut ordered: Vec<_> = ore_results.to_vec();
+    ordered.sort_by(|left, right| {
+        right
+            .amount
+            .cmp(&left.amount)
+            .then_with(|| left.ore_name.cmp(&right.ore_name))
+    });
+    if ordered.len() == 1 {
+        return ordered[0].ore_name.clone();
     }
-    ore_results
+    ordered
         .iter()
         .map(|ore_result| ore_result.ore_name.as_str())
         .collect::<Vec<_>>()
