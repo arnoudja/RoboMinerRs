@@ -948,9 +948,10 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1401,         3,     10,     8),
                                 (1401,         4,     5,      5),
                                 (1401,         4,     5,      5),
-                                (1401,         5,     3,      3),
+                                (1401,         5,     4,      3),
                                 (1401,         5,     4,      4),
-                                (1401,         5,     5,      5);
+                                (1401,         5,     5,      4),
+                                (1401,         5,     6,      5);
 
 insert into OrePrice (id, description) values (14002, 'Mining Area Complatix-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -961,13 +962,13 @@ insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMo
                 values (1402, 'Complatix-Large', 14002,      90,    90,    1200,     1800,       25,      60,             1402) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (1402,         3,     10,     8),
-                                (1402,         4,     5,      5),
-                                (1402,         4,     5,      5),
-                                (1402,         5,     3,      2),
-                                (1402,         5,     3,      3),
+                                (1402,         4,     8,      6),
+                                (1402,         4,     8,      6),
                                 (1402,         5,     3,      3),
                                 (1402,         5,     4,      4),
-                                (1402,         5,     5,      4);
+                                (1402,         5,     4,      4),
+                                (1402,         5,     5,      4),
+                                (1402,         5,     6,      5);
 
 -- Prantum
 insert into OrePrice (id, description) values (15001, 'Mining Area Prantum-Small price') ON DUPLICATE KEY UPDATE description = VALUES(description);
@@ -1229,7 +1230,7 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (2,             12,   1002,         900.0),
                                                   (2,             12,   1003,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
-                                           values (2,             12,   1,     15000);
+                                           values (2,             12,   1,     10000);
 
 
 -- Achievements - Oxaria Mastery
@@ -1319,7 +1320,7 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                            values (3,             12,   1102,         900.0),
                                                   (3,             12,   1103,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
-                                           values (3,             12,   2,     15000);
+                                           values (3,             12,   2,     10000);
 
 
 -- Achievements - Lithabine Mastery
