@@ -72,19 +72,31 @@ pub(super) fn render_mining_area_details(
 <tr><td>Mining cycles:</td><td colspan="3">{}</td></tr>
 <tr><td>Area size:</td><td colspan="3">{} x {}</td></tr>
 <tr><td>Ore target:</td><td colspan="3">{}</td></tr>
-<tr><td colspan="4">Available ore:</td></tr>"#,
+<tr><td colspan="4">Estimated ore:</td></tr>"#,
         format_period(area.mining_time),
         area.max_moves,
         area.size_x,
         area.size_y,
         area.score_ore_target
     ));
+    // Group heaps by ore type (areas may have multiple supplies per ore).
+    let mut estimated_by_ore: Vec<(i64, &str, i32)> = Vec::new();
     for supply in supplies {
+        let estimated = robominer_domain::ore_heap_estimated_total(supply.supply, supply.radius);
+        if let Some((_, _, total)) = estimated_by_ore
+            .iter_mut()
+            .find(|(ore_id, _, _)| *ore_id == supply.ore_id)
+        {
+            *total += estimated;
+        } else {
+            estimated_by_ore.push((supply.ore_id, &supply.ore_name, estimated));
+        }
+    }
+    for (_, ore_name, estimated) in estimated_by_ore {
         body.push_str(&format!(
-            r#"<tr><td></td><td>{}:</td><td colspan="2">h {} / r {}</td></tr>"#,
-            escape_html(&supply.ore_name),
-            supply.supply,
-            supply.radius
+            r#"<tr><td></td><td>{}:</td><td colspan="2">{}</td></tr>"#,
+            escape_html(ore_name),
+            estimated
         ));
     }
     let mut title_added = false;

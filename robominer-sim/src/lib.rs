@@ -21,7 +21,7 @@ pub use animation_payload::{
     AnimationGroundChange, AnimationGroundPosition, AnimationLocation, AnimationOreType,
     AnimationPayload, AnimationRobot, AnimationRobots,
 };
-pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot};
+pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot, ore_heap_estimated_total};
 pub use position::Position;
 pub use robot::{ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, RobotSpec, ScriptedRobot};
 pub use score::{calculate_score, ore_amounts};

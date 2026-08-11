@@ -99,10 +99,7 @@ impl Ground {
                 let y = center_y as i32 + dy;
 
                 if x >= 0 && x < self.size_x as i32 && y >= 0 && y < self.size_y as i32 {
-                    let distance = ((dx * dx + dy * dy) as f64).sqrt();
-                    let amount = (0.5
-                        + top_amount as f64 * (radius as f64 - distance) / radius as f64)
-                        as i32;
+                    let amount = ore_heap_cell_amount(top_amount, radius, dx, dy);
                     let amount = amount - self.at(x as usize, y as usize).ore_at(ore_type);
 
                     if amount > 0 {
@@ -183,6 +180,30 @@ impl Ground {
             ScanResult::empty()
         }
     }
+}
+
+/// Unclipped total ore units for a radial heap with the same per-cell formula as
+/// [`Ground::add_ore_heap`]. Near map edges the real placement may be slightly lower.
+pub fn ore_heap_estimated_total(top_amount: i32, radius: i32) -> i32 {
+    if radius <= 0 || top_amount <= 0 {
+        return 0;
+    }
+
+    let mut total = 0;
+    for dx in -radius..=radius {
+        for dy in -radius..=radius {
+            let amount = ore_heap_cell_amount(top_amount, radius, dx, dy);
+            if amount > 0 {
+                total += amount;
+            }
+        }
+    }
+    total
+}
+
+fn ore_heap_cell_amount(top_amount: i32, radius: i32, dx: i32, dy: i32) -> i32 {
+    let distance = ((dx * dx + dy * dy) as f64).sqrt();
+    (0.5 + top_amount as f64 * (radius as f64 - distance) / radius as f64) as i32
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

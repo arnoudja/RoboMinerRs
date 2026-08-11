@@ -22,3 +22,5 @@ pub use simulation::{
     persist_pool_rally_outcome, persist_rally_outcome, run_pool_loadout_with_seed,
     run_rally_loadout_with_animation_seed, run_rally_loadout_with_seed,
 };
+
+pub use robominer_sim::ore_heap_estimated_total;

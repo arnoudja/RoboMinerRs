@@ -164,7 +164,8 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"class="mining-queue-area-panel"><tr><td>Tax rate:</td><td colspan="3">5%</td></tr>"#,
             r#"Area size:</td><td colspan="3">10 x 11</td></tr>
 <tr><td>Ore target:</td><td colspan="3">30</td></tr>
-<tr><td colspan="4">Available ore:</td></tr>"#,
+<tr><td colspan="4">Estimated ore:</td></tr>"#,
+            r#"Ore &lt;Two&gt;:</td><td colspan="2">72</td></tr>"#,
             r#"class="mining-queue-page" data-area-storage-key="#,
             r#"class="page-wallet mining-queue-wallet""#,
             r#"class="mining-queue-card""#,
@@ -199,6 +200,85 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
     ] {
         assert_html_not_contains(&html, absent);
     }
+}
+
+#[test]
+fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
+    let mut selected_robot_area_ids = HashMap::new();
+    selected_robot_area_ids.insert(1, 20);
+    let html = render_mining_queue_page(
+        "Player".to_string(),
+        None,
+        &MiningQueuePageState {
+            asset_summary: robominer_db::UserAssetSummaryRecord {
+                username: "Player".to_string(),
+                achievement_points: 0,
+                mining_queue_size: 3,
+                robot_count: 1,
+            },
+            ore_assets: vec![],
+            robots: vec![robominer_db::MiningQueuePageRobotRecord {
+                robot_id: 1,
+                robot_name: "Bot".to_string(),
+                recharge_time: 60,
+            }],
+            areas: vec![robominer_db::MiningQueuePageAreaRecord {
+                mining_area_id: 20,
+                area_name: "Area".to_string(),
+                tax_rate: 0,
+                mining_time: 120,
+                max_moves: 10,
+                size_x: 5,
+                size_y: 5,
+                score_ore_target: 30,
+            }],
+            costs: vec![],
+            supplies: vec![
+                robominer_db::MiningQueuePageAreaSupplyRecord {
+                    mining_area_id: 20,
+                    ore_id: 2,
+                    ore_name: "Iron".to_string(),
+                    supply: 8,
+                    radius: 3,
+                },
+                robominer_db::MiningQueuePageAreaSupplyRecord {
+                    mining_area_id: 20,
+                    ore_id: 3,
+                    ore_name: "Copper".to_string(),
+                    supply: 10,
+                    radius: 2,
+                },
+                robominer_db::MiningQueuePageAreaSupplyRecord {
+                    mining_area_id: 20,
+                    ore_id: 2,
+                    ore_name: "Iron".to_string(),
+                    supply: 5,
+                    radius: 2,
+                },
+            ],
+            yields: vec![],
+            scores: vec![],
+            items: vec![],
+            selected_info_area_id: 20,
+            selected_robot_area_ids,
+            error_message: None,
+            claimed_results: robominer_db::ClaimedUserResults {
+                claimed_queues: 0,
+                ore_rewards: vec![],
+            },
+        },
+    );
+
+    // 8@r3 => 72, 5@r2 => 21, same ore_id summed; 10@r2 => 42 kept separate.
+    // First-seen order: Iron then Copper.
+    assert_contains_all(
+        &html,
+        &[
+            r#"<tr><td colspan="4">Estimated ore:</td></tr><tr><td></td><td>Iron:</td><td colspan="2">93</td></tr><tr><td></td><td>Copper:</td><td colspan="2">42</td></tr>"#,
+        ],
+    );
+    assert_html_not_contains(&html, r#"Iron:</td><td colspan="2">72</td></tr>"#);
+    assert_html_not_contains(&html, r#"Iron:</td><td colspan="2">21</td></tr>"#);
 }
 
 #[test]

@@ -1,6 +1,22 @@
 use crate::*;
 
 #[test]
+fn ore_heap_estimated_total_matches_unclipped_placement() {
+    assert_eq!(ore_heap_estimated_total(10, 2), 42);
+    assert_eq!(ore_heap_estimated_total(0, 2), 0);
+    assert_eq!(ore_heap_estimated_total(10, 0), 0);
+    assert_eq!(ore_heap_estimated_total(-1, 2), 0);
+
+    let mut ground = Ground::new(40, 40);
+    ground.add_ore_heap(20, 20, 0, 10, 2);
+    let placed: i32 = (0..ground.size_x())
+        .flat_map(|x| (0..ground.size_y()).map(move |y| (x, y)))
+        .map(|(x, y)| ground.at(x, y).ore_at(0))
+        .sum();
+    assert_eq!(ore_heap_estimated_total(10, 2), placed);
+}
+
+#[test]
 fn scan_detects_closest_ore_along_direction() {
     let mut ground = Ground::new(10, 10);
     ground.at_mut(5, 5).add_ore(0, 20);
