@@ -775,35 +775,35 @@ insert into AIRobot (id, robotName, sourceCode,
 values (1502, 'AI-Prantum',
 '',
  80,     7,           700,     14,        7.0,          1.7,            27,         8,        13,            2.6) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
-update AIRobot set sourceCode = (select sourceCode from AIRobot where id = 1402) where id = 1502;
+update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1402) as src) where id = 1502;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
 values (1602, 'AI-Raxia',
 '',
  100,    8,           1100,    16,        9.9,          1.7,            25,         9,        15,            2.7) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
-update AIRobot set sourceCode = (select sourceCode from AIRobot where id = 1502) where id = 1602;
+update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1502) as src) where id = 1602;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
 values (1702, 'AI-Dipolir',
 '',
  120,    9,           1450,    18,        12.1,         1.7,            24,         10,       17,            2.9) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
-update AIRobot set sourceCode = (select sourceCode from AIRobot where id = 1602) where id = 1702;
+update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1602) as src) where id = 1702;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
 values (1802, 'AI-Asradon',
 '',
  140,    10,          2050,    20,        13.6,         1.6,            22,         11,       19,            3.0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
-update AIRobot set sourceCode = (select sourceCode from AIRobot where id = 1702) where id = 1802;
+update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1702) as src) where id = 1802;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
 values (3, 'AI-3',
 '',
  160,    11,          5000,     99,       15.0,         2.0,           36,          12,       21,            3.2) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
-update AIRobot set sourceCode = (select sourceCode from AIRobot where id = 1802) where id = 3;
+update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1802) as src) where id = 3;
 
 
 -- Mining areas
