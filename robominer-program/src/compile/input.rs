@@ -251,6 +251,15 @@ impl CompileInput {
         }
     }
 
+    pub(super) fn peek_nth(&mut self, n: usize) -> Option<char> {
+        if !self.next_word.is_empty() {
+            self.next_word.chars().nth(n)
+        } else {
+            self.skip_whitespace();
+            self.source.get(self.pos + n).copied()
+        }
+    }
+
     pub(super) fn eof(&mut self) -> bool {
         self.skip_whitespace();
         self.pos >= self.source.len()

@@ -3,7 +3,7 @@ use super::resume::ExpressionResume;
 use super::schedule::{
     ExpressionWork, ExpressionWorkItem, Truthy, evaluate_operator, schedule_expression,
 };
-use crate::cpu_step_result::CpuStepResult;
+use crate::cpu_step_result::{CpuStepResult, CpuStepResultKind};
 use crate::pending_program_motion::{
     ContinueProgramMotion, PendingProgramMotion, ProgramMotionCompletion,
 };
@@ -251,6 +251,17 @@ impl ExecutableRunner {
                     } else {
                         1.0
                     }));
+                eval.index += 1;
+            }
+            ExpressionWork::ApplyUnaryMinus => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                let value = -operand.value;
+                eval.values
+                    .push(if operand.kind == CpuStepResultKind::Float {
+                        CpuStepResult::float_value(value)
+                    } else {
+                        CpuStepResult::int_value(value)
+                    });
                 eval.index += 1;
             }
             ExpressionWork::ApplyBinary(operator) => {

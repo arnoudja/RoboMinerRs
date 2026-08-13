@@ -127,6 +127,7 @@ fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
     match &expression.kind {
         ExecutableExpressionKind::Number(_) => 1,
         ExecutableExpressionKind::UnaryNot(inner)
+        | ExecutableExpressionKind::UnaryMinus(inner)
         | ExecutableExpressionKind::Ore(inner)
         | ExecutableExpressionKind::Move(inner)
         | ExecutableExpressionKind::Rotate(inner)
@@ -240,6 +241,7 @@ fn apply_number_jitter_in_expression(
             }
         }
         ExecutableExpressionKind::UnaryNot(inner)
+        | ExecutableExpressionKind::UnaryMinus(inner)
         | ExecutableExpressionKind::Ore(inner)
         | ExecutableExpressionKind::Move(inner)
         | ExecutableExpressionKind::Rotate(inner)

@@ -65,7 +65,8 @@ fn expression_size(expression: &ExecutableExpression) -> usize {
                 2
             }
         }
-        ExecutableExpressionKind::UnaryNot(expression) => 1 + expression_size(expression),
+        ExecutableExpressionKind::UnaryNot(expression)
+        | ExecutableExpressionKind::UnaryMinus(expression) => 1 + expression_size(expression),
         ExecutableExpressionKind::Binary { left, right, .. } => {
             1 + expression_size(left) + expression_size(right)
         }

@@ -25,7 +25,8 @@ impl ExecutableExpression {
                 .literal_number()
                 .map(|value| ExecutableAction::Dump(value as i32))
                 .or_else(|| value.first_action()),
-            ExecutableExpressionKind::UnaryNot(value) => value.first_action(),
+            ExecutableExpressionKind::UnaryNot(value)
+            | ExecutableExpressionKind::UnaryMinus(value) => value.first_action(),
             ExecutableExpressionKind::Binary { left, right, .. } => {
                 left.first_action().or_else(|| right.first_action())
             }

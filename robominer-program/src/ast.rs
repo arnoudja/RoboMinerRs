@@ -197,6 +197,7 @@ pub enum ExecutableExpressionKind {
         operator: VariableOperator,
     },
     UnaryNot(Box<ExecutableExpression>),
+    UnaryMinus(Box<ExecutableExpression>),
     Binary {
         operator: Operator,
         left: Box<ExecutableExpression>,

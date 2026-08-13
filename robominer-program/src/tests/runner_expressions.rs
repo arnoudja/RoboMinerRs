@@ -177,3 +177,71 @@ fn expression_dynamic_dump_awaits_sim_result_then_continues() {
         Some(ExecutableAction::Mine)
     );
 }
+
+#[test]
+fn expression_unary_minus_negates_variable() {
+    let program =
+        compile_executable_source("int x = 5; dump(-x);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(-5))
+    );
+}
+
+#[test]
+fn expression_unary_minus_negates_parenthesized_sum() {
+    let program = compile_executable_source("dump(-(1+2));").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(-3))
+    );
+}
+
+#[test]
+fn expression_binary_minus_then_unary_minus() {
+    let program = compile_executable_source("int a = 10; int b = 3; dump(a - -b);")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(13))
+    );
+}
+
+#[test]
+fn expression_pre_decrement_is_not_double_unary_minus() {
+    let program =
+        compile_executable_source("int x = 5; dump(--x);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(4))
+    );
+}
+
+#[test]
+fn expression_negative_number_literal_is_not_unary_minus() {
+    let program =
+        compile_executable_source("int x = -45; rotate(-45);").expect("program should compile");
+
+    match &program.statements()[0].kind {
+        ExecutableStatementKind::Declare {
+            value: Some(expr), ..
+        } => {
+            assert_eq!(expr.kind, ExecutableExpressionKind::Number(-45.0));
+        }
+        other => panic!("expected declare with Number(-45), got {other:?}"),
+    }
+
+    assert_eq!(program.actions(), &[ExecutableAction::Rotate(-45.0)]);
+}

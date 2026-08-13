@@ -201,6 +201,10 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
             out.push('!');
             unparse_expression(inner, out, usize::MAX);
         }
+        ExecutableExpressionKind::UnaryMinus(inner) => {
+            out.push('-');
+            unparse_expression(inner, out, usize::MAX);
+        }
         ExecutableExpressionKind::Binary {
             operator,
             left,

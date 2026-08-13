@@ -31,6 +31,7 @@ pub(crate) enum ExpressionWork {
     PushDynamicDump,
     PushAction(ExecutableAction),
     ApplyUnaryNot,
+    ApplyUnaryMinus,
     ApplyBinary(Operator),
 }
 
@@ -65,6 +66,10 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::UnaryNot(value) => {
             schedule_expression(work, value);
             push(work, ExpressionWork::ApplyUnaryNot);
+        }
+        ExecutableExpressionKind::UnaryMinus(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplyUnaryMinus);
         }
         ExecutableExpressionKind::Binary {
             operator,

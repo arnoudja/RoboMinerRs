@@ -101,6 +101,22 @@ fn parse_single_expression_kind(
         return Ok(Some(ExecutableExpressionKind::UnaryNot(Box::new(value))));
     }
 
+    // Unary minus: not `--` (pre-decrement) and not a signed number literal like `-45`.
+    if input.peek() == Some('-') && input.peek_nth(1) != Some('-') {
+        let next = input.peek_nth(1);
+        let is_number_literal = next.is_some_and(|c| c.is_ascii_digit() || c == '.');
+        if !is_number_literal {
+            input.eat_char('-', false);
+            let value = parse_executable_single_expression(input)?.ok_or_else(|| {
+                CompileError::new(format!(
+                    "Syntax error at line {}. expression expected",
+                    input.current_line
+                ))
+            })?;
+            return Ok(Some(ExecutableExpressionKind::UnaryMinus(Box::new(value))));
+        }
+    }
+
     if input.use_next_word("true") {
         return Ok(Some(ExecutableExpressionKind::Bool(true)));
     }
