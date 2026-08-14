@@ -38,6 +38,9 @@ fn verify_source_requires_executable_program_support() {
     assert_valid_any_size("ore(0);");
     assert_valid_any_size("time();");
     assert_valid_any_size("scan();");
+    assert_valid_any_size("dump(abs(-3));");
+    assert_valid_any_size("dump(min(1, 2));");
+    assert_valid_any_size("dump(max(1, 2));");
 
     let source = "int rot = 0; while (true) { while (mine()) { rot = 100; } }";
     let verification = verify_source(source);

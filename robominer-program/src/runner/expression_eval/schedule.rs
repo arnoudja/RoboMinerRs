@@ -32,6 +32,9 @@ pub(crate) enum ExpressionWork {
     PushAction(ExecutableAction),
     ApplyUnaryNot,
     ApplyUnaryMinus,
+    ApplyAbs,
+    ApplyMin,
+    ApplyMax,
     ApplyBinary(Operator),
 }
 
@@ -70,6 +73,20 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::UnaryMinus(value) => {
             schedule_expression(work, value);
             push(work, ExpressionWork::ApplyUnaryMinus);
+        }
+        ExecutableExpressionKind::Abs(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplyAbs);
+        }
+        ExecutableExpressionKind::Min(left, right) => {
+            schedule_expression(work, left);
+            schedule_expression(work, right);
+            push(work, ExpressionWork::ApplyMin);
+        }
+        ExecutableExpressionKind::Max(left, right) => {
+            schedule_expression(work, left);
+            schedule_expression(work, right);
+            push(work, ExpressionWork::ApplyMax);
         }
         ExecutableExpressionKind::Binary {
             operator,

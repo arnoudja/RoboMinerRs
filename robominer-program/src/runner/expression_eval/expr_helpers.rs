@@ -26,8 +26,11 @@ impl ExecutableExpression {
                 .map(|value| ExecutableAction::Dump(value as i32))
                 .or_else(|| value.first_action()),
             ExecutableExpressionKind::UnaryNot(value)
-            | ExecutableExpressionKind::UnaryMinus(value) => value.first_action(),
-            ExecutableExpressionKind::Binary { left, right, .. } => {
+            | ExecutableExpressionKind::UnaryMinus(value)
+            | ExecutableExpressionKind::Abs(value) => value.first_action(),
+            ExecutableExpressionKind::Min(left, right)
+            | ExecutableExpressionKind::Max(left, right)
+            | ExecutableExpressionKind::Binary { left, right, .. } => {
                 left.first_action().or_else(|| right.first_action())
             }
             ExecutableExpressionKind::Ore(value) => value.first_action(),

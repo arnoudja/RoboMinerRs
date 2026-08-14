@@ -205,6 +205,25 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
             out.push('-');
             unparse_expression(inner, out, usize::MAX);
         }
+        ExecutableExpressionKind::Abs(inner) => {
+            out.push_str("abs(");
+            unparse_expression(inner, out, 0);
+            out.push(')');
+        }
+        ExecutableExpressionKind::Min(left, right) => {
+            out.push_str("min(");
+            unparse_expression(left, out, 0);
+            out.push_str(", ");
+            unparse_expression(right, out, 0);
+            out.push(')');
+        }
+        ExecutableExpressionKind::Max(left, right) => {
+            out.push_str("max(");
+            unparse_expression(left, out, 0);
+            out.push_str(", ");
+            unparse_expression(right, out, 0);
+            out.push(')');
+        }
         ExecutableExpressionKind::Binary {
             operator,
             left,

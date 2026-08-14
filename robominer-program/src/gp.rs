@@ -128,11 +128,14 @@ fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
         ExecutableExpressionKind::Number(_) => 1,
         ExecutableExpressionKind::UnaryNot(inner)
         | ExecutableExpressionKind::UnaryMinus(inner)
+        | ExecutableExpressionKind::Abs(inner)
         | ExecutableExpressionKind::Ore(inner)
         | ExecutableExpressionKind::Move(inner)
         | ExecutableExpressionKind::Rotate(inner)
         | ExecutableExpressionKind::Dump(inner) => count_numbers_in_expression(inner),
-        ExecutableExpressionKind::Binary { left, right, .. } => {
+        ExecutableExpressionKind::Min(left, right)
+        | ExecutableExpressionKind::Max(left, right)
+        | ExecutableExpressionKind::Binary { left, right, .. } => {
             count_numbers_in_expression(left) + count_numbers_in_expression(right)
         }
         ExecutableExpressionKind::Scan(Some(inner)) => count_numbers_in_expression(inner),
@@ -242,13 +245,16 @@ fn apply_number_jitter_in_expression(
         }
         ExecutableExpressionKind::UnaryNot(inner)
         | ExecutableExpressionKind::UnaryMinus(inner)
+        | ExecutableExpressionKind::Abs(inner)
         | ExecutableExpressionKind::Ore(inner)
         | ExecutableExpressionKind::Move(inner)
         | ExecutableExpressionKind::Rotate(inner)
         | ExecutableExpressionKind::Dump(inner) => {
             apply_number_jitter_in_expression(inner, counter, target, rng)
         }
-        ExecutableExpressionKind::Binary { left, right, .. } => {
+        ExecutableExpressionKind::Min(left, right)
+        | ExecutableExpressionKind::Max(left, right)
+        | ExecutableExpressionKind::Binary { left, right, .. } => {
             apply_number_jitter_in_expression(left, counter, target, rng)
                 || apply_number_jitter_in_expression(right, counter, target, rng)
         }

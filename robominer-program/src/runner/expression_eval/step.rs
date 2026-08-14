@@ -264,6 +264,47 @@ impl ExecutableRunner {
                     });
                 eval.index += 1;
             }
+            ExpressionWork::ApplyAbs => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                let value = operand.value.abs();
+                eval.values
+                    .push(if operand.kind == CpuStepResultKind::Float {
+                        CpuStepResult::float_value(value)
+                    } else {
+                        CpuStepResult::int_value(value)
+                    });
+                eval.index += 1;
+            }
+            ExpressionWork::ApplyMin => {
+                let right = eval.values.pop().expect("expression value stack underflow");
+                let left = eval.values.pop().expect("expression value stack underflow");
+                let value = left.value.min(right.value);
+                eval.values.push(
+                    if matches!(left.kind, CpuStepResultKind::Float)
+                        || matches!(right.kind, CpuStepResultKind::Float)
+                    {
+                        CpuStepResult::float_value(value)
+                    } else {
+                        CpuStepResult::int_value(value)
+                    },
+                );
+                eval.index += 1;
+            }
+            ExpressionWork::ApplyMax => {
+                let right = eval.values.pop().expect("expression value stack underflow");
+                let left = eval.values.pop().expect("expression value stack underflow");
+                let value = left.value.max(right.value);
+                eval.values.push(
+                    if matches!(left.kind, CpuStepResultKind::Float)
+                        || matches!(right.kind, CpuStepResultKind::Float)
+                    {
+                        CpuStepResult::float_value(value)
+                    } else {
+                        CpuStepResult::int_value(value)
+                    },
+                );
+                eval.index += 1;
+            }
             ExpressionWork::ApplyBinary(operator) => {
                 let right = eval.values.pop().expect("expression value stack underflow");
                 let left = eval.values.pop().expect("expression value stack underflow");

@@ -155,6 +155,28 @@ fn parse_single_expression_kind(
         return Ok(Some(ExecutableExpressionKind::Time));
     }
 
+    if input.use_next_word("abs") {
+        return Ok(Some(ExecutableExpressionKind::Abs(Box::new(
+            parse_call_argument(input)?,
+        ))));
+    }
+
+    if input.use_next_word("min") {
+        let (left, right) = parse_two_call_arguments(input)?;
+        return Ok(Some(ExecutableExpressionKind::Min(
+            Box::new(left),
+            Box::new(right),
+        )));
+    }
+
+    if input.use_next_word("max") {
+        let (left, right) = parse_two_call_arguments(input)?;
+        return Ok(Some(ExecutableExpressionKind::Max(
+            Box::new(left),
+            Box::new(right),
+        )));
+    }
+
     if input.use_next_word("scan") {
         return Ok(Some(parse_scan_call(input)?));
     }
@@ -171,15 +193,9 @@ fn parse_single_expression_kind(
 
     // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C. Kept for existing programs.
     if input.use_next_word("ore") {
-        expect_char(input, '(', "'(' expected")?;
-        let ore_type = parse_executable_expression(input)?.ok_or_else(|| {
-            CompileError::new(format!(
-                "Syntax error at line {}. value expected",
-                input.current_line
-            ))
-        })?;
-        expect_char(input, ')', "')' expected")?;
-        return Ok(Some(ExecutableExpressionKind::Ore(Box::new(ore_type))));
+        return Ok(Some(ExecutableExpressionKind::Ore(Box::new(
+            parse_call_argument(input)?,
+        ))));
     }
 
     if let Some(kind) = parse_robot_property_expression(input)? {
@@ -226,6 +242,39 @@ fn parse_single_expression_kind(
     Ok(input
         .extract_number_value()
         .map(ExecutableExpressionKind::Number))
+}
+
+fn parse_call_argument(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {
+    expect_char(input, '(', "'(' expected")?;
+    let value = parse_executable_expression(input)?.ok_or_else(|| {
+        CompileError::new(format!(
+            "Syntax error at line {}. value expected",
+            input.current_line
+        ))
+    })?;
+    expect_char(input, ')', "')' expected")?;
+    Ok(value)
+}
+
+fn parse_two_call_arguments(
+    input: &mut CompileInput,
+) -> Result<(ExecutableExpression, ExecutableExpression), CompileError> {
+    expect_char(input, '(', "'(' expected")?;
+    let left = parse_executable_expression(input)?.ok_or_else(|| {
+        CompileError::new(format!(
+            "Syntax error at line {}. value expected",
+            input.current_line
+        ))
+    })?;
+    expect_char(input, ',', "',' expected")?;
+    let right = parse_executable_expression(input)?.ok_or_else(|| {
+        CompileError::new(format!(
+            "Syntax error at line {}. value expected",
+            input.current_line
+        ))
+    })?;
+    expect_char(input, ')', "')' expected")?;
+    Ok((left, right))
 }
 
 fn parse_robot_property_expression(

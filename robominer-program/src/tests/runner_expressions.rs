@@ -245,3 +245,40 @@ fn expression_negative_number_literal_is_not_unary_minus() {
 
     assert_eq!(program.actions(), &[ExecutableAction::Rotate(-45.0)]);
 }
+
+#[test]
+fn expression_abs_returns_absolute_value() {
+    let program = compile_executable_source("dump(abs(-7));").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(7))
+    );
+}
+
+#[test]
+fn expression_min_returns_smaller_value() {
+    let program = compile_executable_source("dump(min(3, -1));").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(-1))
+    );
+}
+
+#[test]
+fn expression_max_returns_larger_value() {
+    let program = compile_executable_source("int a = 4; int b = 9; dump(max(a, b));")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(9))
+    );
+}
