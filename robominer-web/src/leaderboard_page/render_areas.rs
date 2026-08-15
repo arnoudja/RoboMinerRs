@@ -103,7 +103,7 @@ fn render_leaderboard_area_score_table(
     body.push_str(r#"<th scope="col">Robot</th>"#);
     body.push_str(r#"<th scope="col">Owner</th>"#);
     body.push_str(
-        r#"<th scope="col" class="leaderboard-col-score" title="Best single-run score recorded in this mining area.">Score</th>"#,
+        r#"<th scope="col" class="leaderboard-col-score" title="Smoothed running score for this robot in this mining area.">Score</th>"#,
     );
     body.push_str("</tr></thead><tbody>");
     for (index, score) in rows.iter().enumerate() {

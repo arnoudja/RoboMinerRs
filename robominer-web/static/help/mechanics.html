@@ -45,6 +45,61 @@
                 On the rally replay, a translucent square in your player color marks the spawn corner where
                 depot dumps land, and the player card shows depot fill next to cargo when capacity is unlocked.
             </p>
+            <h2 id="rally-score">Rally score</h2>
+            <p class="helptext">
+                Each rally awards a score for how valuable your haul was in that mining area.
+                Leaderboards and area rankings use a smoothed score per robot per area:
+                your first run in an area is stored below the raw rally score, and each later run
+                blends into that value so recent results matter more than a single lucky peak.
+                The score is separate from the ore that ends up in your wallet: tax reduces the ore you keep,
+                but it does not change the score number.
+            </p>
+            <p class="helptext">
+                Scoring uses the total ore you hauled: whatever is still in the container plus whatever
+                you already banked in the depot when the rally ends.
+                Only the area's A / B / C ore slots count (the same ranking as robot.oreStoredA / B / C
+                and oreType() 1 / 2 / 3). Higher value ore in an area is the A slot.
+            </p>
+            <p class="helptext">
+                Every mining area has an Ore target (T), shown in the mining queue area details.
+                That target sets how much top-quality ore fills the first scoring tier.
+                The tiers below scale with T as well.
+            </p>
+            <p class="helptext">
+                Points are awarded in diminishing tiers:
+            </p>
+            <ul>
+                <li class="helptext">
+                    Up to T units of A ore contribute to the top tier (worth up to 900 points when that tier is full).
+                </li>
+                <li class="helptext">
+                    Any A ore beyond T is converted for scoring at 2:1 into B-equivalent ore.
+                </li>
+                <li class="helptext">
+                    Up to 3×T units of B-equivalent ore fill the middle tier (worth up to 90 points when full).
+                </li>
+                <li class="helptext">
+                    Any B-equivalent beyond that converts at 2:1 into C-equivalent ore.
+                </li>
+                <li class="helptext">
+                    Up to 12×T units of C-equivalent ore fill the low tier (worth up to 9 points when full).
+                </li>
+                <li class="helptext">
+                    Anything left after that adds only tiny residual points in successive bands
+                    (starting at 0.01 per unit in the next band, then 0.001, and so on).
+                </li>
+            </ul>
+            <p class="helptext">
+                Example with Ore target 30: mining 30 A ore scores 900.
+                Mining another 30 A does not add another 900 — that overflow becomes 60 B-equivalent
+                toward the middle tier (which caps at 90 B-equivalent for a full 90 points).
+                So high-quality ore is always valuable, but past the target you get less score per unit,
+                and filling B / C only helps after the higher tiers are covered.
+            </p>
+            <p class="helptext">
+                Practical takeaway: prefer A ore, use the depot so one battery charge can bank more than
+                one container load, and treat B / C as filler once A is scarce or your container is full of A.
+            </p>
             <h2 id="mining-unit">Mining Unit</h2>
             <p class="helptext">
                 The Mining Unit is the part of the Robot that is put to work when executing the mine() command.

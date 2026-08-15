@@ -193,7 +193,7 @@ fn render_area_stats_section(
         r#"<h2 id="robot-stats-areas-title" class="robot-stats-section-title">Mining areas</h2>"#,
     );
     body.push_str(
-        r#"<p class="robot-stats-section-hint">Runs and best recorded score per mining area.</p>"#,
+        r#"<p class="robot-stats-section-hint">Runs and smoothed score per mining area.</p>"#,
     );
     if area_stats.is_empty() {
         body.push_str(r#"<p class="robot-stats-empty">No mining area history yet.</p>"#);

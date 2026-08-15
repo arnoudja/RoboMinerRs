@@ -95,7 +95,7 @@ fn render_leaderboard_metric_glossary(body: &mut String) {
     body.push_str(r#"<h2 class="leaderboard-section-title">How rankings work</h2>"#);
     body.push_str(r#"<dl class="leaderboard-metric-glossary">"#);
     body.push_str(
-        r#"<div class="leaderboard-metric-item"><dt>Area score</dt><dd>Best single-run score per robot in a mining area.</dd></div>"#,
+        r#"<div class="leaderboard-metric-item"><dt>Area score</dt><dd>Smoothed running score per robot in a mining area (recent runs weigh more than a single peak).</dd></div>"#,
     );
     body.push_str(
         r#"<div class="leaderboard-metric-item"><dt>Ore per run</dt><dd>Lifetime ore gathered divided by total mining runs.</dd></div>"#,

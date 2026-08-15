@@ -144,7 +144,7 @@ fn leaderboard_rendering_shows_climb_hints_and_metric_glossary() {
             r#"class="leaderboard-climb-title">How to climb</h3>"#,
             r#"href="editCode">Edit code</a>"#,
             r#"href="activity">Activity replays</a>"#,
-            "Best single-run score per robot in a mining area.",
+            "Smoothed running score per robot in a mining area",
         ],
     );
 }

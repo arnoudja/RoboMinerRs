@@ -92,7 +92,7 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         &[
             r#"href="activity?areaId=1">View area rallies</a>"#,
             r#"href="leaderboard?tab=areas&amp;areaId=1&amp;limit=20">Load more entries</a>"#,
-            r#"title="Best single-run score recorded in this mining area.""#,
+            r#"title="Smoothed running score for this robot in this mining area.""#,
         ],
     );
 
