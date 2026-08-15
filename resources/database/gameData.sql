@@ -629,27 +629,27 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 -- AI opponent robots (separate from player Robot rows)
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1002, 'AI-Cerbonium', 'move(1.5); while (mine());',
- 7,     2,           25,        2,        1.6,          0.7,           44,          0,        0,            1.6) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 7,     2,           25,        2,        1.6,          0.7,           44,          0,        0,            1.6, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1102, 'AI-Oxaria', 'if (move(1.5) >= 1) { while (mine()); } else { move(-1); rotate(41); }',
- 14,     2,           100,      3,        1.2,          0.5,           31,          0,        0,            1.76) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 14,     2,           100,      3,        1.2,          0.5,           31,          0,        0,            1.76, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1202, 'AI-Lithabine',
 'scan(); bool found = false; if (oreType() == 1) { move(oreDistance()); found = true; while (mine()); }
 scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; while (mine()); }
 scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
 if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(2 *robot.rotateSpeed); }
 } else { dumpB(); dumpC(); }',
- 25,     2,           200,      8,        3.0,          1.0,           36,          3,        5,            2.01) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 25,     2,           200,      8,        3.0,          1.0,           36,          3,        5,            2.01, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1302, 'AI-Neudralion',
 'bool found = false;
 move(robot.forwardSpeed);
@@ -705,10 +705,10 @@ while (found) {
         found = false;
     }
 }',
- 40,     5,           320,      10,        3.9,          1.3,           32,          6,        9,            2.22) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 40,     5,           320,      10,        3.9,          1.3,           32,          6,        9,            2.22, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1402, 'AI-Complatix',
 'bool found = false;
 move(robot.forwardSpeed);
@@ -768,48 +768,136 @@ while (found) {
         found = false;
     }
 }',
- 60,     6,           425,      12,        4.6,          1.6,           29,          7,        11,           2.42) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 60,     6,           425,      12,        4.6,          1.6,           29,          7,        11,           2.42, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1502, 'AI-Prantum',
-'',
- 80,     7,           700,     14,        7.0,          1.7,            27,         8,        13,            2.6) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+'bool found = false;
+move(robot.forwardSpeed);
+
+while (!found)
+{
+    scan();
+
+    if (oreType() == 1) {
+        found = (move(oreDistance()) > 0.5);
+    }
+
+    if (!found)
+    {
+        scan(60);
+        if (oreType() == 1) {
+            rotate(60);
+            found = (move(oreDistance()) > 0.5);
+        }
+    }
+
+    if (!found)
+    {
+        scan(-60);
+        if (oreType() == 1) {
+            rotate(-60);
+            found = (move(oreDistance()) > 0.5);
+        }
+    }
+
+    if (!found)
+    {
+        while (move(robot.forwardSpeed) < 0.1) {
+            rotate(robot.rotateSpeed);
+        }
+    }
+}
+
+int blockedCount = 0;
+while (found && robot.oreStored < robot.oreCap) {
+    while (mine()) {
+        blockedCount = 0;
+    }
+
+    int direction = 0;
+    scan(direction);
+    while (oreType() != 1 && direction <= 350) {
+        rotate(robot.rotateSpeed);
+        direction += robot.rotateSpeed;
+        scan(0);
+    }
+
+    if (oreType() == 1) {
+        if (move(oreDistance()) < 0.1 && direction == 0) {
+            rotate(20);
+            blockedCount++;
+            if (blockedCount > 18) found = false;
+        }
+    } else {
+        found = false;
+    }
+}
+
+if (robot.oreStored >= robot.oreCap) {
+    rotate(315 - robot.orientation);
+    move(999);
+
+    while (robot.xPos > 0 || robot.yPos > 0) {
+        if (robot.xPos > 0) {
+            if (robot.orientation > 90) {
+                rotate(270 - robot.orientation);
+            } else {
+                rotate(-90 - robot.orientation);
+            }
+            move(999);
+        }
+        if (robot.yPos > 0) {
+            if (robot.orientation > 180) {
+                rotate(360 - robot.orientation);
+            } else {
+                rotate(0 - robot.orientation);
+            }
+            move(999);
+        }
+    }
+
+    dump();
+    while (mine());
+    rotate(135 - robot.orientation);
+}',
+ 80,     7,           700,     14,        7.0,          1.7,            27,         8,        13,            2.6,      150) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1402) as src) where id = 1502;
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1602, 'AI-Raxia',
 '',
- 100,    8,           1100,    16,        9.9,          1.7,            25,         9,        15,            2.7) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 100,    8,           1100,    16,        9.9,          1.7,            25,         9,        15,            2.7,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1502) as src) where id = 1602;
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1702, 'AI-Dipolir',
 '',
- 120,    9,           1450,    18,        12.1,         1.7,            24,         10,       17,            2.9) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 120,    9,           1450,    18,        12.1,         1.7,            24,         10,       17,            2.9,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1602) as src) where id = 1702;
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1802, 'AI-Asradon',
 '',
- 140,    10,          2050,    20,        13.6,         1.6,            22,         11,       19,            3.0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 140,    10,          2050,    20,        13.6,         1.6,            22,         11,       19,            3.0,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1702) as src) where id = 1802;
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1902, 'AI-Baratiem',
 '',
- 160,    11,          4400,    22,        17.4,         1.6,            22,         12,       21,            3.1) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 160,    11,          4400,    22,        17.4,         1.6,            22,         12,       21,            3.1,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1802) as src) where id = 1902;
 
 insert into AIRobot (id, robotName, sourceCode,
- maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize)
+ maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (2002, 'AI-Etaxy',
 '',
- 180,    12,          8400,    24,        20.1,         1.6,            22,         13,       23,            3.2) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize);
+ 180,    12,          8400,    24,        20.1,         1.6,            22,         13,       23,            3.2,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1902) as src) where id = 2002;
 
 

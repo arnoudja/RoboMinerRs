@@ -79,6 +79,11 @@ fn ai_robot_to_loadout(ai: robominer_db::AIRobotRecord) -> RobotLoadout {
         },
         RobotLoadoutParts::empty(),
     )
+    .with_depot_capacity(ai_depot_capacity(ai.depot_size))
+}
+
+fn ai_depot_capacity(depot_size: i32) -> [i32; MAX_ORE_TYPES] {
+    [depot_size; MAX_ORE_TYPES]
 }
 
 pub async fn load_next_rally_loadout(
@@ -277,7 +282,7 @@ fn depot_capacity_for_ore_types(
 
 #[cfg(test)]
 mod tests {
-    use super::depot_capacity_for_ore_types;
+    use super::{ai_depot_capacity, depot_capacity_for_ore_types};
     use robominer_sim::MAX_ORE_TYPES;
 
     #[test]
@@ -295,5 +300,11 @@ mod tests {
             depot_capacity_for_ore_types(&[30, 20], &[(99, 7)]),
             [0; MAX_ORE_TYPES]
         );
+    }
+
+    #[test]
+    fn ai_depot_capacity_fills_every_ore_type_slot() {
+        assert_eq!(ai_depot_capacity(0), [0; MAX_ORE_TYPES]);
+        assert_eq!(ai_depot_capacity(12), [12; MAX_ORE_TYPES]);
     }
 }

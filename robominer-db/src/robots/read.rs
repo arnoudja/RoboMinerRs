@@ -205,10 +205,12 @@ pub async fn get_ai_robot(
             f64,
             i32,
             i32,
+            i32,
         ),
     >(
         "SELECT id, robotName, sourceCode, maxOre, miningSpeed, maxTurns, cpuSpeed, \
-                forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance \
+                forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance, \
+                depotSize \
          FROM AIRobot \
          WHERE id = ?",
     )
@@ -231,6 +233,7 @@ pub async fn get_ai_robot(
                 robot_size,
                 scan_time,
                 scan_distance,
+                depot_size,
             )| crate::AIRobotRecord {
                 id,
                 robot_name,
@@ -245,6 +248,7 @@ pub async fn get_ai_robot(
                 robot_size,
                 scan_time,
                 scan_distance,
+                depot_size,
             },
         )
     })

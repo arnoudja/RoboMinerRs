@@ -30,6 +30,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "006_ai_robot_table",
         include_str!("../../resources/database/migrations/006_ai_robot_table.sql"),
     ),
+    (
+        "007_ai_robot_depot_size",
+        include_str!("../../resources/database/migrations/007_ai_robot_depot_size.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]

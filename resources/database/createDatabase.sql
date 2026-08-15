@@ -185,7 +185,8 @@ backwardSpeed DOUBLE NOT NULL,
 rotateSpeed INT NOT NULL,
 robotSize DOUBLE NOT NULL,
 scanTime INT NOT NULL DEFAULT 0,
-scanDistance INT NOT NULL DEFAULT 0
+scanDistance INT NOT NULL DEFAULT 0,
+depotSize INT NOT NULL DEFAULT 0
 );
 
 

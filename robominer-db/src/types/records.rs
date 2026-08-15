@@ -221,6 +221,7 @@ pub struct AIRobotRecord {
     pub robot_size: f64,
     pub scan_time: i32,
     pub scan_distance: i32,
+    pub depot_size: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
