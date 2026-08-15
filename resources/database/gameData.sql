@@ -718,35 +718,40 @@ while (!found)
     scan();
 
     if (oreType() == 1) {
-        found = true;
-    } else {
+        found = (move(oreDistance()) > 0.5);
+    }
+
+    if (!found)
+    {
         scan(60);
         if (oreType() == 1) {
-           found = true;
-           rotate(60);
-        } else {
-            scan(-60);
-            if (oreType() == 1) {
-                found = true;
-                rotate(-60);
-            } else {
-                while (move(robot.forwardSpeed) < 0.1) {
-                    rotate(robot.rotateSpeed);
-                }
-            }
+            rotate(60);
+            found = (move(oreDistance()) > 0.5);
+        }
+    }
+
+    if (!found)
+    {
+        scan(-60);
+        if (oreType() == 1) {
+            rotate(-60);
+            found = (move(oreDistance()) > 0.5);
+        }
+    }
+
+    if (!found)
+    {
+        while (move(robot.forwardSpeed) < 0.1) {
+            rotate(robot.rotateSpeed);
         }
     }
 }
 
-if (move(oreDistance()) < 0.1) {
-    move(0 - robot.backwardSpeed);
-    rotate(90);
-    move(robot.forwardSpeed);
-}
-
 int blockedCount = 0;
-while (found) {
-    while (mine()) blockedCount = 0;
+while (found && robot.oreStored < robot.oreCap) {
+    while (mine()) {
+        blockedCount = 0;
+    }
 
     int direction = 0;
     scan(direction);
@@ -757,8 +762,6 @@ while (found) {
     }
 
     if (oreType() == 1) {
-        dumpB();
-        dumpC();
         if (move(oreDistance()) < 0.1 && direction == 0) {
             rotate(20);
             blockedCount++;
@@ -767,8 +770,36 @@ while (found) {
     } else {
         found = false;
     }
+}
+
+if (robot.oreStored >= robot.oreCap) {
+    rotate(315 - robot.orientation);
+    move(999);
+
+    while (robot.xPos > 0 || robot.yPos > 0) {
+        if (robot.xPos > 0) {
+            if (robot.orientation > 90) {
+                rotate(270 - robot.orientation);
+            } else {
+                rotate(-90 - robot.orientation);
+            }
+            move(999);
+        }
+        if (robot.yPos > 0) {
+            if (robot.orientation > 180) {
+                rotate(360 - robot.orientation);
+            } else {
+                rotate(0 - robot.orientation);
+            }
+            move(999);
+        }
+    }
+
+    dump();
+    while (mine());
+    rotate(135 - robot.orientation);
 }',
- 60,     6,           425,      12,        4.6,          1.6,           29,          7,        11,           2.42, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 60,     6,           425,      12,        4.6,          1.6,           29,          7,        11,           2.42, 150) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
@@ -863,7 +894,6 @@ if (robot.oreStored >= robot.oreCap) {
     rotate(135 - robot.orientation);
 }',
  80,     7,           700,     14,        7.0,          1.7,            27,         8,        13,            2.6,      150) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
-update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1402) as src) where id = 1502;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
