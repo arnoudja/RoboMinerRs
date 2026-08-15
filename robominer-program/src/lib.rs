@@ -44,5 +44,5 @@ pub use unparse::unparse_program;
 
 /// Slot capacity for ore arrays in the runner / sim bridge (A… plus reserved slots).
 pub const MAX_ORE_TYPES: usize = 10;
-/// Language-facing dump/read slots A/B/C (`dump(1|2|3)`, `robot.oreStoredA|B|C`).
+/// Language-facing dump/read slots A/B/C (`dump(1|2|3)`, `robot.oreStoredA|B|C`, `robot.depotSizeA|B|C`, `robot.depotStoredA|B|C`).
 pub const LANGUAGE_ORE_SLOTS: usize = 3;

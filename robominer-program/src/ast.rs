@@ -236,6 +236,18 @@ pub enum RobotProperty {
     OreStoredB,
     /// Lowest-quality ore currently in the container (`ore(3)`).
     OreStoredC,
+    /// Depot capacity for highest-quality ore (slot A).
+    DepotSizeA,
+    /// Depot capacity for medium-quality ore (slot B).
+    DepotSizeB,
+    /// Depot capacity for lowest-quality ore (slot C).
+    DepotSizeC,
+    /// Highest-quality ore currently stored in the depot (slot A).
+    DepotStoredA,
+    /// Medium-quality ore currently stored in the depot (slot B).
+    DepotStoredB,
+    /// Lowest-quality ore currently stored in the depot (slot C).
+    DepotStoredC,
     MaxCycles,
     MiningSpeed,
     CpuSpeed,
@@ -257,6 +269,12 @@ impl RobotProperty {
             "oreStoredA" => Ok(Self::OreStoredA),
             "oreStoredB" => Ok(Self::OreStoredB),
             "oreStoredC" => Ok(Self::OreStoredC),
+            "depotSizeA" => Ok(Self::DepotSizeA),
+            "depotSizeB" => Ok(Self::DepotSizeB),
+            "depotSizeC" => Ok(Self::DepotSizeC),
+            "depotStoredA" => Ok(Self::DepotStoredA),
+            "depotStoredB" => Ok(Self::DepotStoredB),
+            "depotStoredC" => Ok(Self::DepotStoredC),
             "maxCycles" => Ok(Self::MaxCycles),
             "miningSpeed" => Ok(Self::MiningSpeed),
             "cpuSpeed" => Ok(Self::CpuSpeed),
@@ -281,6 +299,12 @@ impl RobotProperty {
             Self::OreStoredA => "oreStoredA",
             Self::OreStoredB => "oreStoredB",
             Self::OreStoredC => "oreStoredC",
+            Self::DepotSizeA => "depotSizeA",
+            Self::DepotSizeB => "depotSizeB",
+            Self::DepotSizeC => "depotSizeC",
+            Self::DepotStoredA => "depotStoredA",
+            Self::DepotStoredB => "depotStoredB",
+            Self::DepotStoredC => "depotStoredC",
             Self::MaxCycles => "maxCycles",
             Self::MiningSpeed => "miningSpeed",
             Self::CpuSpeed => "cpuSpeed",

@@ -84,6 +84,10 @@ fn robot_property_program_verifies() {
     assert_valid_any_size("if (robot.oreStored < robot.oreCap) { mine(); }");
     assert_valid_any_size("dump(robot.oreStoredA);");
     assert_valid_any_size("if (robot.oreStoredB + robot.oreStoredC > 0) { dump(); }");
+    assert_valid_any_size("if (robot.depotStoredA < robot.depotSizeA) { dumpA(); }");
+    assert_valid_any_size(
+        "if (robot.depotStoredB < robot.depotSizeB || robot.depotStoredC < robot.depotSizeC) { dump(); }",
+    );
 }
 
 #[test]

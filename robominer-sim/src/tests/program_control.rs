@@ -293,3 +293,35 @@ fn executable_variable_action_argument_drives_simulation() {
     assert_eq!(simulation.robot(0).position().orientation, 135);
     assert_eq!(simulation.robot(0).actions_done()[4], 1);
 }
+
+#[test]
+fn compiled_program_reads_depot_size_and_stored() {
+    let program = robominer_program::compile_executable_source(
+        "while (mine()); if (robot.depotSizeA > 0) { dumpA(); } if (robot.depotStoredA > 0) { rotate(90); } while (true);",
+    )
+    .expect("source should compile");
+
+    let mut ground = Ground::new(5, 5);
+    ground.at_mut(0, 0).add_ore(0, 20);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.mining_speed = 8;
+    spec.max_ore = 8;
+    spec.max_turns = 20;
+    spec.cpu_speed = 72;
+    spec.rotate_speed = 90;
+
+    let mut capacity = [0; MAX_ORE_TYPES];
+    capacity[0] = 4;
+
+    let mut simulation = Simulation::new(
+        ground,
+        20,
+        vec![ScriptedRobot::from_executable_program(spec, &program).with_depot_capacity(capacity)],
+    );
+
+    simulation.run();
+
+    assert_eq!(simulation.robot(0).depot()[0], 4);
+    assert_eq!(simulation.robot(0).position().orientation, 135);
+}

@@ -207,6 +207,7 @@ impl ExecutableRunner {
             ExpressionWork::PushRobotProperty(property) => {
                 let value = property
                     .stored_ore_value(&context.ore)
+                    .or_else(|| property.depot_value(&context.depot, &context.depot_capacity))
                     .or_else(|| property.value(&context.robot))
                     .expect("robot property should resolve");
                 eval.values

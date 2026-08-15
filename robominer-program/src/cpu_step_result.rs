@@ -94,6 +94,12 @@ impl CpuStepResult {
             | RobotProperty::OreStoredA
             | RobotProperty::OreStoredB
             | RobotProperty::OreStoredC
+            | RobotProperty::DepotSizeA
+            | RobotProperty::DepotSizeB
+            | RobotProperty::DepotSizeC
+            | RobotProperty::DepotStoredA
+            | RobotProperty::DepotStoredB
+            | RobotProperty::DepotStoredC
             | RobotProperty::MaxCycles
             | RobotProperty::MiningSpeed
             | RobotProperty::CpuSpeed
