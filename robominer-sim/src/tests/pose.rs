@@ -2,7 +2,7 @@ use super::helpers::*;
 use crate::*;
 
 #[test]
-fn rally_position_tracks_east_and_north_from_initial() {
+fn rally_position_tracks_spawn_relative_axes_from_initial() {
     let mut spec = RobotSpec::test_robot();
     spec.robot_size = 1.0;
     spec.forward_speed = 1.0;

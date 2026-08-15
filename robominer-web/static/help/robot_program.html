@@ -130,7 +130,7 @@
             </table></div>
             <h3>Robot properties</h3>
             <p class="helptext">Read-only values that describe the robot this program is running on. Part stats reflect the installed hardware and cannot be changed in code. Position and orientation are rally-relative: at the start of every mining run, robot.xPos and robot.yPos are 0 and robot.orientation is 135, regardless of which corner the robot spawns in.</p>
-            <p class="helptext">Orientation 0 points north (toward the west map edge). Angles increase clockwise, matching rotate(positive). robot.xPos is the signed east/west distance from your rally start position (positive = east). robot.yPos is the signed north/south distance from your rally start position (positive = north).</p>
+            <p class="helptext">Angles increase clockwise, matching rotate(positive). Position axes use the same spawn-local frame in every corner: moving into the map increases both robot.xPos and robot.yPos. Facing 270 moves toward decreasing robot.xPos; facing 0 moves toward decreasing robot.yPos. That makes return-home logic written for one corner work in all four.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">robot.forwardSpeed</td>
@@ -230,17 +230,17 @@
                 <tr>
                     <td class="helptable">robot.orientation</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">Current orientation in degrees. Starts at 135; 0 is north (west map edge).</td>
+                    <td class="helptable">Current orientation in degrees in the spawn-local frame. Starts at 135 in every corner.</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.xPos</td>
                     <td class="helptable">double</td>
-                    <td class="helptable">Signed east/west distance from the rally start position (positive = east).</td>
+                    <td class="helptable">Signed distance from the rally start in the spawn-local frame (positive toward into-map +x; facing 270 reduces it).</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.yPos</td>
                     <td class="helptable">double</td>
-                    <td class="helptable">Signed north/south distance from the rally start position (positive = north).</td>
+                    <td class="helptable">Signed distance from the rally start in the spawn-local frame (positive toward into-map +y; facing 0 reduces it).</td>
                 </tr>
             </table></div>
             <h3>scan()</h3>

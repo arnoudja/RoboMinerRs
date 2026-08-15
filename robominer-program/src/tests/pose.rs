@@ -41,6 +41,32 @@ fn rally_robot_pose_tracks_orientation_and_position_delta() {
 }
 
 #[test]
+fn rally_robot_pose_is_corner_independent_for_into_map_offsets() {
+    // Same into-map offsets expressed in map coords for each spawn facing.
+    let cases = [
+        (45, 2.0, 3.0),
+        (135, -3.0, 2.0),
+        (315, 3.0, -2.0),
+        (225, -2.0, -3.0),
+    ];
+    for (spawn_ori, map_dx, map_dy) in cases {
+        let (x_pos, y_pos, orientation) = rally_robot_pose(
+            10.0 + map_dx,
+            10.0 + map_dy,
+            spawn_ori,
+            10.0,
+            10.0,
+            spawn_ori,
+        );
+        assert!(
+            (x_pos - 2.0).abs() < 1e-9 && (y_pos - 3.0).abs() < 1e-9,
+            "spawn {spawn_ori}: got ({x_pos}, {y_pos})"
+        );
+        assert!((orientation - 135.0).abs() < f64::EPSILON);
+    }
+}
+
+#[test]
 fn rally_pose_properties_evaluate_from_context() {
     let program =
         compile_executable_source("move(robot.orientation);").expect("program should compile");
