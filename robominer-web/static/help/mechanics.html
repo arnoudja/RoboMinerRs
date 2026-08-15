@@ -32,6 +32,12 @@
                 Away from spawn, dump() always puts ore on the ground — the depot is not used.
             </p>
             <p class="helptext">
+                Use robot.depotSizeA / robot.depotSizeB / robot.depotSizeC to read the unlocked capacity
+                for each ore type in the current area, and robot.depotStoredA / robot.depotStoredB /
+                robot.depotStoredC to read how much is already banked. Those values stay at 0 for
+                ore types the area does not have.
+            </p>
+            <p class="helptext">
                 At the end of the rally, ore still in the container and ore already in the depot are added
                 together for your mining result and score.
             </p>
@@ -138,7 +144,8 @@
             </p>
             <p class="helptext">
                 CPU actions are flow control, calculations, variable assignment, time(),
-                and robot property reads (including robot.oreStored*). They do not change the robot pose or cargo by themselves.
+                and robot property reads (including robot.oreStored* and robot.depotSize* / robot.depotStored*).
+                They do not change the robot pose or cargo by themselves.
             </p>
             <p class="helptext">
                 Scanning is special. scan() starts a scanner job and counts as initiating work

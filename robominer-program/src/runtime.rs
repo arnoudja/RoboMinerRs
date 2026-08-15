@@ -20,6 +20,8 @@ pub struct RobotProperties {
 pub struct ExecutionContext {
     pub time_left: i32,
     pub ore: [i32; crate::MAX_ORE_TYPES],
+    pub depot: [i32; crate::MAX_ORE_TYPES],
+    pub depot_capacity: [i32; crate::MAX_ORE_TYPES],
     pub action_result: Option<f64>,
     pub scan_time: i32,
     pub scan_started: bool,
@@ -38,6 +40,8 @@ impl ExecutionContext {
         Self {
             time_left,
             ore,
+            depot: [0; crate::MAX_ORE_TYPES],
+            depot_capacity: [0; crate::MAX_ORE_TYPES],
             action_result,
             scan_time: 0,
             scan_started: false,
@@ -71,7 +75,16 @@ impl RobotProperty {
             Self::Orientation => robot.orientation,
             Self::XPos => robot.x_pos,
             Self::YPos => robot.y_pos,
-            Self::OreStored | Self::OreStoredA | Self::OreStoredB | Self::OreStoredC => {
+            Self::OreStored
+            | Self::OreStoredA
+            | Self::OreStoredB
+            | Self::OreStoredC
+            | Self::DepotSizeA
+            | Self::DepotSizeB
+            | Self::DepotSizeC
+            | Self::DepotStoredA
+            | Self::DepotStoredB
+            | Self::DepotStoredC => {
                 return None;
             }
         })
@@ -83,6 +96,22 @@ impl RobotProperty {
             Self::OreStoredA => ore.first().copied().unwrap_or(0) as f64,
             Self::OreStoredB => ore.get(1).copied().unwrap_or(0) as f64,
             Self::OreStoredC => ore.get(2).copied().unwrap_or(0) as f64,
+            _ => return None,
+        })
+    }
+
+    pub fn depot_value(
+        self,
+        depot: &[i32; crate::MAX_ORE_TYPES],
+        depot_capacity: &[i32; crate::MAX_ORE_TYPES],
+    ) -> Option<f64> {
+        Some(match self {
+            Self::DepotSizeA => depot_capacity.first().copied().unwrap_or(0) as f64,
+            Self::DepotSizeB => depot_capacity.get(1).copied().unwrap_or(0) as f64,
+            Self::DepotSizeC => depot_capacity.get(2).copied().unwrap_or(0) as f64,
+            Self::DepotStoredA => depot.first().copied().unwrap_or(0) as f64,
+            Self::DepotStoredB => depot.get(1).copied().unwrap_or(0) as f64,
+            Self::DepotStoredC => depot.get(2).copied().unwrap_or(0) as f64,
             _ => return None,
         })
     }

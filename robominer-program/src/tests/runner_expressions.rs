@@ -140,6 +140,52 @@ fn expression_ore_stored_properties_match_deprecated_ore_query() {
 }
 
 #[test]
+fn expression_depot_properties_read_capacity_and_stored() {
+    let program = compile_executable_source(
+        "dump(robot.depotSizeA); dump(robot.depotSizeB); dump(robot.depotSizeC); dump(robot.depotStoredA); dump(robot.depotStoredB); dump(robot.depotStoredC);",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(8, None);
+    context.depot_capacity[0] = 10;
+    context.depot_capacity[1] = 4;
+    context.depot_capacity[2] = 2;
+    context.depot[0] = 7;
+    context.depot[1] = 1;
+    context.depot[2] = 0;
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(10))
+    );
+    context.action_result = Some(10.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(4))
+    );
+    context.action_result = Some(4.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(2))
+    );
+    context.action_result = Some(2.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(7))
+    );
+    context.action_result = Some(7.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(1))
+    );
+    context.action_result = Some(1.0);
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(0))
+    );
+}
+
+#[test]
 fn expression_unary_not_in_while_condition() {
     let program = compile_executable_source("int done = 0; while (!done) { done = 1; mine(); }")
         .expect("program should compile");

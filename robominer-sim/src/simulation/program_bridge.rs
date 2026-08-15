@@ -108,6 +108,8 @@ impl Simulation {
             *robot.ore(),
             self.action_results[robot_index],
         );
+        context.depot = *robot.depot();
+        context.depot_capacity = *robot.depot_capacity();
         context.scan_time = robot.spec.scan_time;
         context.scan_started = snapshot.started;
         context.scan_complete = snapshot.complete;

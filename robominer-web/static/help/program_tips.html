@@ -211,6 +211,14 @@ if (oreType() == 1)
                 Overflow still goes onto the ground, so a full depot behaves like a normal dump at home.
             </p>
             <p class="helptext">
+                Read remaining room with robot.depotSizeA / robot.depotStoredA (and the B/C variants for
+                other ore types). Dump only when the depot still has space:
+            </p>
+            <pre class="help-code-block"><code>if (robot.depotStoredA &lt; robot.depotSizeA)
+{
+    dumpA();
+}</code></pre>
+            <p class="helptext">
                 A useful pattern is to mine until the container is full of the ore you want to keep, navigate
                 back to spawn using robot.xPos and robot.yPos (both are 0 at the rally start corner), then dump:
             </p>
