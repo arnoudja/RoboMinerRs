@@ -299,6 +299,10 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
             out.push_str("robot.");
             out.push_str(property.as_name());
         }
+        ExecutableExpressionKind::AreaProperty(property) => {
+            out.push_str("area.");
+            out.push_str(property.as_name());
+        }
         ExecutableExpressionKind::Move(inner) => {
             out.push_str("move(");
             unparse_expression(inner, out, 0);

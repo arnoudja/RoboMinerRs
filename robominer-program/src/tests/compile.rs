@@ -92,6 +92,8 @@ fn robot_property_program_verifies() {
     assert_valid_any_size(
         "if (robot.depotStoredB < robot.depotSizeB || robot.depotStoredC < robot.depotSizeC) { dump(); }",
     );
+    assert_valid_any_size("if (robot.xPos < area.sizeX && robot.yPos < area.sizeY) { move(1); }");
+    assert_valid_any_size("if (area.startingOreA > 0 && area.containerTax < 100) { mine(); }");
 }
 
 #[test]

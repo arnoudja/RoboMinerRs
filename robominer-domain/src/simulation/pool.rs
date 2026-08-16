@@ -1,4 +1,4 @@
-use robominer_sim::{MAX_ORE_TYPES, Simulation};
+use robominer_sim::{MAX_ORE_TYPES, Simulation, SimulationAreaConfig};
 
 use crate::constants::RALLY_SIZE;
 use crate::error::DomainError;
@@ -36,8 +36,17 @@ pub fn run_pool_loadout_with_seed(
         loadout.mining_area.area.id,
         &loadout.mining_area.ore_supplies,
     )?;
-    let mut simulation =
-        Simulation::new_with_ore_ids(ground, loadout.mining_area.area.max_moves, robots, ore_ids);
+    let mut simulation = Simulation::new_with_area(
+        ground,
+        loadout.mining_area.area.max_moves,
+        robots,
+        ore_ids,
+        SimulationAreaConfig {
+            container_tax: loadout.mining_area.area.tax_rate,
+            depot_tax: loadout.mining_area.area.depot_tax_rate,
+            ore_target: loadout.mining_area.area.score_ore_target,
+        },
+    );
     simulation.run();
 
     pool_rally_outcome(loadout, simulation)

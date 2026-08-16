@@ -325,3 +325,39 @@ fn compiled_program_reads_depot_size_and_stored() {
     assert_eq!(simulation.robot(0).depot()[0], 4);
     assert_eq!(simulation.robot(0).position().orientation, 135);
 }
+
+#[test]
+fn compiled_program_reads_area_properties() {
+    let program = robominer_program::compile_executable_source(
+        "if (area.sizeX == 4 && area.sizeY == 4 && area.containerTax == 25 && area.depotTax == 12 \
+         && area.startingOreA == 7 && area.startingOreB == 3 && area.startingOreC == 0 \
+         && area.miningCycles == 15 && area.oreTarget == 30) { rotate(90); } while (true);",
+    )
+    .expect("source should compile");
+
+    let mut ground = Ground::new(5, 5);
+    ground.at_mut(1, 1).add_ore(0, 7);
+    ground.at_mut(2, 2).add_ore(1, 3);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.robot_size = 1.0;
+    spec.max_turns = 15;
+    spec.cpu_speed = 72;
+    spec.rotate_speed = 90;
+
+    let mut simulation = Simulation::new_with_area(
+        ground,
+        15,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+        vec![3, 2],
+        SimulationAreaConfig {
+            container_tax: 25,
+            depot_tax: 12,
+            ore_target: 30,
+        },
+    );
+
+    simulation.run();
+
+    assert_eq!(simulation.robot(0).position().orientation, 135);
+}

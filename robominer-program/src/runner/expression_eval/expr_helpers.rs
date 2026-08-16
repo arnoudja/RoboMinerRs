@@ -43,7 +43,8 @@ impl ExecutableExpression {
             }
             ExecutableExpressionKind::OreDistance
             | ExecutableExpressionKind::OreType
-            | ExecutableExpressionKind::RobotProperty(_) => None,
+            | ExecutableExpressionKind::RobotProperty(_)
+            | ExecutableExpressionKind::AreaProperty(_) => None,
             ExecutableExpressionKind::Number(_)
             | ExecutableExpressionKind::Bool(_)
             | ExecutableExpressionKind::Variable(_)

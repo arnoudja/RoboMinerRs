@@ -35,10 +35,10 @@ pub use pending_await::{ActionAwaitKind, await_kind};
 pub use pose::{rally_map_position, rally_robot_pose};
 pub use runner::ExecutableRunner;
 pub use types::{
-    CompileError, ExecutableAction, ExecutableActionExpression, ExecutableExpression,
-    ExecutableExpressionKind, ExecutableProgram, ExecutableStatement, ExecutableStatementKind,
-    ExecutionContext, Operator, ProgramStep, RobotProperties, RobotProperty, SourceSpan, ValueType,
-    VariableOperator,
+    AreaProperties, AreaProperty, CompileError, ExecutableAction, ExecutableActionExpression,
+    ExecutableExpression, ExecutableExpressionKind, ExecutableProgram, ExecutableStatement,
+    ExecutableStatementKind, ExecutionContext, Operator, ProgramStep, RobotProperties,
+    RobotProperty, SourceSpan, ValueType, VariableOperator,
 };
 pub use unparse::unparse_program;
 

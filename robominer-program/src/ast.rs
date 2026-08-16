@@ -218,10 +218,66 @@ pub enum ExecutableExpressionKind {
     OreDistance,
     OreType,
     RobotProperty(RobotProperty),
+    AreaProperty(AreaProperty),
     Move(Box<ExecutableExpression>),
     Rotate(Box<ExecutableExpression>),
     Dump(Box<ExecutableExpression>),
     Action(ExecutableAction),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AreaProperty {
+    /// Spawn-local `robot.xPos` at the opposite corner from spawn.
+    SizeX,
+    /// Spawn-local `robot.yPos` at the opposite corner from spawn.
+    SizeY,
+    /// Container tax rate (%) for this mining area.
+    ContainerTax,
+    /// Depot tax rate (%) for this mining area.
+    DepotTax,
+    /// Ore of type A on the ground when the rally started.
+    StartingOreA,
+    /// Ore of type B on the ground when the rally started (0 if the area has only one type).
+    StartingOreB,
+    /// Ore of type C on the ground when the rally started (0 if the area has fewer than three types).
+    StartingOreC,
+    /// Maximum number of mining cycles for the area.
+    MiningCycles,
+    /// Ore target used in the rally score calculation.
+    OreTarget,
+}
+
+impl AreaProperty {
+    pub fn from_name(name: &str, line: usize) -> Result<Self, CompileError> {
+        match name {
+            "sizeX" => Ok(Self::SizeX),
+            "sizeY" => Ok(Self::SizeY),
+            "containerTax" => Ok(Self::ContainerTax),
+            "depotTax" => Ok(Self::DepotTax),
+            "startingOreA" => Ok(Self::StartingOreA),
+            "startingOreB" => Ok(Self::StartingOreB),
+            "startingOreC" => Ok(Self::StartingOreC),
+            "miningCycles" => Ok(Self::MiningCycles),
+            "oreTarget" => Ok(Self::OreTarget),
+            other => Err(CompileError::new(format!(
+                "Syntax error at line {line}. Unknown area property '{other}'"
+            ))),
+        }
+    }
+
+    pub fn as_name(self) -> &'static str {
+        match self {
+            Self::SizeX => "sizeX",
+            Self::SizeY => "sizeY",
+            Self::ContainerTax => "containerTax",
+            Self::DepotTax => "depotTax",
+            Self::StartingOreA => "startingOreA",
+            Self::StartingOreB => "startingOreB",
+            Self::StartingOreC => "startingOreC",
+            Self::MiningCycles => "miningCycles",
+            Self::OreTarget => "oreTarget",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

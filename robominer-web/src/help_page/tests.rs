@@ -133,6 +133,11 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             "position and orientation at the moment scan() starts",
             "robot.depotSizeA",
             "robot.depotStoredA",
+            "area.sizeX",
+            "area.containerTax",
+            "area.startingOreA",
+            "area.miningCycles",
+            "area.oreTarget",
             "<h1>Robot programming help</h1>",
         ],
     );

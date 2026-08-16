@@ -108,6 +108,30 @@ fn robot_property_expression_evaluates_from_context() {
 }
 
 #[test]
+fn area_property_expression_evaluates_from_context() {
+    let program =
+        compile_executable_source("move(area.sizeX + area.miningCycles + area.startingOreA);")
+            .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = robot_context(1.0);
+    context.area.size_x = 9.0;
+    context.area.mining_cycles = 20.0;
+    context.area.starting_ore_a = 42.0;
+
+    loop {
+        match runner.step(&mut context) {
+            ProgramStep::Action(ExecutableAction::Move(distance)) => {
+                assert!((distance - 71.0).abs() < f64::EPSILON);
+                break;
+            }
+            ProgramStep::Cpu => {}
+            ProgramStep::Done => panic!("program finished without issuing move"),
+            other => panic!("unexpected step {other:?}"),
+        }
+    }
+}
+
+#[test]
 fn dynamic_move_in_expression_condition_compiles_and_runs() {
     assert_valid_any_size("if (move(robot.forwardSpeed) < 1) { rotate(150); } else { rotate(0); }");
 

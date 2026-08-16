@@ -31,6 +31,12 @@ pub(super) fn robot_property_mutation_error(line: usize) -> CompileError {
         "Error at line {line}: Robot properties cannot be changed."
     ))
 }
+
+pub(super) fn area_property_mutation_error(line: usize) -> CompileError {
+    CompileError::new(format!(
+        "Error at line {line}: Area properties cannot be changed."
+    ))
+}
 pub(super) fn parse_operator_token(input: &mut CompileInput) -> Operator {
     if input.eat_char('+', false) {
         Operator::Addition

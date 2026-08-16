@@ -1,11 +1,11 @@
 use crate::types::{
-    CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind, Operator,
-    RobotProperty, VariableOperator,
+    AreaProperty, CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind,
+    Operator, RobotProperty, VariableOperator,
 };
 
 use super::super::input::{
-    CompileInput, expect_char, expect_empty_call, parse_operator_token,
-    robot_property_mutation_error,
+    CompileInput, area_property_mutation_error, expect_char, expect_empty_call,
+    parse_operator_token, robot_property_mutation_error,
 };
 use super::actions::{
     parse_dump_expression, parse_move_expression, parse_named_dump_action, parse_rotate_expression,
@@ -229,6 +229,13 @@ fn parse_single_expression_kind(
         return Ok(Some(kind));
     }
 
+    if let Some(kind) = parse_area_property_expression(input)? {
+        if input.eat_sequence("++") || input.eat_sequence("--") {
+            return Err(area_property_mutation_error(input.current_line));
+        }
+        return Ok(Some(kind));
+    }
+
     let mut variable_operator = VariableOperator::None;
     if input.eat_sequence("++") {
         variable_operator = VariableOperator::PreIncrement;
@@ -323,4 +330,28 @@ fn parse_robot_property_expression(
 
     let property = RobotProperty::from_name(&property_name, input.current_line)?;
     Ok(Some(ExecutableExpressionKind::RobotProperty(property)))
+}
+
+fn parse_area_property_expression(
+    input: &mut CompileInput,
+) -> Result<Option<ExecutableExpressionKind>, CompileError> {
+    if !input.use_next_word("area") {
+        return Ok(None);
+    }
+
+    if !input.eat_char('.', false) {
+        input.return_next_word("area".to_string());
+        return Ok(None);
+    }
+
+    let property_name = input.use_next_word_any();
+    if property_name.is_empty() {
+        return Err(CompileError::new(format!(
+            "Syntax error at line {}. Area property expected",
+            input.current_line
+        )));
+    }
+
+    let property = AreaProperty::from_name(&property_name, input.current_line)?;
+    Ok(Some(ExecutableExpressionKind::AreaProperty(property)))
 }

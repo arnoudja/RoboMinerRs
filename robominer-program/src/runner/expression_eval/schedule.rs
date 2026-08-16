@@ -1,6 +1,6 @@
 use crate::types::{
-    ExecutableAction, ExecutableExpression, ExecutableExpressionKind, Operator, RobotProperty,
-    SourceSpan, VariableOperator,
+    AreaProperty, ExecutableAction, ExecutableExpression, ExecutableExpressionKind, Operator,
+    RobotProperty, SourceSpan, VariableOperator,
 };
 
 /// One CPU step of expression evaluation, tagged with the source it came from so the
@@ -26,6 +26,7 @@ pub(crate) enum ExpressionWork {
     PushOreDistance,
     PushOreType,
     PushRobotProperty(RobotProperty),
+    PushAreaProperty(AreaProperty),
     PushDynamicMove,
     PushDynamicRotate,
     PushDynamicDump,
@@ -139,6 +140,9 @@ pub(crate) fn schedule_expression(
         }
         ExecutableExpressionKind::RobotProperty(property) => {
             push(work, ExpressionWork::PushRobotProperty(*property));
+        }
+        ExecutableExpressionKind::AreaProperty(property) => {
+            push(work, ExpressionWork::PushAreaProperty(*property));
         }
         ExecutableExpressionKind::Move(arg) => {
             schedule_expression(work, arg);

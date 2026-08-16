@@ -1,4 +1,4 @@
-use crate::ast::{ExecutableAction, RobotProperty};
+use crate::ast::{AreaProperty, ExecutableAction, RobotProperty};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct RobotProperties {
@@ -16,6 +16,21 @@ pub struct RobotProperties {
     pub y_pos: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct AreaProperties {
+    /// Spawn-local x of the opposite corner (`size_x - robot_size`).
+    pub size_x: f64,
+    /// Spawn-local y of the opposite corner (`size_y - robot_size`).
+    pub size_y: f64,
+    pub container_tax: f64,
+    pub depot_tax: f64,
+    pub starting_ore_a: f64,
+    pub starting_ore_b: f64,
+    pub starting_ore_c: f64,
+    pub mining_cycles: f64,
+    pub ore_target: f64,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutionContext {
     pub time_left: i32,
@@ -29,6 +44,7 @@ pub struct ExecutionContext {
     pub scan_distance: f64,
     pub scan_ore_type: f64,
     pub robot: RobotProperties,
+    pub area: AreaProperties,
 }
 
 impl ExecutionContext {
@@ -49,6 +65,7 @@ impl ExecutionContext {
             scan_distance: -1.0,
             scan_ore_type: 0.0,
             robot: RobotProperties::default(),
+            area: AreaProperties::default(),
         }
     }
 }
@@ -58,6 +75,22 @@ pub enum ProgramStep {
     Cpu,
     Action(ExecutableAction),
     Done,
+}
+
+impl AreaProperty {
+    pub fn value(self, area: &AreaProperties) -> f64 {
+        match self {
+            Self::SizeX => area.size_x,
+            Self::SizeY => area.size_y,
+            Self::ContainerTax => area.container_tax,
+            Self::DepotTax => area.depot_tax,
+            Self::StartingOreA => area.starting_ore_a,
+            Self::StartingOreB => area.starting_ore_b,
+            Self::StartingOreC => area.starting_ore_c,
+            Self::MiningCycles => area.mining_cycles,
+            Self::OreTarget => area.ore_target,
+        }
+    }
 }
 
 impl RobotProperty {

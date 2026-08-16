@@ -4,7 +4,7 @@
 //! and expression heuristics (`for_number_literal`, `for_action`, …). Wire format uses
 //! `b`/`i`/`f` via `AnimationCpuStepResultKind` in robominer-sim.
 
-use crate::ast::{ExecutableAction, Operator, RobotProperty, ValueType};
+use crate::ast::{AreaProperty, ExecutableAction, Operator, RobotProperty, ValueType};
 
 /// How a CPU-step return value should be displayed in the replay UI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -104,6 +104,19 @@ impl CpuStepResult {
             | RobotProperty::MiningSpeed
             | RobotProperty::CpuSpeed
             | RobotProperty::Orientation => Self::int_value(value),
+        }
+    }
+
+    pub fn for_area_property(property: AreaProperty, value: f64) -> Self {
+        match property {
+            AreaProperty::SizeX | AreaProperty::SizeY => Self::float_value(value),
+            AreaProperty::ContainerTax
+            | AreaProperty::DepotTax
+            | AreaProperty::StartingOreA
+            | AreaProperty::StartingOreB
+            | AreaProperty::StartingOreC
+            | AreaProperty::MiningCycles
+            | AreaProperty::OreTarget => Self::int_value(value),
         }
     }
 

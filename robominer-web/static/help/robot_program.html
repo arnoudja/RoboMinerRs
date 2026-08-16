@@ -243,6 +243,55 @@
                     <td class="helptable">Signed distance from the rally start in the spawn-local frame (positive toward into-map +y; facing 0 reduces it).</td>
                 </tr>
             </table></div>
+            <h3>Area properties</h3>
+            <p class="helptext">Read-only values that describe the mining area this rally is running in. They cannot be changed in code. Ore types A / B / C match robot.oreStoredA / B / C (highest-quality ore first).</p>
+            <div class="help-table-wrap"><table class="helptable">
+                <tr>
+                    <td class="helptable">area.sizeX</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Highest robot.xPos this robot can reach (the opposite corner from spawn in the spawn-local frame).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.sizeY</td>
+                    <td class="helptable">double</td>
+                    <td class="helptable">Highest robot.yPos this robot can reach (the opposite corner from spawn in the spawn-local frame).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.containerTax</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Container tax rate (%) for ore still in the robot when the rally ends.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.depotTax</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Depot tax rate (%) for ore already banked in the depot when the rally ends.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.startingOreA</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Amount of highest-quality ore on the ground when the rally started.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.startingOreB</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Amount of medium-quality ore on the ground when the rally started. Always 0 when the area has only one ore type.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.startingOreC</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Amount of lowest-quality ore on the ground when the rally started. Always 0 when the area has fewer than three ore types.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.miningCycles</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Maximum number of mining cycles for this area (before robot battery limits).</td>
+                </tr>
+                <tr>
+                    <td class="helptable">area.oreTarget</td>
+                    <td class="helptable">int</td>
+                    <td class="helptable">Ore target used in the rally score calculation (shown as Ore target in the mining queue).</td>
+                </tr>
+            </table></div>
             <h3>scan()</h3>
             <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). The ray uses the robot's position and orientation at the moment scan() starts, even if the robot moves or rotates before the scan finishes. Use oreDistance() or oreType() to read the result once the scan has finished.
                 The scanner reports the nearest ore of any type along the ray. Outer lower-value ore can hide a richer heap further away on the same line of sight.</p>

@@ -177,6 +177,30 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         expected_error_contains: Some("Unknown robot property"),
     },
     CompatibilityFixture {
+        name: "invalid_area_property_unknown",
+        source: "move(area.foo);",
+        expected_size: None,
+        expected_error_contains: Some("Unknown area property"),
+    },
+    CompatibilityFixture {
+        name: "invalid_area_size_assignment",
+        source: "area.sizeX = 1;",
+        expected_size: None,
+        expected_error_contains: Some("Area properties cannot be changed"),
+    },
+    CompatibilityFixture {
+        name: "invalid_empty_robot_property",
+        source: "move(robot.);",
+        expected_size: None,
+        expected_error_contains: Some("Robot property expected"),
+    },
+    CompatibilityFixture {
+        name: "invalid_empty_area_property",
+        source: "move(area.);",
+        expected_size: None,
+        expected_error_contains: Some("Area property expected"),
+    },
+    CompatibilityFixture {
         name: "invalid_bare_pre_increment",
         source: "++;",
         expected_size: None,
@@ -187,12 +211,6 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         source: "--;",
         expected_size: None,
         expected_error_contains: Some("Variable expected"),
-    },
-    CompatibilityFixture {
-        name: "invalid_empty_robot_property",
-        source: "move(robot.);",
-        expected_size: None,
-        expected_error_contains: Some("Robot property expected"),
     },
     CompatibilityFixture {
         name: "pre_and_post_decrement",

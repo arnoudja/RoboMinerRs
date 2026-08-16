@@ -25,6 +25,6 @@ pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot, ore_heap_estimate
 pub use position::Position;
 pub use robot::{ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, RobotSpec, ScriptedRobot};
 pub use score::{calculate_score, ore_amounts};
-pub use simulation::Simulation;
+pub use simulation::{Simulation, SimulationAreaConfig};
 
 pub use robominer_program::MAX_ORE_TYPES;

@@ -89,6 +89,7 @@ fn expression_size(expression: &ExecutableExpression) -> usize {
                 .unwrap_or(0)
         }
         ExecutableExpressionKind::RobotProperty(_) => 1,
+        ExecutableExpressionKind::AreaProperty(_) => 1,
         ExecutableExpressionKind::Move(expression)
         | ExecutableExpressionKind::Rotate(expression)
         | ExecutableExpressionKind::Dump(expression) => 1 + expression_size(expression),

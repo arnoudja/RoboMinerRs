@@ -5,6 +5,7 @@ mod program_bridge;
 mod test_support;
 
 use robominer_program::ExecutableRunner;
+use robominer_program::LANGUAGE_ORE_SLOTS;
 use robominer_program::motion::is_zero_motion;
 
 use crate::OreAnimationData;
@@ -15,6 +16,36 @@ use crate::ground::{Ground, ScanState};
 use crate::physics::{ActionResult, apply_mining};
 use crate::position::Position;
 use crate::robot::{ActionSource, ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, ScriptedRobot};
+
+/// Area-level values exposed to robot programs as `area.*`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct SimulationAreaConfig {
+    pub container_tax: i32,
+    pub depot_tax: i32,
+    pub ore_target: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+struct AreaSnapshot {
+    container_tax: i32,
+    depot_tax: i32,
+    starting_ore: [i32; LANGUAGE_ORE_SLOTS],
+    mining_cycles: i32,
+    ore_target: i32,
+}
+
+fn starting_ore_from_ground(ground: &Ground) -> [i32; LANGUAGE_ORE_SLOTS] {
+    let mut totals = [0; LANGUAGE_ORE_SLOTS];
+    for x in 0..ground.size_x() {
+        for y in 0..ground.size_y() {
+            let unit = ground.at(x, y);
+            for (slot, total) in totals.iter_mut().enumerate() {
+                *total += unit.ore_at(slot);
+            }
+        }
+    }
+    totals
+}
 
 fn animation_action_index(action: RobotAction, robot: &Robot, scanned_this_cycle: bool) -> u8 {
     let scan_busy = scanned_this_cycle || matches!(robot.scan_state, ScanState::Scanning { .. });
@@ -43,6 +74,7 @@ pub struct Simulation {
     ground: Ground,
     ore_ids: Vec<i64>,
     total_moves: i32,
+    area: AreaSnapshot,
     robots: Vec<Robot>,
     action_sources: Vec<ActionSource>,
     action_results: Vec<Option<f64>>,
@@ -95,10 +127,27 @@ impl Simulation {
         robots: Vec<ScriptedRobot>,
         ore_ids: Vec<i64>,
     ) -> Self {
+        Self::new_with_area(
+            ground,
+            total_moves,
+            robots,
+            ore_ids,
+            SimulationAreaConfig::default(),
+        )
+    }
+
+    pub fn new_with_area(
+        ground: Ground,
+        total_moves: i32,
+        robots: Vec<ScriptedRobot>,
+        ore_ids: Vec<i64>,
+        area: SimulationAreaConfig,
+    ) -> Self {
         assert!(total_moves >= 0);
         assert!(!robots.is_empty());
         assert!(robots.len() <= 4);
 
+        let starting_ore = starting_ore_from_ground(&ground);
         let action_sources: Vec<_> = robots
             .iter()
             .map(|robot| robot.action_source.clone())
@@ -121,6 +170,13 @@ impl Simulation {
             ground,
             ore_ids,
             total_moves,
+            area: AreaSnapshot {
+                container_tax: area.container_tax,
+                depot_tax: area.depot_tax,
+                starting_ore,
+                mining_cycles: total_moves,
+                ore_target: area.ore_target,
+            },
             robots,
             action_sources,
             action_results,

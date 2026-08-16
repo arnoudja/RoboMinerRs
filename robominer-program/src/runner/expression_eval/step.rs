@@ -214,6 +214,12 @@ impl ExecutableRunner {
                     .push(CpuStepResult::for_robot_property(property, value));
                 eval.index += 1;
             }
+            ExpressionWork::PushAreaProperty(property) => {
+                let value = property.value(&context.area);
+                eval.values
+                    .push(CpuStepResult::for_area_property(property, value));
+                eval.index += 1;
+            }
             // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C.
             ExpressionWork::PushOre => {
                 let ore_type = eval
