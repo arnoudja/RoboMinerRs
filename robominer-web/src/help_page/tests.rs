@@ -115,7 +115,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             "when scan() started",
             "you'll mine the same ore again",
             "robot.depotStoredA",
-            "Depot tax is half the container tax",
+            "Depot tax is usually lower than the container tax",
             r#"<pre class="help-code-block"><code>"#,
             "<h1>Programming tips</h1>",
         ],
