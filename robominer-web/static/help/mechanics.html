@@ -45,14 +45,38 @@
                 On the rally replay, a translucent square in your player color marks the spawn corner where
                 depot dumps land, and the player card shows depot fill next to cargo when capacity is unlocked.
             </p>
+            <h2 id="tax">Tax</h2>
+            <p class="helptext">
+                When you claim a finished mining run, tax is deducted from the ore before it is added to
+                your wallet. Each mining area has two tax rates, shown in the mining queue area details:
+            </p>
+            <ul>
+                <li class="helptext">
+                    Container tax applies to ore still in the robot container when the rally ends.
+                </li>
+                <li class="helptext">
+                    Depot tax applies to ore already banked in your personal depot when the rally ends.
+                    Depot tax is half the container tax in every current area (rounded down).
+                </li>
+            </ul>
+            <p class="helptext">
+                Tax is calculated separately per ore type as a percentage of each pile, rounded down.
+                Dumping at your spawn corner therefore keeps more of that ore after the claim,
+                because depot tax is lower than container tax. Ore left in the container still
+                counts for score, but it is taxed at the higher container rate.
+            </p>
+            <p class="helptext">
+                Tax does not change the rally score. Leaderboards use score; your wallet receives
+                the ore that remains after tax.
+            </p>
             <h2 id="rally-score">Rally score</h2>
             <p class="helptext">
                 Each rally awards a score for how valuable your haul was in that mining area.
                 Leaderboards and area rankings use a smoothed score per robot per area:
                 your first run in an area is stored below the raw rally score, and each later run
                 blends into that value so recent results matter more than a single lucky peak.
-                The score is separate from the ore that ends up in your wallet: tax reduces the ore you keep,
-                but it does not change the score number.
+                The score is separate from the ore that ends up in your wallet: tax reduces the ore you keep
+                (see Tax), but it does not change the score number.
             </p>
             <p class="helptext">
                 Scoring uses the total ore you hauled: whatever is still in the container plus whatever

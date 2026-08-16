@@ -152,7 +152,8 @@
       "ore_results": [
         {
           "ore_id": 1,
-          "amount": 12
+          "amount": 12,
+          "depot_amount": 10
         }
       ],
       "action_results": [

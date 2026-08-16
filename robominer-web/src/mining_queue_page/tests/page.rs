@@ -55,6 +55,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     mining_area_id: 20,
                     area_name: "Area & Two".to_string(),
                     tax_rate: 12,
+                    depot_tax_rate: 6,
                     mining_time: 120,
                     max_moves: 50,
                     size_x: 10,
@@ -65,6 +66,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     mining_area_id: 21,
                     area_name: "Area Three".to_string(),
                     tax_rate: 5,
+                    depot_tax_rate: 2,
                     mining_time: 60,
                     max_moves: 20,
                     size_x: 6,
@@ -161,7 +163,8 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"class="mining-queue-area-panel mining-queue-area-panel-active""#,
             r#"class="mining-queue-area-panel mining-queue-area-panel-active"><tr><td colspan="4">Upfront costs:</td></tr>"#,
             r#"Upfront costs:</td></tr><tr><td></td><td>Ore &amp; Two:</td><td>30</td>"#,
-            r#"class="mining-queue-area-panel"><tr><td>Tax rate:</td><td colspan="3">5%</td></tr>"#,
+            r#"class="mining-queue-area-panel"><tr><td>Container tax:</td><td colspan="3">5%</td></tr>
+<tr><td>Depot tax:</td><td colspan="3">2%</td></tr>"#,
             r#"Mining cycles:</td><td colspan="3">50 robot turns</td></tr>
 <tr><td>Area size:</td><td colspan="3">10 x 11</td></tr>
 <tr><td>Ore target:</td><td colspan="3">30</td></tr>
@@ -227,6 +230,7 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
                 mining_area_id: 20,
                 area_name: "Area".to_string(),
                 tax_rate: 0,
+                depot_tax_rate: 0,
                 mining_time: 120,
                 max_moves: 10,
                 size_x: 5,
@@ -312,6 +316,7 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
                 mining_area_id: 20,
                 area_name: "Area".to_string(),
                 tax_rate: 0,
+                depot_tax_rate: 0,
                 mining_time: 120,
                 max_moves: 10,
                 size_x: 5,
@@ -384,6 +389,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     mining_area_id: 20,
                     area_name: "Expensive".to_string(),
                     tax_rate: 0,
+                    depot_tax_rate: 0,
                     mining_time: 120,
                     max_moves: 10,
                     size_x: 5,
@@ -394,6 +400,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     mining_area_id: 21,
                     area_name: "Affordable".to_string(),
                     tax_rate: 0,
+                    depot_tax_rate: 0,
                     mining_time: 60,
                     max_moves: 10,
                     size_x: 5,

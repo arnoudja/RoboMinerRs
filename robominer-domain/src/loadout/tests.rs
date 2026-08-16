@@ -38,6 +38,7 @@ fn single_ore_heap_fits_inside_mining_area() {
         max_moves: 15,
         mining_time: 5,
         tax_rate: 25,
+        depot_tax_rate: 12,
         score_ore_target: 30,
         ai_robot_id: 1,
     };

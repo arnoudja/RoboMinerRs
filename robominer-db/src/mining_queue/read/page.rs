@@ -35,8 +35,8 @@ pub async fn list_mining_queue_page_areas(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i32, i32, i32, i32, i32, i32)>(
-        "SELECT MiningArea.id, MiningArea.areaName, MiningArea.taxRate, \
+    sqlx::query_as::<_, (i64, String, i32, i32, i32, i32, i32, i32, i32)>(
+        "SELECT MiningArea.id, MiningArea.areaName, MiningArea.taxRate, MiningArea.depotTaxRate, \
                 MiningArea.miningTime, MiningArea.maxMoves, MiningArea.sizeX, MiningArea.sizeY, \
                 MiningArea.scoreOreTarget \
          FROM MiningArea \
@@ -54,6 +54,7 @@ pub async fn list_mining_queue_page_areas(
                     mining_area_id,
                     area_name,
                     tax_rate,
+                    depot_tax_rate,
                     mining_time,
                     max_moves,
                     size_x,
@@ -64,6 +65,7 @@ pub async fn list_mining_queue_page_areas(
                         mining_area_id,
                         area_name,
                         tax_rate,
+                        depot_tax_rate,
                         mining_time,
                         max_moves,
                         size_x,

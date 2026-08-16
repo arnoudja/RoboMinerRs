@@ -3,7 +3,12 @@ use robominer_db::{
     CompletedRallyRecord, cleanup_old_claimed_mining_queue_items_for_robot,
     persist_completed_rally,
 };
-use robominer_test_support::{RallyFixture, insert_claimed_mining_queue, insert_row_id};
+use robominer_test_support::{
+    RallyFixture, insert_ai_robot, insert_area_supply, insert_claimed_mining_queue,
+    insert_finished_queue, insert_mining_area, insert_ore, insert_ore_price,
+    insert_ore_result_with_depot, insert_robot, insert_row_id, insert_user, insert_user_ore_asset,
+    unique_prefix,
+};
 use serial_test::serial;
 use sqlx::Row;
 
@@ -35,6 +40,7 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
                 ore_results: vec![CompletedRallyOreRecord {
                     ore_id: fixture.ore_id,
                     amount: 6,
+                    depot_amount: 2,
                 }],
                 action_results: vec![CompletedRallyActionRecord {
                     action_type: 6,
@@ -72,8 +78,8 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
             .expect("failed to load executed source");
     assert_eq!(executed_source.as_deref(), Some("mine();"));
 
-    let ore_amount: i32 = sqlx::query_scalar(
-        "SELECT amount FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?",
+    let (ore_amount, depot_amount): (i32, i32) = sqlx::query_as(
+        "SELECT amount, depotAmount FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?",
     )
     .bind(fixture.mining_queue_id)
     .bind(fixture.ore_id)
@@ -81,6 +87,7 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
     .await
     .expect("failed to load ore result");
     assert_eq!(ore_amount, 6);
+    assert_eq!(depot_amount, 2);
 
     let action_amount: i32 = sqlx::query_scalar(
         "SELECT amount FROM RobotActionsDone WHERE miningQueueId = ? AND actionType = 6",
@@ -249,4 +256,54 @@ async fn list_mining_result_states_for_robot_returns_claimed_only() {
         .execute(&pool)
         .await;
     fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn claim_taxes_container_and_depot_ore_separately() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("split-tax");
+    let ore_id = insert_ore(&pool, &format!("{prefix}-ore")).await;
+    let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
+    let user_id = insert_user(&pool, &prefix).await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let robot_id = insert_robot(&pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
+    let mining_area_id = insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 20).await;
+    insert_area_supply(&pool, mining_area_id, ore_id, 10, 2).await;
+    let queue_id = insert_finished_queue(&pool, mining_area_id, robot_id, -20, -10).await;
+    insert_ore_result_with_depot(&pool, queue_id, ore_id, 100, 40).await;
+    insert_user_ore_asset(&pool, user_id, ore_id, 0, 1000).await;
+
+    let claimed = robominer_db::claim_user_results(&pool, user_id)
+        .await
+        .expect("claim should succeed");
+    assert_eq!(claimed.claimed_queues, 1);
+    assert_eq!(claimed.ore_rewards.len(), 1);
+    assert_eq!(claimed.ore_rewards[0].ore_id, ore_id);
+    assert_eq!(claimed.ore_rewards[0].reward, 84);
+
+    let tax: i32 =
+        sqlx::query_scalar("SELECT tax FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?")
+            .bind(queue_id)
+            .bind(ore_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load tax");
+    assert_eq!(tax, 16);
+
+    let wallet: i32 =
+        sqlx::query_scalar("SELECT amount FROM UserOreAsset WHERE userId = ? AND oreId = ?")
+            .bind(user_id)
+            .bind(ore_id)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load wallet");
+    assert_eq!(wallet, 84);
 }

@@ -163,6 +163,7 @@ fn cerbonium_starter() -> AreaProfile {
             area.max_moves = 30;
             area.mining_time = 10;
             area.tax_rate = 20;
+            area.depot_tax_rate = 10;
             area.ai_robot_id = 2;
             area
         },
@@ -184,6 +185,7 @@ fn cerbonium_advanced() -> AreaProfile {
             area.max_moves = 40;
             area.mining_time = 15;
             area.tax_rate = 0;
+            area.depot_tax_rate = 0;
             area.ai_robot_id = 3;
             area
         },
@@ -226,6 +228,7 @@ fn oxaria_2() -> AreaProfile {
             area.max_moves = 75;
             area.mining_time = 30;
             area.tax_rate = 10;
+            area.depot_tax_rate = 5;
             area.ai_robot_id = 3;
             area
         },

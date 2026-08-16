@@ -21,6 +21,7 @@ pub struct RallyParticipantOutcome {
     pub is_ai: bool,
     pub position: Position,
     pub ore: [i32; MAX_ORE_TYPES],
+    pub depot: [i32; MAX_ORE_TYPES],
     pub score: f64,
     pub actions_done: [i32; 8],
 }

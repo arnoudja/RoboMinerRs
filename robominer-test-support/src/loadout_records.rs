@@ -138,6 +138,7 @@ pub fn mining_area_record(id: i64, area_name: &str) -> MiningAreaRecord {
         max_moves: 150,
         mining_time: 30,
         tax_rate: 25,
+        depot_tax_rate: 12,
         score_ore_target: 30,
         ai_robot_id: 1,
     }

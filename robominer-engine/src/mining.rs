@@ -131,10 +131,11 @@ pub(crate) async fn mining_queue_page_states(
 
     for area in areas {
         println!(
-            "A\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            "A\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             area.mining_area_id,
             escape_state_field(&area.area_name),
             area.tax_rate,
+            area.depot_tax_rate,
             area.mining_time,
             area.max_moves,
             area.size_x,

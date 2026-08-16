@@ -33,6 +33,12 @@ struct GoldenParticipant {
 struct GoldenOreResult {
     ore_id: i64,
     amount: i32,
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
+    depot_amount: i32,
+}
+
+fn is_zero_i32(value: &i32) -> bool {
+    *value == 0
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -115,6 +121,7 @@ fn build_fixture(scenario: &RallyScenario) -> BuiltRallyFixture {
                         .map(|ore| GoldenOreResult {
                             ore_id: ore.ore_id,
                             amount: ore.amount,
+                            depot_amount: ore.depot_amount,
                         })
                         .collect(),
                     action_results: participant

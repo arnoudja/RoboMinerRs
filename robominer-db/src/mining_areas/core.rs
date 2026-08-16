@@ -8,7 +8,7 @@ use crate::{MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord}
 
 pub async fn list_mining_areas(pool: &MySqlPool) -> Result<Vec<MiningAreaRecord>, sqlx::Error> {
     sqlx::query_as::<_, MiningAreaRow>(
-        "SELECT id, areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId \
+        "SELECT id, areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId \
          FROM MiningArea \
          ORDER BY id",
     )
@@ -22,7 +22,7 @@ pub async fn get_mining_area(
     mining_area_id: i64,
 ) -> Result<Option<MiningAreaRecord>, sqlx::Error> {
     sqlx::query_as::<_, MiningAreaRow>(
-        "SELECT id, areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, scoreOreTarget, aiRobotId \
+        "SELECT id, areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId \
          FROM MiningArea \
          WHERE id = ?",
     )

@@ -64,8 +64,9 @@ pub(super) fn render_mining_area_details(
         }
     }
     body.push_str(&format!(
-        r#"<tr><td>Tax rate:</td><td colspan="3">{}%</td></tr>"#,
-        area.tax_rate
+        r#"<tr><td>Container tax:</td><td colspan="3">{}%</td></tr>
+<tr><td>Depot tax:</td><td colspan="3">{}%</td></tr>"#,
+        area.tax_rate, area.depot_tax_rate
     ));
     body.push_str(&format!(
         r#"<tr><td>Mining time:</td><td colspan="3">{}</td></tr>

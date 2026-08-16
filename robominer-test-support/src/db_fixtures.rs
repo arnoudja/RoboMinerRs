@@ -119,12 +119,13 @@ pub async fn insert_mining_area(
         pool,
         sqlx::query(
             "INSERT INTO MiningArea \
-             (areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, aiRobotId) \
-             VALUES (?, ?, 4, 4, 1, 1, ?, ?)",
+             (areaName, orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, aiRobotId) \
+             VALUES (?, ?, 4, 4, 1, 1, ?, ?, ?)",
         )
         .bind(format!("{prefix}-area"))
         .bind(ore_price_id)
         .bind(tax_rate)
+        .bind(tax_rate / 2)
         .bind(ai_robot_id),
     )
     .await
@@ -186,15 +187,26 @@ pub async fn insert_unfinished_queue(pool: &MySqlPool, mining_area_id: i64, robo
 }
 
 pub async fn insert_ore_result(pool: &MySqlPool, mining_queue_id: i64, ore_id: i64, amount: i32) {
+    insert_ore_result_with_depot(pool, mining_queue_id, ore_id, amount, 0).await;
+}
+
+pub async fn insert_ore_result_with_depot(
+    pool: &MySqlPool,
+    mining_queue_id: i64,
+    ore_id: i64,
+    amount: i32,
+    depot_amount: i32,
+) {
     insert_row_id(
         pool,
         sqlx::query(
-            "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, tax) \
-             VALUES (?, ?, ?, NULL)",
+            "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, depotAmount, tax) \
+             VALUES (?, ?, ?, ?, NULL)",
         )
         .bind(mining_queue_id)
         .bind(ore_id)
-        .bind(amount),
+        .bind(amount)
+        .bind(depot_amount),
     )
     .await;
 }

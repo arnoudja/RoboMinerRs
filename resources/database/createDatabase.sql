@@ -235,6 +235,7 @@ sizeY INT NOT NULL,
 maxMoves INT NOT NULL,
 miningTime INT NOT NULL,
 taxRate INT NOT NULL,
+depotTaxRate INT NOT NULL DEFAULT 0,
 scoreOreTarget INT NOT NULL DEFAULT 30,
 aiRobotId INT NOT NULL REFERENCES AIRobot (id)
 );
@@ -307,6 +308,7 @@ create table MiningOreResult
 miningQueueId INT NOT NULL REFERENCES MiningQueue (id) ON DELETE CASCADE,
 oreId INT NOT NULL REFERENCES Ore (id) ON DELETE CASCADE,
 amount INT NOT NULL,
+depotAmount INT NOT NULL DEFAULT 0,
 tax INT NULL,
 PRIMARY KEY (miningQueueId, oreId)
 );

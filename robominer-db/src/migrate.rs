@@ -34,6 +34,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "007_ai_robot_depot_size",
         include_str!("../../resources/database/migrations/007_ai_robot_depot_size.sql"),
     ),
+    (
+        "008_container_and_depot_tax_rates",
+        include_str!("../../resources/database/migrations/008_container_and_depot_tax_rates.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -374,11 +378,15 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
     let has_session_version = column_exists(pool, "User", "sessionVersion").await?;
     let has_score_ore_target = column_exists(pool, "MiningArea", "scoreOreTarget").await?;
     let has_ai_robot = table_exists(pool, "AIRobot").await?;
+    let has_depot_tax_rate = column_exists(pool, "MiningArea", "depotTaxRate").await?;
+    let has_depot_amount = column_exists(pool, "MiningOreResult", "depotAmount").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
         && has_score_ore_target
-        && has_ai_robot)
+        && has_ai_robot
+        && has_depot_tax_rate
+        && has_depot_amount)
 }
 
 async fn table_exists(pool: &MySqlPool, table_name: &str) -> Result<bool, MigrateError> {

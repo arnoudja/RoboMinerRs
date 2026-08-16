@@ -142,7 +142,11 @@ async fn calculate_mining_ore_result_tax(
         "UPDATE MiningOreResult \
          INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
-         SET MiningOreResult.tax = FLOOR(MiningOreResult.amount * MiningArea.taxRate / 100) \
+         SET MiningOreResult.tax = \
+             FLOOR(GREATEST(MiningOreResult.amount - MiningOreResult.depotAmount, 0) \
+                   * MiningArea.taxRate / 100) \
+           + FLOOR(LEAST(MiningOreResult.depotAmount, MiningOreResult.amount) \
+                   * MiningArea.depotTaxRate / 100) \
          WHERE MiningOreResult.miningQueueId = ?",
     )
     .bind(mining_queue_id)

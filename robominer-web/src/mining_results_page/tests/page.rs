@@ -95,7 +95,7 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
             r#"data-robot-id="1" data-area-name="Area &amp; One""#,
             r#"class="mining-results-atlas-helper""#,
             r#"class="mining-results-ore-values">20 mined · 2 tax · +18 net</span></li><li><span class="mining-results-ore-name">Ore &lt;A&gt;</span><span class="mining-results-ore-values">10 mined · 1 tax · +9 net</span></li>"#,
-            r#"title="Tax is deducted before ore is added to your wallet.""#,
+            r#"title="Tax is deducted before ore is added to your wallet. Container tax applies to cargo still in the robot; depot tax applies to ore already banked in the depot.""#,
             r#"class="mining-results-run-card mining-results-run-card-active" data-run-id="10""#,
             r#"class="mining-results-detail-panel mining-results-detail-panel-active" id="miningResultDetails10" data-run-id="10""#,
             "Showing last completed runs",

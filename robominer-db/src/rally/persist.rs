@@ -145,12 +145,13 @@ async fn insert_mining_ore_result(
     ore_result: &CompletedRallyOreRecord,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO MiningOreResult (miningQueueId, oreId, amount) \
-         VALUES (?, ?, ?)",
+        "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, depotAmount) \
+         VALUES (?, ?, ?, ?)",
     )
     .bind(mining_queue_id)
     .bind(ore_result.ore_id)
     .bind(ore_result.amount)
+    .bind(ore_result.depot_amount.clamp(0, ore_result.amount))
     .execute(&mut **transaction)
     .await?;
 

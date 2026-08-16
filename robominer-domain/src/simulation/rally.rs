@@ -143,6 +143,7 @@ fn rally_outcome(
                 is_ai: participant.is_ai,
                 position: robot.position(),
                 ore: robot.result_ore(),
+                depot: *robot.depot(),
                 score: robot.calculate_score(score_ore_target),
                 actions_done: *robot.actions_done(),
             }

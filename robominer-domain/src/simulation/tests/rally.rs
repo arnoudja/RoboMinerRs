@@ -251,6 +251,7 @@ fn completed_rally_record_maps_outcome_to_legacy_write_rows() {
                 is_ai: false,
                 position: Position::default(),
                 ore: robominer_sim::ore_amounts(&[(0, 7), (1, 5)]),
+                depot: robominer_sim::ore_amounts(&[(0, 3)]),
                 score: 42.5,
                 actions_done,
             },
@@ -277,11 +278,13 @@ fn completed_rally_record_maps_outcome_to_legacy_write_rows() {
         vec![
             CompletedRallyOreRecord {
                 ore_id: 3,
-                amount: 7
+                amount: 7,
+                depot_amount: 3,
             },
             CompletedRallyOreRecord {
                 ore_id: 1,
-                amount: 5
+                amount: 5,
+                depot_amount: 0,
             },
         ]
     );
@@ -338,6 +341,7 @@ fn ai_participant_outcome(player_number: usize) -> RallyParticipantOutcome {
         is_ai: true,
         position: Position::default(),
         ore: [0; MAX_ORE_TYPES],
+        depot: [0; MAX_ORE_TYPES],
         score: 0.0,
         actions_done: [0; 8],
     }

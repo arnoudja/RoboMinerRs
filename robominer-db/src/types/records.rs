@@ -234,6 +234,7 @@ pub struct MiningAreaRecord {
     pub max_moves: i32,
     pub mining_time: i32,
     pub tax_rate: i32,
+    pub depot_tax_rate: i32,
     pub score_ore_target: i32,
     pub ai_robot_id: i64,
 }
@@ -285,6 +286,7 @@ pub struct MiningQueuePageAreaRecord {
     pub mining_area_id: i64,
     pub area_name: String,
     pub tax_rate: i32,
+    pub depot_tax_rate: i32,
     pub mining_time: i32,
     pub max_moves: i32,
     pub size_x: i32,
@@ -453,6 +455,7 @@ pub struct CompletedRallyParticipantRecord {
 pub struct CompletedRallyOreRecord {
     pub ore_id: i64,
     pub amount: i32,
+    pub depot_amount: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

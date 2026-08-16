@@ -74,7 +74,11 @@ pub fn completed_rally_record(
             mining_end_seconds_from_now: entry.queue.seconds_left,
             score: outcome_participant.score,
             executed_source_code: Some(entry.robot.robot.source_code.clone()),
-            ore_results: completed_ore_results(&ore_ids, &outcome_participant.ore),
+            ore_results: completed_ore_results(
+                &ore_ids,
+                &outcome_participant.ore,
+                &outcome_participant.depot,
+            ),
             action_results: completed_action_results(&outcome_participant.actions_done),
         });
     }
@@ -125,6 +129,7 @@ pub fn completed_pool_rally_record(
 fn completed_ore_results(
     ore_ids: &[i64],
     ore: &[i32; MAX_ORE_TYPES],
+    depot: &[i32; MAX_ORE_TYPES],
 ) -> Vec<CompletedRallyOreRecord> {
     ore.iter()
         .enumerate()
@@ -133,6 +138,7 @@ fn completed_ore_results(
                 ore_ids.get(index).map(|ore_id| CompletedRallyOreRecord {
                     ore_id: *ore_id,
                     amount: *amount,
+                    depot_amount: depot.get(index).copied().unwrap_or(0).clamp(0, *amount),
                 })
             } else {
                 None

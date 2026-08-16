@@ -124,10 +124,11 @@ async fn mining_queue_page_states_report_page_read_model() {
     let area_line = find_prefixed_line(&stdout, &format!("A\t{}\t", fixture.mining_area_id));
     assert!(area_line[2].ends_with("-area"));
     assert_eq!(area_line[3], "0");
-    assert_eq!(area_line[4], "10");
-    assert_eq!(area_line[5], "1");
-    assert_eq!(area_line[6], "4");
+    assert_eq!(area_line[4], "0");
+    assert_eq!(area_line[5], "10");
+    assert_eq!(area_line[6], "1");
     assert_eq!(area_line[7], "4");
+    assert_eq!(area_line[8], "4");
 
     let cost_line = find_prefixed_line(
         &stdout,
