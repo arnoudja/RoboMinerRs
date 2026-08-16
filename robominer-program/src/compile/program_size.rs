@@ -67,7 +67,11 @@ fn expression_size(expression: &ExecutableExpression) -> usize {
         }
         ExecutableExpressionKind::UnaryNot(expression)
         | ExecutableExpressionKind::UnaryMinus(expression)
-        | ExecutableExpressionKind::Abs(expression) => 1 + expression_size(expression),
+        | ExecutableExpressionKind::Abs(expression)
+        | ExecutableExpressionKind::Sqrt(expression)
+        | ExecutableExpressionKind::Sin(expression)
+        | ExecutableExpressionKind::Cos(expression)
+        | ExecutableExpressionKind::Tan(expression) => 1 + expression_size(expression),
         ExecutableExpressionKind::Min(left, right) | ExecutableExpressionKind::Max(left, right) => {
             1 + expression_size(left) + expression_size(right)
         }

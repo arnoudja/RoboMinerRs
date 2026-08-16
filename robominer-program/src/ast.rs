@@ -199,6 +199,10 @@ pub enum ExecutableExpressionKind {
     UnaryNot(Box<ExecutableExpression>),
     UnaryMinus(Box<ExecutableExpression>),
     Abs(Box<ExecutableExpression>),
+    Sqrt(Box<ExecutableExpression>),
+    Sin(Box<ExecutableExpression>),
+    Cos(Box<ExecutableExpression>),
+    Tan(Box<ExecutableExpression>),
     Min(Box<ExecutableExpression>, Box<ExecutableExpression>),
     Max(Box<ExecutableExpression>, Box<ExecutableExpression>),
     Binary {

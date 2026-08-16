@@ -41,6 +41,10 @@ fn verify_source_requires_executable_program_support() {
     assert_valid_any_size("dump(abs(-3));");
     assert_valid_any_size("dump(min(1, 2));");
     assert_valid_any_size("dump(max(1, 2));");
+    assert_valid_any_size("move(sqrt(4));");
+    assert_valid_any_size("move(sin(90));");
+    assert_valid_any_size("move(cos(0));");
+    assert_valid_any_size("move(tan(45));");
 
     let source = "int rot = 0; while (true) { while (mine()) { rot = 100; } }";
     let verification = verify_source(source);

@@ -27,7 +27,11 @@ impl ExecutableExpression {
                 .or_else(|| value.first_action()),
             ExecutableExpressionKind::UnaryNot(value)
             | ExecutableExpressionKind::UnaryMinus(value)
-            | ExecutableExpressionKind::Abs(value) => value.first_action(),
+            | ExecutableExpressionKind::Abs(value)
+            | ExecutableExpressionKind::Sqrt(value)
+            | ExecutableExpressionKind::Sin(value)
+            | ExecutableExpressionKind::Cos(value)
+            | ExecutableExpressionKind::Tan(value) => value.first_action(),
             ExecutableExpressionKind::Min(left, right)
             | ExecutableExpressionKind::Max(left, right)
             | ExecutableExpressionKind::Binary { left, right, .. } => {

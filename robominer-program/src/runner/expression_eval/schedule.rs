@@ -33,6 +33,10 @@ pub(crate) enum ExpressionWork {
     ApplyUnaryNot,
     ApplyUnaryMinus,
     ApplyAbs,
+    ApplySqrt,
+    ApplySin,
+    ApplyCos,
+    ApplyTan,
     ApplyMin,
     ApplyMax,
     ApplyBinary(Operator),
@@ -77,6 +81,22 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::Abs(value) => {
             schedule_expression(work, value);
             push(work, ExpressionWork::ApplyAbs);
+        }
+        ExecutableExpressionKind::Sqrt(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplySqrt);
+        }
+        ExecutableExpressionKind::Sin(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplySin);
+        }
+        ExecutableExpressionKind::Cos(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplyCos);
+        }
+        ExecutableExpressionKind::Tan(value) => {
+            schedule_expression(work, value);
+            push(work, ExpressionWork::ApplyTan);
         }
         ExecutableExpressionKind::Min(left, right) => {
             schedule_expression(work, left);

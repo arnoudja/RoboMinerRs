@@ -210,6 +210,26 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
             unparse_expression(inner, out, 0);
             out.push(')');
         }
+        ExecutableExpressionKind::Sqrt(inner) => {
+            out.push_str("sqrt(");
+            unparse_expression(inner, out, 0);
+            out.push(')');
+        }
+        ExecutableExpressionKind::Sin(inner) => {
+            out.push_str("sin(");
+            unparse_expression(inner, out, 0);
+            out.push(')');
+        }
+        ExecutableExpressionKind::Cos(inner) => {
+            out.push_str("cos(");
+            unparse_expression(inner, out, 0);
+            out.push(')');
+        }
+        ExecutableExpressionKind::Tan(inner) => {
+            out.push_str("tan(");
+            unparse_expression(inner, out, 0);
+            out.push(')');
+        }
         ExecutableExpressionKind::Min(left, right) => {
             out.push_str("min(");
             unparse_expression(left, out, 0);

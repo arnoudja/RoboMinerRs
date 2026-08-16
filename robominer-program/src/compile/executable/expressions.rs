@@ -161,6 +161,30 @@ fn parse_single_expression_kind(
         ))));
     }
 
+    if input.use_next_word("sqrt") {
+        return Ok(Some(ExecutableExpressionKind::Sqrt(Box::new(
+            parse_call_argument(input)?,
+        ))));
+    }
+
+    if input.use_next_word("sin") {
+        return Ok(Some(ExecutableExpressionKind::Sin(Box::new(
+            parse_call_argument(input)?,
+        ))));
+    }
+
+    if input.use_next_word("cos") {
+        return Ok(Some(ExecutableExpressionKind::Cos(Box::new(
+            parse_call_argument(input)?,
+        ))));
+    }
+
+    if input.use_next_word("tan") {
+        return Ok(Some(ExecutableExpressionKind::Tan(Box::new(
+            parse_call_argument(input)?,
+        ))));
+    }
+
     if input.use_next_word("min") {
         let (left, right) = parse_two_call_arguments(input)?;
         return Ok(Some(ExecutableExpressionKind::Min(

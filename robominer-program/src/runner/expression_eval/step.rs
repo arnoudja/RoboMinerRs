@@ -276,6 +276,30 @@ impl ExecutableRunner {
                     });
                 eval.index += 1;
             }
+            ExpressionWork::ApplySqrt => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                eval.values
+                    .push(CpuStepResult::float_value(operand.value.sqrt()));
+                eval.index += 1;
+            }
+            ExpressionWork::ApplySin => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                eval.values
+                    .push(CpuStepResult::float_value(operand.value.to_radians().sin()));
+                eval.index += 1;
+            }
+            ExpressionWork::ApplyCos => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                eval.values
+                    .push(CpuStepResult::float_value(operand.value.to_radians().cos()));
+                eval.index += 1;
+            }
+            ExpressionWork::ApplyTan => {
+                let operand = eval.values.pop().expect("expression value stack underflow");
+                eval.values
+                    .push(CpuStepResult::float_value(operand.value.to_radians().tan()));
+                eval.index += 1;
+            }
             ExpressionWork::ApplyMin => {
                 let right = eval.values.pop().expect("expression value stack underflow");
                 let left = eval.values.pop().expect("expression value stack underflow");

@@ -328,3 +328,41 @@ fn expression_max_returns_larger_value() {
         Some(ExecutableAction::Dump(9))
     );
 }
+
+#[test]
+fn expression_sqrt_returns_square_root() {
+    let program = compile_executable_source("move(sqrt(4));").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Move(2.0))
+    );
+}
+
+#[test]
+fn expression_trig_functions_use_degrees() {
+    let program = compile_executable_source("move(sin(90)); move(cos(60)); move(tan(45));")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    let sin90 = runner.next_action(&mut context).expect("sin move");
+    match sin90 {
+        ExecutableAction::Move(distance) => assert!((distance - 1.0).abs() < 1e-9),
+        other => panic!("expected Move, got {other:?}"),
+    }
+    context.action_result = Some(1.0);
+    let cos60 = runner.next_action(&mut context).expect("cos move");
+    match cos60 {
+        ExecutableAction::Move(distance) => assert!((distance - 0.5).abs() < 1e-9),
+        other => panic!("expected Move, got {other:?}"),
+    }
+    context.action_result = Some(0.5);
+    let tan45 = runner.next_action(&mut context).expect("tan move");
+    match tan45 {
+        ExecutableAction::Move(distance) => assert!((distance - 1.0).abs() < 1e-9),
+        other => panic!("expected Move, got {other:?}"),
+    }
+}
