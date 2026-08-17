@@ -144,13 +144,13 @@ impl Simulation {
         context.area = robominer_program::AreaProperties {
             size_x: opposite_span_x,
             size_y: opposite_span_y,
-            container_tax: self.area.container_tax as f64,
-            depot_tax: self.area.depot_tax as f64,
-            starting_ore_a: self.area.starting_ore[0] as f64,
-            starting_ore_b: self.area.starting_ore[1] as f64,
-            starting_ore_c: self.area.starting_ore[2] as f64,
-            mining_cycles: self.area.mining_cycles as f64,
-            ore_target: self.area.ore_target as f64,
+            container_tax: self.area.container_tax,
+            depot_tax: self.area.depot_tax,
+            starting_ore_a: self.area.starting_ore[0],
+            starting_ore_b: self.area.starting_ore[1],
+            starting_ore_c: self.area.starting_ore[2],
+            mining_cycles: self.area.mining_cycles,
+            ore_target: self.area.ore_target,
         };
         context
     }

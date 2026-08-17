@@ -22,13 +22,13 @@ pub struct AreaProperties {
     pub size_x: f64,
     /// Spawn-local y of the opposite corner (`size_y - robot_size`).
     pub size_y: f64,
-    pub container_tax: f64,
-    pub depot_tax: f64,
-    pub starting_ore_a: f64,
-    pub starting_ore_b: f64,
-    pub starting_ore_c: f64,
-    pub mining_cycles: f64,
-    pub ore_target: f64,
+    pub container_tax: i32,
+    pub depot_tax: i32,
+    pub starting_ore_a: i32,
+    pub starting_ore_b: i32,
+    pub starting_ore_c: i32,
+    pub mining_cycles: i32,
+    pub ore_target: i32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -82,13 +82,13 @@ impl AreaProperty {
         match self {
             Self::SizeX => area.size_x,
             Self::SizeY => area.size_y,
-            Self::ContainerTax => area.container_tax,
-            Self::DepotTax => area.depot_tax,
-            Self::StartingOreA => area.starting_ore_a,
-            Self::StartingOreB => area.starting_ore_b,
-            Self::StartingOreC => area.starting_ore_c,
-            Self::MiningCycles => area.mining_cycles,
-            Self::OreTarget => area.ore_target,
+            Self::ContainerTax => area.container_tax as f64,
+            Self::DepotTax => area.depot_tax as f64,
+            Self::StartingOreA => area.starting_ore_a as f64,
+            Self::StartingOreB => area.starting_ore_b as f64,
+            Self::StartingOreC => area.starting_ore_c as f64,
+            Self::MiningCycles => area.mining_cycles as f64,
+            Self::OreTarget => area.ore_target as f64,
         }
     }
 }

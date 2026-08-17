@@ -1,14 +1,11 @@
 use crate::types::{
-    AreaProperty, CompileError, ExecutableExpression, ExecutableExpressionKind,
-    ExecutableStatement, ExecutableStatementKind, Operator, RobotProperty, SourceSpan, ValueType,
-    VariableOperator,
+    CompileError, ExecutableExpression, ExecutableExpressionKind, ExecutableStatement,
+    ExecutableStatementKind, Operator, SourceSpan, ValueType, VariableOperator,
 };
 
-use super::super::input::{
-    CompileInput, SourceMark, area_property_mutation_error, expect_char,
-    robot_property_mutation_error,
-};
+use super::super::input::{CompileInput, SourceMark, expect_char};
 use super::actions::parse_executable_action_statement;
+use super::builtins::{BuiltinObject, parse_builtin_property_statement};
 use super::expect_declared_variable;
 use super::expressions::parse_executable_expression;
 
@@ -362,50 +359,10 @@ fn parse_executable_variable_statement(
         )));
     }
 
-    if name == "robot" && input.peek() == Some('.') {
-        input.eat_char('.', false);
-        let property_name = input.use_next_word_any();
-        if property_name.is_empty() {
-            return Err(CompileError::new(format!(
-                "Syntax error at line {}. Robot property expected",
-                input.current_line
-            )));
-        }
-        let property = RobotProperty::from_name(&property_name, input.current_line)?;
-        if input.eat_char('=', false) || input.eat_sequence("++") || input.eat_sequence("--") {
-            return Err(robot_property_mutation_error(input.current_line));
-        }
-        let span = input.span_from(mark);
-        return Ok(Some(ExecutableStatement::at(
-            span,
-            ExecutableStatementKind::Expression(ExecutableExpression::new(
-                span,
-                ExecutableExpressionKind::RobotProperty(property),
-            )),
-        )));
-    }
-
-    if name == "area" && input.peek() == Some('.') {
-        input.eat_char('.', false);
-        let property_name = input.use_next_word_any();
-        if property_name.is_empty() {
-            return Err(CompileError::new(format!(
-                "Syntax error at line {}. Area property expected",
-                input.current_line
-            )));
-        }
-        let property = AreaProperty::from_name(&property_name, input.current_line)?;
-        if input.eat_char('=', false) || input.eat_sequence("++") || input.eat_sequence("--") {
-            return Err(area_property_mutation_error(input.current_line));
-        }
-        let span = input.span_from(mark);
-        return Ok(Some(ExecutableStatement::at(
-            span,
-            ExecutableStatementKind::Expression(ExecutableExpression::new(
-                span,
-                ExecutableExpressionKind::AreaProperty(property),
-            )),
-        )));
+    if let Some(object) = BuiltinObject::from_word(&name)
+        && input.peek() == Some('.')
+    {
+        return Ok(Some(parse_builtin_property_statement(input, mark, object)?));
     }
 
     input.return_next_word(name);

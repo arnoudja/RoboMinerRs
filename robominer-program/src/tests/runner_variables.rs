@@ -115,8 +115,8 @@ fn area_property_expression_evaluates_from_context() {
     let mut runner = program.runner();
     let mut context = robot_context(1.0);
     context.area.size_x = 9.0;
-    context.area.mining_cycles = 20.0;
-    context.area.starting_ore_a = 42.0;
+    context.area.mining_cycles = 20;
+    context.area.starting_ore_a = 42;
 
     loop {
         match runner.step(&mut context) {
