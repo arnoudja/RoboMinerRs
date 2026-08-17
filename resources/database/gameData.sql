@@ -672,6 +672,7 @@ while (!found)
                 rotate(-60);
             } else {
                 while (move(robot.forwardSpeed) < 0.1) {
+                    move(-robot.backwardSpeed);
                     rotate(robot.rotateSpeed);
                 }
             }
@@ -742,6 +743,7 @@ while (!found)
     if (!found)
     {
         while (move(robot.forwardSpeed) < 0.1) {
+            move(-robot.backwardSpeed);
             rotate(robot.rotateSpeed);
         }
     }
@@ -836,6 +838,7 @@ while (!found)
     if (!found)
     {
         while (move(robot.forwardSpeed) < 0.1) {
+            move(-robot.backwardSpeed);
             rotate(robot.rotateSpeed);
         }
     }
