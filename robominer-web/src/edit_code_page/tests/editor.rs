@@ -1,9 +1,9 @@
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
-use super::super::render::{
-    edit_code_line_count, render_edit_code_line_numbers, render_edit_code_page,
-    render_edit_code_source_field,
+use super::super::editor::{
+    edit_code_line_count, render_edit_code_line_numbers, render_edit_code_source_field,
 };
+use super::super::render::render_edit_code_page;
 use super::super::{EditCodePageState, EditCodeProgramSource, edit_code_save_block_reason};
 use super::fixtures::sample_edit_code_state;
 

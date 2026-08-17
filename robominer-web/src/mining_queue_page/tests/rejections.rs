@@ -1,4 +1,4 @@
-use super::super::render::format_queue_time_left;
+use super::super::robots::format_queue_time_left;
 use super::super::{cancel_mining_rejection_message, enqueue_mining_rejection_message};
 
 #[test]

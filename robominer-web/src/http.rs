@@ -53,17 +53,6 @@ impl Response {
         }
     }
 
-    #[allow(dead_code)] // Kept for handlers that need a 400 response body.
-    pub(crate) fn bad_request(message: impl Into<String>) -> Self {
-        Self {
-            status: 400,
-            reason: "Bad Request",
-            content_type: "text/plain; charset=utf-8",
-            headers: Vec::new(),
-            body: message.into().into_bytes(),
-        }
-    }
-
     pub(crate) fn method_not_allowed() -> Self {
         Self {
             status: 405,
@@ -223,11 +212,6 @@ mod tests {
 
     #[test]
     fn response_builders_cover_common_error_statuses() {
-        let bad = Response::bad_request("missing field");
-        assert_eq!(bad.status, 400);
-        assert_eq!(bad.reason, "Bad Request");
-        assert_eq!(String::from_utf8_lossy(&bad.body), "missing field");
-
         let method = Response::method_not_allowed();
         assert_eq!(method.status, 405);
         assert_eq!(method.reason, "Method Not Allowed");

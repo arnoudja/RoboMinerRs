@@ -8,9 +8,6 @@ use crate::static_assets::PageStylesheet;
 use super::inspector::render_mining_area_details;
 use super::robots::{render_robot_card, render_wallet_strip};
 
-#[allow(unused_imports)]
-pub(super) use super::robots::format_queue_time_left;
-
 pub(super) fn render_mining_queue_page(
     username: String,
     hud: Option<&str>,

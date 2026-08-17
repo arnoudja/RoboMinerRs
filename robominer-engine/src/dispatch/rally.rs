@@ -6,7 +6,7 @@ use crate::cli::RallyCommand;
 use crate::database::connect_database;
 use crate::rally::{
     RunPoolOptions, RunRalliesOptions, RunRallyOptions, run_pool, run_rallies, run_rally,
-    validate_run_pool_options, validate_run_rallies_options, validate_run_rally_options,
+    validate_run_pool_options, validate_run_rallies_options,
 };
 
 pub(crate) async fn dispatch_rally(
@@ -28,7 +28,6 @@ pub(crate) async fn dispatch_rally(
                 result_data_file,
                 quiet_when_empty: false,
             };
-            validate_run_rally_options(&options)?;
 
             let pool = connect_database(database_url, config).await?;
             run_rally(&pool, options).await.map(|_| ())

@@ -122,7 +122,6 @@ pub(super) fn robot_apply_block_reason(
     None
 }
 
-#[allow(clippy::too_many_arguments)]
 pub(super) fn update_robot_config_rejection_message(
     rejection: robominer_db::UpdateRobotConfigRejection,
 ) -> &'static str {

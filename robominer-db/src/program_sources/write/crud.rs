@@ -1,31 +1,10 @@
 use sqlx::MySqlPool;
-use sqlx::mysql::MySqlQueryResult;
 
 use crate::users::{touch_user_last_login_time, user_exists};
 use crate::{
     CreateProgramSourceRequest, CreatedProgramSource, ProgramSourceWriteRejection,
     ProgramSourceWriteRequest,
 };
-
-pub async fn insert_program_source(
-    pool: &MySqlPool,
-    user_id: i64,
-    source_name: &str,
-    source_code: &str,
-) -> Result<i64, sqlx::Error> {
-    let result: MySqlQueryResult = sqlx::query(
-        "INSERT INTO ProgramSource \
-         (userId, sourceName, sourceCode, verified, compiledSize, errorDescription) \
-         VALUES (?, ?, ?, false, -1, '')",
-    )
-    .bind(user_id)
-    .bind(source_name)
-    .bind(source_code)
-    .execute(pool)
-    .await?;
-
-    Ok(result.last_insert_id() as i64)
-}
 
 pub async fn create_program_source(
     pool: &MySqlPool,

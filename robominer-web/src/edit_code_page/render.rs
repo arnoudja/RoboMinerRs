@@ -6,11 +6,6 @@ use crate::static_assets::PageStylesheet;
 use super::editor::render_edit_code_panel;
 use super::library::{render_edit_code_new_program_card, render_edit_code_program_card};
 
-#[allow(unused_imports)]
-pub(super) use super::editor::{
-    edit_code_line_count, render_edit_code_line_numbers, render_edit_code_source_field,
-};
-
 pub(super) fn render_edit_code_page(
     username: String,
     hud: Option<&str>,

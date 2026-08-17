@@ -31,8 +31,6 @@ pub(crate) async fn run_rally(
     pool: &robominer_db::MySqlPool,
     options: RunRallyOptions,
 ) -> Result<bool> {
-    validate_run_rally_options(&options)?;
-
     let loadout = robominer_domain::load_next_rally_loadout(pool, options.mining_area_id)
         .await
         .with_context(|| {
@@ -86,12 +84,6 @@ pub(crate) async fn run_rally(
     }
 
     Ok(true)
-}
-
-pub(crate) fn validate_run_rally_options(options: &RunRallyOptions) -> Result<()> {
-    let _ = options;
-
-    Ok(())
 }
 
 pub(crate) async fn run_pool(
