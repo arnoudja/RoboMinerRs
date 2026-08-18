@@ -1,6 +1,8 @@
 use crate::{Request, Response, ServerConfig, query_i64, rally_pages};
 
-const MINING_RESULTS_MAX_SHOWN: i64 = 10;
+const MINING_RESULTS_MAX_SHOWN: i64 = 50;
+pub(super) const MINING_RESULTS_INITIAL_VISIBLE: usize = 5;
+pub(super) const MINING_RESULTS_LOAD_MORE_STEP: usize = 5;
 
 #[derive(Debug)]
 pub(super) struct MiningResultsPageState {

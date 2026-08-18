@@ -15,5 +15,8 @@ node --test viewer.test.js
 cd "${ROOT}/robominer-web/static/js/mining_queue/tests"
 node --test clear_wallet.test.js
 
+cd "${ROOT}/robominer-web/static/js/mining_results/tests"
+node --test page.test.js
+
 cd "${ROOT}/robominer-web/static/js/tests"
 node --test page_scripts.test.js

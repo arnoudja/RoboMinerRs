@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use crate::html::{escape_html, format_utc_millis};
-use crate::mining_results_page::MiningResultsPageState;
+use crate::mining_results_page::{
+    MINING_RESULTS_INITIAL_VISIBLE, MINING_RESULTS_LOAD_MORE_STEP, MiningResultsPageState,
+};
 
 pub(super) fn render_mining_results_log_section(
     body: &mut String,
     state: &MiningResultsPageState,
-    result_map: &HashMap<i64, Vec<&robominer_db::MiningResultStateRecord>>,
+    robot_names: &HashMap<i64, &str>,
     ore_result_map: &HashMap<i64, Vec<&robominer_db::MiningResultOreStateRecord>>,
 ) {
     body.push_str(
@@ -15,48 +17,40 @@ pub(super) fn render_mining_results_log_section(
     body.push_str(
         r#"<h2 id="mining-results-log-title" class="mining-results-section-title">Recent runs</h2><p class="mining-results-log-hint">Select a run to inspect payout and rally details.</p>"#,
     );
-    body.push_str(r#"<div class="mining-results-log-groups">"#);
-    for robot in &state.robots {
-        body.push_str(&format!(
-            r#"<section class="mining-results-robot-group" data-robot-id="{}">"#,
-            robot.robot_id
-        ));
-        body.push_str(&format!(
-            r#"<h3 class="mining-results-robot-title">{}</h3>"#,
-            escape_html(&robot.robot_name)
-        ));
-        if let Some(results) = result_map.get(&robot.robot_id) {
-            body.push_str(r#"<div class="mining-results-run-cards">"#);
-            for result in results.iter().copied() {
-                let ore_results = ore_result_map
-                    .get(&result.mining_queue_id)
-                    .map(Vec::as_slice)
-                    .unwrap_or(&[]);
-                render_mining_result_log_card(
-                    body,
-                    result,
-                    ore_results,
-                    Some(result.mining_queue_id) == state.selected_mining_queue_id,
-                );
-            }
-            body.push_str("</div>");
-        } else {
-            body.push_str(&format!(
-                r#"<p class="mining-results-robot-empty">No recent runs for {}.</p>"#,
-                escape_html(&robot.robot_name)
-            ));
-        }
-        body.push_str("</section>");
+    body.push_str(&format!(
+        r#"<div class="mining-results-run-cards" data-initial-visible="{MINING_RESULTS_INITIAL_VISIBLE}" data-load-more-step="{MINING_RESULTS_LOAD_MORE_STEP}">"#
+    ));
+    for result in &state.results {
+        let ore_results = ore_result_map
+            .get(&result.mining_queue_id)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
+        let robot_name = robot_names
+            .get(&result.robot_id)
+            .copied()
+            .unwrap_or("Robot");
+        render_mining_result_log_card(
+            body,
+            result,
+            robot_name,
+            ore_results,
+            Some(result.mining_queue_id) == state.selected_mining_queue_id,
+        );
     }
+    body.push_str("</div>");
+    body.push_str(
+        r#"<p id="miningResultsLoadMoreWrap" class="mining-results-load-more-wrap" hidden><button type="button" id="miningResultsLoadMore" class="mining-results-load-more">Load more runs</button></p>"#,
+    );
     body.push_str(
         r#"<p id="miningResultsFilterEmpty" class="mining-results-filter-empty" hidden>No runs match the current filters.</p>"#,
     );
-    body.push_str("</div></section>");
+    body.push_str("</section>");
 }
 
 fn render_mining_result_log_card(
     body: &mut String,
     result: &robominer_db::MiningResultStateRecord,
+    robot_name: &str,
     ore_results: &[&robominer_db::MiningResultOreStateRecord],
     active: bool,
 ) {
@@ -77,6 +71,7 @@ fn render_mining_result_log_card(
         result.score
     ));
     body.push_str(r#"<span class="mining-results-run-heading">"#);
+    body.push_str(r#"<span class="mining-results-run-heading-main">"#);
     body.push_str(&format!(
         r#"<span class="mining-results-run-area">{}</span>"#,
         escape_html(&result.mining_area_name)
@@ -87,6 +82,11 @@ fn render_mining_result_log_card(
             escape_html(&ore_summary)
         ));
     }
+    body.push_str("</span>");
+    body.push_str(&format!(
+        r#"<span class="mining-results-run-robot">{}</span>"#,
+        escape_html(robot_name)
+    ));
     body.push_str("</span>");
     body.push_str(&format!(
         r#"<span class="mining-results-run-stats"><span class="mining-results-run-reward">+{} net</span><span class="mining-results-run-score">Score {:.1}</span><span class="mining-results-run-ended">Ended {}</span></span>"#,

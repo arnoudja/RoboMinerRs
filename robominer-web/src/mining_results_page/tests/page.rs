@@ -6,7 +6,9 @@ use crate::{Request, ServerConfig};
 
 use super::super::render::render_mining_results_page;
 use super::super::{MiningResultsPageState, mining_results_page};
-use super::fixtures::{authenticated_request, sample_mining_results_state};
+use super::fixtures::{
+    authenticated_request, sample_mining_results_state, two_robot_mining_results_state,
+};
 
 #[tokio::test(flavor = "current_thread")]
 async fn mining_results_requires_database_configuration() {
@@ -70,7 +72,7 @@ async fn mining_results_unknown_rally_returns_not_found_without_database() {
 }
 
 #[test]
-fn mining_results_rendering_groups_results_and_escapes_fields() {
+fn mining_results_rendering_escapes_fields() {
     let html =
         render_mining_results_page("Player".to_string(), None, &sample_mining_results_state());
 
@@ -87,7 +89,9 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
             r#"class="mining-results-wallet-delta""#,
             r#"class="mining-results-wallet-delta-amount">+9</span>"#,
             r#"class="mining-results-wallet-delta-amount">+18</span>"#,
-            r#"class="mining-results-robot-empty">No recent runs for Bot &amp; Two.</p>"#,
+            r#"class="mining-results-run-cards" data-initial-visible="5" data-load-more-step="5""#,
+            r#"id="miningResultsLoadMore""#,
+            r#"class="mining-results-run-robot">Bot &lt;One&gt;</span>"#,
             r#"data-sort-reward="27""#,
             r#"data-rally-result-id="99""#,
             r#"src="js/common/url_query.js?v="#,
@@ -99,7 +103,6 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
             r#"class="mining-results-run-card mining-results-run-card-active" data-run-id="10""#,
             r#"class="mining-results-detail-panel mining-results-detail-panel-active" id="miningResultDetails10" data-run-id="10""#,
             "Showing last completed runs",
-            r#"class="mining-results-robot-title">Bot &lt;One&gt;</h3>"#,
             "Area &amp; One",
             "Ore &amp; B · Ore &lt;A&gt;",
             "miningResults?rallyResultId=99",
@@ -119,9 +122,41 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
         r#"<script src="js/miningresults.js"></script>"#,
         "function applyMiningResultsSort()",
         r#"<details class="mining-results-run-card""#,
+        r#"class="mining-results-robot-group""#,
+        r#"class="mining-results-robot-title""#,
+        r#"class="mining-results-robot-empty""#,
+        "No recent runs for",
     ] {
         assert_html_not_contains(&html, absent);
     }
+}
+
+#[test]
+fn mining_results_renders_a_single_run_list_with_robot_names() {
+    let html = render_mining_results_page(
+        "Player".to_string(),
+        None,
+        &two_robot_mining_results_state(),
+    );
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="mining-results-run-cards" data-initial-visible="5" data-load-more-step="5""#,
+            r#"class="mining-results-run-robot">Bot &lt;One&gt;</span>"#,
+            r#"class="mining-results-run-robot">Bot &amp; Two</span>"#,
+            r#"data-run-id="10""#,
+            r#"data-run-id="11""#,
+            r#"data-run-id="12""#,
+            r#"data-run-id="13""#,
+            r#"data-run-id="14""#,
+            r#"data-run-id="15""#,
+            r#"id="miningResultsLoadMoreWrap""#,
+            ">Load more runs</button>",
+        ],
+    );
+    assert_eq!(html.matches("mining-results-run-cards").count(), 1);
+    assert_html_not_contains(&html, r#"class="mining-results-robot-group""#);
 }
 
 #[test]
