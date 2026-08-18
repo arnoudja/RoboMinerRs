@@ -166,3 +166,26 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         "expected no-store Cache-Control on /health, got:\n{health_response}"
     );
 }
+
+#[test]
+fn serve_returns_robots_txt() {
+    let (addr, _handle) = spawn_server();
+
+    let response = raw_http_exchange(
+        &addr,
+        "GET /robots.txt HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+    );
+    assert!(
+        response.starts_with("HTTP/1.1 200"),
+        "expected 200 for /robots.txt, got:\n{response}"
+    );
+    let response_lower = response.to_ascii_lowercase();
+    assert!(
+        response_lower.contains("content-type: text/plain"),
+        "expected text/plain content type, got:\n{response}"
+    );
+    assert!(
+        response.contains("Disallow: /"),
+        "expected disallow-all robots.txt body, got:\n{response}"
+    );
+}
