@@ -70,7 +70,7 @@ pub(super) fn render_mining_area_details(
     ));
     body.push_str(&format!(
         r#"<tr><td>Mining time:</td><td colspan="3">{}</td></tr>
-<tr><td>Mining cycles:</td><td colspan="3">{} robot turns</td></tr>
+<tr><td>Robot turns:</td><td colspan="3">{}</td></tr>
 <tr><td>Area size:</td><td colspan="3">{} x {}</td></tr>
 <tr><td>Ore target:</td><td colspan="3">{}</td></tr>
 <tr><td colspan="4">Estimated ore:</td></tr>"#,

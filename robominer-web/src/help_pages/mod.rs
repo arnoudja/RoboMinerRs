@@ -35,7 +35,7 @@ pub(crate) const HELP_GUIDES: [HelpGuide; 4] = [
     HelpGuide {
         href: "helpMechanics",
         title: "Mechanics",
-        summary: "What shop stats mean, how tax and rally score work, how CPU vs physical actions work, and how scanning interacts with ore heaps.",
+        summary: "What shop stats mean, how tax and rally score work, how CPU instructions and robot turns work, and how scanning interacts with ore heaps.",
         tag: "Reference",
         body: content::MECHANICS_BODY,
     },

@@ -30,7 +30,7 @@ struct AreaSnapshot {
     container_tax: i32,
     depot_tax: i32,
     starting_ore: [i32; LANGUAGE_ORE_SLOTS],
-    mining_cycles: i32,
+    robot_turns: i32,
     ore_target: i32,
 }
 
@@ -57,7 +57,7 @@ fn animation_action_index(action: RobotAction, robot: &Robot, scanned_this_cycle
 }
 
 /// Carry forward the last known statement highlight (and refreshed locals) for
-/// pending multi-cycle motion or battery-idle cycles that produce no new CPU steps.
+/// pending multi-turn motion or battery-idle turns that produce no new CPU steps.
 fn sticky_cpu_highlight(
     previous: &RecordedCpuStep,
     runner: Option<&ExecutableRunner>,
@@ -174,7 +174,7 @@ impl Simulation {
                 container_tax: area.container_tax,
                 depot_tax: area.depot_tax,
                 starting_ore,
-                mining_cycles: total_moves,
+                robot_turns: total_moves,
                 ore_target: area.ore_target,
             },
             robots,

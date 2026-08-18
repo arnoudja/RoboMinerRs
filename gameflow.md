@@ -12,16 +12,16 @@ Signup auto-claims achievement **1 / step 1**:
   **301**, memory **401**, CPU **501**, engine **601**, scanner **701**)
 - Default program: `move(1);` + `mine();` (fits memory size **4**)
 - Ore container capacity **2** on the robot (wallet is separate)
-- Mining speed **1**, CPU **1** i/c, engine forward **15** / backward **3** /
+- Mining speed **1**, CPU **1** i/t, engine forward **15** / backward **3** /
   rotate **8** → effective move speed **1.0**
-- Battery capacity **110**, recharge time **5** s (~15 short mining cycles)
+- Battery capacity **110**, recharge time **5** s (~15 short robot turns)
 - **1** mining queue slot
 - Access to **Cerbonium-mini** (`1001`)
 - Cerbonium **wallet** cap **5** (first row created when ore is first claimed)
 
 ## Cerbonium-mini (`1001`)
 
-- 10×10 area, **15** move cycles, **5** s mining time per action, **25%** tax
+- 10×10 area, **15** robot turns, **5** s mining time per action, **25%** tax
 - One Cerbonium heap (supply 4, radius 4)
 - Queue cost: **2** Cerbonium (from `OrePrice` 101) — needs wallet cap ≥ 2 after
   first claim

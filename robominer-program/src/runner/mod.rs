@@ -139,7 +139,7 @@ impl ExecutableRunner {
     /// Source range of the construct currently executing, if any.
     ///
     /// While an expression is being evaluated this narrows to the sub-expression the next
-    /// CPU cycle will run, so replay highlighting follows evaluation inside a statement.
+    /// CPU instruction will run, so replay highlighting follows evaluation inside a statement.
     pub fn current_source_span(&self) -> Option<SourceSpan> {
         if let Some(span) = self
             .expression_eval

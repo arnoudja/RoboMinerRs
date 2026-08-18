@@ -29,8 +29,8 @@ function rallyUpdateTransportUi(completed, cpuIndex, miningCycle)
         track.setAttribute('aria-valuenow', String(miningCycle));
         track.setAttribute(
             'aria-valuetext',
-            'Area cycle ' + miningCycle + ' of ' + maxMining +
-                (totalCpu > 0 ? (', CPU ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
+            'Robot turn ' + miningCycle + ' of ' + maxMining +
+                (totalCpu > 0 ? (', CPU instruction ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
         );
     }
 

@@ -39,14 +39,14 @@ pub(super) fn render_rally_view_deck(
         body.push_str("</div></div>");
         body.push_str(r#"<div class="rally-view-progress">"#);
         body.push_str(
-            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" role="slider" aria-label="Seek rally replay" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="Cycle 0 of 0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
+            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" role="slider" aria-label="Seek rally replay" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="Robot turn 0 of 0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
         );
         body.push_str("</div>");
         body.push_str(
-            r#"<p class="rally-view-cycle-status">Area cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
+            r#"<p class="rally-view-cycle-status">Robot turn <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
         );
         body.push_str(
-            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle (when paused) · Shift+← → next area cycle · Home/End jump</p>"#,
+            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU instruction (when paused) · Shift+← → next robot turn · Home/End jump</p>"#,
         );
         body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
         body.push_str(
@@ -139,7 +139,7 @@ fn render_rally_view_source(
     match source {
         Some(source) if !source.is_empty() => {
             body.push_str(
-                r#"<p class="rally-view-source-note">Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.</p>"#,
+                r#"<p class="rally-view-source-note">Highlighted token is the program work running this CPU instruction. Source is the private snapshot from this rally.</p>"#,
             );
             if let Some(program_source_id) = program_source_id {
                 render_rally_view_edit_code_link(body, program_source_id, true);

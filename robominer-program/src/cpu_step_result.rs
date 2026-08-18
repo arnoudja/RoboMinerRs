@@ -100,7 +100,7 @@ impl CpuStepResult {
             | RobotProperty::DepotStoredA
             | RobotProperty::DepotStoredB
             | RobotProperty::DepotStoredC
-            | RobotProperty::MaxCycles
+            | RobotProperty::MaxTurns
             | RobotProperty::MiningSpeed
             | RobotProperty::CpuSpeed
             | RobotProperty::Orientation => Self::int_value(value),
@@ -115,7 +115,7 @@ impl CpuStepResult {
             | AreaProperty::StartingOreA
             | AreaProperty::StartingOreB
             | AreaProperty::StartingOreC
-            | AreaProperty::MiningCycles
+            | AreaProperty::RobotTurns
             | AreaProperty::OreTarget => Self::int_value(value),
         }
     }

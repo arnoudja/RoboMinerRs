@@ -64,14 +64,14 @@ fn program_bridge_waits_across_cycles_for_scan_result() {
     );
     assert!(
         simulation.program_runner(0).unwrap().pending_scan_start(),
-        "scan() should still await its start result after one CPU cycle"
+        "scan() should still await its start result after one CPU instruction"
     );
     assert!(
         matches!(
             simulation.robot(0).scan_state,
             crate::ground::ScanState::Scanning { .. }
         ),
-        "scan should still be in progress after the first one-CPU cycle"
+        "scan should still be in progress after the first CPU instruction"
     );
 
     let mut turns_until_mine = 1;
@@ -86,10 +86,10 @@ fn program_bridge_waits_across_cycles_for_scan_result() {
         "mine should run once oreDistance() finishes waiting for the scan"
     );
     // StartScan + consume + scan_time await ticks + compare/branch need more than
-    // scan_time mining cycles when cpu_speed is 1.
+    // scan_time robot turns when cpu_speed is 1.
     assert!(
         turns_until_mine > 6,
-        "oreDistance() must wait out scan_time across mining cycles, not finish early; took {turns_until_mine}"
+        "oreDistance() must wait out scan_time across robot turns, not finish early; took {turns_until_mine}"
     );
     assert!(
         matches!(
@@ -132,7 +132,7 @@ fn program_bridge_ore_type_waits_full_scan_time_across_cycles() {
             simulation.robot(0).scan_state,
             crate::ground::ScanState::Scanning { .. }
         ),
-        "scan must still be in progress after 3 mining cycles with scan_time=50 and cpu_speed=10"
+        "scan must still be in progress after 3 robot turns with scan_time=50 and cpu_speed=10"
     );
     assert_eq!(
         simulation.robot(0).actions_done()[6],
@@ -146,7 +146,7 @@ fn program_bridge_ore_type_waits_full_scan_time_across_cycles() {
 
     assert!(
         simulation.time() >= 5,
-        "oreType() wait should span multiple mining cycles; finished at time {}",
+        "oreType() wait should span multiple robot turns; finished at time {}",
         simulation.time()
     );
     assert_eq!(

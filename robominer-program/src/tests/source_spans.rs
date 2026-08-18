@@ -88,7 +88,7 @@ fn expression_evaluation_advances_source_span_within_one_line() {
         "expression CPU steps should report several spans: {spans:?}"
     );
 
-    // `mine()` and the literal `0` are evaluated in separate CPU cycles, so replay
+    // `mine()` and the literal `0` are evaluated in separate CPU instructions, so replay
     // highlighting can distinguish them.
     assert!(
         spans.contains(&span(1, 5, 11)),

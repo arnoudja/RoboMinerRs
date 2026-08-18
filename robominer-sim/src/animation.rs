@@ -23,7 +23,7 @@ pub struct OreAnimationData {
     pub max_amount: i32,
 }
 
-/// One program CPU instruction within a mining cycle (for replay stepping/highlight).
+/// One program CPU instruction within a robot turn (for replay stepping/highlight).
 #[derive(Clone, Debug, PartialEq)]
 pub struct RecordedCpuStep {
     pub line: u16,

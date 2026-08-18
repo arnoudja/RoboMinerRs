@@ -88,7 +88,7 @@ pub struct AnimationRobot {
 ///
 /// # Pose vs CPU clock
 ///
-/// `locations[m]` stores the pose **after** mining cycle `m`. The `cpu` entries on that
+/// `locations[m]` stores the pose **after** robot turn `m`. The `cpu` entries on that
 /// sample are the micro-steps that produced the motion animated during clock segment
 /// `[m-1, m)` (viewer highlights destination-sample CPUs while interpolating into `m`).
 ///

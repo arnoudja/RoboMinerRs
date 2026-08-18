@@ -61,7 +61,7 @@ impl ExecutableRunner {
             .as_ref()
             .is_some_and(|eval| eval.index >= eval.work.len())
         {
-            // Same finish path as mid-eval completion (Continue burns one CPU cycle).
+            // Same finish path as mid-eval completion (Continue burns one CPU instruction).
             return self.complete_expression_work_if_done();
         }
 

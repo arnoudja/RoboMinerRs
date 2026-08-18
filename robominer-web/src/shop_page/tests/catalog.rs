@@ -329,7 +329,7 @@ fn shop_scanner_catalog_cards_show_scan_distance() {
         &html,
         &[
             r#"<span class="shop-part-highlight-label">Scan</span><span class="shop-part-highlight-value">50</span>"#,
-            "Scan time:</dt><dd>6 cycles",
+            "Scan time:</dt><dd>6 instructions",
         ],
     );
     assert_html_not_contains(

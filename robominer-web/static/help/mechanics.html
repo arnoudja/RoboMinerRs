@@ -129,17 +129,17 @@
                 Unlike the Ore Container it is not aware of the different types of ore.
             </p>
             <p class="helptext">
-                Mostly, one cycle of mining won't be enough to mine all the ore from one square.
-                The amount of ore mined in one cycle is limited by two factors:
+                Mostly, one robot turn of mining won't be enough to mine all the ore from one square.
+                The amount of ore mined in one robot turn is limited by two factors:
             </p>
             <ul>
                 <li class="helptext">
                     The Mining Units Mining capacity.
-                    In one cycle, the mining unit can never mine more ore then its Mining Capacity.
+                    In one robot turn, the mining unit can never mine more ore then its Mining Capacity.
                 </li>
                 <li class="helptext">
                     The amount of ore at the current location.
-                    In one cycle, the mining unit can never mine more then half the ore available at the current location, rounded up.
+                    In one robot turn, the mining unit can never mine more then half the ore available at the current location, rounded up.
                 </li>
             </ul>
             <p class="helptext">
@@ -157,7 +157,7 @@
             <p class="helptext">
                 Add the power consumption of every part attached to the robot
                 and divide the Battery Capacity by the result
-                to calculate the maximum number of mining cycles the Robot can be active.
+                to calculate the maximum number of robot turns the Robot can be active.
                 This result is also visible on the Robots page.
             </p>
             <p class="helptext">
@@ -227,20 +227,20 @@
             </p>
             <p class="helptext">
                 Scanning is special. scan() starts a scanner job and counts as initiating work
-                (it returns the scanner's scan time in CPU cycles). The scan then completes after
-                that many CPU cycles (passive countdown on other CPU work, or while
+                (it returns the scanner's scan time in CPU instructions). The scan then completes after
+                that many CPU instructions (passive countdown on other CPU work, or while
                 oreDistance() / oreType() wait). oreDistance() and oreType() do not return while
                 a scan is still running: they wait until the full scan countdown finishes, which
-                can span multiple mining cycles at your CPU speed. Budget CPU speed with scanTime
+                can span multiple robot turns at your CPU speed. Budget CPU speed with scanTime
                 in mind when you scan often.
             </p>
             <p class="helptext">
-                The Physical actions are also called Cycles.
-                When a mining area has a maximum number of mining cycles of 150,
+                Physical actions happen once per robot turn.
+                When a mining area has a maximum of 150 robot turns,
                 there are at most 150 physical actions possible in one mining session in that area.
             </p>
             <p class="helptext">
-                A portion of the timeline of a mining session with a 4 i/c can be represented as followed:
+                A portion of the timeline of a mining session with a 4 i/t can be represented as followed:
             </p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
@@ -268,10 +268,10 @@
             </p>
             <ol>
                 <li class="helptext">
-                    When the CPU starts a Physical action, no more CPU actions are processed during that cycle.
+                    When the CPU starts a Physical action, no more CPU actions are processed during that robot turn.
                 </li>
                 <li class="helptext">
-                    When the CPU doesn't start a Physical action itself before the end of the cycle,
+                    When the CPU doesn't start a Physical action itself before the end of the robot turn,
                     the default Physical action 'Wait' is started.
                 </li>
             </ol>
@@ -325,9 +325,9 @@
             </table></div>
             <p class="helptext">
                 In order to mine efficiently, it is important that the Robot program and CPU match each others capabilities.
-                It is useless to have a 72 i/c CPU for the default 'move(1); mine();' program.
+                It is useless to have a 72 i/t CPU for the default 'move(1); mine();' program.
                 And a highly advanced but complex program requiring on average 120 CPU actions between Physical actions
-                won't get a Robot very far with a 4 i/c CPU on a 150 Mining cycles mining area.
+                won't get a Robot very far with a 4 i/t CPU on a 150 robot-turn mining area.
             </p>
             <p class="helptext">
                 To check your CPU performance, you can see the Mining results page.
@@ -376,17 +376,17 @@
             </p>
             <p class="helptext">
                 The Robots page will tell you the current maximum speeds of the Robot, again split into the three parts.
-                The speed is the maximum distance the Robot can travel or rotate in one cycle.
+                The speed is the maximum distance the Robot can travel or rotate in one robot turn.
             </p>
             <p class="helptext">
                 When a move() or rotate() command is given which exceeds the speed of the Robot,
                 the action is divided into two or more parts.
-                The first cycle(s), the Robot will move at the maximum speed for the full duration of those cycles.
-                In the last cycle, the Robot will still move at its maximum speed but only during the first part of the cycle.
+                The first robot turn(s), the Robot will move at the maximum speed for the full duration of those turns.
+                In the last robot turn, the Robot will still move at its maximum speed but only during the first part of the turn.
             </p>
             <p class="helptext">
                 Assume the Robot has a forward speed of 1.2 and a move(1.8) is executed.
-                With a 4 i/c CPU, the timeline will look like this:
+                With a 4 i/t CPU, the timeline will look like this:
             </p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
@@ -412,7 +412,7 @@
             </table></div>
             <p class="helptext">
                 A collision cancels the move or rotate from the moment the collision occurs.
-                So, when a collision occurs at one half of the move(1.2) cycle,
+                So, when a collision occurs at one half of the move(1.2) robot turn,
                 the Robot has moved a distance of 0.6 and the second move(0.6) will not be executed.
             </p>
             <div class="help-table-wrap"><table class="helptable">

@@ -241,8 +241,8 @@ pub enum AreaProperty {
     StartingOreB,
     /// Ore of type C on the ground when the rally started (0 if the area has fewer than three types).
     StartingOreC,
-    /// Maximum number of mining cycles for the area.
-    MiningCycles,
+    /// Maximum number of robot turns for the area.
+    RobotTurns,
     /// Ore target used in the rally score calculation.
     OreTarget,
 }
@@ -257,7 +257,7 @@ impl AreaProperty {
             "startingOreA" => Ok(Self::StartingOreA),
             "startingOreB" => Ok(Self::StartingOreB),
             "startingOreC" => Ok(Self::StartingOreC),
-            "miningCycles" => Ok(Self::MiningCycles),
+            "robotTurns" | "miningCycles" => Ok(Self::RobotTurns),
             "oreTarget" => Ok(Self::OreTarget),
             other => Err(CompileError::new(format!(
                 "Syntax error at line {line}. Unknown area property '{other}'"
@@ -274,7 +274,7 @@ impl AreaProperty {
             Self::StartingOreA => "startingOreA",
             Self::StartingOreB => "startingOreB",
             Self::StartingOreC => "startingOreC",
-            Self::MiningCycles => "miningCycles",
+            Self::RobotTurns => "robotTurns",
             Self::OreTarget => "oreTarget",
         }
     }
@@ -308,7 +308,7 @@ pub enum RobotProperty {
     DepotStoredB,
     /// Lowest-quality ore currently stored in the depot (slot C).
     DepotStoredC,
-    MaxCycles,
+    MaxTurns,
     MiningSpeed,
     CpuSpeed,
     Orientation,
@@ -335,7 +335,7 @@ impl RobotProperty {
             "depotStoredA" => Ok(Self::DepotStoredA),
             "depotStoredB" => Ok(Self::DepotStoredB),
             "depotStoredC" => Ok(Self::DepotStoredC),
-            "maxCycles" => Ok(Self::MaxCycles),
+            "maxTurns" | "maxCycles" => Ok(Self::MaxTurns),
             "miningSpeed" => Ok(Self::MiningSpeed),
             "cpuSpeed" => Ok(Self::CpuSpeed),
             "orientation" => Ok(Self::Orientation),
@@ -365,7 +365,7 @@ impl RobotProperty {
             Self::DepotStoredA => "depotStoredA",
             Self::DepotStoredB => "depotStoredB",
             Self::DepotStoredC => "depotStoredC",
-            Self::MaxCycles => "maxCycles",
+            Self::MaxTurns => "maxTurns",
             Self::MiningSpeed => "miningSpeed",
             Self::CpuSpeed => "cpuSpeed",
             Self::Orientation => "orientation",

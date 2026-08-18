@@ -71,13 +71,13 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The amount of ore mined. Returns 0 when the cell is empty, the container is full, or nothing can be extracted this cycle.</td>
+                    <td class="helptable">The amount of ore mined. Returns 0 when the cell is empty, the container is full, or nothing can be extracted this robot turn.</td>
                 </tr>
             </table></div>
             <p class="helptext">The amount of ore mined each turn is limited by two factors:</p>
             <ul>
-                <li>The mining unit installed in the robot. The total amount of ore mined in one cycle can never exceed the mining speed of the mining unit.</li>
-                <li>The ore amount available on the robot location. For each type of ore, the amount of ore mined in one cycle can never exceed half the amount of ore available, rounded up.</li>
+                <li>The mining unit installed in the robot. The total amount of ore mined in one robot turn can never exceed the mining speed of the mining unit.</li>
+                <li>The ore amount available on the robot location. For each type of ore, the amount of ore mined in one robot turn can never exceed half the amount of ore available, rounded up.</li>
             </ul>
             <h3>dump()</h3>
             <p class="helptext">Dumps ore from the robot ore container.
@@ -115,7 +115,7 @@
             </table></div>
             <p class="helptext">dumpB() and dumpC() never remove anything when the mining area only has higher ore qualities available.</p>
             <h3>time()</h3>
-            <p class="helptext">Retrieves the number of mining cycles left until either the battery is depleted or the mining event is over.</p>
+            <p class="helptext">Retrieves the number of robot turns left until either the battery is depleted or the mining event is over.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>
@@ -125,7 +125,7 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The number of cycles left.</td>
+                    <td class="helptable">The number of robot turns left.</td>
                 </tr>
             </table></div>
             <h3>Robot properties</h3>
@@ -145,12 +145,12 @@
                 <tr>
                     <td class="helptable">robot.rotateSpeed</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">Rotation speed in degrees per mining cycle.</td>
+                    <td class="helptable">Rotation speed in degrees per robot turn.</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.scanTime</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">CPU cycles required for a scan to complete.</td>
+                    <td class="helptable">CPU instructions required for a scan to complete.</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.scanDistance</td>
@@ -213,9 +213,9 @@
                     <td class="helptable">Lowest-quality ore currently stored in the depot. Always 0 when the area has fewer than three ore types.</td>
                 </tr>
                 <tr>
-                    <td class="helptable">robot.maxCycles</td>
+                    <td class="helptable">robot.maxTurns</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">Maximum mining cycles available per rally.</td>
+                    <td class="helptable">Maximum robot turns available per rally. Alias: robot.maxCycles.</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.miningSpeed</td>
@@ -225,7 +225,7 @@
                 <tr>
                     <td class="helptable">robot.cpuSpeed</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">CPU cycles available per mining cycle.</td>
+                    <td class="helptable">CPU instructions available per robot turn.</td>
                 </tr>
                 <tr>
                     <td class="helptable">robot.orientation</td>
@@ -282,9 +282,9 @@
                     <td class="helptable">Amount of lowest-quality ore on the ground when the rally started. Always 0 when the area has fewer than three ore types.</td>
                 </tr>
                 <tr>
-                    <td class="helptable">area.miningCycles</td>
+                    <td class="helptable">area.robotTurns</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">Maximum number of mining cycles for this area (before robot battery limits).</td>
+                    <td class="helptable">Maximum number of robot turns for this area (before robot battery limits). Alias: area.miningCycles.</td>
                 </tr>
                 <tr>
                     <td class="helptable">area.oreTarget</td>
@@ -293,7 +293,7 @@
                 </tr>
             </table></div>
             <h3>scan()</h3>
-            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU cycles). The ray uses the robot's position and orientation at the moment scan() starts, even if the robot moves or rotates before the scan finishes. Use oreDistance() or oreType() to read the result once the scan has finished.
+            <p class="helptext">Starts scanning for ore in a direction relative to the robot using the installed ore scanner. The scan runs in the background and completes after the scanner's scan time (in CPU instructions). The ray uses the robot's position and orientation at the moment scan() starts, even if the robot moves or rotates before the scan finishes. Use oreDistance() or oreType() to read the result once the scan has finished.
                 The scanner reports the nearest ore of any type along the ray. Outer lower-value ore can hide a richer heap further away on the same line of sight.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
@@ -309,11 +309,11 @@
                 <tr>
                     <td class="helptable">Return value:</td>
                     <td class="helptable">int</td>
-                    <td class="helptable">The number of CPU cycles until the scan completes (the scanner's scan time). Costs 1 CPU cycle to initiate.</td>
+                    <td class="helptable">The number of CPU instructions until the scan completes (the scanner's scan time). Costs 1 CPU instruction to initiate.</td>
                 </tr>
             </table></div>
             <h3>oreDistance()</h3>
-            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple mining cycles).
+            <p class="helptext">Returns the distance to the nearest ore detected by the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple robot turns).
                 When the robot is already standing on ore, the distance is 0.</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
@@ -328,7 +328,7 @@
                 </tr>
             </table></div>
             <h3>oreType()</h3>
-            <p class="helptext">Returns the ore quality index from the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple mining cycles).</p>
+            <p class="helptext">Returns the ore quality index from the most recent scan. If a scan is still in progress, the call waits until the scan countdown finishes (which may span multiple robot turns).</p>
             <div class="help-table-wrap"><table class="helptable">
                 <tr>
                     <td class="helptable">Syntax:</td>

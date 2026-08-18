@@ -131,7 +131,7 @@ impl Simulation {
             scan_time: robot.spec.scan_time as f64,
             scan_distance: robot.spec.scan_distance as f64,
             ore_cap: robot.spec.max_ore as f64,
-            max_cycles: robot.spec.max_turns as f64,
+            max_turns: robot.spec.max_turns as f64,
             mining_speed: robot.spec.mining_speed as f64,
             cpu_speed: robot.spec.cpu_speed as f64,
             orientation,
@@ -149,7 +149,7 @@ impl Simulation {
             starting_ore_a: self.area.starting_ore[0],
             starting_ore_b: self.area.starting_ore[1],
             starting_ore_c: self.area.starting_ore[2],
-            mining_cycles: self.area.mining_cycles,
+            robot_turns: self.area.robot_turns,
             ore_target: self.area.ore_target,
         };
         context
@@ -261,7 +261,7 @@ impl Simulation {
                         fallback_line,
                     );
                     // Wait out the real scan countdown: one tick per CPU, spanning
-                    // mining cycles when remaining work exceeds cpu_speed.
+                    // robot turns when remaining work exceeds cpu_speed.
                     self.tick_scan(robot_index);
                     self.action_results[robot_index] = None;
                     self.action_result_expected[robot_index] = false;
