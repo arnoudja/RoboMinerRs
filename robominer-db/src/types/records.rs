@@ -659,7 +659,9 @@ pub struct LeaderboardViewerAreaStandingRecord {
 pub struct MiningResultStateRecord {
     pub robot_id: i64,
     pub mining_queue_id: i64,
+    pub mining_area_id: i64,
     pub mining_area_name: String,
+    pub score_ore_target: i32,
     pub rally_result_id: Option<i64>,
     pub score: f64,
     pub total_ore_mined: i32,
@@ -677,6 +679,13 @@ pub struct MiningResultOreStateRecord {
     pub amount: i32,
     pub tax: i32,
     pub reward: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MiningResultAreaOreSlotRecord {
+    pub mining_area_id: i64,
+    pub ore_id: i64,
+    pub ore_name: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

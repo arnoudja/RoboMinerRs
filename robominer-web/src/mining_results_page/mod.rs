@@ -8,6 +8,7 @@ pub(super) struct MiningResultsPageState {
     pub(super) results: Vec<robominer_db::MiningResultStateRecord>,
     pub(super) ore_results: Vec<robominer_db::MiningResultOreStateRecord>,
     pub(super) action_results: Vec<robominer_db::MiningResultActionStateRecord>,
+    pub(super) area_ore_slots: Vec<robominer_db::MiningResultAreaOreSlotRecord>,
     pub(super) claimed_results: robominer_db::ClaimedUserResults,
     pub(super) selected_mining_queue_id: Option<i64>,
 }
@@ -98,6 +99,12 @@ async fn load_mining_results_state(
             max_results,
         )
         .await?,
+        area_ore_slots: robominer_db::list_mining_result_area_ore_slots_for_user(
+            pool,
+            user_id,
+            max_results,
+        )
+        .await?,
         claimed_results: claim_result,
     })
 }
@@ -120,6 +127,7 @@ mod render;
 mod render_detail;
 mod render_filters;
 mod render_log;
+mod score;
 mod scripts;
 
 #[cfg(test)]

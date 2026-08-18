@@ -13,7 +13,7 @@ pub(super) fn render_mining_results_log_section(
         r#"<section class="mining-results-log" aria-labelledby="mining-results-log-title">"#,
     );
     body.push_str(
-        r#"<h2 id="mining-results-log-title" class="mining-results-section-title">Recent runs</h2><p class="mining-results-log-hint">Select a run to inspect payout and rally details.</p>"#,
+        r#"<h2 id="mining-results-log-title" class="mining-results-section-title">Recent runs</h2><p class="mining-results-log-hint">Select a run to inspect payout, score, and rally details.</p>"#,
     );
     body.push_str(r#"<div class="mining-results-log-groups">"#);
     for robot in &state.robots {

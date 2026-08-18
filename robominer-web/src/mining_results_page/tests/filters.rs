@@ -1,45 +1,13 @@
 use super::super::render_filters::{mining_result_unique_areas, mining_result_wallet_deltas};
 use super::super::selected_mining_queue_id;
+use super::fixtures::mining_result;
 
 #[test]
 fn mining_result_unique_areas_are_sorted_and_deduped() {
     let results = vec![
-        robominer_db::MiningResultStateRecord {
-            robot_id: 1,
-            mining_queue_id: 10,
-            mining_area_name: "Beta".to_string(),
-            rally_result_id: None,
-            score: 1.0,
-            total_ore_mined: 1,
-            total_tax: 0,
-            total_reward: 1,
-            creation_time_millis: 0,
-            mining_end_time_millis: 0,
-        },
-        robominer_db::MiningResultStateRecord {
-            robot_id: 1,
-            mining_queue_id: 11,
-            mining_area_name: "Alpha".to_string(),
-            rally_result_id: None,
-            score: 2.0,
-            total_ore_mined: 2,
-            total_tax: 0,
-            total_reward: 2,
-            creation_time_millis: 0,
-            mining_end_time_millis: 0,
-        },
-        robominer_db::MiningResultStateRecord {
-            robot_id: 1,
-            mining_queue_id: 12,
-            mining_area_name: "Beta".to_string(),
-            rally_result_id: None,
-            score: 3.0,
-            total_ore_mined: 3,
-            total_tax: 0,
-            total_reward: 3,
-            creation_time_millis: 0,
-            mining_end_time_millis: 0,
-        },
+        mining_result(10, "Beta", 1.0, 1),
+        mining_result(11, "Alpha", 2.0, 2),
+        mining_result(12, "Beta", 3.0, 3),
     ];
 
     assert_eq!(
@@ -86,30 +54,8 @@ fn mining_result_wallet_deltas_aggregate_net_ore_rewards() {
 #[test]
 fn selected_mining_queue_id_prefers_valid_run_from_url() {
     let results = vec![
-        robominer_db::MiningResultStateRecord {
-            robot_id: 1,
-            mining_queue_id: 10,
-            mining_area_name: "A".to_string(),
-            rally_result_id: None,
-            score: 1.0,
-            total_ore_mined: 1,
-            total_tax: 0,
-            total_reward: 1,
-            creation_time_millis: 0,
-            mining_end_time_millis: 0,
-        },
-        robominer_db::MiningResultStateRecord {
-            robot_id: 1,
-            mining_queue_id: 11,
-            mining_area_name: "B".to_string(),
-            rally_result_id: None,
-            score: 2.0,
-            total_ore_mined: 2,
-            total_tax: 0,
-            total_reward: 2,
-            creation_time_millis: 0,
-            mining_end_time_millis: 0,
-        },
+        mining_result(10, "A", 1.0, 1),
+        mining_result(11, "B", 2.0, 2),
     ];
 
     assert_eq!(selected_mining_queue_id(&results, Some(11)), Some(11));

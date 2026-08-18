@@ -530,4 +530,95 @@
     margin: 0;
 }
 
+.mining-results-score-intro,
+.mining-results-score-hint,
+.mining-results-score-help,
+.mining-results-score-empty-haul {
+    color: var(--mq-text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.mining-results-score-intro strong {
+    color: #e8f4ff;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.mining-results-score-haul,
+.mining-results-score-steps {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+.mining-results-score-haul {
+    list-style: none;
+}
+
+.mining-results-score-steps {
+    padding-left: 1.2rem;
+}
+
+.mining-results-score-haul li,
+.mining-results-score-steps li {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.mining-results-score-slot {
+    background: rgba(0, 229, 255, 0.12);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    border-radius: 4px;
+    color: var(--mq-accent);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    min-width: 1.4rem;
+    text-align: center;
+}
+
+.mining-results-score-ore {
+    color: #c5d4ea;
+}
+
+.mining-results-score-amount,
+.mining-results-score-tier-math,
+.mining-results-score-total {
+    color: var(--mq-text-muted);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.88rem;
+}
+
+.mining-results-score-total {
+    color: #e8f4ff;
+    font-weight: bold;
+    margin: 0;
+}
+
+.mining-results-score-tier-name {
+    color: #c5d4ea;
+    font-weight: 600;
+    min-width: 4.5rem;
+}
+
+.mining-results-score-tier-full,
+.mining-results-score-tier-note {
+    color: var(--mq-text-muted);
+    font-size: 0.82rem;
+}
+
+.mining-results-score-help a {
+    color: var(--mq-accent);
+    text-decoration: none;
+}
+
+.mining-results-score-help a:hover {
+    color: #7eeeff;
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+}
+
 

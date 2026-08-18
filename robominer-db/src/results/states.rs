@@ -2,15 +2,34 @@ use sqlx::MySqlPool;
 
 use crate::MiningResultStateRecord;
 
-type MiningResultStateRow = (i64, i64, String, Option<i64>, f64, i32, i32, i32, i64, i64);
+use super::RECENT_CLAIMED_QUEUE_RANK_FILTER;
 
-const MINING_RESULT_STATE_COLUMNS: &str = "MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-     MiningQueue.rallyResultId, COALESCE(MiningQueue.score, 0.0), \
+type MiningResultStateRow = (
+    i64,
+    i64,
+    i64,
+    String,
+    i32,
+    Option<i64>,
+    f64,
+    i32,
+    i32,
+    i32,
+    i64,
+    i64,
+);
+
+const MINING_RESULT_STATE_COLUMNS: &str = "MiningQueue.robotId, MiningQueue.id, MiningArea.id, MiningArea.areaName, \
+     MiningArea.scoreOreTarget, MiningQueue.rallyResultId, COALESCE(MiningQueue.score, 0.0), \
      CAST(COALESCE(SUM(MiningOreResult.amount), 0) AS SIGNED), \
      CAST(COALESCE(SUM(COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED), \
      CAST(COALESCE(SUM(MiningOreResult.amount - COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED), \
      CAST(UNIX_TIMESTAMP(MiningQueue.creationTime) * 1000 AS SIGNED), \
      CAST(UNIX_TIMESTAMP(MiningQueue.miningEndTime) * 1000 AS SIGNED)";
+
+const MINING_RESULT_STATE_GROUP_BY: &str = "MiningQueue.robotId, MiningQueue.id, MiningArea.id, MiningArea.areaName, \
+     MiningArea.scoreOreTarget, MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
+     MiningQueue.miningEndTime";
 
 fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResultStateRecord> {
     rows.into_iter()
@@ -18,7 +37,9 @@ fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResult
             |(
                 robot_id,
                 mining_queue_id,
+                mining_area_id,
                 mining_area_name,
+                score_ore_target,
                 rally_result_id,
                 score,
                 total_ore_mined,
@@ -29,7 +50,9 @@ fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResult
             )| MiningResultStateRecord {
                 robot_id,
                 mining_queue_id,
+                mining_area_id,
                 mining_area_name,
+                score_ore_target,
                 rally_result_id,
                 score,
                 total_ore_mined,
@@ -53,18 +76,8 @@ pub async fn list_mining_result_states_for_user(
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
          LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
-         WHERE Robot.userId = ? \
-           AND MiningQueue.claimed = TRUE \
-           AND (SELECT COUNT(*) \
-                FROM MiningQueue RankedQueue \
-                WHERE RankedQueue.robotId = MiningQueue.robotId \
-                  AND RankedQueue.claimed = TRUE \
-                  AND (RankedQueue.miningEndTime > MiningQueue.miningEndTime \
-                       OR (RankedQueue.miningEndTime = MiningQueue.miningEndTime \
-                           AND RankedQueue.id <= MiningQueue.id))) <= ? \
-         GROUP BY MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-                  MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
-                  MiningQueue.miningEndTime \
+         WHERE {RECENT_CLAIMED_QUEUE_RANK_FILTER} \
+         GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.robotId, MiningQueue.miningEndTime DESC, MiningQueue.id"
     ))
     .bind(user_id)
@@ -86,9 +99,7 @@ pub async fn list_mining_result_states_for_robot(
          LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
          WHERE MiningQueue.robotId = ? \
            AND MiningQueue.claimed = TRUE \
-         GROUP BY MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-                  MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
-                  MiningQueue.miningEndTime \
+         GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
          LIMIT ?"
     ))

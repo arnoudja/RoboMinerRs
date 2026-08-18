@@ -105,8 +105,16 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
             "miningResults?rallyResultId=99",
             "Replay rally",
             "+27 net",
-            "Score 12.3",
-            ">12.3<",
+            "Score 610.0",
+            ">610.0<",
+            "Score calculation",
+            "ore target is <strong>30</strong>",
+            r#"class="mining-results-score-slot">A</span><span class="mining-results-score-ore">Ore &amp; B</span>"#,
+            r#"class="mining-results-score-slot">B</span><span class="mining-results-score-ore">Ore &lt;A&gt;</span>"#,
+            "20 / 30 units × 30 pts = 600.0",
+            "10 / 90 units × 1 pts = 10.0",
+            "To score higher: mine 10 more A ore",
+            r#"href="helpMechanics#rally-score""#,
             "Scan",
             "50.0%",
             "33.3%",
@@ -125,6 +133,29 @@ fn mining_results_rendering_groups_results_and_escapes_fields() {
 }
 
 #[test]
+fn mining_results_score_keeps_unmined_high_value_ore_in_slot_a() {
+    let mut state = sample_mining_results_state();
+    state.ore_results.retain(|ore| ore.ore_id != 2);
+    state.results[0].score = 10.0;
+    state.results[0].total_ore_mined = 10;
+    state.results[0].total_tax = 1;
+    state.results[0].total_reward = 9;
+
+    let html = render_mining_results_page("Player".to_string(), None, &state);
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="mining-results-score-slot">A</span><span class="mining-results-score-ore">Ore &amp; B</span><span class="mining-results-score-amount">0 hauled</span>"#,
+            r#"class="mining-results-score-slot">B</span><span class="mining-results-score-ore">Ore &lt;A&gt;</span><span class="mining-results-score-amount">10 hauled</span>"#,
+            "0 / 30 units × 30 pts = 0.0",
+            "10 / 90 units × 1 pts = 10.0",
+            "To score higher: mine 30 more A ore",
+        ],
+    );
+}
+
+#[test]
 fn mining_results_shows_empty_state_and_claim_banner() {
     let empty_html = render_mining_results_page(
         "Player".to_string(),
@@ -138,6 +169,7 @@ fn mining_results_shows_empty_state_and_claim_banner() {
             results: Vec::new(),
             ore_results: Vec::new(),
             action_results: Vec::new(),
+            area_ore_slots: Vec::new(),
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 2,
                 ore_rewards: vec![

@@ -8,6 +8,7 @@ mod pose;
 mod program_control;
 mod program_motion;
 mod program_scan;
+mod score;
 mod search;
 mod seed_programs;
 mod simulation;

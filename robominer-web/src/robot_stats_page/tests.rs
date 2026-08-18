@@ -55,7 +55,9 @@ fn sample_robot_stats_state() -> RobotStatsPageState {
             robominer_db::MiningResultStateRecord {
                 robot_id: 7,
                 mining_queue_id: 101,
+                mining_area_id: 3,
                 mining_area_name: "Area <One>".to_string(),
+                score_ore_target: 30,
                 rally_result_id: Some(55),
                 score: 18.5,
                 total_ore_mined: 30,
@@ -67,7 +69,9 @@ fn sample_robot_stats_state() -> RobotStatsPageState {
             robominer_db::MiningResultStateRecord {
                 robot_id: 7,
                 mining_queue_id: 100,
+                mining_area_id: 4,
                 mining_area_name: "Older Area".to_string(),
+                score_ore_target: 30,
                 rally_result_id: None,
                 score: 9.0,
                 total_ore_mined: 12,

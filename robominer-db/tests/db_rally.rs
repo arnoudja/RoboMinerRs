@@ -230,6 +230,8 @@ async fn list_mining_result_states_for_robot_returns_claimed_only() {
             .expect("list result states");
     assert_eq!(states.len(), 1);
     assert_eq!(states[0].mining_queue_id, claimed_id);
+    assert_eq!(states[0].mining_area_id, fixture.mining_area_id);
+    assert_eq!(states[0].score_ore_target, 30);
     assert_eq!(states[0].rally_result_id, Some(rally_result_id));
     assert_eq!(states[0].score, 12.5);
     assert_eq!(states[0].total_ore_mined, 8);
@@ -253,6 +255,70 @@ async fn list_mining_result_states_for_robot_returns_claimed_only() {
         .await;
     let _ = sqlx::query("DELETE FROM RallyResult WHERE id = ?")
         .bind(rally_result_id)
+        .execute(&pool)
+        .await;
+    fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn list_mining_result_area_ore_slots_follow_descending_ore_id() {
+    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
+        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = RallyFixture::create(&pool).await;
+    let high_ore_id = insert_ore(&pool, &format!("slot-high-{}", fixture.mining_area_id)).await;
+    insert_area_supply(&pool, fixture.mining_area_id, high_ore_id, 8, 1).await;
+
+    let rally_result_id = insert_row_id(
+        &pool,
+        sqlx::query("INSERT INTO RallyResult (resultData) VALUES ('area-slot-rally')"),
+    )
+    .await;
+    let claimed_id = insert_claimed_mining_queue(
+        &pool,
+        fixture.mining_area_id,
+        fixture.queued_robot_id,
+        rally_result_id,
+    )
+    .await;
+    sqlx::query("UPDATE MiningQueue SET claimed = false WHERE id = ?")
+        .bind(fixture.mining_queue_id)
+        .execute(&pool)
+        .await
+        .expect("keep fixture queue unclaimed");
+
+    let slots = robominer_db::list_mining_result_area_ore_slots_for_user(&pool, fixture.user_id, 5)
+        .await
+        .expect("list area ore slots");
+    let area_slots: Vec<_> = slots
+        .iter()
+        .filter(|slot| slot.mining_area_id == fixture.mining_area_id)
+        .collect();
+    assert_eq!(area_slots.len(), 2);
+    assert_eq!(area_slots[0].ore_id, high_ore_id);
+    assert_eq!(area_slots[1].ore_id, fixture.ore_id);
+
+    let _ = sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
+        .bind(claimed_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM RallyResult WHERE id = ?")
+        .bind(rally_result_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM MiningAreaOreSupply WHERE miningAreaId = ? AND oreId = ?")
+        .bind(fixture.mining_area_id)
+        .bind(high_ore_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Ore WHERE id = ?")
+        .bind(high_ore_id)
         .execute(&pool)
         .await;
     fixture.cleanup(&pool).await;

@@ -24,7 +24,12 @@ pub use animation_payload::{
 pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot, ore_heap_estimated_total};
 pub use position::Position;
 pub use robot::{ROBOT_ACTION_TYPE_SCAN, Robot, RobotAction, RobotSpec, ScriptedRobot};
-pub use score::{calculate_score, ore_amounts};
+pub use score::{
+    SCORE_FIRST_RESIDUAL_FACTOR, SCORE_HIGH_TIER_POINTS, SCORE_LOW_TIER_POINTS,
+    SCORE_MID_TIER_POINTS, SCORE_SLOT_COUNT, ScoreBreakdown, ScoreResidualBand, ScoreSlot,
+    ScoreTier, calculate_score, calculate_score_breakdown, calculate_score_breakdown_from_slots,
+    ore_amounts,
+};
 pub use simulation::{Simulation, SimulationAreaConfig};
 
 pub use robominer_program::MAX_ORE_TYPES;

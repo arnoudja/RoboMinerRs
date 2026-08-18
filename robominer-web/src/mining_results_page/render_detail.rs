@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::html::{escape_html, format_utc_millis};
 use crate::mining_results_page::MiningResultsPageState;
+use crate::mining_results_page::score::render_mining_result_score_section;
 
 pub(super) fn render_mining_results_detail_section(
     body: &mut String,
@@ -9,6 +10,7 @@ pub(super) fn render_mining_results_detail_section(
     robot_names: &HashMap<i64, &str>,
     ore_result_map: &HashMap<i64, Vec<&robominer_db::MiningResultOreStateRecord>>,
     action_result_map: &HashMap<i64, Vec<&robominer_db::MiningResultActionStateRecord>>,
+    area_slot_map: &HashMap<i64, Vec<&robominer_db::MiningResultAreaOreSlotRecord>>,
 ) {
     body.push_str(
         r#"<div class="mining-results-detail-area"><div class="mining-results-detail-panels">"#,
@@ -22,6 +24,10 @@ pub(super) fn render_mining_results_detail_section(
             .get(&result.mining_queue_id)
             .map(Vec::as_slice)
             .unwrap_or(&[]);
+        let area_slots = area_slot_map
+            .get(&result.mining_area_id)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
         let robot_name = robot_names
             .get(&result.robot_id)
             .copied()
@@ -29,10 +35,10 @@ pub(super) fn render_mining_results_detail_section(
         render_mining_result_detail_panel(
             body,
             result,
-            result.robot_id,
             robot_name,
             ore_results,
             action_results,
+            area_slots,
             Some(result.mining_queue_id) == state.selected_mining_queue_id,
         );
     }
@@ -42,10 +48,10 @@ pub(super) fn render_mining_results_detail_section(
 fn render_mining_result_detail_panel(
     body: &mut String,
     result: &robominer_db::MiningResultStateRecord,
-    robot_id: i64,
     robot_name: &str,
     ore_results: &[&robominer_db::MiningResultOreStateRecord],
     action_results: &[&robominer_db::MiningResultActionStateRecord],
+    area_slots: &[&robominer_db::MiningResultAreaOreSlotRecord],
     active: bool,
 ) {
     let active_class = if active {
@@ -59,7 +65,7 @@ fn render_mining_result_detail_panel(
         r#"<div class="mining-results-detail-panel{active_class}" id="miningResultDetails{}" data-run-id="{}" data-robot-id="{}" data-area-name="{}" data-sort-end="{}" data-sort-reward="{}" data-sort-score="{}"{hidden_attr}>"#,
         result.mining_queue_id,
         result.mining_queue_id,
-        robot_id,
+        result.robot_id,
         escape_html(&result.mining_area_name),
         result.mining_end_time_millis,
         result.total_reward,
@@ -75,7 +81,7 @@ fn render_mining_result_detail_panel(
     ));
     body.push_str(&render_mining_result_replay_action(result));
     body.push_str("</header>");
-    render_mining_result_breakdown(body, result, ore_results, action_results);
+    render_mining_result_breakdown(body, result, ore_results, action_results, area_slots);
     body.push_str("</div>");
 }
 
@@ -94,6 +100,7 @@ fn render_mining_result_breakdown(
     result: &robominer_db::MiningResultStateRecord,
     ore_results: &[&robominer_db::MiningResultOreStateRecord],
     action_results: &[&robominer_db::MiningResultActionStateRecord],
+    area_slots: &[&robominer_db::MiningResultAreaOreSlotRecord],
 ) {
     body.push_str(r#"<div class="mining-results-run-breakdown">"#);
     body.push_str(r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Payout</h3><dl class="mining-results-payout-list">"#);
@@ -121,6 +128,12 @@ fn render_mining_result_breakdown(
         }
         body.push_str("</ul></section>");
     }
+
+    body.push_str(&render_mining_result_score_section(
+        result,
+        ore_results,
+        area_slots,
+    ));
 
     let total_actions: i32 = action_results.iter().map(|action| action.amount).sum();
     if !action_results.is_empty() {
