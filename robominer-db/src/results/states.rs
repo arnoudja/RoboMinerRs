@@ -55,17 +55,11 @@ pub async fn list_mining_result_states_for_user(
          LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
          WHERE Robot.userId = ? \
            AND MiningQueue.claimed = TRUE \
-           AND (SELECT COUNT(*) \
-                FROM MiningQueue RankedQueue \
-                WHERE RankedQueue.robotId = MiningQueue.robotId \
-                  AND RankedQueue.claimed = TRUE \
-                  AND (RankedQueue.miningEndTime > MiningQueue.miningEndTime \
-                       OR (RankedQueue.miningEndTime = MiningQueue.miningEndTime \
-                           AND RankedQueue.id <= MiningQueue.id))) <= ? \
          GROUP BY MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
                   MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
                   MiningQueue.miningEndTime \
-         ORDER BY MiningQueue.robotId, MiningQueue.miningEndTime DESC, MiningQueue.id"
+         ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
+         LIMIT ?"
     ))
     .bind(user_id)
     .bind(maximum_results)

@@ -16,11 +16,6 @@ pub(super) fn render_mining_results_page(
     hud: Option<&str>,
     state: &MiningResultsPageState,
 ) -> String {
-    let mut result_map: HashMap<i64, Vec<&robominer_db::MiningResultStateRecord>> = HashMap::new();
-    for result in &state.results {
-        result_map.entry(result.robot_id).or_default().push(result);
-    }
-
     let robot_names: HashMap<i64, &str> = state
         .robots
         .iter()
@@ -57,7 +52,7 @@ pub(super) fn render_mining_results_page(
     } else {
         render_mining_results_filters(&mut body, state);
         body.push_str(r#"<div class="mining-results-deck">"#);
-        render_mining_results_log_section(&mut body, state, &result_map, &ore_result_map);
+        render_mining_results_log_section(&mut body, state, &robot_names, &ore_result_map);
         render_mining_results_detail_section(
             &mut body,
             state,
