@@ -66,7 +66,7 @@ pub(super) fn render_robot_fleet_card(
         escape_html(&robot.robot_name)
     ));
     body.push_str(&format!(
-        r#"<span class="robot-fleet-highlights"><span>Ore {}</span><span>Cycles {}</span><span>Scan {}</span></span>"#,
+        r#"<span class="robot-fleet-highlights"><span>Ore {}</span><span>Turns {}</span><span>Scan {}</span></span>"#,
         robot.max_ore, robot.max_turns, robot.scan_distance
     ));
     body.push_str(&format!(

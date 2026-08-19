@@ -165,7 +165,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"Upfront costs:</td></tr><tr><td></td><td>Ore &amp; Two:</td><td>30</td>"#,
             r#"class="mining-queue-area-panel"><tr><td>Container tax:</td><td colspan="3">5%</td></tr>
 <tr><td>Depot tax:</td><td colspan="3">2%</td></tr>"#,
-            r#"Mining cycles:</td><td colspan="3">50 robot turns</td></tr>
+            r#"Turns:</td><td colspan="3">50</td></tr>
 <tr><td>Area size:</td><td colspan="3">10 x 11</td></tr>
 <tr><td>Ore target:</td><td colspan="3">30</td></tr>
 <tr><td colspan="4">Estimated ore:</td></tr>"#,

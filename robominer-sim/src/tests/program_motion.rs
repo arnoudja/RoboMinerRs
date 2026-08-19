@@ -2,8 +2,8 @@ use super::helpers::*;
 use crate::*;
 
 #[test]
-fn executable_move_uses_robot_max_cycles_property() {
-    let program = robominer_program::compile_executable_source("move(robot.maxCycles);")
+fn executable_move_uses_robot_max_turns_property() {
+    let program = robominer_program::compile_executable_source("move(robot.maxTurns);")
         .expect("source should compile to executable actions");
 
     let mut spec = RobotSpec::test_robot();

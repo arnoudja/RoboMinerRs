@@ -136,7 +136,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             "area.sizeX",
             "area.containerTax",
             "area.startingOreA",
-            "area.miningCycles",
+            "area.miningTurns",
             "area.oreTarget",
             "<h1>Robot programming help</h1>",
         ],

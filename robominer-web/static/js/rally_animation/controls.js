@@ -59,7 +59,7 @@ function rallyBindKeyboardControls()
             event.preventDefault();
             if (event.shiftKey || myRallyPlayer.playing)
             {
-                rallySeekByMiningCycles(-1);
+                rallySeekByTurns(-1);
             }
             else
             {
@@ -73,7 +73,7 @@ function rallyBindKeyboardControls()
             event.preventDefault();
             if (event.shiftKey || myRallyPlayer.playing)
             {
-                rallySeekByMiningCycles(1);
+                rallySeekByTurns(1);
             }
             else
             {

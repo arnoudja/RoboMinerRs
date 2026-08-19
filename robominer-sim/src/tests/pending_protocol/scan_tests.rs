@@ -86,10 +86,10 @@ fn program_bridge_waits_across_cycles_for_scan_result() {
         "mine should run once oreDistance() finishes waiting for the scan"
     );
     // StartScan + consume + scan_time await ticks + compare/branch need more than
-    // scan_time mining cycles when cpu_speed is 1.
+    // scan_time turns when cpu_speed is 1.
     assert!(
         turns_until_mine > 6,
-        "oreDistance() must wait out scan_time across mining cycles, not finish early; took {turns_until_mine}"
+        "oreDistance() must wait out scan_time across turns, not finish early; took {turns_until_mine}"
     );
     assert!(
         matches!(
@@ -132,7 +132,7 @@ fn program_bridge_ore_type_waits_full_scan_time_across_cycles() {
             simulation.robot(0).scan_state,
             crate::ground::ScanState::Scanning { .. }
         ),
-        "scan must still be in progress after 3 mining cycles with scan_time=50 and cpu_speed=10"
+        "scan must still be in progress after 3 turns with scan_time=50 and cpu_speed=10"
     );
     assert_eq!(
         simulation.robot(0).actions_done()[6],
@@ -146,7 +146,7 @@ fn program_bridge_ore_type_waits_full_scan_time_across_cycles() {
 
     assert!(
         simulation.time() >= 5,
-        "oreType() wait should span multiple mining cycles; finished at time {}",
+        "oreType() wait should span multiple turns; finished at time {}",
         simulation.time()
     );
     assert_eq!(

@@ -1,13 +1,13 @@
 //! # Program ↔ simulation pending-action protocol
 //!
-//! Move, rotate, and scan coordinate program execution with the mining-cycle
+//! Move, rotate, and scan coordinate program execution with the turn
 //! simulator. Move/rotate use paired pending state across crate boundaries; scan
 //! uses robot scan state on the simulation side plus runner expression suspend/resume.
 //!
 //! | Layer | Type | Owner | Role |
 //! |---|---|---|---|
 //! | Program | `ExecutableRunner::pending_program_motion` | `robominer-program` | Hold the logical move/rotate and **defer advancing until the sim reports completion**. |
-//! | Simulation | `PendingSimMotionChunk` | `robominer-sim` | Split one logical move/rotate into **per-cycle speed chunks** and accumulate distance/angle traveled. |
+//! | Simulation | `PendingSimMotionChunk` | `robominer-sim` | Split one logical move/rotate into **per-turn speed chunks** and accumulate distance/angle traveled. |
 //! | Simulation | `Robot::scan_state` | `robominer-sim` | Track in-progress or completed scan; feed `ExecutionContext` scan fields. |
 //!
 //! Do not merge move/rotate pending structs with scan state: the runner tracks
@@ -21,10 +21,10 @@
 //! is a mapper/test helper only and must not drive player or rally robots: it drops
 //! scan/control-flow and cannot feed action results back into expressions.
 //!
-//! ## End-to-end cycle flow
+//! ## End-to-end turn flow
 //!
 //! ```text
-//! Mining cycle N
+//! Turn N
 //! ──────────────
 //! 1. Simulation::next_robot_action
 //!      └─ if pending_sim_motion_chunks[i] is Some → emit next speed chunk (skip program)
@@ -43,19 +43,19 @@
 //!      └─ partial chunk: action_results[i] = None, sim pending kept
 //!      └─ final chunk:   action_results[i] = Some(accumulated), sim pending cleared
 //!
-//! Mining cycle N+1 (partial move still running)
+//! Turn N+1 (partial move still running)
 //! ─────────────────────────────────────────────
 //! 5. next_robot_action serves the next chunk from pending_sim_motion_chunks
 //!    without calling the runner (program counter unchanged, `pending_program_motion` kept)
 //!
-//! Mining cycle M (move finished)
+//! Turn M (move finished)
 //! ──────────────────────────────
 //! 6. next_robot_action → run_program_cpu_loop
 //! 7. build_execution_context copies action_results[i] into ExecutionContext::action_result
 //! 8. Runner::step → `handle_continue_program_motion`
 //!      └─ requires `pending_program_motion` Some AND `action_result` Some
 //!      └─ clears `pending_program_motion`, advances frame index or pushes expression result
-//! 9. Runner continues same cycle (CPU budget) or waits next cycle for next statement
+//! 9. Runner continues same turn (CPU budget) or waits next turn for next statement
 //! ```
 //!
 //! ## Move/rotate initiation (unified)
@@ -116,7 +116,7 @@
 //! ────────────────────────────────
 //! 4. Runner sees !scan_complete → Action(AwaitScanResult) (work index not advanced)
 //! 5. Sim tick_scan once, cpu_used += 1; loop continues or ends at cpu_speed
-//! 6. Repeat across mining cycles until ScanState::Complete
+//! 6. Repeat across turns until ScanState::Complete
 //! 7. Runner sees scan_complete → pushes distance
 //!
 //! oreDistance();                   // with no prior scan
@@ -124,19 +124,19 @@
 //! → pushes -1.0 without emitting an action (scan_started false)
 //! ```
 //!
-//! ### CPU budget and cross-cycle scan waits
+//! ### CPU budget and cross-turn scan waits
 //!
-//! Each mining cycle runs at most `robot.spec.cpu_speed` program instructions.
+//! Each turn runs at most `robot.spec.cpu_speed` program instructions.
 //! Mid-scan `oreDistance()` / `oreType()` wait by re-emitting `AwaitScanResult`
 //! (expression work index stays on `PushOreDistance` / `PushOreType`). Each await
 //! burns one CPU and advances the shared `tick_scan` countdown; when the budget is
-//! exhausted the mining cycle returns `Wait`/`Cpu` and the wait resumes next cycle.
+//! exhausted the turn returns `Wait`/`Cpu` and the wait resumes next turn.
 //! There is no lump-sum finish and no CPU-budget extension past `cpu_speed`.
 //!
 //! When `cpu_speed` is exhausted mid-`scan()`, the runner keeps
 //! `pending_action == StartScan` and the sim keeps `action_results = Some(scan_time)`.
 //! **`should_preserve_program_action_result`** prevents `process_robot_action(Wait)`
-//! from clearing that result so the next mining cycle can consume it and advance
+//! from clearing that result so the next turn can consume it and advance
 //! past the `scan()` statement.
 //!
 //! ## Await kinds
@@ -147,7 +147,7 @@
 //! | Kind | Examples | Awaits `action_result`? |
 //! |---|---|---|
 //! | `None` | `move(0)`, `AwaitScanResult`, statement side effects | No |
-//! | `Scalar` | expression `mine()` / `dump(n)` | Yes (one cycle) |
+//! | `Scalar` | expression `mine()` / `dump(n)` | Yes (one turn) |
 //! | `Motion` | chunked `move` / `rotate` | Yes (via `pending_program_motion` + `PendingSimMotionChunk`) |
 //! | `ScanStart` | `scan()` | Result written in the CPU loop, not via Wait |
 //!
@@ -156,7 +156,7 @@
 //! [`crate::motion::MOTION_EPSILON`]). The sim maps those to `Wait`, which produces
 //! `ActionResult::None` and would otherwise livelock the runner.
 //!
-//! If sim pending motion still exists when a cycle yields `Wait` (for example zero
+//! If sim pending motion still exists when a turn yields `Wait` (for example zero
 //! engine speed with remaining distance), `record_action_result` force-completes the
 //! pending action with the accumulated travel so the runner can resume.
 //!
@@ -205,18 +205,18 @@
 //!
 //! ## Sticky CPU highlight / seed floor / end-hold
 //!
-//! Replay highlights for multi-cycle motion and battery-idle cycles reuse
+//! Replay highlights for multi-turn motion and battery-idle turns reuse
 //! `Simulation::last_cpu_highlight`:
 //!
 //! - **Pin on pending:** when `map_awaiting_executable` assigns
 //!   `pending_sim_motion_chunks[i]`, the issuing Action's recorded step is pinned into
 //!   `last_cpu_highlight` (including line-only GP issuers).
 //! - **Skip reseed while pending:** `process_step` must not overwrite that pin from
-//!   earlier micro-steps in the same cycle (column preference would otherwise win).
+//!   earlier micro-steps in the same turn (column preference would otherwise win).
 //! - **Done seed floor:** `ProgramStep::Done` clears the seed and sets
-//!   `cpu_highlight_seed_floor` so pre-Done steps in the same mining cycle are ignored
+//!   `cpu_highlight_seed_floor` so pre-Done steps in the same turn are ignored
 //!   when reseeding after restart.
-//! - **Sticky omit-`r`:** sticky copies drop `result` so continued motion/battery cycles
+//! - **Sticky omit-`r`:** sticky copies drop `result` so continued motion/battery turns
 //!   do not re-show a completion return value.
 //! - **Viewer end-hold:** animation wall-clock is `n * stepTime` with a final hold on the
 //!   last pose; scrubbing the last CPU sample is not playback-finished until the clock ends.

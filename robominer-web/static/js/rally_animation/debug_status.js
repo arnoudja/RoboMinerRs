@@ -119,12 +119,12 @@ function robotTurnsRemaining(robot, step)
 }
 
 
-function updateRobotDebugPanel(robot, poseCycle, sourceLine)
+function updateRobotDebugPanel(robot, poseTurn, sourceLine)
 {
     var turnsEl = document.getElementById('robotTurns' + robot.robotnr);
     var batteryEl = document.getElementById('robotBattery' + robot.robotnr);
     var batteryFillEl = document.getElementById('robotBatteryFill' + robot.robotnr);
-    var remainingTurns = robotTurnsRemaining(robot, poseCycle);
+    var remainingTurns = robotTurnsRemaining(robot, poseTurn);
     var depleted = remainingTurns === 0;
     var maxTurns = typeof robot.maxturns === 'number' && !isNaN(robot.maxturns)
         ? Math.floor(robot.maxturns)
@@ -201,7 +201,7 @@ function updateRobotDebugPanel(robot, poseCycle, sourceLine)
         {
             label = actionName;
         }
-        else if (robotLooksIdle(robot, poseCycle))
+        else if (robotLooksIdle(robot, poseTurn))
         {
             label = 'Idle';
         }
@@ -219,7 +219,7 @@ function updateRobotDebugPanel(robot, poseCycle, sourceLine)
     var card = document.getElementById('rallyPlayer' + robot.robotnr);
     if (card)
     {
-        if (robotLooksIdle(robot, poseCycle))
+        if (robotLooksIdle(robot, poseTurn))
         {
             card.classList.add('rally-view-player-idle');
         }

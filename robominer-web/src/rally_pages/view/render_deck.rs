@@ -39,16 +39,16 @@ pub(super) fn render_rally_view_deck(
         body.push_str("</div></div>");
         body.push_str(r#"<div class="rally-view-progress">"#);
         body.push_str(
-            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" role="slider" aria-label="Seek rally replay" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="Cycle 0 of 0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
+            r#"<button type="button" class="rally-view-progress-track" id="rallyProgressTrack" role="slider" aria-label="Seek rally replay" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="Turn 0 of 0" aria-keyshortcuts="ArrowLeft ArrowRight Home End"><span class="rally-view-progress-fill" id="rallyProgressFill"></span></button>"#,
         );
         body.push_str("</div>");
         body.push_str(
-            r#"<p class="rally-view-cycle-status">Area cycle <span id="rallyCycleCurrent">0</span> / <span id="rallyCycleTotal">0</span></p>"#,
+            r#"<p class="rally-view-turn-status">Turn <span id="rallyTurnCurrent">0</span> / <span id="rallyTurnTotal">0</span></p>"#,
         );
         body.push_str(
-            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle (when paused) · Shift+← → next area cycle · Home/End jump</p>"#,
+            r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle (when paused) · Shift+← → next turn · Home/End jump</p>"#,
         );
-        body.push_str(r#"<input type="hidden" id="cyclenr" value="0" />"#);
+        body.push_str(r#"<input type="hidden" id="turnnr" value="0" />"#);
         body.push_str(
             r#"<canvas id="progressCanvas" class="rally-view-progress-canvas" width="600" height="50" hidden></canvas>"#,
         );

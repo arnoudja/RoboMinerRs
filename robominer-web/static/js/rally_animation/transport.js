@@ -1,14 +1,14 @@
-function rallyUpdateTransportUi(completed, cpuIndex, miningCycle)
+function rallyUpdateTransportUi(completed, cpuIndex, areaTurn)
 {
-    var current = document.getElementById('rallyCycleCurrent');
-    var total = document.getElementById('rallyCycleTotal');
+    var current = document.getElementById('rallyTurnCurrent');
+    var total = document.getElementById('rallyTurnTotal');
     if (current)
     {
-        current.textContent = miningCycle;
+        current.textContent = areaTurn;
     }
     if (total)
     {
-        total.textContent = Math.max(0, rallyTotalMiningCycles() - 1);
+        total.textContent = Math.max(0, rallyTotalTurns() - 1);
     }
 
     var fill = document.getElementById('rallyProgressFill');
@@ -20,16 +20,16 @@ function rallyUpdateTransportUi(completed, cpuIndex, miningCycle)
     var track = document.getElementById('rallyProgressTrack');
     if (track)
     {
-        var totalMining = Math.max(0, rallyTotalMiningCycles());
+        var totalMining = Math.max(0, rallyTotalTurns());
         var totalCpu = Math.max(0, rallyTotalCpuSteps());
         var currentCpu = Math.min(totalCpu, Math.max(0, Math.floor(cpuIndex)));
         var maxMining = Math.max(0, totalMining - 1);
         track.setAttribute('aria-valuemin', '0');
         track.setAttribute('aria-valuemax', String(maxMining));
-        track.setAttribute('aria-valuenow', String(miningCycle));
+        track.setAttribute('aria-valuenow', String(areaTurn));
         track.setAttribute(
             'aria-valuetext',
-            'Area cycle ' + miningCycle + ' of ' + maxMining +
+            'Turn ' + areaTurn + ' of ' + maxMining +
                 (totalCpu > 0 ? (', CPU ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
         );
     }
@@ -159,7 +159,7 @@ function rallyPlay()
         rallyRestart();
     }
 
-    // Leave CPU scrub mode so pose interpolates smoothly across mining cycles.
+    // Leave CPU scrub mode so pose interpolates smoothly across turns.
     // Sync wall-clock to the scrub pose first so play does not jump the sprite.
     if (myRallyPlayer.pausedCpuIndex !== null)
     {
@@ -190,7 +190,7 @@ function rallyRestart()
         return;
     }
 
-    // Keep expanded location deltas; redraw the scene at cycle 0.
+    // Keep expanded location deltas; redraw the scene at turn 0.
     redrawRallyScene();
 }
 
@@ -205,7 +205,7 @@ function rallySeekToRatio(ratio)
     rallyWithPausedSeek(function() {
         ratio = Math.min(1, Math.max(0, ratio));
         myRallyPlayer.elapsedMs = ratio * rallyTotalTime();
-        // Slider seeks on the mining-cycle clock; clear CPU scrub so pose matches time.
+        // Slider seeks on the turn clock; clear CPU scrub so pose matches time.
         myRallyPlayer.pausedCpuIndex = null;
     }, { fullRedraw: true });
 }
@@ -266,13 +266,13 @@ function rallySeekByCpuSteps(deltaSteps)
 
         var entry = myRallyCpuTimeline && myRallyCpuTimeline[targetIndex]
             ? myRallyCpuTimeline[targetIndex]
-            : { miningCycle: targetIndex };
-        myRallyPlayer.elapsedMs = (entry.miningCycle || 0) * rallyStepTime();
+            : { turn: targetIndex };
+        myRallyPlayer.elapsedMs = (entry.turn || 0) * rallyStepTime();
         // finished is set by rallyWithPausedSeek from clock end only.
     }, { fullRedraw: true });
 }
 
-function rallySeekByMiningCycles(deltaMiningCycles)
+function rallySeekByTurns(deltaTurns)
 {
     if (!rallyHasAnimationData())
     {
@@ -281,20 +281,20 @@ function rallySeekByMiningCycles(deltaMiningCycles)
     rallyEnsureCpuTimeline();
 
     rallyWithPausedSeek(function(wasPlaying) {
-        var maxMining = Math.max(0, rallyTotalMiningCycles() - 1);
-        var currentMining = rallyMiningCycleAtTime(myRallyPlayer.elapsedMs);
+        var maxMining = Math.max(0, rallyTotalTurns() - 1);
+        var currentMining = rallyTurnAtTime(myRallyPlayer.elapsedMs);
         if (myRallyPlayer.pausedCpuIndex !== null && myRallyCpuTimeline &&
             myRallyCpuTimeline[myRallyPlayer.pausedCpuIndex])
         {
-            currentMining = myRallyCpuTimeline[myRallyPlayer.pausedCpuIndex].miningCycle;
+            currentMining = myRallyCpuTimeline[myRallyPlayer.pausedCpuIndex].turn;
         }
 
-        var targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaMiningCycles));
+        var targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaTurns));
         myRallyPlayer.elapsedMs = targetMining * rallyStepTime();
-        // Land on the first CPU step of that mining cycle when scrubbing while paused.
+        // Land on the first CPU step of that turn when scrubbing while paused.
         myRallyPlayer.pausedCpuIndex = wasPlaying
             ? null
-            : rallyFirstCpuIndexForMiningCycle(targetMining);
+            : rallyFirstCpuIndexForTurn(targetMining);
         // finished is set by rallyWithPausedSeek from clock end only.
     }, { fullRedraw: true });
 }

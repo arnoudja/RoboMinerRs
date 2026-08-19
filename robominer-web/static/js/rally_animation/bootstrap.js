@@ -119,7 +119,7 @@
     var myProgressCanvas = document.getElementById('progressCanvas');
     window.myProgressCanvas = myProgressCanvas;
     window.myProgressContext = myProgressCanvas ? myProgressCanvas.getContext('2d') : null;
-    window.myCycleText = document.getElementById('cyclenr');
+    window.myTurnText = document.getElementById('turnnr');
 
     var oreNames = config.oreNames || {};
     fillOreLegend('A', 'red', myOreTypes, oreNames);

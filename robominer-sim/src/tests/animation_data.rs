@@ -31,7 +31,7 @@ fn animation_data_uses_versioned_json_payload_shape() {
         payload["robots"]["robot"][0]["locations"][1]["cpu"]
             .as_array()
             .is_some_and(|cpu| !cpu.is_empty()),
-        "mining cycle should record CPU micro-steps: {data}"
+        "turn should record CPU micro-steps: {data}"
     );
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["A"], 4);
     assert_eq!(payload["robots"]["robot"][0]["locations"][1]["a"], 6);
@@ -771,7 +771,7 @@ fn animation_data_empty_program_finishes_without_hanging() {
         .expect("robot locations");
     assert!(
         locations.len() >= 2,
-        "empty program should still record mining-cycle samples: {data}"
+        "empty program should still record turn samples: {data}"
     );
 }
 

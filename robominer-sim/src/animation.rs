@@ -14,7 +14,7 @@ use crate::robot::Robot;
 /// `RallyResult.resultData`. Older executable JavaScript rows (`var myRobots = …`)
 /// are no longer played by the web viewer.
 ///
-/// Version 2 adds optional per-mining-cycle `cpu` arrays of instruction spans,
+/// Version 2 adds optional per-turn `cpu` arrays of instruction spans,
 /// typed step results (`r`), and locals snapshots (`vs`).
 pub const ANIMATION_PAYLOAD_VERSION: u32 = 2;
 
@@ -23,7 +23,7 @@ pub struct OreAnimationData {
     pub max_amount: i32,
 }
 
-/// One program CPU instruction within a mining cycle (for replay stepping/highlight).
+/// One program CPU instruction within a turn (for replay stepping/highlight).
 #[derive(Clone, Debug, PartialEq)]
 pub struct RecordedCpuStep {
     pub line: u16,

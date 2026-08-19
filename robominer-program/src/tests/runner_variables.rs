@@ -110,12 +110,12 @@ fn robot_property_expression_evaluates_from_context() {
 #[test]
 fn area_property_expression_evaluates_from_context() {
     let program =
-        compile_executable_source("move(area.sizeX + area.miningCycles + area.startingOreA);")
+        compile_executable_source("move(area.sizeX + area.miningTurns + area.startingOreA);")
             .expect("program should compile");
     let mut runner = program.runner();
     let mut context = robot_context(1.0);
     context.area.size_x = 9.0;
-    context.area.mining_cycles = 20;
+    context.area.mining_turns = 20;
     context.area.starting_ore_a = 42;
 
     loop {

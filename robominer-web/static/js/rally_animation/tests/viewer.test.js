@@ -358,11 +358,11 @@ describe('rally animation viewer', () => {
         context.myRallyViewerSlot = 2;
         context.rallyRebuildCpuTimeline();
         assert.equal(context.rallyViewerRobot().robotnr, 2);
-        assert.equal(context.rallyTotalMiningCycles(), 3);
+        assert.equal(context.rallyTotalTurns(), 3);
         assert.equal(context.myRallyCpuTimeline[0].l, 1);
     });
 
-    it('builds a CPU timeline and seeks by CPU vs mining cycle', () => {
+    it('builds a CPU timeline and seeks by CPU vs turn', () => {
         const { context } = loadRallyViewer();
         assert.equal(context.applyRallyResultPayload(validPayload()), null);
         context.myRallyViewerSlot = 0;
@@ -381,12 +381,12 @@ describe('rally animation viewer', () => {
         };
 
         assert.equal(context.myRallyCpuTimeline.length, 4);
-        // Playback clock is mining cycles; CPU steps are for paused scrubbing.
-        assert.equal(context.rallyTotalMiningCycles(), 3);
+        // Playback clock is turns; CPU steps are for paused scrubbing.
+        assert.equal(context.rallyTotalTurns(), 3);
         assert.equal(context.rallyTotalCpuSteps(), 4);
         assert.equal(context.rallyTotalTime(), 150);
         assert.equal(context.rallyCpuIndexAtTime(0), 0);
-        assert.equal(context.rallyPoseTimeForRender(0, { miningCycle: 0 }), 0);
+        assert.equal(context.rallyPoseTimeForRender(0, { turn: 0 }), 0);
         assert.deepEqual(context.myRallyCpuTimeline[0].r, { k: 'i', v: 4 });
         assert.deepEqual(context.myRallyCpuTimeline[0].vs, { x: { k: 'i', v: 4 } });
         assert.deepEqual(context.myRallyCpuTimeline[1].r, { k: 'f', v: 1.42 });
@@ -400,7 +400,7 @@ describe('rally animation viewer', () => {
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
         assert.equal(context.rallyCpuIndexAtTime(context.myRallyPlayer.elapsedMs), 1);
         assert.equal(
-            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
+            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).turn,
             1
         );
         assert.equal(context.myRallyPlayer.elapsedMs, 50);
@@ -418,9 +418,9 @@ describe('rally animation viewer', () => {
             25
         );
 
-        context.rallySeekByMiningCycles(1);
+        context.rallySeekByTurns(1);
         assert.equal(
-            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).miningCycle,
+            context.rallyCpuEntryAtTime(context.myRallyPlayer.elapsedMs).turn,
             2
         );
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
@@ -428,9 +428,9 @@ describe('rally animation viewer', () => {
 
         // Paused scrub: transport cycle follows poseTime, not the highlight sample.
         const frame = context.rallyFrameTiming();
-        assert.equal(frame.poseCycle, context.rallyMiningCycleAtTime(frame.poseTime));
-        assert.equal(frame.entry.miningCycle, 2);
-        assert.equal(frame.poseCycle, 1);
+        assert.equal(frame.poseTurn, context.rallyTurnAtTime(frame.poseTime));
+        assert.equal(frame.entry.turn, 2);
+        assert.equal(frame.poseTurn, 1);
         assert.ok(
             Math.abs(frame.completed - frame.poseTime / context.rallyTotalTime()) < 1e-9,
             `scrub completed should track poseTime, got ${frame.completed}`
@@ -483,7 +483,7 @@ describe('rally animation viewer', () => {
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 3);
         assert.equal(context.myRallyPlayer.finished, false);
 
-        context.rallySeekByMiningCycles(100);
+        context.rallySeekByTurns(100);
         assert.equal(context.myRallyPlayer.finished, false);
 
         // Play from scrub inside last cycle must continue, not restart.
@@ -554,7 +554,7 @@ describe('rally animation viewer', () => {
         );
 
         const viewerRobot = { robotnr: 0, l: 9 };
-        context.updateRallyViewerSourceDebug({ miningCycle: 1 }, viewerRobot);
+        context.updateRallyViewerSourceDebug({ turn: 1 }, viewerRobot);
         assert.equal(
             document.getElementById('rallySourceLine1').classList.contains(
                 'rally-view-source-line-active'
@@ -564,7 +564,7 @@ describe('rally animation viewer', () => {
         assert.equal(document.getElementById('rallyEditCodeLink').href, '/edit');
     });
 
-    it('interpolates pose on the mining-cycle clock while playing', () => {
+    it('interpolates pose on the turn clock while playing', () => {
         const { context } = loadRallyViewer();
         assert.equal(context.applyRallyResultPayload(validPayload()), null);
         context.myRallyPlayer.baseStepTime = 50;
@@ -572,13 +572,13 @@ describe('rally animation viewer', () => {
         context.myRallyPlayer.playing = true;
         context.myRallyPlayer.pausedCpuIndex = null;
         context.myRallyPlayer.elapsedMs = 25;
-        assert.equal(context.rallyMiningCycleAtTime(25), 0);
-        assert.equal(context.rallyPoseTimeForRender(25, { miningCycle: 0 }), 25);
-        assert.equal(context.rallyLastCpuIndexForMiningCycle(0), 0);
-        assert.equal(context.rallyLastCpuIndexForMiningCycle(1), 2);
+        assert.equal(context.rallyTurnAtTime(25), 0);
+        assert.equal(context.rallyPoseTimeForRender(25, { turn: 0 }), 25);
+        assert.equal(context.rallyLastCpuIndexForTurn(0), 0);
+        assert.equal(context.rallyLastCpuIndexForTurn(1), 2);
         // During segment 0→1, highlight CPUs recorded on locations[1] (destination).
         assert.equal(context.rallyCpuIndexAtTime(25), 2);
-        assert.equal(context.rallyCpuEntryAtTime(25).miningCycle, 1);
+        assert.equal(context.rallyCpuEntryAtTime(25).turn, 1);
     });
 
     it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {

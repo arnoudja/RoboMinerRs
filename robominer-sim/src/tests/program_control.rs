@@ -331,7 +331,7 @@ fn compiled_program_reads_area_properties() {
     let program = robominer_program::compile_executable_source(
         "if (area.sizeX == 4 && area.sizeY == 4 && area.containerTax == 25 && area.depotTax == 12 \
          && area.startingOreA == 7 && area.startingOreB == 3 && area.startingOreC == 0 \
-         && area.miningCycles == 15 && area.oreTarget == 30) { rotate(90); } while (true);",
+         && area.miningTurns == 15 && area.oreTarget == 30) { rotate(90); } while (true);",
     )
     .expect("source should compile");
 

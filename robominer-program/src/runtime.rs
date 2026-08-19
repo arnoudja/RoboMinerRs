@@ -8,7 +8,7 @@ pub struct RobotProperties {
     pub scan_time: f64,
     pub scan_distance: f64,
     pub ore_cap: f64,
-    pub max_cycles: f64,
+    pub max_turns: f64,
     pub mining_speed: f64,
     pub cpu_speed: f64,
     pub orientation: f64,
@@ -27,7 +27,7 @@ pub struct AreaProperties {
     pub starting_ore_a: i32,
     pub starting_ore_b: i32,
     pub starting_ore_c: i32,
-    pub mining_cycles: i32,
+    pub mining_turns: i32,
     pub ore_target: i32,
 }
 
@@ -87,7 +87,7 @@ impl AreaProperty {
             Self::StartingOreA => area.starting_ore_a as f64,
             Self::StartingOreB => area.starting_ore_b as f64,
             Self::StartingOreC => area.starting_ore_c as f64,
-            Self::MiningCycles => area.mining_cycles as f64,
+            Self::MiningTurns => area.mining_turns as f64,
             Self::OreTarget => area.ore_target as f64,
         }
     }
@@ -102,7 +102,7 @@ impl RobotProperty {
             Self::ScanTime => robot.scan_time,
             Self::ScanDistance => robot.scan_distance,
             Self::OreCap => robot.ore_cap,
-            Self::MaxCycles => robot.max_cycles,
+            Self::MaxTurns => robot.max_turns,
             Self::MiningSpeed => robot.mining_speed,
             Self::CpuSpeed => robot.cpu_speed,
             Self::Orientation => robot.orientation,

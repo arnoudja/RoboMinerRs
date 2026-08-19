@@ -236,7 +236,7 @@ pub(super) fn render_robot_config_panel(
     );
     body.push_str(r#"<div class="robot-stat-highlights">"#);
     push_robot_highlight(body, "Ore cap", robot.max_ore, " units");
-    push_robot_highlight(body, "Cycles", robot.max_turns, "");
+    push_robot_highlight(body, "Turns", robot.max_turns, "");
     push_robot_highlight(body, "Scan distance", robot.scan_distance, "");
     body.push_str("</div>");
     render_robot_memory_progress(

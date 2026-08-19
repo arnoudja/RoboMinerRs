@@ -30,7 +30,7 @@ struct AreaSnapshot {
     container_tax: i32,
     depot_tax: i32,
     starting_ore: [i32; LANGUAGE_ORE_SLOTS],
-    mining_cycles: i32,
+    mining_turns: i32,
     ore_target: i32,
 }
 
@@ -174,7 +174,7 @@ impl Simulation {
                 container_tax: area.container_tax,
                 depot_tax: area.depot_tax,
                 starting_ore,
-                mining_cycles: total_moves,
+                mining_turns: total_moves,
                 ore_target: area.ore_target,
             },
             robots,

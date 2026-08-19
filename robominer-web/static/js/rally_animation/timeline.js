@@ -1,13 +1,13 @@
 /**
- * @typedef {{miningCycle:number,l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}} RallyCpuTimelineEntry
+ * @typedef {{turn:number,l?:number,c?:number,e?:number,r?:{k?:string,v?:number},vs?:Object.<string,{k?:string,v?:number}>}} RallyCpuTimelineEntry
  *
  * Wire contract (see AnimationLocation / AnimationCpuStep in robominer-sim):
- * - locations[m] is the pose after mining cycle m; cpu[] on that sample drove the motion
+ * - locations[m] is the pose after turn m; cpu[] on that sample drove the motion
  *   animated during clock segment [m-1, m).
  * - cpu[].c/e are 1-based half-open [c, e) source columns; omit when unknown.
  * - Emit either sticky l or non-empty cpu per location, not both.
  * - vs is a full locals snapshot (not a delta). r is omitted while an action is still awaiting.
- * - frame.poseCycle is the pose clock (sprite/ground); entry.miningCycle is the highlight sample.
+ * - frame.poseTurn is the pose clock (sprite/ground); entry.turn is the highlight sample.
  * - Clock length is viewer-robot only; peers with fewer locations freeze at their last pose.
  */
 
@@ -27,7 +27,7 @@ var myRallyPlayer = {
 /** @type {RallyCpuTimelineEntry[]|null} */
 var myRallyCpuTimeline = null;
 /** @type {{first:number[], last:number[]}} */
-var myRallyCpuCycleIndex = { first: [], last: [] };
+var myRallyCpuTurnIndex = { first: [], last: [] };
 
 
 function rallyHasAnimationData()
@@ -65,20 +65,20 @@ function rallyViewerRobot()
 }
 
 
-function rallyRecordCpuCycleIndex(miningCycle, timelineIndex)
+function rallyRecordCpuTurnIndex(turn, timelineIndex)
 {
-    if (typeof myRallyCpuCycleIndex.first[miningCycle] !== 'number')
+    if (typeof myRallyCpuTurnIndex.first[turn] !== 'number')
     {
-        myRallyCpuCycleIndex.first[miningCycle] = timelineIndex;
+        myRallyCpuTurnIndex.first[turn] = timelineIndex;
     }
-    myRallyCpuCycleIndex.last[miningCycle] = timelineIndex;
+    myRallyCpuTurnIndex.last[turn] = timelineIndex;
 }
 
 
 function rallyRebuildCpuTimeline()
 {
     myRallyCpuTimeline = null;
-    myRallyCpuCycleIndex = { first: [], last: [] };
+    myRallyCpuTurnIndex = { first: [], last: [] };
     var robot = rallyViewerRobot();
     if (!robot || !robot.locations)
     {
@@ -94,9 +94,9 @@ function rallyRebuildCpuTimeline()
         {
             for (var i = 0; i < cpu.length; i++)
             {
-                rallyRecordCpuCycleIndex(m, timeline.length);
+                rallyRecordCpuTurnIndex(m, timeline.length);
                 timeline.push({
-                    miningCycle: m,
+                    turn: m,
                     l: cpu[i].l,
                     c: cpu[i].c,
                     e: cpu[i].e,
@@ -110,7 +110,7 @@ function rallyRebuildCpuTimeline()
             // Legacy sticky `l` only (older payloads without recorded sticky cpu spans).
             // Carry prior same-line c/e/vs so multi-cycle move/rotate stays highlighted.
             var sticky = {
-                miningCycle: m,
+                turn: m,
                 l: loc.l,
                 c: undefined,
                 e: undefined,
@@ -133,7 +133,7 @@ function rallyRebuildCpuTimeline()
                     break;
                 }
             }
-            rallyRecordCpuCycleIndex(m, timeline.length);
+            rallyRecordCpuTurnIndex(m, timeline.length);
             timeline.push(sticky);
         }
     }
@@ -141,7 +141,7 @@ function rallyRebuildCpuTimeline()
 }
 
 
-function rallyTotalMiningCycles()
+function rallyTotalTurns()
 {
     var robot = rallyViewerRobot();
     if (!robot || !robot.locations)
@@ -158,7 +158,7 @@ function rallyTotalCpuSteps()
     {
         return myRallyCpuTimeline.length;
     }
-    return rallyTotalMiningCycles();
+    return rallyTotalTurns();
 }
 
 
@@ -169,20 +169,20 @@ function rallyStepTime()
 
 
 /**
- * Wall-clock length of the mining-cycle timeline (`n * stepTime`).
+ * Wall-clock length of the turn timeline (`n * stepTime`).
  * Includes a final hold on the last pose, so scrubbing the last-cycle CPU sample is
  * not `finished` until the clock reaches this end.
  */
 function rallyTotalTime()
 {
-    return rallyTotalMiningCycles() * rallyStepTime();
+    return rallyTotalTurns() * rallyStepTime();
 }
 
 
-function rallyMiningCycleAtTime(time)
+function rallyTurnAtTime(time)
 {
     var stepTime = rallyStepTime();
-    var total = rallyTotalMiningCycles();
+    var total = rallyTotalTurns();
     if (stepTime <= 0 || total <= 0)
     {
         return 0;
@@ -200,23 +200,23 @@ function rallyMiningCycleAtTime(time)
 }
 
 
-function rallyFirstCpuIndexForMiningCycle(miningCycle)
+function rallyFirstCpuIndexForTurn(turn)
 {
     if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
     {
-        return Math.max(0, miningCycle);
+        return Math.max(0, turn);
     }
-    if (typeof myRallyCpuCycleIndex.first[miningCycle] === 'number')
+    if (typeof myRallyCpuTurnIndex.first[turn] === 'number')
     {
-        return myRallyCpuCycleIndex.first[miningCycle];
+        return myRallyCpuTurnIndex.first[turn];
     }
     for (var i = 0; i < myRallyCpuTimeline.length; i++)
     {
-        if (myRallyCpuTimeline[i].miningCycle === miningCycle)
+        if (myRallyCpuTimeline[i].turn === turn)
         {
             return i;
         }
-        if (myRallyCpuTimeline[i].miningCycle > miningCycle)
+        if (myRallyCpuTimeline[i].turn > turn)
         {
             return Math.max(0, i - 1);
         }
@@ -225,33 +225,33 @@ function rallyFirstCpuIndexForMiningCycle(miningCycle)
 }
 
 
-function rallyLastCpuIndexForMiningCycle(miningCycle)
+function rallyLastCpuIndexForTurn(turn)
 {
     if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
     {
-        return Math.max(0, miningCycle);
+        return Math.max(0, turn);
     }
-    if (typeof myRallyCpuCycleIndex.last[miningCycle] === 'number')
+    if (typeof myRallyCpuTurnIndex.last[turn] === 'number')
     {
-        return myRallyCpuCycleIndex.last[miningCycle];
+        return myRallyCpuTurnIndex.last[turn];
     }
-    return rallyFirstCpuIndexForMiningCycle(miningCycle);
+    return rallyFirstCpuIndexForTurn(turn);
 }
 
 
 /**
- * Mining-cycle sample used for source highlight at wall-clock `time`.
+ * Turn sample used for source highlight at wall-clock `time`.
  * Recording stores CPUs that produced locations[m] on that same sample, while pose
  * interpolates locations[m-1] → locations[m] during clock cycle m-1. Highlight the
  * destination sample's CPUs so move() lines up with visible travel.
  * At t=0 keep locations[0] so program-entry CPUs are not skipped.
  */
-function rallyHighlightMiningCycle(time)
+function rallyHighlightTurn(time)
 {
-    var cycle = rallyMiningCycleAtTime(time);
+    var cycle = rallyTurnAtTime(time);
     var stepTime = rallyStepTime();
     var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    var maxCycle = Math.max(0, rallyTotalMiningCycles() - 1);
+    var maxCycle = Math.max(0, rallyTotalTurns() - 1);
     if (phase <= 0 && cycle === 0)
     {
         return 0;
@@ -267,16 +267,16 @@ function rallyCpuIndexAtTime(time)
         var totalCpu = rallyTotalCpuSteps();
         return Math.min(Math.max(0, myRallyPlayer.pausedCpuIndex), Math.max(0, totalCpu - 1));
     }
-    var cycle = rallyMiningCycleAtTime(time);
+    var cycle = rallyTurnAtTime(time);
     var stepTime = rallyStepTime();
     var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    var highlightCycle = rallyHighlightMiningCycle(time);
+    var highlightCycle = rallyHighlightTurn(time);
 
     if (phase <= 0)
     {
-        return rallyFirstCpuIndexForMiningCycle(highlightCycle);
+        return rallyFirstCpuIndexForTurn(highlightCycle);
     }
-    return rallyLastCpuIndexForMiningCycle(highlightCycle);
+    return rallyLastCpuIndexForTurn(highlightCycle);
 }
 
 
@@ -284,8 +284,8 @@ function rallyCpuEntryAtTime(time)
 {
     if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
     {
-        var cycle = rallyMiningCycleAtTime(time);
-        return { miningCycle: cycle, l: undefined, c: undefined, e: undefined };
+        var cycle = rallyTurnAtTime(time);
+        return { turn: cycle, l: undefined, c: undefined, e: undefined };
     }
     return myRallyCpuTimeline[rallyCpuIndexAtTime(time)];
 }
@@ -293,21 +293,21 @@ function rallyCpuEntryAtTime(time)
 
 function rallyPoseTimeForRender(time, entry)
 {
-    // Continuous play interpolates across mining cycles.
+    // Continuous play interpolates across turns.
     if (myRallyPlayer.playing || myRallyPlayer.pausedCpuIndex === null)
     {
         return time;
     }
     // Paused CPU scrub: CPUs on locations[m] drove the motion animated in [m-1, m).
     // Show the pre-action pose for expression steps; mid-motion for the last (action) step.
-    var miningCycle = entry && typeof entry.miningCycle === 'number' ? entry.miningCycle : 0;
-    if (miningCycle <= 0)
+    var turn = entry && typeof entry.turn === 'number' ? entry.turn : 0;
+    if (turn <= 0)
     {
         return 0;
     }
     var stepTime = rallyStepTime();
-    var segmentStart = (miningCycle - 1) * stepTime;
-    var lastIdx = rallyLastCpuIndexForMiningCycle(miningCycle);
+    var segmentStart = (turn - 1) * stepTime;
+    var lastIdx = rallyLastCpuIndexForTurn(turn);
     if (myRallyPlayer.pausedCpuIndex === lastIdx)
     {
         return segmentStart + stepTime * 0.5;
@@ -335,15 +335,15 @@ function rallyFrameTiming()
     var entry = rallyCpuEntryAtTime(time);
     // Transport/ground cycle follows the sprite pose clock (not the highlight sample).
     var poseTime = rallyPoseTimeForRender(time, entry);
-    var poseCycle = rallyMiningCycleAtTime(poseTime);
-    var totalCycles = rallyTotalMiningCycles();
+    var poseTurn = rallyTurnAtTime(poseTime);
+    var totalCycles = rallyTotalTurns();
     if (totalCycles <= 0)
     {
-        poseCycle = 0;
+        poseTurn = 0;
     }
-    else if (poseCycle >= totalCycles)
+    else if (poseTurn >= totalCycles)
     {
-        poseCycle = totalCycles - 1;
+        poseTurn = totalCycles - 1;
     }
 
     // While CPU-scrubbed, progress follows poseTime so the bar matches the sprite and
@@ -365,7 +365,7 @@ function rallyFrameTiming()
         completed: completed,
         cpuIndex: cpuIndex,
         entry: entry,
-        poseCycle: poseCycle,
+        poseTurn: poseTurn,
         poseTime: poseTime
     };
 }
