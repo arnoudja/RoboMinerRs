@@ -339,7 +339,8 @@
     width: 0;
 }
 
-.rally-view-turn-status {
+.rally-view-turn-status,
+.rally-view-cpu-status {
     color: #c5d4ea;
     font-family: Consolas, "Courier New", monospace;
     font-size: 0.88rem;

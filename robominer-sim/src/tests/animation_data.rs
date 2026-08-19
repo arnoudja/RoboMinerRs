@@ -27,6 +27,7 @@ fn animation_data_uses_versioned_json_payload_shape() {
     assert_eq!(payload["v"], 2);
     assert_eq!(payload["robots"]["robot"][0]["robotnr"], 0);
     assert_eq!(payload["robots"]["robot"][0]["locations"][0]["l"], 1);
+    assert_eq!(payload["robots"]["robot"][0]["cpuspeed"], 72);
     assert!(
         payload["robots"]["robot"][0]["locations"][1]["cpu"]
             .as_array()

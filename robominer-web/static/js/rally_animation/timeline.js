@@ -291,10 +291,22 @@ function rallyCpuEntryAtTime(time)
 }
 
 
+/** True when paused arrow keys are scrubbing the CPU timeline (not continuous play). */
+function rallyCpuScrubActive()
+{
+    return !myRallyPlayer.playing && myRallyPlayer.pausedCpuIndex !== null;
+}
+
+
 function rallyPoseTimeForRender(time, entry)
 {
-    // Continuous play interpolates across turns.
-    if (myRallyPlayer.playing || myRallyPlayer.pausedCpuIndex === null)
+    // Continuous play always interpolates across turns.
+    if (myRallyPlayer.playing)
+    {
+        return time;
+    }
+    // Paused without CPU scrub: hold the smooth turn clock.
+    if (!rallyCpuScrubActive())
     {
         return time;
     }
@@ -322,6 +334,72 @@ function rallyEnsureCpuTimeline()
     {
         rallyRebuildCpuTimeline();
     }
+}
+
+
+function rallyViewerCpuSpeed()
+{
+    var robot = rallyViewerRobot();
+    if (!robot || typeof robot.cpuspeed !== 'number' || isNaN(robot.cpuspeed) || robot.cpuspeed <= 0)
+    {
+        return 0;
+    }
+    return Math.floor(robot.cpuspeed);
+}
+
+
+/** 1-based CPU step index within `turn` for global timeline index `cpuIndex`. */
+function rallyCpuStepWithinTurn(cpuIndex, turn)
+{
+    rallyEnsureCpuTimeline();
+    if (typeof turn !== 'number' || turn < 0)
+    {
+        return 0;
+    }
+    var first = rallyFirstCpuIndexForTurn(turn);
+    var last = rallyLastCpuIndexForTurn(turn);
+    var stepsInTurn = Math.max(1, last - first + 1);
+    var step = cpuIndex - first + 1;
+    if (step < 1)
+    {
+        return 1;
+    }
+    if (step > stepsInTurn)
+    {
+        return stepsInTurn;
+    }
+    return step;
+}
+
+
+/** Line-only highlight for turn playback; full CPU detail is for arrow-key scrub only. */
+function rallyTurnLevelDebugEntry(turn)
+{
+    var robot = rallyViewerRobot();
+    if (!robot || !robot.locations || typeof turn !== 'number' || turn < 0 || turn >= robot.locations.length)
+    {
+        return null;
+    }
+    var loc = robot.locations[turn];
+    if (typeof loc.l === 'number')
+    {
+        return { turn: turn, l: loc.l };
+    }
+    if (loc.cpu && loc.cpu.length > 0 && typeof loc.cpu[0].l === 'number')
+    {
+        return { turn: turn, l: loc.cpu[0].l };
+    }
+    return null;
+}
+
+
+function rallyEntryForViewerDebug(entry, poseTurn)
+{
+    if (rallyCpuScrubActive())
+    {
+        return entry;
+    }
+    return rallyTurnLevelDebugEntry(poseTurn);
 }
 
 

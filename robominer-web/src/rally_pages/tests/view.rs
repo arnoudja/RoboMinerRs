@@ -233,6 +233,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
             "← → one CPU cycle (when paused)",
             "Shift+← → next turn",
             r#"id="rallyTurnCurrent">0</span>"#,
+            r#"id="rallyCpuCurrent">0</span>"#,
             r#"<script type="application/json" id="rally-result-data">"#,
             r#"<script type="application/json" id="rally-view-config">"#,
             r#""v":1"#,

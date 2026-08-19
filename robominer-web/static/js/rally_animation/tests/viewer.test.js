@@ -20,6 +20,7 @@ function validPayload(overrides = {}) {
                     size: 1.5,
                     maxore: 50,
                     maxturns: 100,
+                    cpuspeed: 4,
                     depotMaxA: 5,
                     depotMaxB: 0,
                     depotMaxC: 0,
@@ -396,6 +397,12 @@ describe('rally animation viewer', () => {
         assert.equal(context.myRallyCpuTimeline[3].c, 9);
         assert.equal(context.myRallyCpuTimeline[3].e, 16);
 
+        assert.equal(context.rallyViewerCpuSpeed(), 4);
+        assert.equal(context.rallyCpuStepWithinTurn(0, 0), 1);
+        assert.equal(context.rallyCpuStepWithinTurn(1, 1), 1);
+        assert.equal(context.rallyCpuStepWithinTurn(2, 1), 2);
+        assert.equal(context.rallyCpuStepWithinTurn(3, 2), 1);
+
         context.rallySeekByCpuSteps(1);
         assert.equal(context.myRallyPlayer.pausedCpuIndex, 1);
         assert.equal(context.rallyCpuIndexAtTime(context.myRallyPlayer.elapsedMs), 1);
@@ -574,11 +581,31 @@ describe('rally animation viewer', () => {
         context.myRallyPlayer.elapsedMs = 25;
         assert.equal(context.rallyTurnAtTime(25), 0);
         assert.equal(context.rallyPoseTimeForRender(25, { turn: 0 }), 25);
+        assert.equal(context.rallyCpuScrubActive(), false);
+        assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).l, 1);
+        assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).c, undefined);
         assert.equal(context.rallyLastCpuIndexForTurn(0), 0);
         assert.equal(context.rallyLastCpuIndexForTurn(1), 2);
         // During segment 0→1, highlight CPUs recorded on locations[1] (destination).
         assert.equal(context.rallyCpuIndexAtTime(25), 2);
         assert.equal(context.rallyCpuEntryAtTime(25).turn, 1);
+    });
+
+    it('shows CPU step detail only while paused and scrubbing', () => {
+        const { context } = loadRallyViewer();
+        assert.equal(context.applyRallyResultPayload(validPayload()), null);
+        context.myRallyViewerSlot = 0;
+        context.myRallyPlayer.playing = false;
+        context.myRallyPlayer.pausedCpuIndex = null;
+        assert.equal(context.rallyCpuScrubActive(), false);
+
+        context.myRallyPlayer.pausedCpuIndex = 2;
+        assert.equal(context.rallyCpuScrubActive(), true);
+        assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).c, 9);
+
+        context.myRallyPlayer.playing = true;
+        context.myRallyPlayer.pausedCpuIndex = null;
+        assert.equal(context.rallyCpuScrubActive(), false);
     });
 
     it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {

@@ -54,6 +54,8 @@ pub struct AnimationRobot {
     pub size: f64,
     pub maxore: i32,
     pub maxturns: i32,
+    #[serde(default)]
+    pub cpuspeed: i32,
     #[serde(rename = "depotMaxA", skip_serializing_if = "Option::is_none", default)]
     pub depot_max_a: Option<i32>,
     #[serde(rename = "depotMaxB", skip_serializing_if = "Option::is_none", default)]

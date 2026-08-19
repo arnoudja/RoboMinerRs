@@ -293,6 +293,7 @@ fn robots_animation(
             size: legacy_float(spec.robot_size),
             maxore: spec.max_ore,
             maxturns: spec.max_turns,
+            cpuspeed: spec.cpu_speed,
             depot_max_a: None,
             depot_max_b: None,
             depot_max_c: None,

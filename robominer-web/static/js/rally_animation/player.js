@@ -8,13 +8,14 @@ function rallyPaintRobots(scale, poseTurn, poseTime, stepTime, entry)
         drawRobotOre(robot);
         drawRobotDepot(robot);
         var isViewer = typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot;
+        var debugEntry = isViewer ? rallyEntryForViewerDebug(entry, poseTurn) : entry;
         // Viewer panel line follows CPU-timeline highlight; peers keep pose `robot.l`.
         var sourceLine = isViewer
-            ? (entry && typeof entry.l === 'number' ? entry.l : null)
+            ? (debugEntry && typeof debugEntry.l === 'number' ? debugEntry.l : null)
             : undefined;
         updateRobotDebugPanel(robot, poseTurn, sourceLine);
     }
-    updateRallyViewerSourceDebug(entry, rallyViewerRobot());
+    updateRallyViewerSourceDebug(rallyEntryForViewerDebug(entry, poseTurn), rallyViewerRobot());
 }
 
 
@@ -22,7 +23,7 @@ function rallyPrepareFrame()
 {
     rallyEnsureCpuTimeline();
     var frame = rallyFrameTiming();
-    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.poseTurn);
+    rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.poseTurn, frame.entry);
     return frame;
 }
 

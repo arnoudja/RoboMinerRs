@@ -1,4 +1,4 @@
-function rallyUpdateTransportUi(completed, cpuIndex, areaTurn)
+function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
 {
     var current = document.getElementById('rallyTurnCurrent');
     var total = document.getElementById('rallyTurnTotal');
@@ -10,6 +10,32 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn)
     {
         total.textContent = Math.max(0, rallyTotalTurns() - 1);
     }
+
+    var cpuCurrent = document.getElementById('rallyCpuCurrent');
+    var cpuTotal = document.getElementById('rallyCpuTotal');
+    var cpuSpeed = rallyViewerCpuSpeed();
+    if (cpuTotal)
+    {
+        cpuTotal.textContent = cpuSpeed > 0 ? String(cpuSpeed) : '—';
+    }
+    if (cpuCurrent)
+    {
+        if (cpuSpeed > 0 && rallyCpuScrubActive())
+        {
+            var cpuTurn = entry && typeof entry.turn === 'number' ? entry.turn : areaTurn;
+            cpuCurrent.textContent = String(rallyCpuStepWithinTurn(cpuIndex, cpuTurn));
+        }
+        else
+        {
+            cpuCurrent.textContent = '—';
+        }
+    }
+    var cpuStep = cpuSpeed > 0 && rallyCpuScrubActive()
+        ? rallyCpuStepWithinTurn(
+            cpuIndex,
+            entry && typeof entry.turn === 'number' ? entry.turn : areaTurn
+        )
+        : null;
 
     var fill = document.getElementById('rallyProgressFill');
     if (fill)
@@ -30,7 +56,8 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn)
         track.setAttribute(
             'aria-valuetext',
             'Turn ' + areaTurn + ' of ' + maxMining +
-                (totalCpu > 0 ? (', CPU ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
+                (cpuStep !== null ? (', Cpu ' + cpuStep + ' of ' + cpuSpeed) : '') +
+                (totalCpu > 0 ? (', CPU timeline ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
         );
     }
 
