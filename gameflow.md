@@ -12,7 +12,7 @@ Signup auto-claims achievement **1 / step 1**:
   **301**, memory **401**, CPU **501**, engine **601**, scanner **701**)
 - Default program: `move(1);` + `mine();` (fits memory size **4**)
 - Ore container capacity **2** on the robot (wallet is separate)
-- Mining speed **1**, CPU **1** i/c, engine forward **15** / backward **3** /
+- Mining speed **1**, CPU **1** i/t, engine forward **15** / backward **3** /
   rotate **8** → effective move speed **1.0**
 - Battery capacity **110**, recharge time **5** s (~15 short turns)
 - **1** mining queue slot

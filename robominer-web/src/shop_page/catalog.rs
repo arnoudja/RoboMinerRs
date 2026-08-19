@@ -49,9 +49,9 @@ pub(super) fn render_shop_part_compact_card(
     ));
     body.push_str(r#"<span class="shop-part-highlights">"#);
     push_shop_highlight(body, "Ore", part.ore_capacity, " units");
-    push_shop_highlight(body, "Mining", part.mining_capacity, " o/c");
+    push_shop_highlight(body, "Mining", part.mining_capacity, " o/t");
     push_shop_highlight(body, "Battery", part.battery_capacity, " pc");
-    push_shop_highlight(body, "CPU", part.cpu_capacity, " i/c");
+    push_shop_highlight(body, "CPU", part.cpu_capacity, " i/t");
     if part.type_id == ORE_SCANNER_PART_TYPE_ID {
         push_shop_highlight(body, "Scan", part.scan_distance, "");
     } else if part.type_id == MEMORY_MODULE_PART_TYPE_ID {
@@ -109,10 +109,10 @@ pub(super) fn render_shop_part_detail_panel(
 
     body.push_str(r#"<dl class="shop-part-stats">"#);
     add_shop_stat_entry(body, "Ore capacity:", part.ore_capacity, " units");
-    add_shop_stat_entry(body, "Mining capacity:", part.mining_capacity, " o/c");
+    add_shop_stat_entry(body, "Mining capacity:", part.mining_capacity, " o/t");
     add_shop_stat_entry(body, "Battery capacity:", part.battery_capacity, " pc");
     add_shop_stat_entry(body, "Memory size:", part.memory_capacity, "");
-    add_shop_stat_entry(body, "CPU speed:", part.cpu_capacity, " i/c");
+    add_shop_stat_entry(body, "CPU speed:", part.cpu_capacity, " i/t");
     if part.forward_capacity > 0 {
         body.push_str(&format!(
             r#"<div class="shop-part-stat"><dt>Engine power</dt><dd>{} forward, {} backward, {} rotate</dd></div>"#,

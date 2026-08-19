@@ -108,10 +108,10 @@ fn part_option_label(part_name: &str, capacity_label: PartCapacityLabel, capacit
     }
     match capacity_label {
         PartCapacityLabel::Ore => format!("{part_name} ({capacity} Ore)"),
-        PartCapacityLabel::Mining => format!("{part_name} ({capacity} u/c)"),
+        PartCapacityLabel::Mining => format!("{part_name} ({capacity} u/t)"),
         PartCapacityLabel::Battery => format!("{part_name} ({capacity} pc)"),
         PartCapacityLabel::Memory => format!("{part_name} ({capacity} i)"),
-        PartCapacityLabel::Cpu => format!("{part_name} ({capacity} i/c)"),
+        PartCapacityLabel::Cpu => format!("{part_name} ({capacity} i/t)"),
         PartCapacityLabel::Engine => format!("{part_name} ({capacity} fc)"),
         PartCapacityLabel::Scanner => format!("{part_name} ({capacity} sd)"),
     }
