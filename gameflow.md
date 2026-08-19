@@ -41,7 +41,7 @@ Signup auto-claims achievement **1 / step 1**:
    Save for shop upgrades.
 
 5. **Achievement 2 step 3** — score ≥ **70** in Cerbonium-mini → unlock
-   **Cerbonium-Starter** (`1002`, 15×15, 25 cycles, 20% tax).
+   **Cerbonium-Starter** (`1002`, 15×15, 25 turns, 20% tax).
 
 6. **Step 4** — mine **50** Cerbonium → wallet cap **50** (can afford enhanced
    container **102**, capacity **5**).
@@ -68,8 +68,8 @@ Early targets from standard → enhanced lines (part IDs in parentheses):
 | Goal | Part | Ore cost (approx.) | Effect |
 | --- | --- | --- | --- |
 | Bigger container | Enhanced Ore Container (102) | 5 Cerbonium | Capacity **5** |
-| Longer runs | Cerbonium Battery (303) | 15 Cerbonium | More cycles per rally |
+| Longer runs | Cerbonium Battery (303) | 15 Cerbonium | More turns per rally |
 | Better program | Enhanced Memory (402) | 6 Cerbonium | Memory **6** (`while (mine());`) |
-| Faster mining | Enhanced CPU (502) | 5 Cerbonium | More instructions per turn |
+| Faster CPU | Enhanced CPU (502) | 5 Cerbonium | More instructions per turn |
 
 Exact prices are in `gameData.sql` (`OrePrice` / `OrePriceAmount`).

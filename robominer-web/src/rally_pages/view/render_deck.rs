@@ -46,7 +46,7 @@ pub(super) fn render_rally_view_deck(
             r#"<p class="rally-view-turn-status">Turn <span id="rallyTurnCurrent">0</span> / <span id="rallyTurnTotal">0</span></p>"#,
         );
         body.push_str(
-            r#"<p class="rally-view-cpu-status">Cpu <span id="rallyCpuCurrent">0</span> / <span id="rallyCpuTotal">0</span></p>"#,
+            r#"<p class="rally-view-cpu-status">CPU <span id="rallyCpuCurrent">0</span> / <span id="rallyCpuTotal">0</span></p>"#,
         );
         body.push_str(
             r#"<p class="rally-view-keyboard-hint">Space play/pause · ← → one CPU cycle (when paused) · Shift+← → next turn · Home/End jump</p>"#,

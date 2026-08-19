@@ -56,7 +56,7 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
         track.setAttribute(
             'aria-valuetext',
             'Turn ' + areaTurn + ' of ' + maxMining +
-                (cpuStep !== null ? (', Cpu ' + cpuStep + ' of ' + cpuSpeed) : '') +
+                (cpuStep !== null ? (', CPU ' + cpuStep + ' of ' + cpuSpeed) : '') +
                 (totalCpu > 0 ? (', CPU timeline ' + currentCpu + ' of ' + Math.max(0, totalCpu - 1)) : '')
         );
     }

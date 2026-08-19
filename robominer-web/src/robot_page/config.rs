@@ -258,7 +258,7 @@ pub(super) fn render_robot_config_panel(
         format!("{:.2} s/t", robot.backward_speed),
     );
     add_robot_stat_entry(body, "Rotate speed:", format!("{} d/t", robot.rotate_speed));
-    add_robot_stat_entry(body, "Mining:", format!("{} u/t", robot.mining_speed));
+    add_robot_stat_entry(body, "Mining speed:", format!("{} u/t", robot.mining_speed));
     add_robot_stat_entry(body, "CPU:", format!("{} i/t", robot.cpu_speed));
     add_robot_stat_entry(body, "Scan time:", format!("{} cycles", robot.scan_time));
     add_robot_stat_entry(body, "Size:", format!("{:.2} s", robot.robot_size));
