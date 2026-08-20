@@ -243,7 +243,7 @@ pub enum AreaProperty {
     StartingOreC,
     /// Maximum number of turns for the area.
     MiningTurns,
-    /// Ore target used in the rally score calculation.
+    /// Mining target used in the rally score calculation.
     OreTarget,
 }
 

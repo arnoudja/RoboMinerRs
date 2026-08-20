@@ -193,7 +193,7 @@ fn render_mining_result_score_breakdown(
         r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Score breakdown</h3>"#,
     );
     body.push_str(&format!(
-        r#"<p class="mining-results-score-target">Ore target: {}</p>"#,
+        r#"<p class="mining-results-score-target">Mining target: {} ore</p>"#,
         breakdown.ore_target
     ));
     body.push_str(

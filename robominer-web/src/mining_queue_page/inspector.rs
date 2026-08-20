@@ -72,7 +72,7 @@ pub(super) fn render_mining_area_details(
         r#"<tr><td>Mining time:</td><td colspan="3">{}</td></tr>
 <tr><td>Turns:</td><td colspan="3">{}</td></tr>
 <tr><td>Area size:</td><td colspan="3">{} x {}</td></tr>
-<tr><td>Ore target:</td><td colspan="3">{}</td></tr>
+<tr><td>Mining target:</td><td colspan="3">{} ore</td></tr>
 <tr><td colspan="4">Estimated ore:</td></tr>"#,
         format_period(area.mining_time),
         area.max_moves,

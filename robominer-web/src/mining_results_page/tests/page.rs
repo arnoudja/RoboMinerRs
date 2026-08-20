@@ -112,7 +112,7 @@ fn mining_results_rendering_escapes_fields() {
             ">610.0<",
             r#"class="mining-results-score-table""#,
             "Score breakdown",
-            r#"class="mining-results-score-target">Ore target: 30</p>"#,
+            r#"class="mining-results-score-target">Mining target: 30 ore</p>"#,
             "Mined + Overflow",
             "Overflow",
             r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">20 / 30</td><td class="mining-results-score-num">600.0</td><td class="mining-results-score-num"></td>"#,
@@ -134,7 +134,7 @@ fn mining_results_rendering_escapes_fields() {
         r#"class="mining-results-robot-title""#,
         r#"class="mining-results-robot-empty""#,
         "No recent runs for",
-        "Ore target (T)",
+        "Ore target",
         "A overflow → B",
         "A (up to 900)",
     ] {
@@ -152,7 +152,7 @@ fn mining_results_score_breakdown_shows_overflow_conversion() {
     assert_contains_all(
         &html,
         &[
-            r#"class="mining-results-score-target">Ore target: 15</p>"#,
+            r#"class="mining-results-score-target">Mining target: 15 ore</p>"#,
             r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">15 / 15</td><td class="mining-results-score-num">900.0</td><td class="mining-results-score-num">5 × 2 = 10</td>"#,
             r#"<td>Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start">10 + 10 = 20</td><td class="mining-results-score-num mining-results-score-start">20 / 45</td><td class="mining-results-score-num">40.0</td><td class="mining-results-score-num"></td>"#,
             r#"class="mining-results-score-total"><td>Total</td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num">940.0</td><td class="mining-results-score-num"></td>"#,

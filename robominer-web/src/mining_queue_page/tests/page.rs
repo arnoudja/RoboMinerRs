@@ -167,7 +167,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
 <tr><td>Depot tax:</td><td colspan="3">2%</td></tr>"#,
             r#"Turns:</td><td colspan="3">50</td></tr>
 <tr><td>Area size:</td><td colspan="3">10 x 11</td></tr>
-<tr><td>Ore target:</td><td colspan="3">30</td></tr>
+<tr><td>Mining target:</td><td colspan="3">30 ore</td></tr>
 <tr><td colspan="4">Estimated ore:</td></tr>"#,
             r#"Ore &lt;Two&gt;:</td><td colspan="2">72</td></tr>"#,
             r#"class="mining-queue-page" data-area-storage-key="#,

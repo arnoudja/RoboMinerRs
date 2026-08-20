@@ -158,7 +158,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
             "Container tax applies to ore still in the robot container",
             "Depot tax applies to ore already banked",
             r#"<h2 id="rally-score">Rally score</h2>"#,
-            "Ore target",
+            "Mining target",
             "worth up to 900 points",
             "smoothed score per robot per area",
             r#"<h2 id="scanning-and-ore-heaps">Scanning and ore heaps</h2>"#,
