@@ -76,17 +76,10 @@ async fn handle_request(
             .into_response();
     };
 
-    match dispatch(state.config, peer, request).await {
-        Ok(response) => response,
-        Err(response) => response,
-    }
+    dispatch(state.config, peer, request).await
 }
 
-async fn dispatch(
-    config: ServerConfig,
-    peer: SocketAddr,
-    request: HyperRequest,
-) -> Result<AxumResponse, AxumResponse> {
+async fn dispatch(config: ServerConfig, peer: SocketAddr, request: HyperRequest) -> AxumResponse {
     let method = request.method().as_str().to_string();
     let head_only = method.eq_ignore_ascii_case("HEAD");
 
@@ -107,10 +100,10 @@ async fn dispatch(
         .entry("x-robominer-peer".to_string())
         .or_insert_with(|| peer.ip().to_string());
 
-    let body = axum::body::to_bytes(request.into_body(), MAX_REQUEST_BODY_BYTES)
-        .await
-        .map_err(|_| to_axum_response(&Response::payload_too_large(), false))?
-        .to_vec();
+    let body = match axum::body::to_bytes(request.into_body(), MAX_REQUEST_BODY_BYTES).await {
+        Ok(bytes) => bytes.to_vec(),
+        Err(_) => return to_axum_response(&Response::payload_too_large(), false),
+    };
 
     let form_values = if method.eq_ignore_ascii_case("POST") {
         parse_form_body_values(&headers, &body)
@@ -128,7 +121,7 @@ async fn dispatch(
         headers,
     };
     let response = crate::route(&app_request, &config).await;
-    Ok(to_axum_response(&response, head_only))
+    to_axum_response(&response, head_only)
 }
 
 async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse {
