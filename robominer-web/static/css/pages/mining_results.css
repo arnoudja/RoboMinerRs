@@ -535,10 +535,61 @@
     font-size: 0.88rem;
 }
 
-.mining-results-action-total {
+.mining-results-action-total,
+.mining-results-score-target {
     color: var(--mq-text-muted);
     font-size: 0.88rem;
     margin: 0;
+}
+
+.mining-results-page table.mining-results-score-table {
+    background: rgba(10, 16, 26, 0.72);
+    border: 1px solid var(--mq-border);
+    border-collapse: collapse;
+    margin: 0;
+    width: 100%;
+}
+
+.mining-results-page table.mining-results-score-table th,
+.mining-results-page table.mining-results-score-table td {
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    color: var(--mq-text);
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+.mining-results-page table.mining-results-score-table thead th {
+    background: rgba(10, 16, 26, 0.95);
+    color: var(--mq-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.mining-results-page table.mining-results-score-table tbody tr {
+    background: rgba(10, 16, 26, 0.55);
+}
+
+.mining-results-page table.mining-results-score-table .mining-results-score-num {
+    font-family: Consolas, "Courier New", monospace;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.mining-results-page table.mining-results-score-table .mining-results-score-start {
+    text-align: left;
+}
+
+.mining-results-page table.mining-results-score-table .mining-results-score-residual td {
+    color: var(--mq-text-muted);
+    font-style: italic;
+}
+
+.mining-results-page table.mining-results-score-table .mining-results-score-total td {
+    background: rgba(0, 229, 255, 0.08);
+    color: #e8f4ff;
+    font-weight: bold;
 }
 
 

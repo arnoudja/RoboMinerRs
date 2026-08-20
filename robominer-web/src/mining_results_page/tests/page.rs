@@ -108,8 +108,16 @@ fn mining_results_rendering_escapes_fields() {
             "miningResults?rallyResultId=99",
             "Replay rally",
             "+27 net",
-            "Score 12.3",
-            ">12.3<",
+            "Score 610.0",
+            ">610.0<",
+            r#"class="mining-results-score-table""#,
+            "Score breakdown",
+            r#"class="mining-results-score-target">Ore target: 30</p>"#,
+            "Mined + Overflow",
+            "Overflow",
+            r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">20 / 30</td><td class="mining-results-score-num">600.0</td><td class="mining-results-score-num"></td>"#,
+            r#"<td>Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start">10 + 0 = 10</td><td class="mining-results-score-num mining-results-score-start">10 / 90</td><td class="mining-results-score-num">10.0</td><td class="mining-results-score-num"></td>"#,
+            r#"class="mining-results-score-total""#,
             "Scan",
             "50.0%",
             "33.3%",
@@ -126,9 +134,30 @@ fn mining_results_rendering_escapes_fields() {
         r#"class="mining-results-robot-title""#,
         r#"class="mining-results-robot-empty""#,
         "No recent runs for",
+        "Ore target (T)",
+        "A overflow → B",
+        "A (up to 900)",
     ] {
         assert_html_not_contains(&html, absent);
     }
+}
+
+#[test]
+fn mining_results_score_breakdown_shows_overflow_conversion() {
+    let mut state = sample_mining_results_state();
+    state.results[0].score_ore_target = 15;
+    state.results[0].score = 940.0;
+    let html = render_mining_results_page("Player".to_string(), None, &state);
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="mining-results-score-target">Ore target: 15</p>"#,
+            r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">15 / 15</td><td class="mining-results-score-num">900.0</td><td class="mining-results-score-num">5 × 2 = 10</td>"#,
+            r#"<td>Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start">10 + 10 = 20</td><td class="mining-results-score-num mining-results-score-start">20 / 45</td><td class="mining-results-score-num">40.0</td><td class="mining-results-score-num"></td>"#,
+            r#"class="mining-results-score-total"><td>Total</td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num">940.0</td><td class="mining-results-score-num"></td>"#,
+        ],
+    );
 }
 
 #[test]
@@ -173,6 +202,7 @@ fn mining_results_shows_empty_state_and_claim_banner() {
             results: Vec::new(),
             ore_results: Vec::new(),
             action_results: Vec::new(),
+            area_ores: Vec::new(),
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 2,
                 ore_rewards: vec![

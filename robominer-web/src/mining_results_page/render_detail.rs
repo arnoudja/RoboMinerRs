@@ -1,7 +1,15 @@
 use std::collections::HashMap;
 
+use robominer_domain::{SCORE_TIER_COUNT, ScoreTierBreakdown, ore_amounts, score_breakdown};
+
 use crate::html::{escape_html, format_utc_millis};
 use crate::mining_results_page::MiningResultsPageState;
+
+#[derive(Clone, Copy)]
+struct ScoringSlot<'a> {
+    name: Option<&'a str>,
+    amount: i32,
+}
 
 pub(super) fn render_mining_results_detail_section(
     body: &mut String,
@@ -9,6 +17,7 @@ pub(super) fn render_mining_results_detail_section(
     robot_names: &HashMap<i64, &str>,
     ore_result_map: &HashMap<i64, Vec<&robominer_db::MiningResultOreStateRecord>>,
     action_result_map: &HashMap<i64, Vec<&robominer_db::MiningResultActionStateRecord>>,
+    area_ore_map: &HashMap<i64, Vec<&robominer_db::MiningResultAreaOreRecord>>,
 ) {
     body.push_str(
         r#"<div class="mining-results-detail-area"><div class="mining-results-detail-panels">"#,
@@ -22,6 +31,10 @@ pub(super) fn render_mining_results_detail_section(
             .get(&result.mining_queue_id)
             .map(Vec::as_slice)
             .unwrap_or(&[]);
+        let area_ores = area_ore_map
+            .get(&result.mining_area_id)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
         let robot_name = robot_names
             .get(&result.robot_id)
             .copied()
@@ -29,10 +42,10 @@ pub(super) fn render_mining_results_detail_section(
         render_mining_result_detail_panel(
             body,
             result,
-            result.robot_id,
             robot_name,
             ore_results,
             action_results,
+            area_ores,
             Some(result.mining_queue_id) == state.selected_mining_queue_id,
         );
     }
@@ -42,10 +55,10 @@ pub(super) fn render_mining_results_detail_section(
 fn render_mining_result_detail_panel(
     body: &mut String,
     result: &robominer_db::MiningResultStateRecord,
-    robot_id: i64,
     robot_name: &str,
     ore_results: &[&robominer_db::MiningResultOreStateRecord],
     action_results: &[&robominer_db::MiningResultActionStateRecord],
+    area_ores: &[&robominer_db::MiningResultAreaOreRecord],
     active: bool,
 ) {
     let active_class = if active {
@@ -59,7 +72,7 @@ fn render_mining_result_detail_panel(
         r#"<div class="mining-results-detail-panel{active_class}" id="miningResultDetails{}" data-run-id="{}" data-robot-id="{}" data-area-name="{}" data-sort-end="{}" data-sort-reward="{}" data-sort-score="{}"{hidden_attr}>"#,
         result.mining_queue_id,
         result.mining_queue_id,
-        robot_id,
+        result.robot_id,
         escape_html(&result.mining_area_name),
         result.mining_end_time_millis,
         result.total_reward,
@@ -75,7 +88,7 @@ fn render_mining_result_detail_panel(
     ));
     body.push_str(&render_mining_result_replay_action(result));
     body.push_str("</header>");
-    render_mining_result_breakdown(body, result, ore_results, action_results);
+    render_mining_result_breakdown(body, result, ore_results, action_results, area_ores);
     body.push_str("</div>");
 }
 
@@ -94,6 +107,7 @@ fn render_mining_result_breakdown(
     result: &robominer_db::MiningResultStateRecord,
     ore_results: &[&robominer_db::MiningResultOreStateRecord],
     action_results: &[&robominer_db::MiningResultActionStateRecord],
+    area_ores: &[&robominer_db::MiningResultAreaOreRecord],
 ) {
     body.push_str(r#"<div class="mining-results-run-breakdown">"#);
     body.push_str(r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Payout</h3><dl class="mining-results-payout-list">"#);
@@ -121,6 +135,8 @@ fn render_mining_result_breakdown(
         }
         body.push_str("</ul></section>");
     }
+
+    render_mining_result_score_breakdown(body, result, ore_results, area_ores);
 
     let total_actions: i32 = action_results.iter().map(|action| action.amount).sum();
     if !action_results.is_empty() {
@@ -152,6 +168,161 @@ fn render_mining_result_breakdown(
         format_utc_millis(result.creation_time_millis),
         format_utc_millis(result.mining_end_time_millis)
     ));
+}
+
+fn render_mining_result_score_breakdown(
+    body: &mut String,
+    result: &robominer_db::MiningResultStateRecord,
+    ore_results: &[&robominer_db::MiningResultOreStateRecord],
+    area_ores: &[&robominer_db::MiningResultAreaOreRecord],
+) {
+    let slots = scoring_slots(area_ores, ore_results);
+    let amounts = ore_amounts(&[
+        (0, slots[0].amount),
+        (1, slots[1].amount),
+        (2, slots[2].amount),
+    ]);
+    let breakdown = score_breakdown(amounts, result.score_ore_target);
+    let tiers = [
+        (&breakdown.high, slots[0]),
+        (&breakdown.mid, slots[1]),
+        (&breakdown.low, slots[2]),
+    ];
+
+    body.push_str(
+        r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Score breakdown</h3>"#,
+    );
+    body.push_str(&format!(
+        r#"<p class="mining-results-score-target">Ore target: {}</p>"#,
+        breakdown.ore_target
+    ));
+    body.push_str(
+        r#"<table class="mining-results-score-table"><thead><tr><th scope="col">Ore</th><th scope="col">Mined + Overflow</th><th scope="col">Counted</th><th scope="col">Points</th><th scope="col">Overflow</th></tr></thead><tbody>"#,
+    );
+    for (index, (tier, slot)) in tiers.into_iter().enumerate() {
+        push_score_tier_row(body, &slot, tier, index == 0);
+    }
+    if breakdown.residual_ore > 0 {
+        push_score_table_row(
+            body,
+            "mining-results-score-residual",
+            "Residual",
+            "",
+            &breakdown.residual_ore.to_string(),
+            &format!("{:.1}", breakdown.residual_points),
+            "",
+        );
+    }
+    push_score_table_row(
+        body,
+        "mining-results-score-total",
+        "Total",
+        "",
+        "",
+        &format!("{:.1}", breakdown.total),
+        "",
+    );
+    body.push_str("</tbody></table></section>");
+}
+
+fn push_score_tier_row(
+    body: &mut String,
+    slot: &ScoringSlot<'_>,
+    tier: &ScoreTierBreakdown,
+    highest_value_ore: bool,
+) {
+    let ore_name = slot
+        .name
+        .map(escape_html)
+        .unwrap_or_else(|| "—".to_string());
+    let overflow = if tier.overflow_out > 0 {
+        format!("{} × 2 = {}", tier.overflow_out, tier.overflow_converted)
+    } else {
+        String::new()
+    };
+    let mined = if highest_value_ore {
+        slot.amount.to_string()
+    } else {
+        format!(
+            "{} + {} = {}",
+            slot.amount,
+            tier.overflow_in,
+            slot.amount + tier.overflow_in
+        )
+    };
+    push_score_table_row(
+        body,
+        "",
+        &ore_name,
+        &mined,
+        &format!("{} / {}", tier.counted, tier.cap),
+        &format!("{:.1}", tier.points),
+        &overflow,
+    );
+}
+
+fn push_score_table_row(
+    body: &mut String,
+    row_class: &str,
+    ore: &str,
+    mined: &str,
+    counted: &str,
+    points: &str,
+    overflow: &str,
+) {
+    let class_attr = if row_class.is_empty() {
+        String::new()
+    } else {
+        format!(r#" class="{row_class}""#)
+    };
+    body.push_str(&format!(
+        r#"<tr{class_attr}><td>{}</td><td class="mining-results-score-num mining-results-score-start">{}</td><td class="mining-results-score-num mining-results-score-start">{}</td><td class="mining-results-score-num">{}</td><td class="mining-results-score-num">{}</td></tr>"#,
+        ore, mined, counted, points, overflow
+    ));
+}
+
+fn scoring_slots<'a>(
+    area_ores: &'a [&robominer_db::MiningResultAreaOreRecord],
+    ore_results: &'a [&robominer_db::MiningResultOreStateRecord],
+) -> [ScoringSlot<'a>; SCORE_TIER_COUNT] {
+    let mut ordered: Vec<(i64, &'a str)> = Vec::new();
+    let mut push_unique = |ore_id: i64, ore_name: &'a str| {
+        if ordered.iter().any(|(id, _)| *id == ore_id) || ordered.len() == SCORE_TIER_COUNT {
+            return;
+        }
+        ordered.push((ore_id, ore_name));
+    };
+
+    if !area_ores.is_empty() {
+        let mut ores = area_ores.to_vec();
+        ores.sort_by_key(|ore| std::cmp::Reverse(ore.ore_id));
+        for ore in ores {
+            push_unique(ore.ore_id, ore.ore_name.as_str());
+        }
+    } else {
+        let mut ores = ore_results.to_vec();
+        ores.sort_by_key(|ore| std::cmp::Reverse(ore.ore_id));
+        for ore in ores {
+            push_unique(ore.ore_id, ore.ore_name.as_str());
+        }
+    }
+
+    let mut slots = [ScoringSlot {
+        name: None,
+        amount: 0,
+    }; SCORE_TIER_COUNT];
+    for (index, (ore_id, name)) in ordered.into_iter().enumerate() {
+        let amount = ore_results
+            .iter()
+            .find(|result| result.ore_id == ore_id)
+            .map(|result| result.amount)
+            .unwrap_or(0);
+        slots[index] = ScoringSlot {
+            name: Some(name),
+            amount,
+        };
+    }
+    slots
 }
 
 fn action_name(action_type: i32) -> &'static str {

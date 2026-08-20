@@ -23,4 +23,7 @@ pub use simulation::{
     run_rally_loadout_with_animation_seed, run_rally_loadout_with_seed,
 };
 
-pub use robominer_sim::ore_heap_estimated_total;
+pub use robominer_sim::{
+    MAX_ORE_TYPES, SCORE_TIER_COUNT, ScoreBreakdown, ScoreTierBreakdown, ore_amounts,
+    ore_heap_estimated_total, score_breakdown,
+};

@@ -40,6 +40,15 @@ pub(super) fn render_mining_results_page(
             .push(action_result);
     }
 
+    let mut area_ore_map: HashMap<i64, Vec<&robominer_db::MiningResultAreaOreRecord>> =
+        HashMap::new();
+    for area_ore in &state.area_ores {
+        area_ore_map
+            .entry(area_ore.mining_area_id)
+            .or_default()
+            .push(area_ore);
+    }
+
     let mut body = String::from(r#"<div class="mining-results-page">"#);
     render_mining_results_summary(&mut body);
     render_mining_results_wallet_delta(&mut body, &state.ore_results, !state.results.is_empty());
@@ -59,6 +68,7 @@ pub(super) fn render_mining_results_page(
             &robot_names,
             &ore_result_map,
             &action_result_map,
+            &area_ore_map,
         );
         body.push_str("</div>");
         body.push_str(&super::scripts::mining_results_page_script_tag());

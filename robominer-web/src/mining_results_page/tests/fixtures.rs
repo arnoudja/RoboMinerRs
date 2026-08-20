@@ -38,9 +38,11 @@ pub(super) fn sample_mining_results_state() -> MiningResultsPageState {
         results: vec![robominer_db::MiningResultStateRecord {
             robot_id: 1,
             mining_queue_id: 10,
+            mining_area_id: 1,
             mining_area_name: "Area & One".to_string(),
             rally_result_id: Some(99),
-            score: 12.34,
+            score: 610.0,
+            score_ore_target: 30,
             total_ore_mined: 30,
             total_tax: 3,
             total_reward: 27,
@@ -86,6 +88,18 @@ pub(super) fn sample_mining_results_state() -> MiningResultsPageState {
             claimed_queues: 0,
             ore_rewards: vec![],
         },
+        area_ores: vec![
+            robominer_db::MiningResultAreaOreRecord {
+                mining_area_id: 1,
+                ore_id: 2,
+                ore_name: "Ore & B".to_string(),
+            },
+            robominer_db::MiningResultAreaOreRecord {
+                mining_area_id: 1,
+                ore_id: 1,
+                ore_name: "Ore <A>".to_string(),
+            },
+        ],
         selected_mining_queue_id: Some(10),
     }
 }
@@ -99,9 +113,11 @@ fn sample_run(
     robominer_db::MiningResultStateRecord {
         robot_id,
         mining_queue_id,
+        mining_area_id: 1,
         mining_area_name: mining_area_name.to_string(),
         rally_result_id: None,
         score: 1.0,
+        score_ore_target: 30,
         total_ore_mined: 1,
         total_tax: 0,
         total_reward: 1,

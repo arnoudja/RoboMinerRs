@@ -235,6 +235,8 @@ async fn list_mining_result_states_for_robot_returns_claimed_only() {
     assert_eq!(states[0].total_ore_mined, 8);
     assert_eq!(states[0].total_tax, 2);
     assert_eq!(states[0].total_reward, 6);
+    assert_eq!(states[0].mining_area_id, fixture.mining_area_id);
+    assert_eq!(states[0].score_ore_target, 30);
     assert!(!states[0].mining_area_name.is_empty());
 
     let limited =
@@ -368,6 +370,15 @@ async fn list_mining_result_states_for_user_returns_newest_claimed_across_robots
         .collect();
     action_queue_ids.sort_unstable();
     assert_eq!(action_queue_ids, expected_ore_ids);
+
+    let area_ores = robominer_db::list_mining_result_area_ores_for_user(&pool, fixture.user_id, 4)
+        .await
+        .expect("list user area ores");
+    assert!(
+        area_ores
+            .iter()
+            .any(|ore| ore.mining_area_id == fixture.mining_area_id && ore.ore_id == fixture.ore_id)
+    );
 
     let limited = robominer_db::list_mining_result_states_for_user(&pool, fixture.user_id, 0)
         .await

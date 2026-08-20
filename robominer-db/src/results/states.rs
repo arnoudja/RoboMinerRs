@@ -2,15 +2,33 @@ use sqlx::MySqlPool;
 
 use crate::MiningResultStateRecord;
 
-type MiningResultStateRow = (i64, i64, String, Option<i64>, f64, i32, i32, i32, i64, i64);
+type MiningResultStateRow = (
+    i64,
+    i64,
+    i64,
+    String,
+    Option<i64>,
+    f64,
+    i32,
+    i32,
+    i32,
+    i32,
+    i64,
+    i64,
+);
 
-const MINING_RESULT_STATE_COLUMNS: &str = "MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-     MiningQueue.rallyResultId, COALESCE(MiningQueue.score, 0.0), \
+const MINING_RESULT_STATE_COLUMNS: &str = "MiningQueue.robotId, MiningQueue.id, MiningQueue.miningAreaId, \
+     MiningArea.areaName, MiningQueue.rallyResultId, COALESCE(MiningQueue.score, 0.0), \
+     MiningArea.scoreOreTarget, \
      CAST(COALESCE(SUM(MiningOreResult.amount), 0) AS SIGNED), \
      CAST(COALESCE(SUM(COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED), \
      CAST(COALESCE(SUM(MiningOreResult.amount - COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED), \
      CAST(UNIX_TIMESTAMP(MiningQueue.creationTime) * 1000 AS SIGNED), \
      CAST(UNIX_TIMESTAMP(MiningQueue.miningEndTime) * 1000 AS SIGNED)";
+
+const MINING_RESULT_STATE_GROUP_BY: &str = "MiningQueue.robotId, MiningQueue.id, MiningQueue.miningAreaId, \
+     MiningArea.areaName, MiningArea.scoreOreTarget, MiningQueue.rallyResultId, MiningQueue.score, \
+     MiningQueue.creationTime, MiningQueue.miningEndTime";
 
 fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResultStateRecord> {
     rows.into_iter()
@@ -18,9 +36,11 @@ fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResult
             |(
                 robot_id,
                 mining_queue_id,
+                mining_area_id,
                 mining_area_name,
                 rally_result_id,
                 score,
+                score_ore_target,
                 total_ore_mined,
                 total_tax,
                 total_reward,
@@ -29,9 +49,11 @@ fn mining_result_state_rows(rows: Vec<MiningResultStateRow>) -> Vec<MiningResult
             )| MiningResultStateRecord {
                 robot_id,
                 mining_queue_id,
+                mining_area_id,
                 mining_area_name,
                 rally_result_id,
                 score,
+                score_ore_target,
                 total_ore_mined,
                 total_tax,
                 total_reward,
@@ -55,9 +77,7 @@ pub async fn list_mining_result_states_for_user(
          LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
          WHERE Robot.userId = ? \
            AND MiningQueue.claimed = TRUE \
-         GROUP BY MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-                  MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
-                  MiningQueue.miningEndTime \
+         GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
          LIMIT ?"
     ))
@@ -80,9 +100,7 @@ pub async fn list_mining_result_states_for_robot(
          LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
          WHERE MiningQueue.robotId = ? \
            AND MiningQueue.claimed = TRUE \
-         GROUP BY MiningQueue.robotId, MiningQueue.id, MiningArea.areaName, \
-                  MiningQueue.rallyResultId, MiningQueue.score, MiningQueue.creationTime, \
-                  MiningQueue.miningEndTime \
+         GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
          LIMIT ?"
     ))
