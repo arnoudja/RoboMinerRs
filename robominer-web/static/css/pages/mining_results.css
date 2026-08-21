@@ -501,6 +501,10 @@
     text-transform: uppercase;
 }
 
+.mining-results-breakdown-section .page-help-hint {
+    margin: 0;
+}
+
 .mining-results-ore-list,
 .mining-results-action-list,
 .mining-results-timeline-list {

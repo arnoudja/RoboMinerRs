@@ -112,6 +112,8 @@ fn mining_results_rendering_escapes_fields() {
             ">610.0<",
             r#"class="mining-results-score-table""#,
             "Score breakdown",
+            r#"class="page-help-hint""#,
+            r#"href="helpMechanics#rally-score">Rally score</a>"#,
             r#"class="mining-results-score-target">Mining target: 30 ore</p>"#,
             "Mined + Overflow",
             "Overflow",

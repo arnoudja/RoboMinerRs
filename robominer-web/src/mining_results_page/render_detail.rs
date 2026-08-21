@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use robominer_domain::{SCORE_TIER_COUNT, ScoreTierBreakdown, ore_amounts, score_breakdown};
 
+use crate::help_pages;
 use crate::html::{escape_html, format_utc_millis};
 use crate::mining_results_page::MiningResultsPageState;
 
@@ -192,6 +193,11 @@ fn render_mining_result_score_breakdown(
     body.push_str(
         r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Score breakdown</h3>"#,
     );
+    body.push_str(&help_pages::render_page_help_hint(
+        "How is this calculated?",
+        "helpMechanics#rally-score",
+        "Rally score",
+    ));
     body.push_str(&format!(
         r#"<p class="mining-results-score-target">Mining target: {} ore</p>"#,
         breakdown.ore_target
