@@ -2472,3 +2472,14 @@ and not exists (
        from UserMiningArea
        where UserMiningArea.userId = UserAchievement.userId
        and UserMiningArea.miningAreaId = AchievementStep.miningAreaId);
+
+-- Update achievement points
+update User
+set achievementPoints = COALESCE(
+(
+ select sum(AchievementStep.achievementPoints)
+ from AchievementStep, UserAchievement
+ where AchievementStep.achievementId = UserAchievement.achievementId
+ and AchievementStep.step <= UserAchievement.stepsClaimed
+ and UserAchievement.userId = User.id
+), 0);
