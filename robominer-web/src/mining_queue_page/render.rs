@@ -30,14 +30,6 @@ pub(super) fn render_mining_queue_page(
             .or_default()
             .push(supply);
     }
-    let mut yield_map: HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaYieldRecord>> =
-        HashMap::new();
-    for area_yield in &state.yields {
-        yield_map
-            .entry(area_yield.mining_area_id)
-            .or_default()
-            .push(area_yield);
-    }
     let mut score_map: HashMap<(i64, i64), f64> = HashMap::new();
     for score in &state.scores {
         score_map.insert((score.robot_id, score.mining_area_id), score.score);
@@ -126,10 +118,6 @@ pub(super) fn render_mining_queue_page(
                 .map(Vec::as_slice)
                 .unwrap_or(&[]),
             supply_map
-                .get(&area.mining_area_id)
-                .map(Vec::as_slice)
-                .unwrap_or(&[]),
-            yield_map
                 .get(&area.mining_area_id)
                 .map(Vec::as_slice)
                 .unwrap_or(&[]),

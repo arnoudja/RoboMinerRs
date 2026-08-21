@@ -31,7 +31,6 @@ pub(super) fn render_mining_area_details(
     area: &robominer_db::MiningQueuePageAreaRecord,
     costs: &[&robominer_db::MiningQueuePageAreaCostRecord],
     supplies: &[&robominer_db::MiningQueuePageAreaSupplyRecord],
-    yields: &[&robominer_db::MiningQueuePageAreaYieldRecord],
     robots: &[robominer_db::MiningQueuePageRobotRecord],
     score_map: &HashMap<(i64, i64), f64>,
     ore_amount_map: &HashMap<i64, i32>,
@@ -116,17 +115,5 @@ pub(super) fn render_mining_area_details(
             ));
         }
     }
-    body.push_str(r#"<tr><td colspan="4">Historic yield:</td></tr>"#);
-    let mut total_percentage = 0.0;
-    for area_yield in yields {
-        total_percentage += area_yield.percentage;
-        body.push_str(&format!(
-            r#"<tr><td></td><td>{}:</td><td colspan="2">{:.1}%</td></tr>"#,
-            escape_html(&area_yield.ore_name),
-            area_yield.percentage
-        ));
-    }
-    body.push_str(&format!(
-        r#"<tr><td></td><td>Total:</td><td colspan="2">{total_percentage:.1}%</td></tr></tbody>"#
-    ));
+    body.push_str("</tbody>");
 }

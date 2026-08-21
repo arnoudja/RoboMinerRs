@@ -87,12 +87,6 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                 supply: 8,
                 radius: 3,
             }],
-            yields: vec![robominer_db::MiningQueuePageAreaYieldRecord {
-                mining_area_id: 20,
-                ore_id: 2,
-                ore_name: "Ore & Two".to_string(),
-                percentage: 12.34,
-            }],
             scores: vec![robominer_db::RobotMiningAreaScoreRecord {
                 robot_id: 1,
                 mining_area_id: 20,
@@ -187,7 +181,6 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             ">3:00<",
             r#"class="sufficientbalance">(40)"#,
             ">45.7<",
-            ">12.3%<",
             ">Unable &lt;queue&gt;<",
             r#"class="buttonlink mining-queue-overview-link" href="miningAreaOverview">Compare all areas</a>"#,
         ],
@@ -201,6 +194,8 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
         r#"name="submitType" value="remove">Remove selected</button>"#,
         r#"name="selectedQueueItemId" value="101" checked"#,
         r#"<button type="submit">Show details</button>"#,
+        "Historic yield:",
+        ">12.3%<",
     ] {
         assert_html_not_contains(&html, absent);
     }
@@ -261,7 +256,6 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
                     radius: 2,
                 },
             ],
-            yields: vec![],
             scores: vec![],
             items: vec![],
             selected_info_area_id: 20,
@@ -330,7 +324,6 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
                 amount: 30,
             }],
             supplies: vec![],
-            yields: vec![],
             scores: vec![],
             items: vec![],
             selected_info_area_id: 20,
@@ -415,7 +408,6 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                 amount: 50,
             }],
             supplies: vec![],
-            yields: vec![],
             scores: vec![],
             items: vec![],
             selected_info_area_id: 20,
@@ -457,7 +449,6 @@ fn mining_queue_shows_no_robots_empty_state() {
             areas: vec![],
             costs: vec![],
             supplies: vec![],
-            yields: vec![],
             scores: vec![],
             items: vec![],
             selected_info_area_id: 0,
