@@ -257,6 +257,7 @@ miningAreaId INT NOT NULL REFERENCES MiningArea (id) ON DELETE CASCADE,
 oreId INT NOT NULL REFERENCES Ore (id) ON DELETE CASCADE,
 totalAmount BIGINT NOT NULL,
 totalContainerSize BIGINT NOT NULL,
+totalRuns BIGINT NOT NULL DEFAULT 0,
 PRIMARY KEY (miningAreaId, oreId)
 );
 

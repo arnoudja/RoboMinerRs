@@ -244,6 +244,15 @@ async fn update_mining_area_lifetime_results(
     .fetch_all(&mut **transaction)
     .await?;
 
+    sqlx::query(
+        "UPDATE MiningAreaLifetimeResult \
+         SET totalRuns = totalRuns + 1 \
+         WHERE miningAreaId = ?",
+    )
+    .bind(queue.mining_area_id)
+    .execute(&mut **transaction)
+    .await?;
+
     for ore_id in ore_ids {
         let amount = ore_results
             .iter()
@@ -253,8 +262,12 @@ async fn update_mining_area_lifetime_results(
 
         sqlx::query(
             "INSERT INTO MiningAreaLifetimeResult \
-             (miningAreaId, oreId, totalAmount, totalContainerSize) \
-             VALUES (?, ?, ?, ?) \
+             (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+             VALUES (?, ?, ?, ?, \
+                     COALESCE((SELECT totalRuns \
+                               FROM MiningAreaLifetimeResult AS existing \
+                               WHERE existing.miningAreaId = ? \
+                               LIMIT 1), 1)) \
              ON DUPLICATE KEY UPDATE \
              totalAmount = totalAmount + VALUES(totalAmount), \
              totalContainerSize = totalContainerSize + VALUES(totalContainerSize)",
@@ -263,6 +276,7 @@ async fn update_mining_area_lifetime_results(
         .bind(ore_id)
         .bind(amount)
         .bind(queue.robot_max_ore)
+        .bind(queue.mining_area_id)
         .execute(&mut **transaction)
         .await?;
     }
