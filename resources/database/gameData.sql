@@ -1043,8 +1043,8 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,           orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1301, 'Neudralion-Small', 13001,      50,    50,    400,      300,        40,      20,           30,             1202) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1301,         2,     10,     10),
-                                (1301,         2,     10,     8),
+                         values (1301,         1,     10,     10),
+                                (1301,         1,     10,     8),
                                 (1301,         3,     8,      6),
                                 (1301,         3,     8,      6),
                                 (1301,         4,     5,      5),
@@ -1074,7 +1074,7 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,          orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1401, 'Complatix-Small', 14001,      60,    60,    600,      900,        50,      25,           50,             1302) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1401,         3,     10,     8),
+                         values (1401,         2,     10,     8),
                                 (1401,         4,     5,      5),
                                 (1401,         4,     5,      5),
                                 (1401,         5,     4,      3),
@@ -1108,7 +1108,7 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1501, 'Prantum-Small', 15001,      70,    70,    900,      1800,       60,      40,           70,             1402) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1501,         3,     15,     12),
+                         values (1501,         1,     18,     12),
                                 (1501,         4,     15,     12),
                                 (1501,         6,     3,      3),
                                 (1501,         6,     3,      4),
@@ -1125,8 +1125,8 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1502, 'Prantum-Large', 15002,      100,   100,   1500,     2700,       15,      5,      80,             1502) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1502,         3,     15,     12),
-                                (1502,         4,     15,     12),
+                         values (1502,         2,     18,     12),
+                                (1502,         5,     15,     12),
                                 (1502,         6,     3,      3),
                                 (1502,         6,     4,      4),
                                 (1502,         6,     5,      5),
@@ -1142,7 +1142,7 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,      orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1601, 'Raxia-Small', 16001,      80,    80,    1250,     3600,       65,      40,           90,             1502) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1601,         3,     15,     12),
+                         values (1601,         3,     20,     12),
                                 (1601,         3,     15,     12),
                                 (1601,         5,     15,     12),
                                 (1601,         7,     3,      3),
@@ -1160,9 +1160,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,      orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1602, 'Raxia-Large', 16002,      110,   110,   1750,     4800,       15,      5,            100,            1602) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1602,         3,     15,     15),
-                                (1602,         3,     15,     15),
-                                (1602,         5,     15,     15),
+                         values (1602,         2,     20,     15),
+                                (1602,         2,     15,     15),
+                                (1602,         4,     20,     15),
                                 (1602,         7,     4,      4),
                                 (1602,         7,     4,      4),
                                 (1602,         7,     5,      5),
@@ -1179,9 +1179,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1701, 'Dipolir-Small', 17001,      90,    90,    1500,     7200,       75,      50,           110,            1602) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1701,         2,     15,     15),
-                                (1701,         2,     15,     15),
-                                (1701,         4,     15,     15),
+                         values (1701,         1,     20,     15),
+                                (1701,         1,     15,     15),
+                                (1701,         5,     20,     15),
                                 (1701,         8,     3,      3),
                                 (1701,         8,     4,      4),
                                 (1701,         8,     4,      4),
@@ -1197,9 +1197,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1702, 'Dipolir-Large', 17002,      120,   120,   1800,     10800,      15,      5,            120,            1702) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1702,         2,     15,     15),
-                                (1702,         2,     15,     15),
+                         values (1702,         4,     20,     15),
                                 (1702,         4,     15,     15),
+                                (1702,         6,     20,     15),
                                 (1702,         8,     3,      3),
                                 (1702,         8,     4,      4),
                                 (1702,         8,     4,      4),
@@ -1217,9 +1217,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1801, 'Asradon-Small', 18001,      100,   100,   2700,     10800,      80,      60,           130,            1702) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1801,         2,     15,     15),
-                                (1801,         2,     15,     15),
+                         values (1801,         3,     20,     15),
                                 (1801,         3,     15,     15),
+                                (1801,         6,     20,     15),
                                 (1801,         9,     3,      4),
                                 (1801,         9,     4,      4),
                                 (1801,         9,     4,      4),
@@ -1235,9 +1235,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,        orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1802, 'Asradon-Large', 18002,      140,   140,   3600,     16200,      25,      10,           140,            1802) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1802,         3,     15,     15),
-                                (1802,         3,     15,     15),
-                                (1802,         5,     15,     15),
+                         values (1802,         4,     20,     15),
+                                (1802,         4,     15,     15),
+                                (1802,         7,     20,     15),
                                 (1802,         9,     3,      4),
                                 (1802,         9,     4,      4),
                                 (1802,         9,     4,      4),
@@ -1255,9 +1255,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1901, 'Baratiem-Small', 19001,      110,   110,   3200,     14400,      85,      60,           150,            1802) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1901,         1,     15,     15),
-                                (1901,         1,     15,     15),
+                         values (1901,         2,     20,     15),
                                 (1901,         2,     15,     15),
+                                (1901,         6,     20,     15),
                                 (1901,        10,     3,      4),
                                 (1901,        10,     3,      4),
                                 (1901,        10,     3,      4),
@@ -1272,9 +1272,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1902, 'Baratiem-Large', 19002,      160,   160,   4500,     21600,      25,      10,           160,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1901,         1,     15,     15),
-                                (1901,         1,     15,     15),
-                                (1901,         2,     15,     15),
+                         values (1901,         5,     25,     15),
+                                (1901,         5,     15,     15),
+                                (1901,         8,     25,     15),
                                 (1901,        10,     3,      4),
                                 (1901,        10,     3,      4),
                                 (1901,        10,     3,      4),
@@ -1291,9 +1291,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,      orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (2001, 'Etaxy-Small', 20001,      120,   120,   3800,     21600,      90,      60,           170,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (2001,         1,     15,     15),
-                                (2001,         1,     15,     15),
-                                (2001,         2,     15,     15),
+                         values (2001,         4,     15,     15),
+                                (2001,         4,     15,     15),
+                                (2001,         7,     25,     15),
                                 (2001,        11,     3,      4),
                                 (2001,        11,     3,      4),
                                 (2001,        11,     3,      4),
@@ -1308,9 +1308,9 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,      orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (2002, 'Etaxy-Large', 20002,      120,   120,   3800,     21600,      90,      20,           180,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (2002,         1,     15,     15),
-                                (2002,         1,     15,     15),
-                                (2002,         2,     15,     15),
+                         values (2002,         6,     15,     15),
+                                (2002,         6,     15,     15),
+                                (2002,         8,     25,     15),
                                 (2002,        11,     3,      4),
                                 (2002,        11,     3,      4),
                                 (2002,        11,     3,      4),
@@ -2608,6 +2608,7 @@ and not exists (
        where UserMiningArea.userId = UserAchievement.userId
        and UserMiningArea.miningAreaId = AchievementStep.miningAreaId);
 
+
 -- Update achievement points
 update User
 set achievementPoints = COALESCE(
@@ -2618,3 +2619,17 @@ set achievementPoints = COALESCE(
  and AchievementStep.step <= UserAchievement.stepsClaimed
  and UserAchievement.userId = User.id
 ), 0);
+
+
+-- Reset MiningAreaLifetimeResult data for areas for which the available ore types are changed
+delete from MiningAreaLifetimeResult
+where miningAreaId in (
+    select miningAreaId
+    from MiningAreaLifetimeResult
+    where not exists (
+        select 1
+        from MiningAreaOreSupply
+        where MiningAreaOreSupply.miningAreaId = MiningAreaLifetimeResult.miningAreaId
+        and MiningAreaOreSupply.oreId = MiningAreaLifetimeResult.oreId
+    )
+);
