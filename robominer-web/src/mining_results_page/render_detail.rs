@@ -203,7 +203,7 @@ fn render_mining_result_score_breakdown(
         breakdown.ore_target
     ));
     body.push_str(
-        r#"<table class="mining-results-score-table"><thead><tr><th scope="col">Ore</th><th scope="col">Mined + Overflow</th><th scope="col">Counted</th><th scope="col">Points</th><th scope="col">Overflow</th></tr></thead><tbody>"#,
+        r#"<div class="mining-results-score-table-wrap"><table class="mining-results-score-table"><thead><tr><th scope="col" class="mining-results-score-col-ore">Ore</th><th scope="col" class="mining-results-score-col-mined">Mined + Overflow</th><th scope="col" class="mining-results-score-col-counted">Counted</th><th scope="col" class="mining-results-score-col-points">Points</th><th scope="col" class="mining-results-score-col-overflow">Overflow</th></tr></thead><tbody>"#,
     );
     for (index, (tier, slot)) in tiers.into_iter().enumerate() {
         push_score_tier_row(body, &slot, tier, index == 0);
@@ -228,7 +228,7 @@ fn render_mining_result_score_breakdown(
         &format!("{:.1}", breakdown.total),
         "",
     );
-    body.push_str("</tbody></table></section>");
+    body.push_str("</tbody></table></div></section>");
 }
 
 fn push_score_tier_row(
@@ -282,7 +282,7 @@ fn push_score_table_row(
         format!(r#" class="{row_class}""#)
     };
     body.push_str(&format!(
-        r#"<tr{class_attr}><td>{}</td><td class="mining-results-score-num mining-results-score-start">{}</td><td class="mining-results-score-num mining-results-score-start">{}</td><td class="mining-results-score-num">{}</td><td class="mining-results-score-num">{}</td></tr>"#,
+        r#"<tr{class_attr}><td class="mining-results-score-col-ore">{}</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">{}</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">{}</td><td class="mining-results-score-num mining-results-score-col-points">{}</td><td class="mining-results-score-num mining-results-score-col-overflow">{}</td></tr>"#,
         ore, mined, counted, points, overflow
     ));
 }

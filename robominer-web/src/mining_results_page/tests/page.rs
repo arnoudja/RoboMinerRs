@@ -117,8 +117,8 @@ fn mining_results_rendering_escapes_fields() {
             r#"class="mining-results-score-target">Mining target: 30 ore</p>"#,
             "Mined + Overflow",
             "Overflow",
-            r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">20 / 30</td><td class="mining-results-score-num">600.0</td><td class="mining-results-score-num"></td>"#,
-            r#"<td>Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start">10 + 0 = 10</td><td class="mining-results-score-num mining-results-score-start">10 / 90</td><td class="mining-results-score-num">10.0</td><td class="mining-results-score-num"></td>"#,
+            r#"<td class="mining-results-score-col-ore">Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">20</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">20 / 30</td><td class="mining-results-score-num mining-results-score-col-points">600.0</td><td class="mining-results-score-num mining-results-score-col-overflow"></td>"#,
+            r#"<td class="mining-results-score-col-ore">Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">10 + 0 = 10</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">10 / 90</td><td class="mining-results-score-num mining-results-score-col-points">10.0</td><td class="mining-results-score-num mining-results-score-col-overflow"></td>"#,
             r#"class="mining-results-score-total""#,
             "Scan",
             "50.0%",
@@ -155,9 +155,9 @@ fn mining_results_score_breakdown_shows_overflow_conversion() {
         &html,
         &[
             r#"class="mining-results-score-target">Mining target: 15 ore</p>"#,
-            r#"<td>Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start">20</td><td class="mining-results-score-num mining-results-score-start">15 / 15</td><td class="mining-results-score-num">900.0</td><td class="mining-results-score-num">5 × 2 = 10</td>"#,
-            r#"<td>Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start">10 + 10 = 20</td><td class="mining-results-score-num mining-results-score-start">20 / 45</td><td class="mining-results-score-num">40.0</td><td class="mining-results-score-num"></td>"#,
-            r#"class="mining-results-score-total"><td>Total</td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num mining-results-score-start"></td><td class="mining-results-score-num">940.0</td><td class="mining-results-score-num"></td>"#,
+            r#"<td class="mining-results-score-col-ore">Ore &amp; B</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">20</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">15 / 15</td><td class="mining-results-score-num mining-results-score-col-points">900.0</td><td class="mining-results-score-num mining-results-score-col-overflow">5 × 2 = 10</td>"#,
+            r#"<td class="mining-results-score-col-ore">Ore &lt;A&gt;</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">10 + 10 = 20</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">20 / 45</td><td class="mining-results-score-num mining-results-score-col-points">40.0</td><td class="mining-results-score-num mining-results-score-col-overflow"></td>"#,
+            r#"class="mining-results-score-total"><td class="mining-results-score-col-ore">Total</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined"></td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted"></td><td class="mining-results-score-num mining-results-score-col-points">940.0</td><td class="mining-results-score-num mining-results-score-col-overflow"></td>"#,
         ],
     );
 }

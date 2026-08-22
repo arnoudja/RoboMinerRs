@@ -546,12 +546,33 @@
     margin: 0;
 }
 
+.mining-results-score-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    container-name: mining-results-score-table;
+    container-type: inline-size;
+    margin: 0;
+    overflow-x: auto;
+}
+
 .mining-results-page table.mining-results-score-table {
     background: rgba(10, 16, 26, 0.72);
     border: 1px solid var(--mq-border);
     border-collapse: collapse;
     margin: 0;
+    min-width: 0;
     width: 100%;
+}
+
+@container mining-results-score-table (max-width: 33rem) {
+    .mining-results-page table.mining-results-score-table .mining-results-score-col-overflow {
+        display: none;
+    }
+}
+
+@container mining-results-score-table (max-width: 28rem) {
+    .mining-results-page table.mining-results-score-table .mining-results-score-col-mined {
+        display: none;
+    }
 }
 
 .mining-results-page table.mining-results-score-table th,
