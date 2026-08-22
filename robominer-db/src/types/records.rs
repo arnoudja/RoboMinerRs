@@ -584,6 +584,7 @@ pub struct AchievementPageScoreRequirementRecord {
     pub area_name: String,
     pub minimum_score: f64,
     pub current_score: f64,
+    pub current_score_robot_name: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

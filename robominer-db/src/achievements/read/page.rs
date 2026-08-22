@@ -191,14 +191,21 @@ pub async fn list_achievement_page_score_requirements_for_user(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<AchievementPageScoreRequirementRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String, f64, f64)>(
+    sqlx::query_as::<_, (i64, i64, String, f64, f64, Option<String>)>(
         "SELECT UserAchievement.achievementId, MiningArea.id, MiningArea.areaName, \
                 AchievementStepMiningScoreRequirement.minimumScore, \
                 COALESCE((SELECT MAX(RobotMiningAreaScore.score) \
                           FROM RobotMiningAreaScore \
                           INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
                           WHERE Robot.userId = UserAchievement.userId \
-                            AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId), 0.0) \
+                            AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId), 0.0), \
+                (SELECT Robot.robotName \
+                 FROM RobotMiningAreaScore \
+                 INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
+                 WHERE Robot.userId = UserAchievement.userId \
+                   AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId \
+                 ORDER BY RobotMiningAreaScore.score DESC, Robot.id ASC \
+                 LIMIT 1) \
          FROM UserAchievement \
          INNER JOIN AchievementStep \
            ON AchievementStep.achievementId = UserAchievement.achievementId \
@@ -216,13 +223,21 @@ pub async fn list_achievement_page_score_requirements_for_user(
     .map(|rows| {
         rows.into_iter()
             .map(
-                |(achievement_id, mining_area_id, area_name, minimum_score, current_score)| {
+                |(
+                    achievement_id,
+                    mining_area_id,
+                    area_name,
+                    minimum_score,
+                    current_score,
+                    current_score_robot_name,
+                )| {
                     AchievementPageScoreRequirementRecord {
                         achievement_id,
                         mining_area_id,
                         area_name,
                         minimum_score,
                         current_score,
+                        current_score_robot_name,
                     }
                 },
             )

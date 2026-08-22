@@ -64,6 +64,7 @@ pub(super) fn sample_achievement_state(claim_message: Option<String>) -> Achieve
             area_name: "Area & D".to_string(),
             minimum_score: 12.34,
             current_score: 10.0,
+            current_score_robot_name: Some("Robot_1".to_string()),
         }],
         points_summary: robominer_db::AchievementPagePointsSummaryRecord {
             points_earned: 45,

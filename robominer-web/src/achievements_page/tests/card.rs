@@ -100,6 +100,52 @@ fn achievements_score_requirement_uses_display_rounding() {
 }
 
 #[test]
+fn achievements_score_requirement_names_robot_when_player_has_two() {
+    let mut state = sample_achievement_state(None);
+    state.robot_count = 2;
+    state.score_requirements[0].minimum_score = 250.0;
+    state.score_requirements[0].current_score = 248.6;
+    state.score_requirements[0].current_score_robot_name = Some("Robot_1".to_string());
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert_html_contains(
+        &html,
+        r#"class="achievement-requirement-target">250.0</span>"#,
+    );
+    assert_html_contains(
+        &html,
+        r#"class="insufficientbalance">(Robot_1: 248.6)</span>"#,
+    );
+}
+
+#[test]
+fn achievements_score_requirement_omits_robot_name_for_single_robot() {
+    let mut state = sample_achievement_state(None);
+    state.robot_count = 1;
+    state.score_requirements[0].minimum_score = 250.0;
+    state.score_requirements[0].current_score = 248.6;
+    state.score_requirements[0].current_score_robot_name = Some("Robot_1".to_string());
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert_html_contains(&html, r#"class="insufficientbalance">(248.6)</span>"#);
+    assert_html_not_contains(&html, "Robot_1");
+}
+
+#[test]
+fn achievements_score_requirement_escapes_robot_name() {
+    let mut state = sample_achievement_state(None);
+    state.robot_count = 2;
+    state.score_requirements[0].current_score_robot_name = Some("Bot <1>".to_string());
+
+    let html = render_achievements_page("Player".to_string(), None, &state);
+
+    assert_html_contains(&html, r#"(Bot &lt;1&gt;: 10.0)"#);
+    assert_html_not_contains(&html, "(Bot <1>:");
+}
+
+#[test]
 fn achievements_hide_ore_and_depot_maximum_when_reward_does_not_increase() {
     let mut state = sample_achievement_state(None);
     state.achievements[0].current_ore_maximum = 100;

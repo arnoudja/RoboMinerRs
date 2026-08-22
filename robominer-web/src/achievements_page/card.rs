@@ -122,7 +122,7 @@ pub(super) fn render_achievement_card(
         }
         for requirement in score_requirements {
             body.push_str(&format!(
-                r#"<li><span>Average {} score</span><span class="achievement-requirement-target">{:.1}</span><span class="{}">({:.1})</span></li>"#,
+                r#"<li><span>Average {} score</span><span class="achievement-requirement-target">{:.1}</span><span class="{}">{}</span></li>"#,
                 escape_html(&requirement.area_name),
                 requirement.minimum_score,
                 if robominer_db::achievement_score_meets_requirement(
@@ -133,7 +133,7 @@ pub(super) fn render_achievement_card(
                 } else {
                     "insufficientbalance"
                 },
-                requirement.current_score
+                current_score_display(requirement, robot_count)
             ));
         }
         body.push_str("</ul></section>");
@@ -146,6 +146,22 @@ fn render_achievement_claim_badge(achievement_id: i64) -> String {
     format!(
         r#"<form action="achievements" method="post" class="achievement-claim-badge-form"><input type="hidden" name="achievementId" value="{achievement_id}"/><button type="submit" class="achievement-status-badge achievement-status-claimable achievement-claim-badge">Claim</button></form>"#
     )
+}
+
+fn current_score_display(
+    requirement: &robominer_db::AchievementPageScoreRequirementRecord,
+    robot_count: i64,
+) -> String {
+    let score = format!("{:.1}", requirement.current_score);
+    match requirement
+        .current_score_robot_name
+        .as_deref()
+        .map(str::trim)
+        .filter(|name| robot_count >= 2 && !name.is_empty())
+    {
+        Some(name) => format!("({}: {score})", escape_html(name)),
+        None => format!("({score})"),
+    }
 }
 
 fn achievement_completed(achievement: &robominer_db::AchievementPageStateRecord) -> bool {
