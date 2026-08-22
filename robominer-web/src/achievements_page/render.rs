@@ -54,6 +54,17 @@ fn render_own_achievements(state: &AchievementsPageState) -> String {
             .push(requirement);
     }
 
+    let mut depot_total_requirement_map: HashMap<
+        i64,
+        Vec<&robominer_db::AchievementPageDepotTotalRequirementRecord>,
+    > = HashMap::new();
+    for requirement in &state.depot_total_requirements {
+        depot_total_requirement_map
+            .entry(requirement.achievement_id)
+            .or_default()
+            .push(requirement);
+    }
+
     let mut achievements = state.achievements.clone();
     achievements.sort_by(|left, right| {
         right.claimable.cmp(&left.claimable).then_with(|| {
@@ -95,6 +106,10 @@ fn render_own_achievements(state: &AchievementsPageState) -> String {
                     .map(Vec::as_slice)
                     .unwrap_or(&[]),
                 score_requirement_map
+                    .get(&achievement.achievement_id)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[]),
+                depot_total_requirement_map
                     .get(&achievement.achievement_id)
                     .map(Vec::as_slice)
                     .unwrap_or(&[]),

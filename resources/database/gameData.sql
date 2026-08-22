@@ -3,6 +3,7 @@ SET storage_engine=InnoDB;
 -- Cleaning unreferenced tables always completely filled with the data in this file.
 delete from OrePriceAmount;
 delete from MiningAreaOreSupply;
+delete from AchievementStepDepotTotalRequirement;
 delete from AchievementStepMiningTotalRequirement;
 delete from AchievementStepMiningScoreRequirement;
 delete from AchievementStep;
@@ -1412,6 +1413,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (2,             12,   1003,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (2,             12,   1,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (2,             12,   1,     1000);
 
 
 -- Achievements - Oxaria Mastery
@@ -1494,6 +1497,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (3,             11,   1103,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (3,             11,   2,     7500);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             11,   2,     200);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (3,             12,   10,                2,     9999);
@@ -1502,6 +1507,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (3,             12,   1103,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (3,             12,   2,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (3,             12,   2,     1000);
 
 
 -- Achievements - Lithabine Mastery
@@ -1582,6 +1589,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (4,             10,   1203,         650.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             10,   3,     5000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             10,   3,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (4,             11,   10,                3,     5000,         1000);
@@ -1591,6 +1600,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (4,             11,   1203,         750.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             11,   3,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             11,   3,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (4,             12,   25,                3,     9999);
@@ -1600,6 +1611,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (4,             12,   1203,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (4,             12,   3,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (4,             12,   3,     2000);
 
 
 -- Achievements - Neudralion Mastery
@@ -1673,6 +1686,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (5,             9,    1302,         750.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (5,             9,    4,     3000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,             9,    4,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (5,             10,   10,                1);
@@ -1681,6 +1696,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (5,             10,   1302,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (5,            10,    4,     5000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,            10,    4,     500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (5,             11,   10,                4,     5000,         1000);
@@ -1689,6 +1706,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (5,             11,   1302,         850.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (5,             11,   4,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,            11,    4,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (5,             12,   25,                4,     9999);
@@ -1697,6 +1716,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (5,             12,   1302,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (5,             12,   4,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (5,            12,    4,     2000);
 
 
 -- Achievements - Second robot
@@ -1719,7 +1740,11 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (6,             1,    1103,         900.0),
                                                   (6,             1,    1203,         900.0),
                                                   (6,             1,    1302,         800.0);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (6,             1,    1,     100),
+                                                  (6,             1,    2,     200),
+                                                  (6,             1,    3,     200),
+                                                  (6,             1,    4,     200);
 
 -- Achievements - Complatix Mastery
 insert into Achievement (id, title,               description)
@@ -1784,6 +1809,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (7,             8,    1402,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (7,             8,    5,     3000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (7,             8,    5,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (7,             9,    10,                5,     2000,         100);
@@ -1792,6 +1819,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (7,             9,    1402,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (7,             9,    5,     4000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (7,             9,    5,     500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (7,             10,   10,                1);
@@ -1800,6 +1829,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (7,             10,   1402,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (7,             10,   5,     5000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (7,            10,    5,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (7,             11,   10,                5,     5000,         1000);
@@ -1808,6 +1839,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (7,             11,   1402,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (7,             11,   5,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (7,            11,    5,     2000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (7,             12,   25,                5,     9999);
@@ -1816,6 +1849,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (7,             12,   1402,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (7,             12,   5,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (7,            12,    5,     3000);
 
 
 -- Achievements - Prantum Mastery
@@ -1873,6 +1908,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             7,    1502,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             7,    6,     5000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            7,    6,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (8,             8,    10,                1);
@@ -1881,6 +1918,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             8,    1502,         450.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             8,    6,     6000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            8,    6,     500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (8,             9,    10,                6,     4000);
@@ -1889,6 +1928,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             9,    1502,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             9,    6,     7000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            9,    6,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (8,             10,   10,                1);
@@ -1897,6 +1938,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             10,   1502,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             10,   6,     8000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            10,    6,     2000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (8,             11,   10,                6,     6000,         1000);
@@ -1905,6 +1948,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             11,   1502,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             11,   6,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            11,    6,     3000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (8,             12,   25,                6,     9999);
@@ -1913,6 +1958,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (8,             12,   1502,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (8,             12,   6,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (8,            12,    6,     5000);
 
 
 -- Achievements - Raxia Mastery
@@ -1962,6 +2009,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             6,    1602,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             6,    7,     8000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             6,    7,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (9,             7,    10,                7,     2500,         250);
@@ -1970,6 +2019,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             7,    1602,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             7,    7,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             7,    7,     300);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (9,             8,    10,                1);
@@ -1978,6 +2029,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             8,    1602,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             8,    7,     12000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             8,    7,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (9,             9,    10,                7,     4000);
@@ -1986,6 +2039,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             9,    1602,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             9,    7,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             9,    7,     2000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (9,             10,   10,                1);
@@ -1994,6 +2049,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             10,   1602,         750.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             10,   7,     20000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             10,   7,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (9,             11,   10,                7,     6000,         1000);
@@ -2002,6 +2059,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             11,   1602,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             11,   7,     25000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             11,   7,     10000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (9,             12,   25,                7,     9999);
@@ -2010,7 +2069,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (9,             12,   1602,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (9,             12,   7,     40000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (9,             12,   7,     15000);
 
 -- Achievements - Dipolir Mastery
 insert into Achievement (id, title,             description)
@@ -2051,6 +2111,8 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (10,            5,    1701,         250.0),
                                                   (10,            5,    1702,         250.0);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            5,    8,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (10,            6,    10,                1);
@@ -2059,6 +2121,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            6,    1702,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            6,    8,     10000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            6,    8,     500);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (10,            7,    10,                8,     2500,         300);
@@ -2067,6 +2131,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            7,    1702,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            7,    8,     15000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            7,    8,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (10,            8,    10,                1);
@@ -2075,7 +2141,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            8,    1702,         500.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            8,    8,     20000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            8,    8,     2000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (10,            9,    10,                8,     4000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2083,6 +2151,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            9,    1702,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            9,    8,     25000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            9,    8,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (10,            10,   10,                1);
@@ -2091,7 +2161,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            10,   1702,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            10,   8,     30000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            10,   8,     10000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (10,            11,   10,                8,     6000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2099,7 +2171,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            11,   1702,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            11,   8,     40000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            11,   8,     15000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (10,            12,   25,                8,     9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2107,7 +2181,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (10,            12,   1702,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (10,            12,   8,     75000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (10,            12,   8,     20000);
 
 -- Achievements - One more robot
 insert into Achievement (id, title,         description)
@@ -2124,6 +2199,11 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
                                                   (11,            1,    6,     25000),
                                                   (11,            1,    7,     15000),
                                                   (11,            1,    8,     6000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (11,            1,    5,     10000),
+                                                  (11,            1,    6,     5000),
+                                                  (11,            1,    7,     1000),
+                                                  (11,            1,    8,     500);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (11,            1,    1402,         900.0),
                                                   (11,            1,    1502,         900.0),
@@ -2162,6 +2242,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                            values (12,            4,    1801,         200.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            4,    9,     7000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            4,    9,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (12,            5,    10,                9,     1000);
@@ -2170,7 +2252,9 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (12,            5,    1801,         250.0),
                                                   (12,            5,    1802,         250.0);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            5,    9,     300);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (12,            6,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2178,6 +2262,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            6,    1802,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            6,    9,     14000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            6,    9,     1000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (12,            7,    10,                9,     2500,         500);
@@ -2186,7 +2272,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            7,    1802,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            7,    9,     18000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            7,    9,     2000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (12,            8,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2194,6 +2282,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            8,    1802,         500.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            8,    9,     22000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            8,    9,     5000);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (12,            9,    10,                9,     4000);
@@ -2202,7 +2292,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            9,    1802,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            9,    9,     30000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            9,    9,     10000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (12,            10,   10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2210,7 +2302,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            10,   1802,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            10,   9,     40000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            10,   9,     15000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (12,            11,   10,                9,     6000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2218,7 +2312,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            11,   1802,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            11,   9,     50000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            11,   9,     20000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (12,            12,   25,                9,     9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2226,7 +2322,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (12,            12,   1802,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (12,            12,   9,     80000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (12,            12,   9,     30000);
 
 -- Achievements - Baratiem Mastery
 insert into Achievement (id, title,             description)
@@ -2252,6 +2349,8 @@ insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxO
                      values (13,            3,    10,                10,    600,          300);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            3,    10,    6000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            3,    10,    100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (13,            4,    10,                1902);
@@ -2259,7 +2358,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                            values (13,            4,    1901,         200.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            4,    10,    7500);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            4,    10,    300);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (13,            5,    10,                10,    1000);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
@@ -2267,7 +2368,9 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (13,            5,    1901,         250.0),
                                                   (13,            5,    1902,         250.0);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            5,    10,    1000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (13,            6,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2275,7 +2378,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            6,    1902,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            6,    10,    12000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            6,    10,    2000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (13,            7,    10,                10,    2500,         500);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2283,7 +2388,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            7,    1902,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            7,    10,    18000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            7,    10,    5000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (13,            8,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2291,7 +2398,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            8,    1902,         500.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            8,    10,    22000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            8,    10,    10000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (13,            9,    10,                10,    4000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2299,7 +2408,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            9,    1902,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            9,    10,    30000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            9,    10,    15000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (13,            10,   10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2307,7 +2418,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            10,   1902,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            10,   10,    40000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            10,   10,    20000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (13,            11,   10,                10,    6000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2315,7 +2428,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            11,   1902,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            11,   10,    50000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            11,   10,    30000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (13,            12,   25,                10,    9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2323,7 +2438,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (13,            12,   1902,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            12,   10,    80000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (13,            12,   10,    40000);
 
 -- Achievements - Etaxy Mastery
 insert into Achievement (id, title,             description)
@@ -2349,6 +2465,8 @@ insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxO
                      values (14,            3,    10,                11,    600,          300);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            3,    11,    6000);
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            2,    11,    100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, miningAreaId)
                      values (14,            4,    10,                2002);
@@ -2356,7 +2474,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                            values (14,            4,    2001,         200.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            4,    11,    7500);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            4,    11,    500);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (14,            5,    10,                11,    1000);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
@@ -2364,7 +2484,9 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (14,            5,    2001,         250.0),
                                                   (14,            5,    2002,         250.0);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            5,    11,    1000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (14,            6,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2372,7 +2494,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            6,    2002,         300.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            6,    11,    12000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            6,    11,    2000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (14,            7,    10,                11,    2500,         500);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2380,7 +2504,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            7,    2002,         400.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            7,    11,    18000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            7,    11,    5000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (14,            8,    10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2388,7 +2514,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            8,    2002,         500.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            8,    11,    22000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            8,    11,    10000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (14,            9,    10,                11,    4000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2396,7 +2524,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            9,    2002,         600.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            9,    11,    30000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            9,    11,    15000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward)
                      values (14,            10,   10,                1);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2404,7 +2534,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            10,   2002,         700.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            10,   11,    40000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            10,   11,    20000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (14,            11,   10,                11,    6000,         1000);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2412,7 +2544,9 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            11,   2002,         800.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            11,   11,    50000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            11,   11,    30000);
+                                           
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
                      values (14,            12,   25,                11,    9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
@@ -2420,7 +2554,8 @@ insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAr
                                                   (14,            12,   2002,         900.0);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
                                            values (14,            12,   11,    80000);
-
+insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
+                                           values (14,            12,   11,    50000);
 
 -- Calculate the tier levels
 update RobotPart

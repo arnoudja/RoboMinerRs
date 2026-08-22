@@ -2,8 +2,9 @@ use sqlx::MySqlPool;
 use sqlx::Row;
 
 use crate::{
-    AchievementPagePointsSummaryRecord, AchievementPageScoreRequirementRecord,
-    AchievementPageStateRecord, AchievementPageTotalRequirementRecord, INITIAL_ORE_WALLET_MAX,
+    AchievementPageDepotTotalRequirementRecord, AchievementPagePointsSummaryRecord,
+    AchievementPageScoreRequirementRecord, AchievementPageStateRecord,
+    AchievementPageTotalRequirementRecord, INITIAL_ORE_WALLET_MAX,
 };
 
 pub async fn list_achievement_page_states_for_user(
@@ -70,6 +71,19 @@ pub async fn list_achievement_page_states_for_user(
                                INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
                                  AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId), 1)) \
+                       AND NOT EXISTS \
+                         (SELECT 1 \
+                          FROM AchievementStepDepotTotalRequirement \
+                          WHERE AchievementStepDepotTotalRequirement.achievementId = AchievementStep.achievementId \
+                            AND AchievementStepDepotTotalRequirement.step = AchievementStep.step \
+                            AND AchievementStepDepotTotalRequirement.amount > \
+                              (SELECT CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
+                               FROM MiningOreResult \
+                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
+                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                               WHERE Robot.userId = UserAchievement.userId \
+                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
+                                 AND MiningQueue.claimed = true)) \
                      THEN 1 ELSE 0 END AS claimable \
          FROM UserAchievement \
          INNER JOIN Achievement ON Achievement.id = UserAchievement.achievementId \
@@ -238,6 +252,51 @@ pub async fn list_achievement_page_score_requirements_for_user(
                         minimum_score,
                         current_score,
                         current_score_robot_name,
+                    }
+                },
+            )
+            .collect()
+    })
+}
+
+pub async fn list_achievement_page_depot_total_requirements_for_user(
+    pool: &MySqlPool,
+    user_id: i64,
+) -> Result<Vec<AchievementPageDepotTotalRequirementRecord>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, i64, String, i32, i32)>(
+        "SELECT UserAchievement.achievementId, Ore.id, Ore.oreName, \
+                AchievementStepDepotTotalRequirement.amount, \
+                CAST(COALESCE((SELECT SUM(MiningOreResult.depotAmount) \
+                               FROM MiningOreResult \
+                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
+                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                               WHERE Robot.userId = UserAchievement.userId \
+                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
+                                 AND MiningQueue.claimed = true), 0) AS SIGNED) \
+         FROM UserAchievement \
+         INNER JOIN AchievementStep \
+           ON AchievementStep.achievementId = UserAchievement.achievementId \
+          AND AchievementStep.step = UserAchievement.stepsClaimed + 1 \
+         INNER JOIN AchievementStepDepotTotalRequirement \
+           ON AchievementStepDepotTotalRequirement.achievementId = AchievementStep.achievementId \
+          AND AchievementStepDepotTotalRequirement.step = AchievementStep.step \
+         INNER JOIN Ore ON Ore.id = AchievementStepDepotTotalRequirement.oreId \
+         WHERE UserAchievement.userId = ? \
+         ORDER BY UserAchievement.achievementId, Ore.id DESC",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(
+                |(achievement_id, ore_id, ore_name, amount, current_amount)| {
+                    AchievementPageDepotTotalRequirementRecord {
+                        achievement_id,
+                        ore_id,
+                        ore_name,
+                        amount,
+                        current_amount,
                     }
                 },
             )

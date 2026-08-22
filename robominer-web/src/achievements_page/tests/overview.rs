@@ -33,6 +33,7 @@ fn achievements_overview_renders_other_player_tracks_without_claim_ui() {
         achievements: Vec::new(),
         total_requirements: Vec::new(),
         score_requirements: Vec::new(),
+        depot_total_requirements: Vec::new(),
         points_summary: robominer_db::AchievementPagePointsSummaryRecord {
             points_earned: 40,
             points_achievable: 150,
@@ -78,6 +79,7 @@ fn achievements_overview_shows_not_found_for_missing_player() {
         achievements: Vec::new(),
         total_requirements: Vec::new(),
         score_requirements: Vec::new(),
+        depot_total_requirements: Vec::new(),
         points_summary: robominer_db::AchievementPagePointsSummaryRecord {
             points_earned: 0,
             points_achievable: 0,

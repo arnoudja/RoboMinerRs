@@ -22,6 +22,7 @@ fn achievements_sort_non_claimable_by_descending_id() {
         ],
         total_requirements: Vec::new(),
         score_requirements: Vec::new(),
+        depot_total_requirements: Vec::new(),
         points_summary: robominer_db::AchievementPagePointsSummaryRecord {
             points_earned: 0,
             points_achievable: 0,
@@ -62,6 +63,9 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
             "50 → 100",
             "Ore &lt;C&gt; depot maximum",
             "10 → 25",
+            "Ore &lt;D&gt; dumped in depot",
+            r#"class="sufficientbalance">(30)"#,
+            r#"class="insufficientbalance">(10)"#,
             "Area &amp; D",
             "New robot",
             r#"class="sufficientbalance">(11)"#,

@@ -66,6 +66,22 @@ pub(super) fn sample_achievement_state(claim_message: Option<String>) -> Achieve
             current_score: 10.0,
             current_score_robot_name: Some("Robot_1".to_string()),
         }],
+        depot_total_requirements: vec![
+            robominer_db::AchievementPageDepotTotalRequirementRecord {
+                achievement_id: 5,
+                ore_id: 3,
+                ore_name: "Ore <D>".to_string(),
+                amount: 25,
+                current_amount: 30,
+            },
+            robominer_db::AchievementPageDepotTotalRequirementRecord {
+                achievement_id: 5,
+                ore_id: 1,
+                ore_name: "Ore <C>".to_string(),
+                amount: 15,
+                current_amount: 10,
+            },
+        ],
         points_summary: robominer_db::AchievementPagePointsSummaryRecord {
             points_earned: 45,
             points_achievable: 150,

@@ -33,6 +33,19 @@ pub async fn list_achievement_claim_states_for_user(
                                INNER JOIN Robot ON Robot.id = RobotMiningAreaScore.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
                                  AND RobotMiningAreaScore.miningAreaId = AchievementStepMiningScoreRequirement.miningAreaId), 1)) \
+                       AND NOT EXISTS \
+                         (SELECT 1 \
+                          FROM AchievementStepDepotTotalRequirement \
+                          WHERE AchievementStepDepotTotalRequirement.achievementId = AchievementStep.achievementId \
+                            AND AchievementStepDepotTotalRequirement.step = AchievementStep.step \
+                            AND AchievementStepDepotTotalRequirement.amount > \
+                              (SELECT CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
+                               FROM MiningOreResult \
+                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
+                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                               WHERE Robot.userId = UserAchievement.userId \
+                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
+                                 AND MiningQueue.claimed = true)) \
                      THEN 1 ELSE 0 END \
          FROM UserAchievement \
          LEFT JOIN AchievementStep \

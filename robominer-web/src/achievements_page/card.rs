@@ -7,6 +7,7 @@ pub(super) fn render_achievement_card(
     robot_count: i64,
     total_requirements: &[&robominer_db::AchievementPageTotalRequirementRecord],
     score_requirements: &[&robominer_db::AchievementPageScoreRequirementRecord],
+    depot_total_requirements: &[&robominer_db::AchievementPageDepotTotalRequirementRecord],
 ) {
     let completed = achievement_completed(achievement);
     let card_class = if achievement.claimable {
@@ -105,11 +106,27 @@ pub(super) fn render_achievement_card(
     }
     body.push_str("</ul></section>");
 
-    if !total_requirements.is_empty() || !score_requirements.is_empty() {
+    if !total_requirements.is_empty()
+        || !score_requirements.is_empty()
+        || !depot_total_requirements.is_empty()
+    {
         body.push_str(r#"<section class="achievement-requirements"><h3 class="achievement-section-title">Requirements</h3><ul class="achievement-requirement-list">"#);
         for requirement in total_requirements {
             body.push_str(&format!(
                 r#"<li><span>{} mined</span><span class="achievement-requirement-target">{}</span><span class="{}">({})</span></li>"#,
+                escape_html(&requirement.ore_name),
+                requirement.amount,
+                if requirement.current_amount >= requirement.amount {
+                    "sufficientbalance"
+                } else {
+                    "insufficientbalance"
+                },
+                requirement.current_amount
+            ));
+        }
+        for requirement in depot_total_requirements {
+            body.push_str(&format!(
+                r#"<li><span>{} dumped in depot</span><span class="achievement-requirement-target">{}</span><span class="{}">({})</span></li>"#,
                 escape_html(&requirement.ore_name),
                 requirement.amount,
                 if requirement.current_amount >= requirement.amount {

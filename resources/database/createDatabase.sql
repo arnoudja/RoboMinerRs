@@ -7,6 +7,7 @@ drop table if exists PoolItemMiningTotals;
 drop table if exists PoolItem;
 drop table if exists Pool;
 drop table if exists UserAchievement;
+drop table if exists AchievementStepDepotTotalRequirement;
 drop table if exists AchievementStepMiningScoreRequirement;
 drop table if exists AchievementStepMiningTotalRequirement;
 drop table if exists AchievementPredecessor;
@@ -383,6 +384,17 @@ step INT NOT NULL,
 miningAreaId INT NOT NULL REFERENCES MiningArea (id) ON DELETE CASCADE,
 minimumScore DOUBLE NOT NULL,
 PRIMARY KEY (achievementId, step, miningAreaId),
+FOREIGN KEY (achievementId, step) REFERENCES AchievementStep (achievementId, step) ON DELETE CASCADE
+);
+
+
+create table AchievementStepDepotTotalRequirement
+(
+achievementId INT NOT NULL,
+step INT NOT NULL,
+oreId INT NOT NULL REFERENCES Ore (id) ON DELETE CASCADE,
+amount INT NOT NULL,
+PRIMARY KEY (achievementId, step, oreId),
 FOREIGN KEY (achievementId, step) REFERENCES AchievementStep (achievementId, step) ON DELETE CASCADE
 );
 

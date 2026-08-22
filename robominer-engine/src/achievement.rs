@@ -35,6 +35,9 @@ pub(crate) async fn achievement_states(pool: &robominer_db::MySqlPool, user_id: 
     let scores = robominer_db::list_user_best_mining_area_scores(pool, user_id)
         .await
         .context("failed to load user mining area scores")?;
+    let depot_totals = robominer_db::list_user_depot_totals(pool, user_id)
+        .await
+        .context("failed to load user depot totals")?;
 
     for claim_state in claim_states {
         println!(
@@ -49,6 +52,10 @@ pub(crate) async fn achievement_states(pool: &robominer_db::MySqlPool, user_id: 
 
     for score in scores {
         println!("S\t{}\t{}", score.mining_area_id, score.score);
+    }
+
+    for depot_total in depot_totals {
+        println!("D\t{}\t{}", depot_total.ore_id, depot_total.amount);
     }
 
     Ok(())
@@ -72,6 +79,10 @@ pub(crate) async fn achievement_page_states(
         robominer_db::list_achievement_page_score_requirements_for_user(pool, user_id)
             .await
             .context("failed to load achievement page score requirements")?;
+    let depot_total_requirements =
+        robominer_db::list_achievement_page_depot_total_requirements_for_user(pool, user_id)
+            .await
+            .context("failed to load achievement page depot total requirements")?;
 
     println!("V\t{robot_count}");
 
@@ -120,6 +131,17 @@ pub(crate) async fn achievement_page_states(
             escape_state_field(&requirement.area_name),
             requirement.minimum_score,
             requirement.current_score
+        );
+    }
+
+    for requirement in depot_total_requirements {
+        println!(
+            "D\t{}\t{}\t{}\t{}\t{}",
+            requirement.achievement_id,
+            requirement.ore_id,
+            escape_state_field(&requirement.ore_name),
+            requirement.amount,
+            requirement.current_amount
         );
     }
 

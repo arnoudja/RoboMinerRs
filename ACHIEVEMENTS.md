@@ -17,6 +17,7 @@ Seed data lives in `resources/database/gameData.sql` (achievement section from l
 | `AchievementStep` | One step in a track: points, rewards, optional area/ore reward fields. |
 | `AchievementStepMiningTotalRequirement` | Lifetime ore totals required before claim. |
 | `AchievementStepMiningScoreRequirement` | Minimum best robot score in a mining area. |
+| `AchievementStepDepotTotalRequirement` | Lifetime depot ore totals required before claim. |
 | `AchievementPredecessor` | Unlock rule: successor becomes available after predecessor step N. |
 | `UserAchievement` | Per-user progress: `stepsClaimed` for each unlocked achievement. |
 
@@ -63,13 +64,21 @@ across all of that user's robots.
 
 ### Mining area scores
 
-`AchievementStepMiningScoreRequirement` compares against the **maximum**
+`AchievementStepMiningScoreRequirement` compares against the **smoothed running**
 `RobotMiningAreaScore.score` any of the user's robots has reached in the given
 `miningAreaId`. Scores are updated when rallies complete. Comparison uses the
 same one-decimal rounding as the achievements UI (`900.04` and `900.0` both
 count as `900.0`), so a displayed tie meets the requirement.
 
-A step with **no** rows in either requirement table is claimable as soon as it is
+### Lifetime depot totals
+
+`AchievementStepDepotTotalRequirement` compares against the sum of
+`MiningOreResult.depotAmount` on **claimed** mining-queue results for the
+required `oreId`, aggregated across all of the user's robots. This is **gross
+depot ore** (before tax), counted when the user claims finished mining-queue
+results — the same timing as lifetime mined totals.
+
+A step with **no** rows in any requirement table is claimable as soon as it is
 the user's next step (for example the signup reward).
 
 ## Player lifecycle
@@ -105,7 +114,7 @@ and `achievementId`. The engine:
 
 1. Locks the `UserAchievement` row.
 2. Loads step `stepsClaimed + 1`.
-3. Verifies all mining-total and mining-score requirements.
+3. Verifies all mining-total, mining-score, and depot-total requirements.
 4. Increments `stepsClaimed`.
 5. Applies step rewards to `User`, `UserMiningArea`, `UserOreAsset`, and robots.
 6. Unlocks any successor achievements whose predecessor steps are now satisfied.

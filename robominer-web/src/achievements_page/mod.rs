@@ -10,6 +10,8 @@ pub(super) struct AchievementsPageState {
     pub(super) achievements: Vec<robominer_db::AchievementPageStateRecord>,
     pub(super) total_requirements: Vec<robominer_db::AchievementPageTotalRequirementRecord>,
     pub(super) score_requirements: Vec<robominer_db::AchievementPageScoreRequirementRecord>,
+    pub(super) depot_total_requirements:
+        Vec<robominer_db::AchievementPageDepotTotalRequirementRecord>,
     pub(super) points_summary: robominer_db::AchievementPagePointsSummaryRecord,
     pub(super) claim_message: Option<String>,
 }
@@ -95,6 +97,9 @@ async fn load_achievements_state(
             pool, user_id,
         )
         .await?,
+        depot_total_requirements:
+            robominer_db::list_achievement_page_depot_total_requirements_for_user(pool, user_id)
+                .await?,
         points_summary: robominer_db::load_achievement_page_points_summary_for_user(pool, user_id)
             .await?,
         claim_message,
@@ -114,6 +119,7 @@ async fn load_achievements_overview(
             achievements: Vec::new(),
             total_requirements: Vec::new(),
             score_requirements: Vec::new(),
+            depot_total_requirements: Vec::new(),
             points_summary: robominer_db::AchievementPagePointsSummaryRecord {
                 points_earned: 0,
                 points_achievable: 0,
@@ -134,6 +140,7 @@ async fn load_achievements_overview(
         achievements: Vec::new(),
         total_requirements: Vec::new(),
         score_requirements: Vec::new(),
+        depot_total_requirements: Vec::new(),
         points_summary: robominer_db::load_achievement_page_points_summary_for_user(
             pool,
             target_user_id,

@@ -218,6 +218,25 @@ async fn achievement_requirements_met(
         }
     }
 
+    let depot_requirements = sqlx::query_as::<_, (i64, i32)>(
+        "SELECT oreId, amount \
+         FROM AchievementStepDepotTotalRequirement \
+         WHERE achievementId = ? AND step = ?",
+    )
+    .bind(achievement_id)
+    .bind(step)
+    .fetch_all(&mut **transaction)
+    .await?;
+
+    for (ore_id, required_amount) in depot_requirements {
+        let deposited =
+            super::read::user_depot_total_for_ore(&mut **transaction, user_id, ore_id).await?;
+
+        if deposited < required_amount {
+            return Ok(false);
+        }
+    }
+
     Ok(true)
 }
 

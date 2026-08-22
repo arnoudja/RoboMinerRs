@@ -521,6 +521,12 @@ pub struct UserOreMinedRecord {
     pub amount: i32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct UserDepotTotalRecord {
+    pub ore_id: i64,
+    pub amount: i32,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct UserMiningAreaScoreRecord {
     pub mining_area_id: i64,
@@ -570,6 +576,15 @@ pub struct AchievementPageStateRecord {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AchievementPageTotalRequirementRecord {
+    pub achievement_id: i64,
+    pub ore_id: i64,
+    pub ore_name: String,
+    pub amount: i32,
+    pub current_amount: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AchievementPageDepotTotalRequirementRecord {
     pub achievement_id: i64,
     pub ore_id: i64,
     pub ore_name: String,
