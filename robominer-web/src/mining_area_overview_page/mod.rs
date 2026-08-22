@@ -9,7 +9,7 @@ mod tests;
 pub(super) struct MiningAreaOverviewPageState {
     pub(super) ores: Vec<robominer_db::MiningAreaOverviewOreRecord>,
     pub(super) areas: Vec<robominer_db::MiningAreaOverviewAreaRecord>,
-    pub(super) percentages: Vec<robominer_db::MiningAreaOverviewPercentageRecord>,
+    pub(super) ore_averages: Vec<robominer_db::MiningAreaOverviewOreAverageRecord>,
     pub(super) costs: Vec<robominer_db::MiningQueuePageAreaCostRecord>,
     pub(super) ore_assets: Vec<robominer_db::UserOreAssetStateRecord>,
 }
@@ -50,7 +50,7 @@ async fn load_mining_area_overview_state(
     Ok(MiningAreaOverviewPageState {
         ores: robominer_db::list_mining_area_overview_ores_for_user(pool, user_id).await?,
         areas: robominer_db::list_mining_area_overview_areas_for_user(pool, user_id).await?,
-        percentages: robominer_db::list_mining_area_overview_percentages_for_user(pool, user_id)
+        ore_averages: robominer_db::list_mining_area_overview_ore_averages_for_user(pool, user_id)
             .await?,
         costs: robominer_db::list_mining_queue_page_area_costs(pool, user_id).await?,
         ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id).await?,

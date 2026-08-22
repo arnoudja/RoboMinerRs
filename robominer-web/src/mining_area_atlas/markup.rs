@@ -15,11 +15,11 @@ pub(crate) fn render_mining_area_atlas(
     mode: MiningAreaAtlasMode,
     ores: &[robominer_db::MiningAreaOverviewOreRecord],
     areas: &[robominer_db::MiningAreaOverviewAreaRecord],
-    percentages: &[robominer_db::MiningAreaOverviewPercentageRecord],
+    ore_averages: &[robominer_db::MiningAreaOverviewOreAverageRecord],
     costs: &[robominer_db::MiningQueuePageAreaCostRecord],
     ore_assets: &[robominer_db::UserOreAssetStateRecord],
 ) {
-    render_mining_area_atlas_markup(body, mode, ores, areas, percentages, costs, ore_assets);
+    render_mining_area_atlas_markup(body, mode, ores, areas, ore_averages, costs, ore_assets);
     render_mining_area_atlas_script(body);
 }
 
@@ -28,15 +28,15 @@ pub(crate) fn render_mining_area_atlas_markup(
     mode: MiningAreaAtlasMode,
     ores: &[robominer_db::MiningAreaOverviewOreRecord],
     areas: &[robominer_db::MiningAreaOverviewAreaRecord],
-    percentages: &[robominer_db::MiningAreaOverviewPercentageRecord],
+    ore_averages: &[robominer_db::MiningAreaOverviewOreAverageRecord],
     costs: &[robominer_db::MiningQueuePageAreaCostRecord],
     ore_assets: &[robominer_db::UserOreAssetStateRecord],
 ) {
-    let mut percentage_map = HashMap::new();
-    for percentage in percentages {
-        percentage_map.insert(
-            (percentage.mining_area_id, percentage.ore_id),
-            percentage.percentage,
+    let mut average_map = HashMap::new();
+    for average in ore_averages {
+        average_map.insert(
+            (average.mining_area_id, average.ore_id),
+            average.average_ore_per_run,
         );
     }
 
@@ -66,14 +66,14 @@ pub(crate) fn render_mining_area_atlas_markup(
             mode,
             ores,
             areas,
-            &percentage_map,
+            &average_map,
             &cost_map,
             &ore_amount_map,
         );
     }
 
     body.push_str(
-        r#"<p class="mining-area-atlas-footnote">Percentages reflect historic rally yields, not guaranteed results.</p>"#,
+        r#"<p class="mining-area-atlas-footnote">Averages reflect historic ore mined per claimed run, not guaranteed results.</p>"#,
     );
 }
 
@@ -121,7 +121,7 @@ fn render_mining_area_atlas_matrix(
     mode: MiningAreaAtlasMode,
     ores: &[robominer_db::MiningAreaOverviewOreRecord],
     areas: &[robominer_db::MiningAreaOverviewAreaRecord],
-    percentage_map: &HashMap<(i64, i64), f64>,
+    average_map: &HashMap<(i64, i64), f64>,
     cost_map: &HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaCostRecord>>,
     ore_amount_map: &HashMap<i64, i32>,
 ) {
@@ -150,37 +150,34 @@ fn render_mining_area_atlas_matrix(
         let cost_markup = render_area_entry_costs(costs, ore_amount_map);
         let mut ore_yield_attrs = String::new();
         for ore in ores {
-            let percentage = percentage_map
+            let average = average_map
                 .get(&(area.mining_area_id, ore.ore_id))
                 .copied()
                 .unwrap_or(0.0);
-            ore_yield_attrs.push_str(&format!(
-                r#" data-ore-yield-{}="{}""#,
-                ore.ore_id, percentage
-            ));
+            ore_yield_attrs.push_str(&format!(r#" data-ore-yield-{}="{}""#, ore.ore_id, average));
         }
         body.push_str(&format!(
             r#"<tr class="mining-area-atlas-row" data-area-id="{}" data-area-name="{}" data-total-yield="{}" data-affordable="{}"{ore_yield_attrs}><th scope="row" class="mining-area-atlas-area-col">"#,
             area.mining_area_id,
             escape_html(&area.area_name),
-            area.total_percentage,
+            area.total_average_ore_per_run,
             if affordable { "1" } else { "0" },
         ));
         render_mining_area_atlas_area_cell(body, mode, area);
         body.push_str(&format!(
-            r#"</th><td class="mining-area-atlas-cost-cell">{cost_markup}</td><td class="{}">{:.1}%</td>"#,
-            yield_cell_class(area.total_percentage),
-            area.total_percentage
+            r#"</th><td class="mining-area-atlas-cost-cell">{cost_markup}</td><td class="{}">{:.1}</td>"#,
+            yield_cell_class(area.total_average_ore_per_run),
+            area.total_average_ore_per_run
         ));
         for ore in ores {
-            let percentage = percentage_map
+            let average = average_map
                 .get(&(area.mining_area_id, ore.ore_id))
                 .copied()
                 .unwrap_or(0.0);
             body.push_str(&format!(
-                r#"<td class="{}">{:.1}%</td>"#,
-                yield_cell_class(percentage),
-                percentage
+                r#"<td class="{}">{:.1}</td>"#,
+                yield_cell_class(average),
+                average
             ));
         }
         body.push_str("</tr>");
@@ -205,12 +202,12 @@ fn render_mining_area_atlas_area_cell(
     ));
 }
 
-pub(crate) fn yield_cell_class(percentage: f64) -> &'static str {
-    if percentage >= 20.0 {
+pub(crate) fn yield_cell_class(average_ore_per_run: f64) -> &'static str {
+    if average_ore_per_run >= 20.0 {
         "mining-area-atlas-yield-high"
-    } else if percentage >= 5.0 {
+    } else if average_ore_per_run >= 5.0 {
         "mining-area-atlas-yield-mid"
-    } else if percentage > 0.0 {
+    } else if average_ore_per_run > 0.0 {
         "mining-area-atlas-yield-low"
     } else {
         "mining-area-atlas-yield-zero"

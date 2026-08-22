@@ -289,9 +289,9 @@ pub(crate) async fn mining_area_overview_states(pool: &robominer_db::MySqlPool) 
     let areas = robominer_db::list_mining_area_overview_areas(pool)
         .await
         .context("failed to load mining area overview areas")?;
-    let percentages = robominer_db::list_mining_area_overview_percentages(pool)
+    let ore_averages = robominer_db::list_mining_area_overview_ore_averages(pool)
         .await
-        .context("failed to load mining area overview percentages")?;
+        .context("failed to load mining area overview ore averages")?;
 
     for ore in ores {
         println!("O\t{}\t{}", ore.ore_id, escape_state_field(&ore.ore_name));
@@ -302,14 +302,14 @@ pub(crate) async fn mining_area_overview_states(pool: &robominer_db::MySqlPool) 
             "A\t{}\t{}\t{}",
             area.mining_area_id,
             escape_state_field(&area.area_name),
-            area.total_percentage
+            area.total_average_ore_per_run
         );
     }
 
-    for percentage in percentages {
+    for average in ore_averages {
         println!(
             "P\t{}\t{}\t{}",
-            percentage.mining_area_id, percentage.ore_id, percentage.percentage
+            average.mining_area_id, average.ore_id, average.average_ore_per_run
         );
     }
 

@@ -705,12 +705,12 @@ pub struct MiningAreaOverviewOreRecord {
 pub struct MiningAreaOverviewAreaRecord {
     pub mining_area_id: i64,
     pub area_name: String,
-    pub total_percentage: f64,
+    pub total_average_ore_per_run: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MiningAreaOverviewPercentageRecord {
+pub struct MiningAreaOverviewOreAverageRecord {
     pub mining_area_id: i64,
     pub ore_id: i64,
-    pub percentage: f64,
+    pub average_ore_per_run: f64,
 }

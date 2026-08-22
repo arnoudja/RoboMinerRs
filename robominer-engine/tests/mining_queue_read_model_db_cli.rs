@@ -84,8 +84,8 @@ async fn mining_queue_page_states_report_page_read_model() {
     .expect("failed to insert mining area ore supply");
     sqlx::query(
         "INSERT INTO MiningAreaLifetimeResult \
-         (miningAreaId, oreId, totalAmount, totalContainerSize) \
-         VALUES (?, ?, 25, 100)",
+         (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+         VALUES (?, ?, 25, 100, 1)",
     )
     .bind(fixture.mining_area_id)
     .bind(fixture.ore_id)

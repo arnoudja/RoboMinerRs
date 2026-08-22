@@ -1,6 +1,6 @@
 use robominer_db::{
     get_mining_area, list_mining_area_ore_supplies, list_mining_area_overview_areas_for_user,
-    list_mining_area_overview_ores_for_user, list_mining_area_overview_percentages_for_user,
+    list_mining_area_overview_ore_averages_for_user, list_mining_area_overview_ores_for_user,
 };
 use robominer_test_support::{
     insert_ai_robot, insert_area_supply, insert_mining_area, insert_ore, insert_ore_price,
@@ -105,8 +105,8 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
         &pool,
         sqlx::query(
             "INSERT INTO MiningAreaLifetimeResult \
-             (miningAreaId, oreId, totalAmount, totalContainerSize) \
-             VALUES (?, ?, 40, 100)",
+             (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+             VALUES (?, ?, 40, 100, 1)",
         )
         .bind(granted_area_id)
         .bind(granted_ore_id),
@@ -116,8 +116,8 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
         &pool,
         sqlx::query(
             "INSERT INTO MiningAreaLifetimeResult \
-             (miningAreaId, oreId, totalAmount, totalContainerSize) \
-             VALUES (?, ?, 10, 100)",
+             (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+             VALUES (?, ?, 10, 100, 1)",
         )
         .bind(hidden_area_id)
         .bind(hidden_ore_id),
@@ -129,7 +129,7 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
         .expect("overview areas should load");
     assert_eq!(overview_areas.len(), 1);
     assert_eq!(overview_areas[0].mining_area_id, granted_area_id);
-    assert!((overview_areas[0].total_percentage - 40.0).abs() < f64::EPSILON);
+    assert!((overview_areas[0].total_average_ore_per_run - 40.0).abs() < f64::EPSILON);
 
     let overview_ores = list_mining_area_overview_ores_for_user(&pool, user_id)
         .await
@@ -143,13 +143,13 @@ async fn mining_area_overview_helpers_respect_user_area_grant() {
         "hidden-area ore should stay out of user overview"
     );
 
-    let overview_percentages = list_mining_area_overview_percentages_for_user(&pool, user_id)
+    let overview_averages = list_mining_area_overview_ore_averages_for_user(&pool, user_id)
         .await
-        .expect("overview percentages should load");
-    assert_eq!(overview_percentages.len(), 1);
-    assert_eq!(overview_percentages[0].mining_area_id, granted_area_id);
-    assert_eq!(overview_percentages[0].ore_id, granted_ore_id);
-    assert!((overview_percentages[0].percentage - 40.0).abs() < f64::EPSILON);
+        .expect("overview ore averages should load");
+    assert_eq!(overview_averages.len(), 1);
+    assert_eq!(overview_averages[0].mining_area_id, granted_area_id);
+    assert_eq!(overview_averages[0].ore_id, granted_ore_id);
+    assert!((overview_averages[0].average_ore_per_run - 40.0).abs() < f64::EPSILON);
 
     cleanup_granted_area_fixture(
         &pool,

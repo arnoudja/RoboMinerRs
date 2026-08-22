@@ -1,7 +1,7 @@
 use sqlx::MySqlPool;
 
 use crate::{
-    MiningAreaOverviewAreaRecord, MiningAreaOverviewOreRecord, MiningAreaOverviewPercentageRecord,
+    MiningAreaOverviewAreaRecord, MiningAreaOverviewOreAverageRecord, MiningAreaOverviewOreRecord,
 };
 
 pub async fn list_mining_area_overview_ores(
@@ -60,8 +60,8 @@ pub async fn list_mining_area_overview_areas(
 ) -> Result<Vec<MiningAreaOverviewAreaRecord>, sqlx::Error> {
     sqlx::query_as::<_, (i64, String, f64)>(
         "SELECT MiningArea.id, MiningArea.areaName, \
-                CAST(COALESCE(SUM(CASE WHEN MiningAreaLifetimeResult.totalContainerSize > 0 \
-                                        THEN MiningAreaLifetimeResult.totalAmount * 100.0 / MiningAreaLifetimeResult.totalContainerSize \
+                CAST(COALESCE(SUM(CASE WHEN MiningAreaLifetimeResult.totalRuns > 0 \
+                                        THEN MiningAreaLifetimeResult.totalAmount / MiningAreaLifetimeResult.totalRuns \
                                         ELSE 0.0 END), 0.0) AS DOUBLE) \
          FROM MiningArea \
          INNER JOIN MiningAreaLifetimeResult \
@@ -80,8 +80,8 @@ pub async fn list_mining_area_overview_areas_for_user(
 ) -> Result<Vec<MiningAreaOverviewAreaRecord>, sqlx::Error> {
     sqlx::query_as::<_, (i64, String, f64)>(
         "SELECT MiningArea.id, MiningArea.areaName, \
-                CAST(COALESCE(SUM(CASE WHEN MiningAreaLifetimeResult.totalContainerSize > 0 \
-                                        THEN MiningAreaLifetimeResult.totalAmount * 100.0 / MiningAreaLifetimeResult.totalContainerSize \
+                CAST(COALESCE(SUM(CASE WHEN MiningAreaLifetimeResult.totalRuns > 0 \
+                                        THEN MiningAreaLifetimeResult.totalAmount / MiningAreaLifetimeResult.totalRuns \
                                         ELSE 0.0 END), 0.0) AS DOUBLE) \
          FROM MiningArea \
          INNER JOIN UserMiningArea \
@@ -102,40 +102,40 @@ fn map_mining_area_overview_area_rows(
     rows: Vec<(i64, String, f64)>,
 ) -> Vec<MiningAreaOverviewAreaRecord> {
     rows.into_iter()
-        .map(
-            |(mining_area_id, area_name, total_percentage)| MiningAreaOverviewAreaRecord {
+        .map(|(mining_area_id, area_name, total_average_ore_per_run)| {
+            MiningAreaOverviewAreaRecord {
                 mining_area_id,
                 area_name,
-                total_percentage,
-            },
-        )
+                total_average_ore_per_run,
+            }
+        })
         .collect()
 }
 
-pub async fn list_mining_area_overview_percentages(
+pub async fn list_mining_area_overview_ore_averages(
     pool: &MySqlPool,
-) -> Result<Vec<MiningAreaOverviewPercentageRecord>, sqlx::Error> {
+) -> Result<Vec<MiningAreaOverviewOreAverageRecord>, sqlx::Error> {
     sqlx::query_as::<_, (i64, i64, f64)>(
         "SELECT miningAreaId, oreId, \
-                CAST(CASE WHEN totalContainerSize > 0 \
-                          THEN totalAmount * 100.0 / totalContainerSize \
+                CAST(CASE WHEN totalRuns > 0 \
+                          THEN totalAmount / totalRuns \
                           ELSE 0.0 END AS DOUBLE) \
          FROM MiningAreaLifetimeResult \
          ORDER BY miningAreaId, oreId",
     )
     .fetch_all(pool)
     .await
-    .map(map_mining_area_overview_percentage_rows)
+    .map(map_mining_area_overview_ore_average_rows)
 }
 
-pub async fn list_mining_area_overview_percentages_for_user(
+pub async fn list_mining_area_overview_ore_averages_for_user(
     pool: &MySqlPool,
     user_id: i64,
-) -> Result<Vec<MiningAreaOverviewPercentageRecord>, sqlx::Error> {
+) -> Result<Vec<MiningAreaOverviewOreAverageRecord>, sqlx::Error> {
     sqlx::query_as::<_, (i64, i64, f64)>(
         "SELECT MiningAreaLifetimeResult.miningAreaId, MiningAreaLifetimeResult.oreId, \
-                CAST(CASE WHEN MiningAreaLifetimeResult.totalContainerSize > 0 \
-                          THEN MiningAreaLifetimeResult.totalAmount * 100.0 / MiningAreaLifetimeResult.totalContainerSize \
+                CAST(CASE WHEN MiningAreaLifetimeResult.totalRuns > 0 \
+                          THEN MiningAreaLifetimeResult.totalAmount / MiningAreaLifetimeResult.totalRuns \
                           ELSE 0.0 END AS DOUBLE) \
          FROM MiningAreaLifetimeResult \
          INNER JOIN UserMiningArea \
@@ -146,18 +146,18 @@ pub async fn list_mining_area_overview_percentages_for_user(
     .bind(user_id)
     .fetch_all(pool)
     .await
-    .map(map_mining_area_overview_percentage_rows)
+    .map(map_mining_area_overview_ore_average_rows)
 }
 
-fn map_mining_area_overview_percentage_rows(
+fn map_mining_area_overview_ore_average_rows(
     rows: Vec<(i64, i64, f64)>,
-) -> Vec<MiningAreaOverviewPercentageRecord> {
+) -> Vec<MiningAreaOverviewOreAverageRecord> {
     rows.into_iter()
         .map(
-            |(mining_area_id, ore_id, percentage)| MiningAreaOverviewPercentageRecord {
+            |(mining_area_id, ore_id, average_ore_per_run)| MiningAreaOverviewOreAverageRecord {
                 mining_area_id,
                 ore_id,
-                percentage,
+                average_ore_per_run,
             },
         )
         .collect()

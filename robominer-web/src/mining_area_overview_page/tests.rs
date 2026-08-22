@@ -32,18 +32,18 @@ fn sample_state() -> MiningAreaOverviewPageState {
             robominer_db::MiningAreaOverviewAreaRecord {
                 mining_area_id: 10,
                 area_name: "Area <A>".to_string(),
-                total_percentage: 12.34,
+                total_average_ore_per_run: 12.34,
             },
             robominer_db::MiningAreaOverviewAreaRecord {
                 mining_area_id: 11,
                 area_name: "Area B".to_string(),
-                total_percentage: 5.0,
+                total_average_ore_per_run: 5.0,
             },
         ],
-        percentages: vec![robominer_db::MiningAreaOverviewPercentageRecord {
+        ore_averages: vec![robominer_db::MiningAreaOverviewOreAverageRecord {
             mining_area_id: 10,
             ore_id: 2,
-            percentage: 7.89,
+            average_ore_per_run: 7.89,
         }],
         costs: vec![
             robominer_db::MiningQueuePageAreaCostRecord {
@@ -115,7 +115,7 @@ async fn mining_area_overview_requires_login() {
 }
 
 #[test]
-fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_percentages() {
+fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_averages() {
     let html = render_mining_area_overview_page("Player".to_string(), None, &sample_state());
 
     assert_contains_all(
@@ -133,10 +133,10 @@ fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_percentage
             r#"data-affordable="1""#,
             r#"data-affordable="0""#,
             "Ore &amp; Two",
-            ">12.3%<",
-            ">7.9%<",
-            ">0.0%<",
-            "Percentages reflect historic rally yields",
+            ">12.3<",
+            ">7.9<",
+            ">0.0<",
+            "Averages reflect historic ore mined per claimed run",
         ],
     );
     assert_html_not_contains(&html, "Ore &lt;One&gt;");

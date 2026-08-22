@@ -14,7 +14,7 @@ pub(super) fn render_mining_area_overview_page(
         MiningAreaAtlasMode::StandalonePage,
         &state.ores,
         &state.areas,
-        &state.percentages,
+        &state.ore_averages,
         &state.costs,
         &state.ore_assets,
     );

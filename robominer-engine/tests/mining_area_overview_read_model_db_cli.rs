@@ -5,7 +5,7 @@ use support::*;
 
 #[tokio::test]
 #[serial]
-async fn mining_area_overview_states_report_lifetime_percentages() {
+async fn mining_area_overview_states_report_lifetime_averages() {
     let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
         eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
         return;
@@ -18,8 +18,8 @@ async fn mining_area_overview_states_report_lifetime_percentages() {
 
     sqlx::query(
         "INSERT INTO MiningAreaLifetimeResult \
-         (miningAreaId, oreId, totalAmount, totalContainerSize) \
-         VALUES (?, ?, 25, 100)",
+         (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+         VALUES (?, ?, 25, 100, 1)",
     )
     .bind(fixture.mining_area_id)
     .bind(fixture.ore_id)
@@ -62,7 +62,7 @@ async fn mining_area_overview_states_report_lifetime_percentages() {
             "P\t{}\t{}\t25",
             fixture.mining_area_id, fixture.ore_id
         )),
-        "expected overview percentage row in stdout:\n{stdout}"
+        "expected overview ore average row in stdout:\n{stdout}"
     );
 
     let _ = sqlx::query("DELETE FROM MiningAreaLifetimeResult WHERE miningAreaId = ?")

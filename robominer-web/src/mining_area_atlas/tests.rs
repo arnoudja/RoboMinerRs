@@ -10,7 +10,7 @@ use super::links::{
 use super::markup::{MiningAreaAtlasMode, render_mining_area_atlas, yield_cell_class};
 
 #[test]
-fn yield_cell_class_buckets_percentages() {
+fn yield_cell_class_buckets_averages() {
     assert_eq!(yield_cell_class(25.0), "mining-area-atlas-yield-high");
     assert_eq!(yield_cell_class(5.0), "mining-area-atlas-yield-mid");
     assert_eq!(yield_cell_class(1.0), "mining-area-atlas-yield-low");
@@ -110,12 +110,12 @@ fn render_mining_area_atlas_uses_area_links() {
         &[robominer_db::MiningAreaOverviewAreaRecord {
             mining_area_id: 10,
             area_name: "Area A".to_string(),
-            total_percentage: 12.0,
+            total_average_ore_per_run: 12.0,
         }],
-        &[robominer_db::MiningAreaOverviewPercentageRecord {
+        &[robominer_db::MiningAreaOverviewOreAverageRecord {
             mining_area_id: 10,
             ore_id: 1,
-            percentage: 12.0,
+            average_ore_per_run: 12.0,
         }],
         &[],
         &[],
