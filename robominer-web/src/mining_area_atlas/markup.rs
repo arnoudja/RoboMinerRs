@@ -23,6 +23,14 @@ pub(crate) fn render_mining_area_atlas(
     render_mining_area_atlas_script(body);
 }
 
+fn sort_ores_by_id_descending(
+    ores: &[robominer_db::MiningAreaOverviewOreRecord],
+) -> Vec<robominer_db::MiningAreaOverviewOreRecord> {
+    let mut sorted = ores.to_vec();
+    sorted.sort_by_key(|ore| std::cmp::Reverse(ore.ore_id));
+    sorted
+}
+
 pub(crate) fn render_mining_area_atlas_markup(
     body: &mut String,
     mode: MiningAreaAtlasMode,
@@ -32,6 +40,8 @@ pub(crate) fn render_mining_area_atlas_markup(
     costs: &[robominer_db::MiningQueuePageAreaCostRecord],
     ore_assets: &[robominer_db::UserOreAssetStateRecord],
 ) {
+    let ores = sort_ores_by_id_descending(ores);
+
     let mut average_map = HashMap::new();
     for average in ore_averages {
         average_map.insert(
@@ -60,11 +70,11 @@ pub(crate) fn render_mining_area_atlas_markup(
             r#"<p class="mining-area-atlas-empty">No mining areas are available yet.</p>"#,
         );
     } else {
-        render_mining_area_atlas_controls(body, ores);
+        render_mining_area_atlas_controls(body, &ores);
         render_mining_area_atlas_matrix(
             body,
             mode,
-            ores,
+            &ores,
             areas,
             &average_map,
             &cost_map,

@@ -98,6 +98,47 @@ fn render_mining_area_atlas_ore_link_escapes_fields() {
 }
 
 #[test]
+fn render_mining_area_atlas_orders_ore_columns_by_descending_ore_id() {
+    let mut body = String::new();
+    render_mining_area_atlas(
+        &mut body,
+        MiningAreaAtlasMode::StandalonePage,
+        &[
+            robominer_db::MiningAreaOverviewOreRecord {
+                ore_id: 1,
+                ore_name: "Iron".to_string(),
+            },
+            robominer_db::MiningAreaOverviewOreRecord {
+                ore_id: 3,
+                ore_name: "Gold".to_string(),
+            },
+            robominer_db::MiningAreaOverviewOreRecord {
+                ore_id: 2,
+                ore_name: "Silver".to_string(),
+            },
+        ],
+        &[robominer_db::MiningAreaOverviewAreaRecord {
+            mining_area_id: 10,
+            area_name: "Area A".to_string(),
+            total_average_ore_per_run: 12.0,
+        }],
+        &[],
+        &[],
+        &[],
+    );
+
+    let header = body
+        .split("<tbody")
+        .next()
+        .expect("table header should precede body rows");
+    let gold_pos = header.find("Gold").expect("Gold column header");
+    let silver_pos = header.find("Silver").expect("Silver column header");
+    let iron_pos = header.find("Iron").expect("Iron column header");
+    assert!(gold_pos < silver_pos);
+    assert!(silver_pos < iron_pos);
+}
+
+#[test]
 fn render_mining_area_atlas_uses_area_links() {
     let mut body = String::new();
     render_mining_area_atlas(
