@@ -47,7 +47,11 @@ fn collect_static_actions(statements: &[ExecutableStatement], actions: &mut Vec<
 
 pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram, CompileError> {
     let mut input = CompileInput::new(source);
-    let root = parse_executable_sequence(&mut input)?;
+    let result = parse_executable_sequence(&mut input);
+    if let Some(error) = input.unterminated_comment_error() {
+        return Err(error);
+    }
+    let root = result?;
     let statements = match root.kind {
         ExecutableStatementKind::Sequence(statements) => statements,
         _ => vec![root],

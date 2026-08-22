@@ -182,3 +182,64 @@ fn executable_while_semicolon_matches_empty_block() {
         assert_eq!(runner.next_action(&mut depleted_context), None, "{source}");
     }
 }
+
+#[test]
+fn block_comments_are_ignored_like_whitespace() {
+    assert_valid_any_size("/* this is a comment */ move(1);");
+    assert_valid_any_size("move(1); /* trailing */ mine();");
+    assert_valid_any_size("int /* type */ x = 1; dump(x);");
+    assert_valid_any_size("int x = 10 / /* keep division */ 2; dump(x);");
+    assert_valid_any_size("/* outer * still a comment */ mine();");
+    assert_valid_any_size("/**/ mine();");
+    assert_valid_any_size("/* // line text inside block */ mine();");
+    assert_valid_any_size("// /* not a block comment\nmine();");
+    assert_valid_any_size("/* first */ /* second */ mine();");
+    assert_valid_any_size("/*\n * multi-line\n * comment\n */\nwhile (mine());");
+
+    let with_comments = verify_source("/* header */\nmove(1);\n/* mid */\nmine();");
+    let without_comments = verify_source("move(1);\nmine();");
+    assert!(
+        with_comments.verified,
+        "{}",
+        with_comments.error_description
+    );
+    assert_eq!(with_comments.compiled_size, without_comments.compiled_size);
+}
+
+#[test]
+fn unterminated_block_comment_is_a_syntax_error() {
+    let result = verify_source("move(1); /* this is a comment");
+    assert!(!result.verified);
+    assert_eq!(result.compiled_size, -1);
+    assert!(
+        result.error_description.contains("Unterminated comment"),
+        "got {:?}",
+        result.error_description
+    );
+    assert!(
+        result.error_description.contains("line 1"),
+        "got {:?}",
+        result.error_description
+    );
+
+    let later_line = verify_source("move(1);\n/*\nstill open");
+    assert!(!later_line.verified);
+    assert!(
+        later_line.error_description.contains("line 2"),
+        "unterminated comment should report the line where /* started, got {:?}",
+        later_line.error_description
+    );
+
+    let after_inner_close = verify_source("/* outer /* inner */ move(1);");
+    assert!(
+        after_inner_close.verified,
+        "the first */ ends the comment, leaving move(1); as code: {}",
+        after_inner_close.error_description
+    );
+
+    let leftover_after_close = verify_source("/* outer /* inner */ still */ move(1);");
+    assert!(
+        !leftover_after_close.verified,
+        "block comments do not nest, so `still` is parsed as code"
+    );
+}

@@ -19,6 +19,16 @@
             </p>
             <p class="helptext">This program moves the robot forward two positions and then continues mining until there is nothing to mine at the current location.
                 Since the program is started again when the program completes, these steps are repeated until the mining session is over.</p>
+            <h2 id="comments">Comments</h2>
+            <p class="helptext">Comments are ignored when the program runs. Use them to describe what the code is doing.</p>
+            <p class="helptext">A line comment starts with // and continues until the end of that line.</p>
+            <p class="helptext">A block comment starts with /* and ends with the first */. Block comments can span multiple lines. They do not nest.</p>
+            <h3>Example</h3>
+            <p class="helptext">/* this is a comment */<br>
+                scan();<br>
+                move(oreDistance()); // step onto the heap<br>
+                while (mine());<br>
+            </p>
             <h2 id="robot-actions">Robot actions</h2>
             <h3>move()</h3>
             <p class="helptext">Moves the robot forward or backward at the maximum speed until either the desired distance is traveled or a collision occurs.</p>

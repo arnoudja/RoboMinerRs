@@ -27,6 +27,18 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         expected_error_contains: None,
     },
     CompatibilityFixture {
+        name: "block_comment",
+        source: "/* start */\nwhile (mine());",
+        expected_size: Some(2),
+        expected_error_contains: None,
+    },
+    CompatibilityFixture {
+        name: "multiline_block_comment",
+        source: "/* this is a comment\nspanning lines */\nmove(1);\nmine();",
+        expected_size: Some(4),
+        expected_error_contains: None,
+    },
+    CompatibilityFixture {
         name: "all_robot_actions",
         source: "move(1); rotate(90); mine(); ore(0); dump(1); time();",
         expected_size: Some(11),
@@ -289,6 +301,12 @@ static COMPATIBILITY_FIXTURES: &[CompatibilityFixture] = &[
         source: "scan(90",
         expected_size: None,
         expected_error_contains: Some("')' expected"),
+    },
+    CompatibilityFixture {
+        name: "invalid_unterminated_block_comment",
+        source: "move(1); /* this is a comment",
+        expected_size: None,
+        expected_error_contains: Some("Unterminated comment"),
     },
 ];
 

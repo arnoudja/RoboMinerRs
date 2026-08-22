@@ -128,6 +128,8 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
         &[
             r#"class="help-article-toc""#,
             r#"<h2 id="statements">Statements</h2>"#,
+            r#"<h2 id="comments">Comments</h2>"#,
+            "/* this is a comment */",
             "collects every ore type present on that cell",
             "When the robot is already standing on ore, the distance is 0",
             "position and orientation at the moment scan() starts",

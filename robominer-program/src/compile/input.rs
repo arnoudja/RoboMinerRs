@@ -84,6 +84,7 @@ pub(super) struct CompileInput {
     pub(super) next_word: String,
     pub(super) current_line: usize,
     pub(super) variables: VariableStorage,
+    unterminated_block_comment_line: Option<usize>,
 }
 
 impl CompileInput {
@@ -180,6 +181,7 @@ impl CompileInput {
             next_word: String::new(),
             current_line: 1,
             variables: VariableStorage::default(),
+            unterminated_block_comment_line: None,
         };
         input.extract_next_word();
         input
@@ -344,9 +346,37 @@ impl CompileInput {
                         }
                     }
                 }
+                Some('/') if self.source.get(self.pos + 1) == Some(&'*') => {
+                    self.skip_block_comment();
+                }
                 _ => break,
             }
         }
+    }
+
+    /// C-style block comment: `/* ... */`, including across lines. Does not nest.
+    fn skip_block_comment(&mut self) {
+        let start_line = self.current_line;
+        self.pos += 2;
+        while let Some(ch) = self.source.get(self.pos).copied() {
+            if ch == '*' && self.source.get(self.pos + 1) == Some(&'/') {
+                self.pos += 2;
+                return;
+            }
+            if ch == '\n' {
+                self.current_line += 1;
+            }
+            self.pos += 1;
+        }
+        if self.unterminated_block_comment_line.is_none() {
+            self.unterminated_block_comment_line = Some(start_line);
+        }
+    }
+
+    pub(super) fn unterminated_comment_error(&self) -> Option<CompileError> {
+        self.unterminated_block_comment_line.map(|line| {
+            CompileError::new(format!("Syntax error at line {line}. Unterminated comment"))
+        })
     }
 }
 

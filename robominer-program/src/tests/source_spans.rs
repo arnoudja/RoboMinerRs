@@ -64,6 +64,29 @@ fn statement_spans_track_columns_past_the_first_line() {
 }
 
 #[test]
+fn block_comments_do_not_shift_following_statement_spans() {
+    let program = compile_executable_source("mine(); /* skip */ dumpA();")
+        .expect("comments between statements should compile");
+    let statements = program.statements();
+
+    assert_eq!(statements.len(), 2);
+    assert_eq!(statements[0].source_span, span(1, 1, 7));
+    // `dumpA()` starts after `mine(); /* skip */ `.
+    assert_eq!(statements[1].source_span, span(1, 20, 27));
+}
+
+#[test]
+fn multiline_block_comment_preserves_later_source_lines() {
+    let program = compile_executable_source("/*\ncomment\n*/\nmine();\ndumpA();")
+        .expect("multi-line comments should compile");
+    let statements = program.statements();
+
+    assert_eq!(statements.len(), 2);
+    assert_eq!(statements[0].source_span, span(4, 1, 7));
+    assert_eq!(statements[1].source_span, span(5, 1, 8));
+}
+
+#[test]
 fn source_span_line_matches_statement_source_line() {
     let program = compile_executable_source("while (mine())\n{\nmove(1);\n}")
         .expect("while loop should compile");
