@@ -9,7 +9,7 @@ pub mod rejection_messages;
 pub mod robot_config;
 pub mod simulation;
 
-pub use error::{DomainError, RobotPartSlot};
+pub use error::{DatabaseError, DomainError, RobotPartSlot};
 
 pub use loadout::{
     load_mining_area_loadout, load_next_pool_rally_loadout, load_next_rally_loadout,

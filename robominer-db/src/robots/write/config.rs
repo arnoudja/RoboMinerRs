@@ -14,19 +14,22 @@ use super::pending::{
 use crate::mining_queue::robot_waiting_queue_count;
 use crate::shop::add_user_robot_part_asset;
 use crate::users::touch_user_last_login_time;
-use crate::{UpdateRobotConfigRejection, UpdateRobotConfigRequest, UpdatedRobotConfig};
+use crate::{
+    DbOutcome, UpdateRobotConfigRejection, UpdateRobotConfigRequest, UpdatedRobotConfig, db_ok,
+    db_reject,
+};
 
 pub async fn update_robot_config(
     pool: &MySqlPool,
     request: UpdateRobotConfigRequest,
-) -> Result<Result<UpdatedRobotConfig, UpdateRobotConfigRejection>, sqlx::Error> {
+) -> Result<DbOutcome<UpdatedRobotConfig, UpdateRobotConfigRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     let Some(robot) =
         load_robot_for_update(&mut transaction, request.robot_id, request.user_id).await?
     else {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::UnknownRobot));
+        return db_reject(UpdateRobotConfigRejection::UnknownRobot);
     };
 
     let pending = load_pending_robot_changes_for_update(&mut transaction, request.robot_id).await?;
@@ -34,7 +37,7 @@ pub async fn update_robot_config(
 
     if !valid_robot_name(&request.robot_name) {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::InvalidRobotName));
+        return db_reject(UpdateRobotConfigRejection::InvalidRobotName);
     }
 
     let Some(program_source) = load_program_source_for_update(
@@ -45,17 +48,17 @@ pub async fn update_robot_config(
     .await?
     else {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::UnknownProgramSource));
+        return db_reject(UpdateRobotConfigRejection::UnknownProgramSource);
     };
 
     let Some(parts) = load_requested_robot_parts(&mut transaction, &request).await? else {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::UnknownRobotPart));
+        return db_reject(UpdateRobotConfigRejection::UnknownRobotPart);
     };
 
     if parts.memory_module.memory_capacity < program_source.compiled_size {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::ProgramTooLarge));
+        return db_reject(UpdateRobotConfigRejection::ProgramTooLarge);
     }
 
     let baseline_parts = robot_part_baseline(&robot, pending.as_ref());
@@ -69,14 +72,12 @@ pub async fn update_robot_config(
     .await?
     {
         transaction.rollback().await?;
-        return Ok(Err(UpdateRobotConfigRejection::NoUnassignedRobotPart));
+        return db_reject(UpdateRobotConfigRejection::NoUnassignedRobotPart);
     }
 
     let Some(parameters) = robot_parameters_for_parts(&parts) else {
         transaction.rollback().await?;
-        return Ok(Err(
-            UpdateRobotConfigRejection::InvalidRobotPartConfiguration,
-        ));
+        return db_reject(UpdateRobotConfigRejection::InvalidRobotPartConfiguration);
     };
 
     let source_code = if program_source.verified {
@@ -119,10 +120,10 @@ pub async fn update_robot_config(
 
     transaction.commit().await?;
 
-    Ok(Ok(UpdatedRobotConfig {
+    db_ok(UpdatedRobotConfig {
         robot_id: request.robot_id,
         pending: still_queued,
-    }))
+    })
 }
 pub(crate) async fn user_robot_count(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,

@@ -111,6 +111,7 @@ async fn process_login_request(
             },
         )
         .await?
+        .into_result()
         {
             Ok(verified) => {
                 let username = robominer_db::get_user_by_id(pool, verified.user_id)
@@ -182,6 +183,7 @@ async fn process_login_request(
                 },
             )
             .await?
+            .into_result()
             {
                 Ok(created) => {
                     return Ok(auth_redirect_response(

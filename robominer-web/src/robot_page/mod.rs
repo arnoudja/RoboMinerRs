@@ -74,7 +74,7 @@ async fn load_robot_page_state(
         )
         .await?;
 
-        message = Some(if let Err(rejection) = result {
+        message = Some(if let Err(rejection) = result.into_result() {
             format!(
                 "Unable to apply robot changes: {}",
                 update_robot_config_rejection_message(rejection)

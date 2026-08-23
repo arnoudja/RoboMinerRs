@@ -106,6 +106,7 @@ async fn load_mining_queue_page_state(
                         },
                     )
                     .await?
+                    .into_result()
                     {
                         error_message =
                             Some(enqueue_mining_rejection_message(rejection).to_string());
@@ -202,6 +203,7 @@ async fn cancel_queued_items(
             },
         )
         .await?
+        .into_result()
         {
             Ok(_) => batch.cleared += 1,
             Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp) => {

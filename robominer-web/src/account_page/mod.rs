@@ -173,7 +173,7 @@ async fn load_account_page_state(
             )
             .await?;
 
-            match update_result {
+            match update_result.into_result() {
                 Ok(updated) => {
                     message = Some("Account information updated".to_string());
                     if updated.password_changed {

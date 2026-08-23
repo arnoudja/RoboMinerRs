@@ -82,6 +82,7 @@ async fn load_shop_state(
                 },
             )
             .await?
+            .into_result()
             {
                 Ok(_) => "Robot part bought".to_string(),
                 Err(rejection) => format!(
@@ -92,7 +93,10 @@ async fn load_shop_state(
         );
     } else if sell_all_unassigned {
         message = Some(
-            match robominer_db::sell_all_unassigned_robot_parts(pool, user_id).await? {
+            match robominer_db::sell_all_unassigned_robot_parts(pool, user_id)
+                .await?
+                .into_result()
+            {
                 Ok(result) => {
                     if result.sold_count == 1 {
                         "Sold 1 unassigned robot part".to_string()
@@ -116,6 +120,7 @@ async fn load_shop_state(
                 },
             )
             .await?
+            .into_result()
             {
                 Ok(_) => "Robot part sold".to_string(),
                 Err(rejection) => format!(

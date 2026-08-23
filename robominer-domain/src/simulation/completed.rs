@@ -23,7 +23,7 @@ pub async fn persist_rally_outcome(
 
     robominer_db::persist_completed_rally(pool, &record)
         .await
-        .map_err(DomainError::Database)
+        .map_err(DomainError::from)
 }
 
 pub async fn persist_pool_rally_outcome(
@@ -35,7 +35,7 @@ pub async fn persist_pool_rally_outcome(
 
     robominer_db::persist_completed_pool_rally(pool, &record)
         .await
-        .map_err(DomainError::Database)
+        .map_err(DomainError::from)
 }
 
 pub fn completed_rally_record(

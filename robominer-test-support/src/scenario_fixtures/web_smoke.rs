@@ -84,8 +84,10 @@ impl WebSmokeDbFixture {
         )
         .await
         {
-            Ok(Ok(enqueued)) => enqueued,
-            Ok(Err(rejection)) => panic!("enqueue mining rejected: {rejection:?}"),
+            Ok(outcome) => match outcome.into_result() {
+                Ok(enqueued) => enqueued,
+                Err(rejection) => panic!("enqueue mining rejected: {rejection:?}"),
+            },
             Err(error) => panic!("enqueue mining failed: {error}"),
         };
         assert_eq!(

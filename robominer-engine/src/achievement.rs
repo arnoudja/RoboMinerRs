@@ -8,6 +8,7 @@ pub(crate) async fn claim_achievement_step(
     match robominer_db::claim_achievement_step(pool, request)
         .await
         .context("failed to claim achievement step")?
+        .into_result()
     {
         Ok(result) => {
             println!(

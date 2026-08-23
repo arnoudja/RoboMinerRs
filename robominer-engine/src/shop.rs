@@ -8,6 +8,7 @@ pub(crate) async fn buy_robot_part(
     match robominer_db::buy_robot_part(pool, request)
         .await
         .context("failed to buy robot part")?
+        .into_result()
     {
         Ok(result) => {
             println!(
@@ -32,6 +33,7 @@ pub(crate) async fn sell_robot_part(
     match robominer_db::sell_robot_part(pool, request)
         .await
         .context("failed to sell robot part")?
+        .into_result()
     {
         Ok(result) => {
             println!(

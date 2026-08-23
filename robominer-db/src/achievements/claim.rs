@@ -3,7 +3,10 @@ use sqlx::Row;
 
 use crate::robots::{add_default_robot_for_user, user_robot_count};
 use crate::users::touch_user_last_login_time;
-use crate::{ClaimAchievementStepRejection, ClaimAchievementStepRequest, ClaimedAchievementStep};
+use crate::{
+    ClaimAchievementStepRejection, ClaimAchievementStepRequest, ClaimedAchievementStep, DbOutcome,
+    db_ok, db_reject,
+};
 
 #[derive(Debug, Clone, Copy)]
 struct AchievementStepState {
@@ -19,7 +22,7 @@ struct AchievementStepState {
 pub async fn claim_achievement_step(
     pool: &MySqlPool,
     request: ClaimAchievementStepRequest,
-) -> Result<Result<ClaimedAchievementStep, ClaimAchievementStepRejection>, sqlx::Error> {
+) -> Result<DbOutcome<ClaimedAchievementStep, ClaimAchievementStepRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     let result = claim_achievement_step_in_transaction(&mut transaction, request).await?;
@@ -37,7 +40,7 @@ pub async fn claim_achievement_step(
 pub(crate) async fn claim_achievement_step_in_transaction(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     request: ClaimAchievementStepRequest,
-) -> Result<Result<ClaimedAchievementStep, ClaimAchievementStepRejection>, sqlx::Error> {
+) -> Result<DbOutcome<ClaimedAchievementStep, ClaimAchievementStepRejection>, sqlx::Error> {
     let Some(steps_claimed) = sqlx::query_scalar::<_, i32>(
         "SELECT stepsClaimed \
          FROM UserAchievement \
@@ -49,13 +52,13 @@ pub(crate) async fn claim_achievement_step_in_transaction(
     .fetch_optional(&mut **transaction)
     .await?
     else {
-        return Ok(Err(ClaimAchievementStepRejection::UnknownUserAchievement));
+        return db_reject(ClaimAchievementStepRejection::UnknownUserAchievement);
     };
 
     let next_step = steps_claimed + 1;
     let Some(step) = load_achievement_step(transaction, request.achievement_id, next_step).await?
     else {
-        return Ok(Err(ClaimAchievementStepRejection::NoNextStep));
+        return db_reject(ClaimAchievementStepRejection::NoNextStep);
     };
 
     if !achievement_requirements_met(
@@ -66,7 +69,7 @@ pub(crate) async fn claim_achievement_step_in_transaction(
     )
     .await?
     {
-        return Ok(Err(ClaimAchievementStepRejection::RequirementsNotMet));
+        return db_reject(ClaimAchievementStepRejection::RequirementsNotMet);
     }
 
     sqlx::query(
@@ -122,10 +125,10 @@ pub(crate) async fn claim_achievement_step_in_transaction(
     )
     .await?;
 
-    Ok(Ok(ClaimedAchievementStep {
+    db_ok(ClaimedAchievementStep {
         achievement_id: request.achievement_id,
         step: next_step,
-    }))
+    })
 }
 
 async fn load_achievement_step(

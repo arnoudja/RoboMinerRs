@@ -7,23 +7,23 @@ use super::password::{
 use crate::achievements::claim_achievement_step_in_transaction;
 use crate::password::hash_password_async;
 use crate::{
-    ClaimAchievementStepRequest, CreateUserRejection, CreateUserRequest, CreatedUser,
+    ClaimAchievementStepRequest, CreateUserRejection, CreateUserRequest, CreatedUser, DbOutcome,
     UpdateUserAccountRejection, UpdateUserAccountRequest, UpdatedUserAccount, VerifiedLogin,
-    VerifyLoginRejection, VerifyLoginRequest, VerifyUserPasswordRequest,
+    VerifyLoginRejection, VerifyLoginRequest, VerifyUserPasswordRequest, db_ok, db_reject,
 };
 
 pub async fn create_user(
     pool: &MySqlPool,
     request: CreateUserRequest,
-) -> Result<Result<CreatedUser, CreateUserRejection>, sqlx::Error> {
+) -> Result<DbOutcome<CreatedUser, CreateUserRejection>, sqlx::Error> {
     if !valid_username(&request.username) {
-        return Ok(Err(CreateUserRejection::InvalidUsername));
+        return db_reject(CreateUserRejection::InvalidUsername);
     }
     if !valid_email(&request.email) {
-        return Ok(Err(CreateUserRejection::InvalidEmail));
+        return db_reject(CreateUserRejection::InvalidEmail);
     }
     if !valid_password(&request.password) {
-        return Ok(Err(CreateUserRejection::InvalidPassword));
+        return db_reject(CreateUserRejection::InvalidPassword);
     }
 
     // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
@@ -38,7 +38,7 @@ pub async fn create_user(
             .await?;
     if duplicate_username.is_some() {
         transaction.rollback().await?;
-        return Ok(Err(CreateUserRejection::DuplicateUsername));
+        return db_reject(CreateUserRejection::DuplicateUsername);
     }
 
     let duplicate_email: Option<i64> =
@@ -48,7 +48,7 @@ pub async fn create_user(
             .await?;
     if duplicate_email.is_some() {
         transaction.rollback().await?;
-        return Ok(Err(CreateUserRejection::DuplicateEmail));
+        return db_reject(CreateUserRejection::DuplicateEmail);
     }
 
     let user_result = sqlx::query(
@@ -80,18 +80,16 @@ pub async fn create_user(
     )
     .await?
     {
-        Ok(_) => {
+        DbOutcome::Success(_) => {
             transaction.commit().await?;
-            Ok(Ok(CreatedUser {
+            db_ok(CreatedUser {
                 user_id,
                 session_version: 0,
-            }))
+            })
         }
-        Err(rejection) => {
+        DbOutcome::Rejected(rejection) => {
             transaction.rollback().await?;
-            Ok(Err(CreateUserRejection::InitialAchievementRejected(
-                rejection,
-            )))
+            db_reject(CreateUserRejection::InitialAchievementRejected(rejection))
         }
     }
 }
@@ -99,19 +97,19 @@ pub async fn create_user(
 pub async fn update_user_account(
     pool: &MySqlPool,
     request: UpdateUserAccountRequest,
-) -> Result<Result<UpdatedUserAccount, UpdateUserAccountRejection>, sqlx::Error> {
+) -> Result<DbOutcome<UpdatedUserAccount, UpdateUserAccountRejection>, sqlx::Error> {
     if !valid_username(&request.username) {
-        return Ok(Err(UpdateUserAccountRejection::InvalidUsername));
+        return db_reject(UpdateUserAccountRejection::InvalidUsername);
     }
     if !valid_email(&request.email) {
-        return Ok(Err(UpdateUserAccountRejection::InvalidEmail));
+        return db_reject(UpdateUserAccountRejection::InvalidEmail);
     }
     if request
         .password
         .as_ref()
         .is_some_and(|password| !valid_password(password))
     {
-        return Ok(Err(UpdateUserAccountRejection::InvalidPassword));
+        return db_reject(UpdateUserAccountRejection::InvalidPassword);
     }
 
     // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
@@ -128,7 +126,7 @@ pub async fn update_user_account(
         .await?;
     if user_exists.is_none() {
         transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::UnknownUser));
+        return db_reject(UpdateUserAccountRejection::UnknownUser);
     }
 
     let duplicate_username: Option<i64> =
@@ -139,7 +137,7 @@ pub async fn update_user_account(
             .await?;
     if duplicate_username.is_some() {
         transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::DuplicateUsername));
+        return db_reject(UpdateUserAccountRejection::DuplicateUsername);
     }
 
     let duplicate_email: Option<i64> =
@@ -150,7 +148,7 @@ pub async fn update_user_account(
             .await?;
     if duplicate_email.is_some() {
         transaction.rollback().await?;
-        return Ok(Err(UpdateUserAccountRejection::DuplicateEmail));
+        return db_reject(UpdateUserAccountRejection::DuplicateEmail);
     }
 
     let password_changed = password_hash.is_some();
@@ -183,11 +181,11 @@ pub async fn update_user_account(
     touch_user_last_login_time(&mut transaction, request.user_id).await?;
 
     transaction.commit().await?;
-    Ok(Ok(UpdatedUserAccount {
+    db_ok(UpdatedUserAccount {
         user_id: request.user_id,
         session_version,
         password_changed,
-    }))
+    })
 }
 
 pub(crate) async fn touch_user_last_login_time(
@@ -205,7 +203,7 @@ pub(crate) async fn touch_user_last_login_time(
 pub async fn verify_login(
     pool: &MySqlPool,
     request: VerifyLoginRequest,
-) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
     let Some((user_id, password_hash, session_version)) = sqlx::query_as::<_, (i64, String, i32)>(
         "SELECT id, password, sessionVersion FROM User WHERE username = ? OR email = ?",
     )
@@ -214,11 +212,11 @@ pub async fn verify_login(
     .fetch_optional(pool)
     .await?
     else {
-        return Ok(Err(VerifyLoginRejection::UnknownUser));
+        return db_reject(VerifyLoginRejection::UnknownUser);
     };
 
     if !verify_password_hash(pool, &request.password, &password_hash).await? {
-        return Ok(Err(VerifyLoginRejection::InvalidPassword));
+        return db_reject(VerifyLoginRejection::InvalidPassword);
     }
 
     let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
@@ -230,16 +228,16 @@ pub async fn verify_login(
     touch_user_last_login_time(&mut transaction, user_id).await?;
     transaction.commit().await?;
 
-    Ok(Ok(VerifiedLogin {
+    db_ok(VerifiedLogin {
         user_id,
         session_version,
-    }))
+    })
 }
 
 pub async fn verify_user_password(
     pool: &MySqlPool,
     request: VerifyUserPasswordRequest,
-) -> Result<Result<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
     let Some((password_hash, session_version)) = sqlx::query_as::<_, (String, i32)>(
         "SELECT password, sessionVersion FROM User WHERE id = ?",
     )
@@ -247,11 +245,11 @@ pub async fn verify_user_password(
     .fetch_optional(pool)
     .await?
     else {
-        return Ok(Err(VerifyLoginRejection::UnknownUser));
+        return db_reject(VerifyLoginRejection::UnknownUser);
     };
 
     if !verify_password_hash(pool, &request.password, &password_hash).await? {
-        return Ok(Err(VerifyLoginRejection::InvalidPassword));
+        return db_reject(VerifyLoginRejection::InvalidPassword);
     }
 
     let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
@@ -262,10 +260,10 @@ pub async fn verify_user_password(
         transaction.commit().await?;
     }
 
-    Ok(Ok(VerifiedLogin {
+    db_ok(VerifiedLogin {
         user_id: request.user_id,
         session_version,
-    }))
+    })
 }
 
 pub(crate) async fn user_exists(

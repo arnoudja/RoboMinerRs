@@ -80,6 +80,7 @@ async fn load_edit_code_page_state(
                 if let Err(rejection) =
                     robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
                         .await?
+                        .into_result()
                 {
                     message = Some(format!(
                         "Unable to delete program: {}",
@@ -105,6 +106,7 @@ async fn load_edit_code_page_state(
                     )
                     .await
                     .map_err(program_source_write_page_error)?
+                    .into_result()
                     {
                         message = Some(format!(
                             "Unable to save program: {}",
@@ -133,6 +135,7 @@ async fn load_edit_code_page_state(
                     )
                     .await
                     .map_err(program_source_write_page_error)?
+                    .into_result()
                     {
                         Ok(created) => {
                             // Always select the created program (do not keep New program / -1).

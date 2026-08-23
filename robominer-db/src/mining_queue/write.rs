@@ -8,19 +8,19 @@ use crate::assets::{
     refund_full_ore_costs,
 };
 use crate::{
-    CancelMiningQueueRejection, CancelMiningQueueRequest, CanceledMiningQueue,
-    EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining,
+    CancelMiningQueueRejection, CancelMiningQueueRequest, CanceledMiningQueue, DbOutcome,
+    EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining, db_ok, db_reject,
 };
 
 pub async fn enqueue_mining(
     pool: &MySqlPool,
     request: EnqueueMiningRequest,
-) -> Result<Result<EnqueuedMining, EnqueueMiningRejection>, sqlx::Error> {
+) -> Result<DbOutcome<EnqueuedMining, EnqueueMiningRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     if !robot_belongs_to_user(&mut transaction, request.robot_id, request.user_id).await? {
         transaction.rollback().await?;
-        return Ok(Err(EnqueueMiningRejection::UnknownRobot));
+        return db_reject(EnqueueMiningRejection::UnknownRobot);
     }
 
     let Some((ore_price_id,)) =
@@ -30,12 +30,12 @@ pub async fn enqueue_mining(
             .await?
     else {
         transaction.rollback().await?;
-        return Ok(Err(EnqueueMiningRejection::UnknownMiningArea));
+        return db_reject(EnqueueMiningRejection::UnknownMiningArea);
     };
 
     if !user_has_mining_area(&mut transaction, request.user_id, request.mining_area_id).await? {
         transaction.rollback().await?;
-        return Ok(Err(EnqueueMiningRejection::MiningAreaUnavailable));
+        return db_reject(EnqueueMiningRejection::MiningAreaUnavailable);
     }
 
     let mining_queue_size = user_mining_queue_size(&mut transaction, request.user_id).await?;
@@ -43,7 +43,7 @@ pub async fn enqueue_mining(
 
     if waiting_count >= mining_queue_size {
         transaction.rollback().await?;
-        return Ok(Err(EnqueueMiningRejection::QueueFull));
+        return db_reject(EnqueueMiningRejection::QueueFull);
     }
 
     let requested_count = if request.fill {
@@ -66,20 +66,20 @@ pub async fn enqueue_mining(
 
     if inserted_queues == 0 {
         transaction.rollback().await?;
-        return Ok(Err(EnqueueMiningRejection::InsufficientFunds));
+        return db_reject(EnqueueMiningRejection::InsufficientFunds);
     }
 
     touch_user_last_login_time(&mut transaction, request.user_id).await?;
 
     transaction.commit().await?;
 
-    Ok(Ok(EnqueuedMining { inserted_queues }))
+    db_ok(EnqueuedMining { inserted_queues })
 }
 
 pub async fn cancel_mining_queue(
     pool: &MySqlPool,
     request: CancelMiningQueueRequest,
-) -> Result<Result<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
+) -> Result<DbOutcome<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     let Some((robot_id, owner_id, rally_result_id, mining_end_time_is_null, mining_area_id)) =
@@ -96,12 +96,12 @@ pub async fn cancel_mining_queue(
         .await?
     else {
         transaction.rollback().await?;
-        return Ok(Err(CancelMiningQueueRejection::UnknownQueue));
+        return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
 
     if owner_id != request.user_id {
         transaction.rollback().await?;
-        return Ok(Err(CancelMiningQueueRejection::WrongOwner));
+        return db_reject(CancelMiningQueueRejection::WrongOwner);
     }
 
     let earlier_unfinished_queue_count: i64 = sqlx::query_scalar(
@@ -122,7 +122,7 @@ pub async fn cancel_mining_queue(
         earlier_unfinished_queue_count,
     ) {
         transaction.rollback().await?;
-        return Ok(Err(CancelMiningQueueRejection::NotCancelable));
+        return db_reject(CancelMiningQueueRejection::NotCancelable);
     }
 
     let Some((ore_price_id,)) =
@@ -132,14 +132,14 @@ pub async fn cancel_mining_queue(
             .await?
     else {
         transaction.rollback().await?;
-        return Ok(Err(CancelMiningQueueRejection::UnknownQueue));
+        return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
     let costs = list_ore_price_amounts(&mut transaction, ore_price_id).await?;
     if request.require_refund_fits
         && !ore_refund_fits_without_clamp_tx(&mut transaction, request.user_id, &costs).await?
     {
         transaction.rollback().await?;
-        return Ok(Err(CancelMiningQueueRejection::RefundWouldClamp));
+        return db_reject(CancelMiningQueueRejection::RefundWouldClamp);
     }
     refund_full_ore_costs(&mut transaction, request.user_id, &costs).await?;
 
@@ -151,9 +151,9 @@ pub async fn cancel_mining_queue(
     touch_user_last_login_time(&mut transaction, request.user_id).await?;
 
     transaction.commit().await?;
-    Ok(Ok(CanceledMiningQueue {
+    db_ok(CanceledMiningQueue {
         mining_queue_id: request.mining_queue_id,
-    }))
+    })
 }
 
 async fn robot_belongs_to_user(

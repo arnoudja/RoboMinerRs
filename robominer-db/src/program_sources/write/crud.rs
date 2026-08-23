@@ -2,26 +2,26 @@ use sqlx::MySqlPool;
 
 use crate::users::{touch_user_last_login_time, user_exists};
 use crate::{
-    CreateProgramSourceRequest, CreatedProgramSource, ProgramSourceWriteRejection,
-    ProgramSourceWriteRequest,
+    CreateProgramSourceRequest, CreatedProgramSource, DbOutcome, ProgramSourceWriteRejection,
+    ProgramSourceWriteRequest, db_ok, db_reject,
 };
 
 pub async fn create_program_source(
     pool: &MySqlPool,
     request: CreateProgramSourceRequest,
-) -> Result<Result<CreatedProgramSource, ProgramSourceWriteRejection>, sqlx::Error> {
+) -> Result<DbOutcome<CreatedProgramSource, ProgramSourceWriteRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     if let Some(rejection) =
         validate_program_source_write(&request.source_name, &request.source_code)
     {
         transaction.rollback().await?;
-        return Ok(Err(rejection));
+        return db_reject(rejection);
     }
 
     if !user_exists(&mut transaction, request.user_id).await? {
         transaction.rollback().await?;
-        return Ok(Err(ProgramSourceWriteRejection::UnknownUser));
+        return db_reject(ProgramSourceWriteRejection::UnknownUser);
     }
 
     let result = sqlx::query(
@@ -39,9 +39,9 @@ pub async fn create_program_source(
 
     transaction.commit().await?;
 
-    Ok(Ok(CreatedProgramSource {
+    db_ok(CreatedProgramSource {
         program_source_id: result.last_insert_id() as i64,
-    }))
+    })
 }
 
 pub async fn delete_program_source(
@@ -59,21 +59,21 @@ pub async fn delete_program_source(
 pub async fn update_program_source(
     pool: &MySqlPool,
     request: ProgramSourceWriteRequest,
-) -> Result<Result<(), ProgramSourceWriteRejection>, sqlx::Error> {
+) -> Result<DbOutcome<(), ProgramSourceWriteRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     if let Some(rejection) =
         validate_program_source_write(&request.source_name, &request.source_code)
     {
         transaction.rollback().await?;
-        return Ok(Err(rejection));
+        return db_reject(rejection);
     }
 
     if !program_source_belongs_to_user(&mut transaction, request.program_source_id, request.user_id)
         .await?
     {
         transaction.rollback().await?;
-        return Ok(Err(ProgramSourceWriteRejection::UnknownProgramSource));
+        return db_reject(ProgramSourceWriteRejection::UnknownProgramSource);
     }
 
     sqlx::query(
@@ -91,24 +91,24 @@ pub async fn update_program_source(
     touch_user_last_login_time(&mut transaction, request.user_id).await?;
 
     transaction.commit().await?;
-    Ok(Ok(()))
+    db_ok(())
 }
 
 pub async fn delete_program_source_for_user(
     pool: &MySqlPool,
     user_id: i64,
     program_source_id: i64,
-) -> Result<Result<(), ProgramSourceWriteRejection>, sqlx::Error> {
+) -> Result<DbOutcome<(), ProgramSourceWriteRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
     if !program_source_belongs_to_user(&mut transaction, program_source_id, user_id).await? {
         transaction.rollback().await?;
-        return Ok(Err(ProgramSourceWriteRejection::UnknownProgramSource));
+        return db_reject(ProgramSourceWriteRejection::UnknownProgramSource);
     }
 
     if program_source_robot_count(&mut transaction, program_source_id).await? > 0 {
         transaction.rollback().await?;
-        return Ok(Err(ProgramSourceWriteRejection::SourceInUse));
+        return db_reject(ProgramSourceWriteRejection::SourceInUse);
     }
 
     sqlx::query("DELETE FROM ProgramSource WHERE id = ? AND userId = ?")
@@ -120,7 +120,7 @@ pub async fn delete_program_source_for_user(
     touch_user_last_login_time(&mut transaction, user_id).await?;
 
     transaction.commit().await?;
-    Ok(Ok(()))
+    db_ok(())
 }
 
 pub async fn set_valid_program_source(

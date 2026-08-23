@@ -30,9 +30,37 @@ impl fmt::Display for RobotPartSlot {
     }
 }
 
+/// Opaque persistence failure. Keeps `sqlx` out of the domain error surface.
+#[derive(Debug)]
+pub struct DatabaseError {
+    message: String,
+}
+
+impl DatabaseError {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
+    }
+}
+
+impl fmt::Display for DatabaseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl Error for DatabaseError {}
+
+impl From<sqlx::Error> for DatabaseError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::new(error.to_string())
+    }
+}
+
 #[derive(Debug)]
 pub enum DomainError {
-    Database(sqlx::Error),
+    Database(DatabaseError),
     /// A `spawn_blocking` join failed (task panicked or was cancelled).
     BackgroundTask {
         operation: &'static str,
@@ -213,6 +241,12 @@ impl Error for DomainError {
 
 impl From<sqlx::Error> for DomainError {
     fn from(error: sqlx::Error) -> Self {
+        Self::Database(DatabaseError::from(error))
+    }
+}
+
+impl From<DatabaseError> for DomainError {
+    fn from(error: DatabaseError) -> Self {
         Self::Database(error)
     }
 }
@@ -223,12 +257,11 @@ mod tests {
 
     use robominer_program::CompileError;
 
-    use super::{DomainError, RobotPartSlot};
+    use super::{DatabaseError, DomainError, RobotPartSlot};
 
     #[test]
     fn domain_error_display_includes_database_context() {
-        let error =
-            DomainError::Database(sqlx::Error::Configuration("database url missing".into()));
+        let error = DomainError::Database(DatabaseError::new("database url missing"));
         assert!(error.to_string().contains("database error"));
         assert!(error.source().is_some());
     }

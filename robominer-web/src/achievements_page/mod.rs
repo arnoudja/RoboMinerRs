@@ -72,6 +72,7 @@ async fn load_achievements_state(
             },
         )
         .await?
+        .into_result()
         {
             Ok(_) => Some("Achievement claimed".to_string()),
             Err(rejection) => Some(format!(

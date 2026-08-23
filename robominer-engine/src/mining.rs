@@ -30,6 +30,7 @@ pub(crate) async fn enqueue_mining(
     match robominer_db::enqueue_mining(pool, request)
         .await
         .context("failed to enqueue mining run")?
+        .into_result()
     {
         Ok(result) => {
             println!(
@@ -52,6 +53,7 @@ pub(crate) async fn cancel_mining_queue(
     match robominer_db::cancel_mining_queue(pool, request)
         .await
         .context("failed to cancel mining queue item")?
+        .into_result()
     {
         Ok(result) => {
             println!("Canceled mining queue {}", result.mining_queue_id);

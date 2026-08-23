@@ -11,6 +11,7 @@ pub(crate) async fn create_program_source(
     match robominer_domain::create_program_source(pool, request)
         .await
         .context("failed to create program source")?
+        .into_result()
     {
         Ok(result) => {
             mark_program_source_verification(pool, result.program_source_id, &source_code).await?;
@@ -37,6 +38,7 @@ pub(crate) async fn update_program_source(
     match robominer_domain::update_program_source(pool, request)
         .await
         .context("failed to update program source")?
+        .into_result()
     {
         Ok(()) => {
             mark_program_source_verification(pool, program_source_id, &source_code).await?;
@@ -71,6 +73,7 @@ pub(crate) async fn delete_program_source(
     match robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
         .await
         .context("failed to delete program source")?
+        .into_result()
     {
         Ok(()) => {
             println!("Deleted program source {program_source_id}");

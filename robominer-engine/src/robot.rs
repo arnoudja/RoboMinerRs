@@ -81,6 +81,7 @@ pub(crate) async fn update_robot_config(
     match robominer_db::update_robot_config(pool, request.clone())
         .await
         .context("failed to update robot configuration")?
+        .into_result()
     {
         Ok(result) => {
             let mode = if result.pending { "pending" } else { "active" };

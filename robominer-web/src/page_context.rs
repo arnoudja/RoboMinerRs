@@ -34,7 +34,9 @@ impl PageLoadError {
         error: robominer_domain::DomainError,
     ) -> Result<Self, robominer_domain::DomainError> {
         match error {
-            robominer_domain::DomainError::Database(error) => Ok(Self(error)),
+            robominer_domain::DomainError::Database(error) => {
+                Ok(Self(sqlx::Error::Protocol(error.to_string())))
+            }
             other => Err(other),
         }
     }

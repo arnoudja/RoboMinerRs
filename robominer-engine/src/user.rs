@@ -8,6 +8,7 @@ pub(crate) async fn create_user(
     match robominer_db::create_user(pool, request)
         .await
         .context("failed to create user")?
+        .into_result()
     {
         Ok(created) => {
             println!("{}", created.user_id);
@@ -27,6 +28,7 @@ pub(crate) async fn update_user_account(
     match robominer_db::update_user_account(pool, request)
         .await
         .context("failed to update user account")?
+        .into_result()
     {
         Ok(updated) => {
             println!("Updated user account {}", updated.user_id);
@@ -63,6 +65,7 @@ pub(crate) async fn verify_login(
     match robominer_db::verify_login(pool, request)
         .await
         .context("failed to verify login")?
+        .into_result()
     {
         Ok(verified) => {
             println!("{}", verified.user_id);
@@ -82,6 +85,7 @@ pub(crate) async fn verify_user_password(
     match robominer_db::verify_user_password(pool, request)
         .await
         .context("failed to verify user password")?
+        .into_result()
     {
         Ok(verified) => {
             println!("{}", verified.user_id);
