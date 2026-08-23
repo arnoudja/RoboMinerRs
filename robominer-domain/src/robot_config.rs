@@ -44,7 +44,9 @@ async fn verify_and_mark_program_source(
     let verification =
         tokio::task::spawn_blocking(move || robominer_program::verify_source(&source_code))
             .await
-            .expect("program verification task should not panic");
+            .map_err(|_| DomainError::BackgroundTask {
+                operation: "program verification",
+            })?;
     if verification.verified {
         robominer_db::set_valid_program_source(pool, program_source_id, verification.compiled_size)
             .await

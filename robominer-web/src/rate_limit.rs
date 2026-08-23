@@ -145,7 +145,12 @@ pub(crate) fn record_auth_attempt(ip: &str, login_name: &str) {
 
 pub(crate) fn log_auth_failure(ip: &str, login_name: &str, result: &str) {
     let safe_login = sanitize_log_token(login_name);
-    eprintln!("auth_failure ip={ip} login_name={safe_login} result={result}");
+    tracing::warn!(
+        ip = %ip,
+        login_name = %safe_login,
+        result = %result,
+        "auth_failure"
+    );
 }
 
 fn sanitize_log_token(value: &str) -> String {

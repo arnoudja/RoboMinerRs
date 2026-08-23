@@ -203,6 +203,13 @@ pub(crate) async fn run_rallies(
         loop {
             cycle += 1;
             let summary = run_rallies_cycle(pool, &options, cycle).await?;
+            tracing::info!(
+                cycle,
+                ran = summary.ran,
+                skipped = summary.skipped,
+                persist = options.persist,
+                "Completed rally poll cycle"
+            );
             println!(
                 "Completed rally poll cycle {cycle}: ran={} skipped={} persist={}",
                 summary.ran, summary.skipped, options.persist
@@ -263,6 +270,7 @@ async fn run_rallies_cycle(
         .with_context(|| format!("failed to process mining area {}", mining_area.id))?;
 
         if did_run {
+            tracing::info!(mining_area_id = mining_area.id, cycle, "rally completed");
             ran += 1;
         } else {
             skipped += 1;

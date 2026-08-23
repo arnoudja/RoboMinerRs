@@ -20,6 +20,8 @@ struct Cli {
 }
 
 fn main() -> io::Result<()> {
+    init_tracing();
+
     let cli = Cli::parse();
     let _default_static_root = default_web_root();
     let (config_path, legacy_config) = load_legacy_config(cli.config.clone())?;
@@ -27,12 +29,21 @@ fn main() -> io::Result<()> {
     let (host, port, server_config) = prepare_server_config(&legacy_config, database_pool)?;
 
     let listener = TcpListener::bind(format!("{host}:{port}"))?;
-    eprintln!(
-        "robominer-web listening on http://{} with static root {} (config {})",
-        listener.local_addr()?,
-        server_config.static_root.display(),
-        config_path.display()
+    tracing::info!(
+        addr = %listener.local_addr()?,
+        static_root = %server_config.static_root.display(),
+        config = %config_path.display(),
+        "robominer-web listening"
     );
 
     serve(listener, server_config)
+}
+
+fn init_tracing() {
+    let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .init();
 }

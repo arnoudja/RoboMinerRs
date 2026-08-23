@@ -27,7 +27,7 @@ pub async fn create_user(
     }
 
     // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
-    let password_hash = hash_password_async(request.password.clone()).await;
+    let password_hash = hash_password_async(request.password.clone()).await?;
 
     let mut transaction = pool.begin().await?;
 
@@ -116,7 +116,7 @@ pub async fn update_user_account(
 
     // Hash before opening a DB transaction so Argon2 does not hold a pool connection.
     let password_hash = match request.password {
-        Some(password) => Some(hash_password_async(password).await),
+        Some(password) => Some(hash_password_async(password).await?),
         None => None,
     };
 
@@ -221,7 +221,7 @@ pub async fn verify_login(
         return Ok(Err(VerifyLoginRejection::InvalidPassword));
     }
 
-    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await;
+    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
 
     let mut transaction = pool.begin().await?;
     if let Some(upgraded_hash) = upgraded_hash {
@@ -254,7 +254,7 @@ pub async fn verify_user_password(
         return Ok(Err(VerifyLoginRejection::InvalidPassword));
     }
 
-    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await;
+    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
 
     if let Some(upgraded_hash) = upgraded_hash {
         let mut transaction = pool.begin().await?;

@@ -30,8 +30,8 @@ impl OngoingExpressionEval {
             .and_then(|index| self.work.get(index).map(|item| item.span))
     }
 
-    fn pop_value(&mut self) -> CpuStepResult {
-        self.values.pop().expect("expression value stack underflow")
+    fn pop_value(&mut self) -> Option<CpuStepResult> {
+        self.values.pop()
     }
 }
 
@@ -65,14 +65,14 @@ impl ExecutableRunner {
             return self.complete_expression_work_if_done();
         }
 
-        let work_span = {
-            let eval = self.expression_eval.as_ref().expect("expression eval");
-            eval.work.get(eval.index).map(|item| item.span)
+        let Some(eval) = self.expression_eval.as_ref() else {
+            return self.abort_with_fault();
         };
-        let work = {
-            let eval = self.expression_eval.as_ref().expect("expression eval");
-            eval.work[eval.index].kind.clone()
+        let work_span = eval.work.get(eval.index).map(|item| item.span);
+        let Some(work_item) = eval.work.get(eval.index) else {
+            return self.abort_with_fault();
         };
+        let work = work_item.kind.clone();
 
         if let ExpressionWork::PushAction(action) = &work {
             if matches!(
@@ -105,7 +105,9 @@ impl ExecutableRunner {
             if let Some(ExecutableAction::StartScan(direction)) = self.pending_action {
                 if let Some(value) = action_result.take() {
                     self.pending_action = None;
-                    let eval = self.expression_eval.as_mut().expect("expression eval");
+                    let Some(eval) = self.expression_eval.as_mut() else {
+                        return self.abort_with_fault();
+                    };
                     eval.values.push(CpuStepResult::for_action(
                         ExecutableAction::StartScan(0.0),
                         value,
@@ -120,7 +122,9 @@ impl ExecutableRunner {
 
             // scan() with no argument defaults to direction 0; only pop when an arg was scheduled.
             let direction = {
-                let eval = self.expression_eval.as_mut().expect("expression eval");
+                let Some(eval) = self.expression_eval.as_mut() else {
+                    return self.abort_with_fault();
+                };
                 eval.values.pop().map(|value| value.value).unwrap_or(0.0)
             };
             *action_result = None;
@@ -140,7 +144,9 @@ impl ExecutableRunner {
                 } else {
                     0.0
                 };
-                let eval = self.expression_eval.as_mut().expect("expression eval");
+                let Some(eval) = self.expression_eval.as_mut() else {
+                    return self.abort_with_fault();
+                };
                 eval.values
                     .push(if matches!(work, ExpressionWork::PushOreDistance) {
                         CpuStepResult::for_ore_distance(value)
@@ -162,7 +168,9 @@ impl ExecutableRunner {
             } else {
                 context.scan_ore_type
             };
-            let eval = self.expression_eval.as_mut().expect("expression eval");
+            let Some(eval) = self.expression_eval.as_mut() else {
+                return self.abort_with_fault();
+            };
             eval.values
                 .push(if matches!(work, ExpressionWork::PushOreDistance) {
                     CpuStepResult::for_ore_distance(value)
@@ -173,7 +181,21 @@ impl ExecutableRunner {
             return self.complete_expression_work_if_done();
         }
 
-        let eval = self.expression_eval.as_mut().expect("expression eval");
+        if let Err(()) = self.apply_expression_work(context, action_result, work) {
+            return self.abort_with_fault();
+        }
+
+        self.complete_expression_work_if_done()
+    }
+
+    /// Apply one scheduled expression work item. Returns `Err(())` on invariant failure.
+    fn apply_expression_work(
+        &mut self,
+        context: &ExecutionContext,
+        action_result: &mut Option<f64>,
+        work: ExpressionWork,
+    ) -> Result<(), ()> {
+        let eval = self.expression_eval.as_mut().ok_or(())?;
         match work {
             ExpressionWork::PushNumber(value) => {
                 eval.values.push(CpuStepResult::for_number_literal(value));
@@ -209,7 +231,7 @@ impl ExecutableRunner {
                     .stored_ore_value(&context.ore)
                     .or_else(|| property.depot_value(&context.depot, &context.depot_capacity))
                     .or_else(|| property.value(&context.robot))
-                    .expect("robot property should resolve");
+                    .ok_or(())?;
                 eval.values
                     .push(CpuStepResult::for_robot_property(property, value));
                 eval.index += 1;
@@ -222,11 +244,7 @@ impl ExecutableRunner {
             }
             // Deprecated: prefer robot.oreStored / robot.oreStoredA|B|C.
             ExpressionWork::PushOre => {
-                let ore_type = eval
-                    .values
-                    .pop()
-                    .expect("expression value stack underflow")
-                    .value as i32;
+                let ore_type = eval.values.pop().ok_or(())?.value as i32;
                 let amount = if ore_type == 0 {
                     context.ore.iter().sum::<i32>() as f64
                 } else if ore_type > 0 {
@@ -242,16 +260,12 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::PushAction(action) => {
-                let value = action_result.take().expect("action result for PushAction");
+                let value = action_result.take().ok_or(())?;
                 eval.values.push(CpuStepResult::for_action(action, value));
                 eval.index += 1;
             }
             ExpressionWork::ApplyUnaryNot => {
-                let value = eval
-                    .values
-                    .pop()
-                    .expect("expression value stack underflow")
-                    .value;
+                let value = eval.values.pop().ok_or(())?.value;
                 eval.values
                     .push(CpuStepResult::bool_value(if value.is_truthy() {
                         0.0
@@ -261,7 +275,7 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::ApplyUnaryMinus => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 let value = -operand.value;
                 eval.values
                     .push(if operand.kind == CpuStepResultKind::Float {
@@ -272,7 +286,7 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::ApplyAbs => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 let value = operand.value.abs();
                 eval.values
                     .push(if operand.kind == CpuStepResultKind::Float {
@@ -283,32 +297,32 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::ApplySqrt => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 eval.values
                     .push(CpuStepResult::float_value(operand.value.sqrt()));
                 eval.index += 1;
             }
             ExpressionWork::ApplySin => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 eval.values
                     .push(CpuStepResult::float_value(operand.value.to_radians().sin()));
                 eval.index += 1;
             }
             ExpressionWork::ApplyCos => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 eval.values
                     .push(CpuStepResult::float_value(operand.value.to_radians().cos()));
                 eval.index += 1;
             }
             ExpressionWork::ApplyTan => {
-                let operand = eval.values.pop().expect("expression value stack underflow");
+                let operand = eval.values.pop().ok_or(())?;
                 eval.values
                     .push(CpuStepResult::float_value(operand.value.to_radians().tan()));
                 eval.index += 1;
             }
             ExpressionWork::ApplyMin => {
-                let right = eval.values.pop().expect("expression value stack underflow");
-                let left = eval.values.pop().expect("expression value stack underflow");
+                let right = eval.values.pop().ok_or(())?;
+                let left = eval.values.pop().ok_or(())?;
                 let value = left.value.min(right.value);
                 eval.values.push(
                     if matches!(left.kind, CpuStepResultKind::Float)
@@ -322,8 +336,8 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::ApplyMax => {
-                let right = eval.values.pop().expect("expression value stack underflow");
-                let left = eval.values.pop().expect("expression value stack underflow");
+                let right = eval.values.pop().ok_or(())?;
+                let left = eval.values.pop().ok_or(())?;
                 let value = left.value.max(right.value);
                 eval.values.push(
                     if matches!(left.kind, CpuStepResultKind::Float)
@@ -337,24 +351,22 @@ impl ExecutableRunner {
                 eval.index += 1;
             }
             ExpressionWork::ApplyBinary(operator) => {
-                let right = eval.values.pop().expect("expression value stack underflow");
-                let left = eval.values.pop().expect("expression value stack underflow");
+                let right = eval.values.pop().ok_or(())?;
+                let left = eval.values.pop().ok_or(())?;
                 let value = evaluate_operator(operator, left.value, right.value);
                 eval.values.push(CpuStepResult::for_binary_operator(
                     operator, left.kind, right.kind, value,
                 ));
                 eval.index += 1;
             }
-            ExpressionWork::PushStartScan => unreachable!("PushStartScan handled above"),
-            ExpressionWork::PushDynamicMove
+            ExpressionWork::PushStartScan
+            | ExpressionWork::PushDynamicMove
             | ExpressionWork::PushDynamicRotate
-            | ExpressionWork::PushDynamicDump => unreachable!("dynamic actions handled above"),
-            ExpressionWork::PushOreDistance | ExpressionWork::PushOreType => {
-                unreachable!("ore distance/type handled above")
-            }
+            | ExpressionWork::PushDynamicDump
+            | ExpressionWork::PushOreDistance
+            | ExpressionWork::PushOreType => return Err(()),
         }
-
-        self.complete_expression_work_if_done()
+        Ok(())
     }
 
     fn step_expression_move_or_rotate(
@@ -366,23 +378,27 @@ impl ExecutableRunner {
             return outcome;
         }
 
-        let action = fixed_action.unwrap_or_else(|| {
-            let eval = self.expression_eval.as_mut().expect("expression eval");
-            let arg = eval
-                .values
-                .pop()
-                .expect("expression value stack underflow")
-                .value;
-            match eval.work[eval.index].kind {
-                ExpressionWork::PushDynamicMove => ExecutableAction::Move(arg),
-                ExpressionWork::PushDynamicRotate => ExecutableAction::Rotate(arg),
-                _ => unreachable!("dynamic move/rotate requires matching work item"),
+        let action = if let Some(action) = fixed_action {
+            action
+        } else {
+            let Some(eval) = self.expression_eval.as_mut() else {
+                return self.abort_with_fault();
+            };
+            let Some(arg) = eval.values.pop() else {
+                return self.abort_with_fault();
+            };
+            match eval.work.get(eval.index).map(|item| &item.kind) {
+                Some(ExpressionWork::PushDynamicMove) => ExecutableAction::Move(arg.value),
+                Some(ExpressionWork::PushDynamicRotate) => ExecutableAction::Rotate(arg.value),
+                _ => return self.abort_with_fault(),
             }
-        });
+        };
 
         if !PendingProgramMotion::is_chunked(action) {
             // move(0) / rotate(0) travel nothing; complete with 0 without awaiting the sim.
-            let eval = self.expression_eval.as_mut().expect("expression eval");
+            let Some(eval) = self.expression_eval.as_mut() else {
+                return self.abort_with_fault();
+            };
             eval.values.push(CpuStepResult::for_action(action, 0.0));
             eval.index += 1;
             return self.complete_expression_work_if_done();
@@ -402,7 +418,9 @@ impl ExecutableRunner {
         if let Some(pending) = self.pending_action {
             if let Some(value) = action_result.take() {
                 self.pending_action = None;
-                let eval = self.expression_eval.as_mut().expect("expression eval");
+                let Some(eval) = self.expression_eval.as_mut() else {
+                    return self.abort_with_fault();
+                };
                 eval.values.push(CpuStepResult::for_action(pending, value));
                 eval.index += 1;
                 return self.complete_expression_work_if_done();
@@ -416,11 +434,13 @@ impl ExecutableRunner {
         }
 
         let arg = {
-            let eval = self.expression_eval.as_mut().expect("expression eval");
-            eval.values
-                .pop()
-                .expect("expression value stack underflow")
-                .value
+            let Some(eval) = self.expression_eval.as_mut() else {
+                return self.abort_with_fault();
+            };
+            let Some(value) = eval.values.pop() else {
+                return self.abort_with_fault();
+            };
+            value.value
         };
         *action_result = None;
         self.last_step_span = self
@@ -445,18 +465,15 @@ impl ExecutableRunner {
                     let _ = action;
                     self.active_source_span
                 });
-                Some(StepOutcome::Action(
-                    self.pending_program_motion
-                        .as_ref()
-                        .expect("reemit requires pending_program_motion")
-                        .action,
-                ))
+                let Some(pending) = self.pending_program_motion.as_ref() else {
+                    return Some(self.abort_with_fault());
+                };
+                Some(StepOutcome::Action(pending.action))
             }
             ContinueProgramMotion::StatementComplete(value) => {
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("chunked action requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return Some(self.abort_with_fault());
+                };
                 frame.index += 1;
                 let action = pending_action.unwrap_or(ExecutableAction::Move(0.0));
                 self.last_step_result = Some(CpuStepResult::for_action(action, value));
@@ -465,7 +482,9 @@ impl ExecutableRunner {
             }
             ContinueProgramMotion::ExpressionComplete(value) => {
                 let action = pending_action.unwrap_or(ExecutableAction::Move(0.0));
-                let eval = self.expression_eval.as_mut().expect("expression eval");
+                let Some(eval) = self.expression_eval.as_mut() else {
+                    return Some(self.abort_with_fault());
+                };
                 eval.values.push(CpuStepResult::for_action(action, value));
                 eval.index += 1;
                 Some(self.complete_expression_work_if_done())
@@ -479,13 +498,20 @@ impl ExecutableRunner {
             .as_ref()
             .is_some_and(|eval| eval.index >= eval.work.len())
         {
-            let (result, resume, span) = {
-                let eval = self.expression_eval.as_mut().expect("expression eval");
+            let finished = {
+                let Some(eval) = self.expression_eval.as_mut() else {
+                    return self.abort_with_fault();
+                };
                 let span = eval
                     .last_executed_span()
                     .or_else(|| eval.work.last().map(|item| item.span));
-                let result = eval.pop_value();
-                (result, eval.resume.clone(), span)
+                match eval.pop_value() {
+                    Some(result) => Some((result, eval.resume.clone(), span)),
+                    None => None,
+                }
+            };
+            let Some((result, resume, span)) = finished else {
+                return self.abort_with_fault();
             };
             self.expression_eval = None;
             self.last_step_result = Some(result);
@@ -534,7 +560,9 @@ impl ExecutableRunner {
                 ProgramStep::Action(action) => StepOutcome::Action(action),
                 ProgramStep::Done => StepOutcome::Done,
                 ProgramStep::Cpu => StepOutcome::Cpu,
+                ProgramStep::Fault => StepOutcome::Fault,
             },
+            super::resume::ExpressionComplete::Fault => StepOutcome::Fault,
         }
     }
 }

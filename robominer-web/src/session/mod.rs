@@ -44,8 +44,8 @@ pub fn resolve_session_secret(
     }
 
     if is_local_bind_host(bind_host) {
-        eprintln!(
-            "warning: ROBOMINER_SESSION_SECRET is not set; using an insecure development default"
+        tracing::warn!(
+            "ROBOMINER_SESSION_SECRET is not set; using an insecure development default"
         );
         return Ok(DEFAULT_DEV_SESSION_SECRET.to_string());
     }

@@ -33,6 +33,10 @@ impl fmt::Display for RobotPartSlot {
 #[derive(Debug)]
 pub enum DomainError {
     Database(sqlx::Error),
+    /// A `spawn_blocking` join failed (task panicked or was cancelled).
+    BackgroundTask {
+        operation: &'static str,
+    },
     ReferencedAiRobotMissing {
         mining_area_id: i64,
         robot_id: i64,
@@ -94,6 +98,9 @@ impl fmt::Display for DomainError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Database(error) => write!(f, "database error: {error}"),
+            Self::BackgroundTask { operation } => {
+                write!(f, "background task failed: {operation}")
+            }
             Self::ReferencedAiRobotMissing {
                 mining_area_id,
                 robot_id,
@@ -185,7 +192,8 @@ impl Error for DomainError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Database(error) => Some(error),
-            Self::ReferencedAiRobotMissing { .. }
+            Self::BackgroundTask { .. }
+            | Self::ReferencedAiRobotMissing { .. }
             | Self::ReferencedRobotPartMissing { .. }
             | Self::ReferencedQueueRobotMissing { .. }
             | Self::ReferencedPoolMiningAreaMissing { .. }

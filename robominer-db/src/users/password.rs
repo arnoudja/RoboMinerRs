@@ -67,7 +67,7 @@ pub(super) async fn verify_password_hash(
         return verify_legacy_password_hash(pool, password, password_hash).await;
     }
 
-    Ok(verify_argon2_password_async(password.to_owned(), password_hash.to_owned()).await)
+    Ok(verify_argon2_password_async(password.to_owned(), password_hash.to_owned()).await?)
 }
 
 async fn verify_legacy_password_hash(
@@ -94,12 +94,12 @@ async fn verify_legacy_password_hash(
 pub(super) async fn maybe_upgrade_password_hash(
     password: &str,
     password_hash: &str,
-) -> Option<String> {
+) -> Result<Option<String>, sqlx::Error> {
     if !is_legacy_password_hash(password_hash) {
-        return None;
+        return Ok(None);
     }
 
-    Some(hash_password_async(password.to_owned()).await)
+    Ok(Some(hash_password_async(password.to_owned()).await?))
 }
 
 pub(super) async fn write_password_hash(

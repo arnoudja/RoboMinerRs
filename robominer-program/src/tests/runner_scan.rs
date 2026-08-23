@@ -44,7 +44,7 @@ fn executable_ore_distance_returns_typed_double() {
                     return;
                 }
             }
-            ProgramStep::Done => panic!("finished without oreDistance result"),
+            ProgramStep::Done | ProgramStep::Fault => panic!("finished without oreDistance result"),
             ProgramStep::Action(_) => {}
         }
     }
@@ -77,7 +77,7 @@ fn scan_with_direction_does_not_restart_as_forward_scan() {
     let mut after_scan = test_context(10, Some(6.0));
     assert!(matches!(
         runner.step(&mut after_scan),
-        ProgramStep::Cpu | ProgramStep::Done
+        ProgramStep::Cpu | ProgramStep::Done | ProgramStep::Fault
     ));
     assert_eq!(runner.next_action(&mut test_context(10, None)), None);
     assert!(!runner.awaits_scan_result());

@@ -35,10 +35,12 @@ impl RuntimeVariables {
     }
 
     pub(crate) fn declare(&mut self, name: String, value: f64, value_type: ValueType) {
-        self.scopes
-            .last_mut()
-            .expect("runtime should always have a scope")
-            .insert(name, RuntimeBinding { value, value_type });
+        if self.scopes.is_empty() {
+            self.scopes.push(BTreeMap::new());
+        }
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name, RuntimeBinding { value, value_type });
+        }
     }
 
     pub(crate) fn get(&self, name: &str) -> f64 {

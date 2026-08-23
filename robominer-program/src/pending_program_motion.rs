@@ -59,7 +59,10 @@ impl PendingProgramMotion {
             return ContinueProgramMotion::Reemit;
         };
 
-        let completed = pending.take().expect("pending_program_motion");
+        let completed = match pending.take() {
+            Some(completed) => completed,
+            None => return ContinueProgramMotion::NotActive,
+        };
         match completed.completion {
             ProgramMotionCompletion::Statement => ContinueProgramMotion::StatementComplete(value),
             ProgramMotionCompletion::Expression => ContinueProgramMotion::ExpressionComplete(value),

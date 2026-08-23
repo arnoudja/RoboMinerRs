@@ -50,6 +50,7 @@ pub(crate) enum StepOutcome {
     Cpu,
     Action(ExecutableAction),
     Done,
+    Fault,
 }
 
 impl ExecutableRunner {
@@ -164,10 +165,21 @@ impl ExecutableRunner {
         loop {
             match self.step(context) {
                 ProgramStep::Action(action) => return Some(action),
-                ProgramStep::Done => return None,
+                ProgramStep::Done | ProgramStep::Fault => return None,
                 ProgramStep::Cpu => {}
             }
         }
+    }
+
+    /// Clear expression/pending state and report a recoverable runner fault.
+    pub(crate) fn abort_with_fault(&mut self) -> StepOutcome {
+        debug_assert!(false, "program runner invariant failed");
+        self.expression_eval = None;
+        self.clear_pending_action_handshake();
+        self.set_active_source(None);
+        self.last_step_result = None;
+        self.last_step_span = None;
+        StepOutcome::Fault
     }
 
     pub fn step(&mut self, context: &mut ExecutionContext) -> ProgramStep {
@@ -197,6 +209,9 @@ impl ExecutableRunner {
                 StepOutcome::Done => {
                     self.set_active_source(None);
                     break ProgramStep::Done;
+                }
+                StepOutcome::Fault => {
+                    break ProgramStep::Fault;
                 }
             }
         };

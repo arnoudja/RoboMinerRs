@@ -234,6 +234,18 @@ impl Simulation {
                     // Empty programs restart immediately; charge budget so we cannot spin forever.
                     cpu_used += 1;
                 }
+                ProgramStep::Fault => {
+                    // Halt without restarting: a corrupted/buggy executable must not livelock.
+                    if let ActionSource::Program { runner, .. } =
+                        &mut self.action_sources[robot_index]
+                    {
+                        runner.clear_pending_action_handshake();
+                    }
+                    self.action_results[robot_index] = None;
+                    self.action_result_expected[robot_index] = false;
+                    self.pending_sim_motion_chunks[robot_index] = None;
+                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
+                }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
                     // StartScan returns scan_time synchronously on issue (unlike move/mine).
                     let _ = step_result;

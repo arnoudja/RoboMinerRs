@@ -26,7 +26,7 @@ fn spans_while_stepping(source: &str) -> Vec<SourceSpan> {
 
         let mut context = test_context(20, action_result);
         match runner.step(&mut context) {
-            ProgramStep::Done => break,
+            ProgramStep::Done | ProgramStep::Fault => break,
             ProgramStep::Action(_) => action_result = Some(1.0),
             ProgramStep::Cpu => action_result = None,
         }
@@ -149,7 +149,7 @@ fn current_source_span_line_agrees_with_current_source_line() {
 
         let mut context = test_context(20, action_result);
         match runner.step(&mut context) {
-            ProgramStep::Done => break,
+            ProgramStep::Done | ProgramStep::Fault => break,
             ProgramStep::Action(_) => action_result = Some(1.0),
             ProgramStep::Cpu => action_result = None,
         }

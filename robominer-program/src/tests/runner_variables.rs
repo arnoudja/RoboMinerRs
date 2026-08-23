@@ -101,7 +101,9 @@ fn robot_property_expression_evaluates_from_context() {
                 break;
             }
             ProgramStep::Cpu => {}
-            ProgramStep::Done => panic!("program finished without issuing move"),
+            ProgramStep::Done | ProgramStep::Fault => {
+                panic!("program finished without issuing move")
+            }
             other => panic!("unexpected step {other:?}"),
         }
     }
@@ -125,7 +127,9 @@ fn area_property_expression_evaluates_from_context() {
                 break;
             }
             ProgramStep::Cpu => {}
-            ProgramStep::Done => panic!("program finished without issuing move"),
+            ProgramStep::Done | ProgramStep::Fault => {
+                panic!("program finished without issuing move")
+            }
             other => panic!("unexpected step {other:?}"),
         }
     }
@@ -157,7 +161,7 @@ fn dynamic_move_in_expression_condition_compiles_and_runs() {
             }
             ProgramStep::Action(_) => {}
             ProgramStep::Cpu => {}
-            ProgramStep::Done => break,
+            ProgramStep::Done | ProgramStep::Fault => break,
         }
     }
 
@@ -191,7 +195,7 @@ fn runtime_variables_snapshot_flattens_scopes_with_types() {
                     saw_inner_shadow = true;
                 }
             }
-            ProgramStep::Done => break,
+            ProgramStep::Done | ProgramStep::Fault => break,
             ProgramStep::Action(_) => {}
         }
     }

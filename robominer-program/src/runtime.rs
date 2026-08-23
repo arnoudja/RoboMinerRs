@@ -75,6 +75,10 @@ pub enum ProgramStep {
     Cpu,
     Action(ExecutableAction),
     Done,
+    /// Internal runner invariant failed (stack underflow, missing frame, etc.).
+    /// Callers must halt this runner without restarting it, so a corrupted or
+    /// buggy executable cannot livelock the simulation.
+    Fault,
 }
 
 impl AreaProperty {

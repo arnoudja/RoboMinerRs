@@ -20,6 +20,8 @@ robominer-domain = { workspace = true }
 robominer-program = { workspace = true }
 robominer-sim = { workspace = true }
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "signal"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 robominer-test-support = { workspace = true }

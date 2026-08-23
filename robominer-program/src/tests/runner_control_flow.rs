@@ -143,7 +143,7 @@ fn executable_do_while_repeats_while_condition_is_true() {
     for _ in 0..20 {
         let mut context = test_context(10, None);
         match runner.step(&mut context) {
-            ProgramStep::Done => break,
+            ProgramStep::Done | ProgramStep::Fault => break,
             ProgramStep::Action(_) => panic!("counting do-while should not emit actions"),
             ProgramStep::Cpu => {}
         }

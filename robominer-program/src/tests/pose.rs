@@ -81,7 +81,7 @@ fn rally_pose_properties_evaluate_from_context() {
                 break;
             }
             ProgramStep::Cpu => {}
-            ProgramStep::Done => panic!("program finished without move"),
+            ProgramStep::Done | ProgramStep::Fault => panic!("program finished without move"),
             other => panic!("unexpected step {other:?}"),
         }
     }
@@ -100,7 +100,7 @@ fn rally_pose_properties_evaluate_from_context() {
                 break;
             }
             ProgramStep::Cpu => {}
-            ProgramStep::Done => panic!("program finished without move"),
+            ProgramStep::Done | ProgramStep::Fault => panic!("program finished without move"),
             other => panic!("unexpected step {other:?}"),
         }
     }

@@ -32,6 +32,7 @@ pub(crate) enum ExpressionResume {
 pub(crate) enum ExpressionComplete {
     Continue,
     Step(ProgramStep),
+    Fault,
 }
 
 impl ExecutableRunner {
@@ -42,10 +43,9 @@ impl ExecutableRunner {
     ) -> ExpressionComplete {
         match resume {
             ExpressionResume::RepeatCondition => {
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("repeat condition requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 if value.is_truthy() {
                     if frame.scoped {
                         self.variables.pop_scope();
@@ -66,10 +66,9 @@ impl ExecutableRunner {
                 } else {
                     false_body
                 };
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("if condition requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 frame.index += 1;
                 if let Some(body) = body {
                     self.push_statement(*body, None, None);
@@ -81,10 +80,9 @@ impl ExecutableRunner {
                 body,
                 source_span,
             } => {
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("while condition requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 if value.is_truthy() {
                     frame.index += 1;
                     let loop_body = body.map_or_else(
@@ -105,27 +103,24 @@ impl ExecutableRunner {
             }
             ExpressionResume::Declare { name, value_type } => {
                 self.variables.declare(name, value, value_type);
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("declare requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 frame.index += 1;
                 ExpressionComplete::Continue
             }
             ExpressionResume::Assign { name } => {
                 self.variables.set(&name, value);
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("assign requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 frame.index += 1;
                 ExpressionComplete::Continue
             }
             ExpressionResume::ExpressionStatement => {
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("expression statement requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 frame.index += 1;
                 ExpressionComplete::Continue
             }
@@ -133,10 +128,9 @@ impl ExecutableRunner {
                 let action = ExecutableAction::Move(value);
                 if !PendingProgramMotion::is_chunked(action) {
                     // Zero-distance dynamic moves are not pending; advance like a literal move(0).
-                    let frame = self
-                        .stack
-                        .last_mut()
-                        .expect("dynamic move requires an active frame");
+                    let Some(frame) = self.stack.last_mut() else {
+                        return ExpressionComplete::Fault;
+                    };
                     frame.index += 1;
                 }
                 ExpressionComplete::Step(ProgramStep::Action(action))
@@ -144,19 +138,17 @@ impl ExecutableRunner {
             ExpressionResume::DynamicRotate => {
                 let action = ExecutableAction::Rotate(value);
                 if !PendingProgramMotion::is_chunked(action) {
-                    let frame = self
-                        .stack
-                        .last_mut()
-                        .expect("dynamic rotate requires an active frame");
+                    let Some(frame) = self.stack.last_mut() else {
+                        return ExpressionComplete::Fault;
+                    };
                     frame.index += 1;
                 }
                 ExpressionComplete::Step(ProgramStep::Action(action))
             }
             ExpressionResume::DynamicDump => {
-                let frame = self
-                    .stack
-                    .last_mut()
-                    .expect("dynamic dump requires an active frame");
+                let Some(frame) = self.stack.last_mut() else {
+                    return ExpressionComplete::Fault;
+                };
                 frame.index += 1;
                 ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(value as i32)))
             }
