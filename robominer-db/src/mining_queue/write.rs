@@ -18,7 +18,7 @@ pub async fn enqueue_mining(
 ) -> Result<DbOutcome<EnqueuedMining, EnqueueMiningRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    if !robot_belongs_to_user(&mut transaction, request.robot_id, request.user_id).await? {
+    if !lock_robot_for_enqueue(&mut transaction, request.robot_id, request.user_id).await? {
         transaction.rollback().await?;
         return db_reject(EnqueueMiningRejection::UnknownRobot);
     }
@@ -156,13 +156,13 @@ pub async fn cancel_mining_queue(
     })
 }
 
-async fn robot_belongs_to_user(
+async fn lock_robot_for_enqueue(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_id: i64,
     user_id: i64,
 ) -> Result<bool, sqlx::Error> {
     let exists: Option<i64> =
-        sqlx::query_scalar("SELECT id FROM Robot WHERE id = ? AND userId = ?")
+        sqlx::query_scalar("SELECT id FROM Robot WHERE id = ? AND userId = ? FOR UPDATE")
             .bind(robot_id)
             .bind(user_id)
             .fetch_optional(&mut **transaction)
