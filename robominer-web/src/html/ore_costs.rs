@@ -12,6 +12,11 @@ pub(crate) fn ore_costs_affordable(
         .all(|(ore_id, amount)| ore_amount_map.get(ore_id).copied().unwrap_or(0) >= *amount)
 }
 
+/// Plain-text shortfall copy (escape at HTML call sites).
+pub(crate) fn format_ore_shortfall(need: i32, ore_name: &str) -> String {
+    format!("Need {need} more {ore_name}.")
+}
+
 pub(crate) fn render_ore_entry_costs(
     costs: &[(i64, i32, &str)],
     ore_amount_map: &HashMap<i64, i32>,
@@ -34,9 +39,8 @@ pub(crate) fn render_ore_entry_costs(
             } else {
                 let need = amount - have;
                 format!(
-                    r#"<span class="{unaffordable_class}">Need {} more {}.</span>"#,
-                    need,
-                    escape_html(ore_name)
+                    r#"<span class="{unaffordable_class}">{}</span>"#,
+                    escape_html(&format_ore_shortfall(need, ore_name))
                 )
             }
         })

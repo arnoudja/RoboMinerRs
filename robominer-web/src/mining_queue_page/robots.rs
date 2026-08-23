@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, selected_attr};
+use crate::html::{escape_html, format_ore_shortfall, selected_attr};
 use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
 
 use super::inspector::render_mining_queue_selection_state_inputs;
@@ -314,7 +314,7 @@ pub(super) fn enqueue_block_reason(
         let have = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
         if have < cost.amount {
             let need = cost.amount - have;
-            return Some(format!("Need {} more {}.", need, cost.ore_name));
+            return Some(format_ore_shortfall(need, &cost.ore_name));
         }
     }
     None

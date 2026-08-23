@@ -1,6 +1,9 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_ai_robot, insert_robot, insert_row_id, unique_prefix};
+use crate::{
+    cleanup_base_catalog, ensure_base_catalog, insert_ai_robot, insert_robot, insert_row_id,
+    insert_user_ore_asset, unique_prefix,
+};
 
 pub struct WebSmokeDbFixture {
     pub user_id: i64,
@@ -19,37 +22,11 @@ impl WebSmokeDbFixture {
         let robot_name = format!("{prefix}-robot");
         let area_name = format!("{prefix}-area");
 
-        let ore_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-        )
-        .await;
-        let ore_price_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO OrePrice (description) VALUES (?)")
-                .bind(format!("{prefix}-price")),
-        )
-        .await;
-        insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO OrePriceAmount (orePriceId, oreId, amount) VALUES (?, ?, ?)")
-                .bind(ore_price_id)
-                .bind(ore_id)
-                .bind(1),
-        )
-        .await;
+        let catalog = ensure_base_catalog(pool, prefix, 1).await;
+        let ore_id = catalog.ore_id;
+        let ore_price_id = catalog.ore_price_id;
 
-        insert_row_id(
-            pool,
-            sqlx::query(
-                "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
-                 VALUES (?, ?, ?, 1000)",
-            )
-            .bind(user_id)
-            .bind(ore_id)
-            .bind(25),
-        )
-        .await;
+        insert_user_ore_asset(pool, user_id, ore_id, 25, 1000).await;
 
         let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
         let robot_id = insert_robot(pool, user_id, &robot_name, "mine();", 1).await;
@@ -164,18 +141,14 @@ impl WebSmokeDbFixture {
             .bind(self.user_id)
             .execute(pool)
             .await;
-        let _ = sqlx::query("DELETE FROM OrePriceAmount WHERE orePriceId = ?")
-            .bind(self.ore_price_id)
-            .execute(pool)
-            .await;
-        let _ = sqlx::query("DELETE FROM OrePrice WHERE id = ?")
-            .bind(self.ore_price_id)
-            .execute(pool)
-            .await;
-        let _ = sqlx::query("DELETE FROM Ore WHERE id = ?")
-            .bind(self.ore_id)
-            .execute(pool)
-            .await;
+        cleanup_base_catalog(
+            pool,
+            crate::BaseCatalog {
+                ore_id: self.ore_id,
+                ore_price_id: self.ore_price_id,
+            },
+        )
+        .await;
     }
 }
 

@@ -3,3 +3,5 @@ __pycache__/
 /target/
 /lcov.info
 /local/
+node_modules/
+robominer-web/package-lock.json

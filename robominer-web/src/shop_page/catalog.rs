@@ -6,7 +6,7 @@ use super::helpers::{
     shop_total_cost,
 };
 use super::{ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID};
-use crate::html::{escape_html, format_period};
+use crate::html::{escape_html, format_ore_shortfall, format_period};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, render_mining_area_atlas_ore_link};
 
 pub(super) fn render_shop_part_compact_card(
@@ -240,7 +240,7 @@ pub(super) fn shop_buy_block_reason(
         let have = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
         if have < cost.amount {
             let need = cost.amount - have;
-            return Some(format!("Need {} more {}.", need, cost.ore_name));
+            return Some(format_ore_shortfall(need, &cost.ore_name));
         }
     }
     if state.total_owned > 0 {

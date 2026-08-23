@@ -1,3 +1,7 @@
+//! HTTP host for RoboMiner: Axum transport shell, session/CSRF, HTML pages, and
+//! static assets. Game mutations and rejection copy live in `robominer-domain`;
+//! SQL and typed contracts live in `robominer-db`. See `CONTRIBUTING.md`.
+
 use std::future::Future;
 use std::path::PathBuf;
 use std::sync::OnceLock;

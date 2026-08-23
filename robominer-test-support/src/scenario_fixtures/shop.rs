@@ -1,6 +1,6 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_row_id, insert_user_with_credentials, unique_prefix};
+use crate::{ensure_base_catalog, insert_row_id, insert_user_with_credentials, unique_prefix};
 
 pub struct ShopCatalog {
     pub ore_id: i64,
@@ -173,25 +173,9 @@ pub async fn insert_shop_catalog(
     prefix: &str,
     robot_part_cost: i32,
 ) -> ShopCatalog {
-    let ore_id = insert_row_id(
-        pool,
-        sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-    )
-    .await;
-    let ore_price_id = insert_row_id(
-        pool,
-        sqlx::query("INSERT INTO OrePrice (description) VALUES (?)")
-            .bind(format!("{prefix}-price")),
-    )
-    .await;
-    insert_row_id(
-        pool,
-        sqlx::query("INSERT INTO OrePriceAmount (orePriceId, oreId, amount) VALUES (?, ?, ?)")
-            .bind(ore_price_id)
-            .bind(ore_id)
-            .bind(robot_part_cost),
-    )
-    .await;
+    let catalog = ensure_base_catalog(pool, prefix, robot_part_cost).await;
+    let ore_id = catalog.ore_id;
+    let ore_price_id = catalog.ore_price_id;
 
     let robot_part_type_id = insert_row_id(
         pool,

@@ -1,3 +1,6 @@
+//! Shared DB fixtures, golden helpers, and scenario builders for integration
+//! tests (`publish = false`).
+
 mod db_fixtures;
 mod golden;
 mod loadout_records;

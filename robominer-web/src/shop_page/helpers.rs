@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::ShopPageState;
-use crate::html::escape_html;
+use crate::html::{escape_html, format_ore_shortfall};
 
 pub(super) fn shop_total_cost(costs: &[&robominer_db::ShopRobotPartCostRecord]) -> i32 {
     costs.iter().map(|cost| cost.amount).sum()
@@ -18,7 +18,7 @@ pub(super) fn shop_cost_summary(
         let have = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
         if have < cost.amount {
             let need = cost.amount - have;
-            return format!("Need {} more {}.", need, cost.ore_name);
+            return format_ore_shortfall(need, &cost.ore_name);
         }
     }
     let first = costs[0];

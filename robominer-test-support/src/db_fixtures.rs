@@ -377,3 +377,50 @@ pub async fn cleanup_claimed_queue_fixture(
         .await;
     cleanup_created_user(pool, user_id).await;
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BaseCatalog {
+    pub ore_id: i64,
+    pub ore_price_id: i64,
+}
+
+pub async fn insert_ore_price_amount(
+    pool: &MySqlPool,
+    ore_price_id: i64,
+    ore_id: i64,
+    amount: i32,
+) {
+    sqlx::query("INSERT INTO OrePriceAmount (orePriceId, oreId, amount) VALUES (?, ?, ?)")
+        .bind(ore_price_id)
+        .bind(ore_id)
+        .bind(amount)
+        .execute(pool)
+        .await
+        .expect("failed to insert ore price amount");
+}
+
+/// Insert a unique ore + ore price (+ amount) catalog triple for scenario fixtures.
+pub async fn ensure_base_catalog(pool: &MySqlPool, prefix: &str, price_amount: i32) -> BaseCatalog {
+    let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;
+    let ore_price_id = insert_ore_price(pool, &format!("{prefix}-price")).await;
+    insert_ore_price_amount(pool, ore_price_id, ore_id, price_amount).await;
+    BaseCatalog {
+        ore_id,
+        ore_price_id,
+    }
+}
+
+pub async fn cleanup_base_catalog(pool: &MySqlPool, catalog: BaseCatalog) {
+    let _ = sqlx::query("DELETE FROM OrePriceAmount WHERE orePriceId = ?")
+        .bind(catalog.ore_price_id)
+        .execute(pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM OrePrice WHERE id = ?")
+        .bind(catalog.ore_price_id)
+        .execute(pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Ore WHERE id = ?")
+        .bind(catalog.ore_id)
+        .execute(pool)
+        .await;
+}

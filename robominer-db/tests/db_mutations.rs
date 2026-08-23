@@ -419,7 +419,7 @@ async fn cancel_mining_queue_require_refund_fits_skips_clamp() {
     .await
     .expect("cancel should not fail at sql layer");
     assert_eq!(
-        result,
+        result.into_result(),
         Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp)
     );
 

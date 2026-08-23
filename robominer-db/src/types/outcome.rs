@@ -51,6 +51,24 @@ impl<T, R> DbOutcome<T, R> {
             Self::Rejected(r) => Err(r),
         }
     }
+
+    /// Panic with `msg` when rejected (test/helper convenience, mirrors `Result::expect`).
+    #[track_caller]
+    pub fn expect(self, msg: &str) -> T {
+        match self {
+            Self::Success(v) => v,
+            Self::Rejected(_) => panic!("{msg}"),
+        }
+    }
+
+    /// Panic with `msg` when successful (test/helper convenience, mirrors `Result::expect_err`).
+    #[track_caller]
+    pub fn expect_err(self, msg: &str) -> R {
+        match self {
+            Self::Success(_) => panic!("{msg}"),
+            Self::Rejected(r) => r,
+        }
+    }
 }
 
 impl<T, R> From<Result<T, R>> for DbOutcome<T, R> {

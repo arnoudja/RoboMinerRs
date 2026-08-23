@@ -1,3 +1,6 @@
+//! Offline genetic optimizer over robot parts/programs against area loadouts.
+//! Not part of the production web/engine path.
+
 mod catalog;
 mod cli;
 mod fitness;

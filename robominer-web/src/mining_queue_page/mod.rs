@@ -2,6 +2,17 @@ use std::collections::HashMap;
 
 use crate::{Request, Response, ServerConfig, is_post, query_i64};
 
+mod actions;
+mod inspector;
+mod render;
+mod robots;
+mod scripts;
+
+#[cfg(test)]
+mod tests;
+
+use actions::{cancel_queued_items, format_cancel_batch_message};
+
 #[derive(Debug)]
 pub(super) struct MiningQueuePageState {
     pub(super) asset_summary: robominer_db::UserAssetSummaryRecord,
@@ -27,14 +38,6 @@ pub(super) struct MiningQueueDisplayItem {
     pub(super) rally_result_id: Option<i64>,
     pub(super) status: robominer_db::MiningQueueStatus,
     pub(super) time_left_seconds: i64,
-}
-
-#[derive(Debug, Default)]
-struct CancelBatchResult {
-    cleared: usize,
-    skipped: usize,
-    failed: usize,
-    last_rejection: Option<robominer_db::CancelMiningQueueRejection>,
 }
 
 pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) -> Response {
@@ -186,83 +189,6 @@ async fn load_mining_queue_page_state(
     })
 }
 
-async fn cancel_queued_items(
-    pool: &robominer_db::MySqlPool,
-    user_id: i64,
-    mining_queue_ids: &[i64],
-    require_refund_fits: bool,
-) -> Result<CancelBatchResult, crate::page_context::PageLoadError> {
-    let mut batch = CancelBatchResult::default();
-    for &mining_queue_id in mining_queue_ids {
-        match robominer_db::cancel_mining_queue(
-            pool,
-            robominer_db::CancelMiningQueueRequest {
-                user_id,
-                mining_queue_id,
-                require_refund_fits,
-            },
-        )
-        .await?
-        .into_result()
-        {
-            Ok(_) => batch.cleared += 1,
-            Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp) => {
-                batch.skipped += 1;
-            }
-            Err(rejection) => {
-                batch.failed += 1;
-                batch.last_rejection = Some(rejection);
-            }
-        }
-    }
-    Ok(batch)
-}
-
-fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<String> {
-    if batch.cleared == 0 && batch.skipped == 0 && batch.failed == 0 {
-        return None;
-    }
-    if batch.failed == 0 && batch.skipped == 0 {
-        return None;
-    }
-
-    let mut parts = Vec::new();
-    if batch.cleared > 0 {
-        parts.push(format!(
-            "Cleared {} queued run{}.",
-            batch.cleared,
-            if batch.cleared == 1 { "" } else { "s" }
-        ));
-    }
-    if batch.skipped > 0 {
-        if batch.cleared == 0 {
-            parts.push(
-                "No queued runs cleared; refunds would exceed your wallet maximum.".to_string(),
-            );
-        } else {
-            parts.push(format!(
-                "{} left in queue to avoid losing ore.",
-                batch.skipped
-            ));
-        }
-    }
-    if batch.failed > 0 {
-        let detail = batch
-            .last_rejection
-            .map(cancel_mining_rejection_message)
-            .unwrap_or("Unable to cancel mining queue item.");
-        if batch.cleared == 0 && batch.skipped == 0 {
-            parts.push(detail.to_string());
-        } else {
-            parts.push(format!(
-                "{} could not be canceled ({detail}).",
-                batch.failed
-            ));
-        }
-    }
-    Some(parts.join(" "))
-}
-
 async fn load_mining_queue_display_items(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
@@ -295,13 +221,6 @@ async fn load_mining_queue_display_items(
         .collect())
 }
 
-mod inspector;
-mod render;
-mod robots;
-mod scripts;
-
-#[cfg(test)]
-mod tests;
 fn form_i64_values(request: &Request, name: &str) -> Vec<i64> {
     request
         .form_values
@@ -334,50 +253,4 @@ pub(super) fn cancel_mining_rejection_message(
     rejection: robominer_db::CancelMiningQueueRejection,
 ) -> &'static str {
     robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message(rejection)
-}
-
-#[cfg(test)]
-mod batch_message_tests {
-    use super::*;
-
-    #[test]
-    fn format_cancel_batch_message_covers_partial_outcomes() {
-        assert_eq!(
-            format_cancel_batch_message(&CancelBatchResult::default()),
-            None
-        );
-        assert_eq!(
-            format_cancel_batch_message(&CancelBatchResult {
-                cleared: 2,
-                ..CancelBatchResult::default()
-            }),
-            None
-        );
-        assert_eq!(
-            format_cancel_batch_message(&CancelBatchResult {
-                cleared: 2,
-                skipped: 1,
-                ..CancelBatchResult::default()
-            })
-            .as_deref(),
-            Some("Cleared 2 queued runs. 1 left in queue to avoid losing ore.")
-        );
-        assert_eq!(
-            format_cancel_batch_message(&CancelBatchResult {
-                skipped: 2,
-                ..CancelBatchResult::default()
-            })
-            .as_deref(),
-            Some("No queued runs cleared; refunds would exceed your wallet maximum.")
-        );
-        let failed = format_cancel_batch_message(&CancelBatchResult {
-            cleared: 1,
-            failed: 1,
-            last_rejection: Some(robominer_db::CancelMiningQueueRejection::NotCancelable),
-            ..CancelBatchResult::default()
-        })
-        .expect("message");
-        assert!(failed.starts_with("Cleared 1 queued run."));
-        assert!(failed.contains("1 could not be canceled"));
-    }
 }
