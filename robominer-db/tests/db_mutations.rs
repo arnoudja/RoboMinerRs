@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     CancelMiningQueueRequest, CreateProgramSourceRequest, RobotPartTransactionRequest,
     buy_robot_part, create_program_source, sell_all_unassigned_robot_parts, sell_robot_part,
@@ -11,8 +12,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn buy_robot_part_deducts_ore_and_adds_owned_part() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -41,8 +41,7 @@ async fn buy_robot_part_deducts_ore_and_adds_owned_part() {
 #[tokio::test]
 #[serial]
 async fn buy_robot_part_rejects_insufficient_funds() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -73,8 +72,7 @@ async fn buy_robot_part_rejects_insufficient_funds() {
 #[tokio::test]
 #[serial]
 async fn sell_robot_part_refunds_half_cost_and_clears_unassigned_stock() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -102,8 +100,7 @@ async fn sell_robot_part_refunds_half_cost_and_clears_unassigned_stock() {
 #[tokio::test]
 #[serial]
 async fn buy_robot_part_rejects_unknown_user() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -133,8 +130,7 @@ async fn buy_robot_part_rejects_unknown_user() {
 #[tokio::test]
 #[serial]
 async fn buy_robot_part_rejects_unknown_robot_part() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -165,8 +161,7 @@ async fn buy_robot_part_rejects_unknown_robot_part() {
 #[tokio::test]
 #[serial]
 async fn sell_robot_part_rejects_no_unassigned_stock() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -197,8 +192,7 @@ async fn sell_robot_part_rejects_no_unassigned_stock() {
 #[tokio::test]
 #[serial]
 async fn sell_all_unassigned_robot_parts_rejects_when_empty() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -222,8 +216,7 @@ async fn sell_all_unassigned_robot_parts_rejects_when_empty() {
 #[tokio::test]
 #[serial]
 async fn sell_all_unassigned_robot_parts_sells_stock() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db shop test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -246,8 +239,7 @@ async fn sell_all_unassigned_robot_parts_sells_stock() {
 #[tokio::test]
 #[serial]
 async fn cancel_mining_queue_deletes_only_queued_item() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -296,8 +288,7 @@ async fn cancel_mining_queue_deletes_only_queued_item() {
 #[tokio::test]
 #[serial]
 async fn cancel_mining_queue_refunds_ore_cost() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -343,8 +334,7 @@ async fn cancel_mining_queue_refunds_ore_cost() {
 #[tokio::test]
 #[serial]
 async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -389,8 +379,7 @@ async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
 #[tokio::test]
 #[serial]
 async fn cancel_mining_queue_require_refund_fits_skips_clamp() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -436,8 +425,7 @@ async fn cancel_mining_queue_require_refund_fits_skips_clamp() {
 #[tokio::test]
 #[serial]
 async fn ore_refund_fits_without_clamp_detects_wallet_cap() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -481,8 +469,7 @@ async fn ore_refund_fits_without_clamp_detects_wallet_cap() {
 #[tokio::test]
 #[serial]
 async fn create_program_source_rejects_empty_source_name() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db program source test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -524,8 +511,7 @@ async fn create_program_source_rejects_empty_source_name() {
 #[tokio::test]
 #[serial]
 async fn create_program_source_inserts_verifiable_row() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db program source test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

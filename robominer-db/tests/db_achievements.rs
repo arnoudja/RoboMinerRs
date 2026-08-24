@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     ClaimAchievementStepRejection, ClaimAchievementStepRequest, claim_achievement_step,
 };
@@ -10,8 +11,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn claim_achievement_step_requires_depot_total_on_claimed_runs() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db achievement test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -155,8 +155,7 @@ async fn claim_achievement_step_requires_depot_total_on_claimed_runs() {
 #[tokio::test]
 #[serial]
 async fn list_achievement_page_depot_total_requirements_reports_progress() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db achievement test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

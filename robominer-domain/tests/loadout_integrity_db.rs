@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_domain::{
     DomainError, load_mining_area_loadout, load_next_rally_loadout, load_pool_loadout,
 };
@@ -24,8 +25,7 @@ async fn orphan_update(pool: &MySqlPool, sql: &str, bind_a: i64, bind_b: i64) {
 #[tokio::test]
 #[serial]
 async fn missing_area_and_pool_return_none() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping loadout integrity DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -50,8 +50,7 @@ async fn missing_area_and_pool_return_none() {
 #[tokio::test]
 #[serial]
 async fn load_mining_area_reports_missing_ai_robot() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping loadout integrity DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -96,8 +95,7 @@ async fn load_mining_area_reports_missing_ai_robot() {
 #[tokio::test]
 #[serial]
 async fn load_next_rally_skips_orphaned_queue_robot() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping loadout integrity DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -144,8 +142,7 @@ async fn load_next_rally_skips_orphaned_queue_robot() {
 #[tokio::test]
 #[serial]
 async fn load_pool_reports_missing_mining_area() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping loadout integrity DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -190,8 +187,7 @@ async fn load_pool_reports_missing_mining_area() {
 #[tokio::test]
 #[serial]
 async fn load_pool_reports_missing_pool_robot() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping loadout integrity DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

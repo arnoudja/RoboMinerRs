@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use std::collections::HashMap;
@@ -14,17 +15,15 @@ use support::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn shop_buy_post_deducts_ore_and_adds_owned_part() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping shop buy web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -69,17 +68,15 @@ async fn shop_buy_post_deducts_ore_and_adds_owned_part() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn shop_sell_post_refunds_ore_and_clears_owned_part() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping shop sell web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -123,17 +120,15 @@ async fn shop_sell_post_refunds_ore_and_clears_owned_part() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn shop_buy_post_shows_insufficient_funds_message() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping shop insufficient funds web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop-funds");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -177,17 +172,15 @@ async fn shop_buy_post_shows_insufficient_funds_message() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn shop_buy_get_query_does_not_mutate() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping shop GET buy web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop-get");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -235,17 +228,15 @@ async fn shop_buy_get_query_does_not_mutate() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn shop_buy_post_without_csrf_is_rejected() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping shop CSRF web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-shop-csrf");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();

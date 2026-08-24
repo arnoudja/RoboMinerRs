@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_web::test_support::route;
@@ -10,17 +11,15 @@ use support::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn login_post_redirects_to_mining_queue_with_session_cookie() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping login web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-login");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -70,17 +69,15 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn signup_post_redirects_to_welcome_with_session_cookie() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping signup web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-signup");
     let username = format!("{prefix}user");
     let email = format!("{prefix}@example.invalid");

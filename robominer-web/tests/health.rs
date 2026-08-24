@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_web::test_support::route;
@@ -7,8 +8,7 @@ use support::{get_request, server_config};
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn health_reports_ok_when_database_and_migrations_are_ready() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping health web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

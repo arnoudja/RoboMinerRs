@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     CreateUserRejection, CreateUserRequest, UpdateUserAccountRejection, UpdateUserAccountRequest,
     VerifyLoginRejection, VerifyLoginRequest, create_user, get_user_by_id, get_user_id_by_username,
@@ -11,8 +12,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn create_user_rejects_invalid_profile_fields() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -39,8 +39,7 @@ async fn create_user_rejects_invalid_profile_fields() {
 #[tokio::test]
 #[serial]
 async fn create_user_inserts_user_and_claims_initial_achievement() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -114,8 +113,7 @@ async fn create_user_inserts_user_and_claims_initial_achievement() {
 #[tokio::test]
 #[serial]
 async fn create_user_rejects_duplicate_username() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -155,8 +153,7 @@ async fn create_user_rejects_duplicate_username() {
 #[tokio::test]
 #[serial]
 async fn verify_login_accepts_username_or_email() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -211,8 +208,7 @@ async fn verify_login_accepts_username_or_email() {
 #[tokio::test]
 #[serial]
 async fn verify_login_rejects_invalid_password() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -254,8 +250,7 @@ async fn verify_login_rejects_invalid_password() {
 #[tokio::test]
 #[serial]
 async fn update_user_account_rejects_duplicate_email() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -303,8 +298,7 @@ async fn update_user_account_rejects_duplicate_email() {
 #[tokio::test]
 #[serial]
 async fn update_user_account_bumps_session_version_only_when_password_changes() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db users test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

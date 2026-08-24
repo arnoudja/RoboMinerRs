@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use std::collections::HashMap;
@@ -13,17 +14,15 @@ use support::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn achievements_claim_post_applies_rewards() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping achievement claim web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-achievement");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -57,17 +56,15 @@ async fn achievements_claim_post_applies_rewards() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn achievements_claim_get_query_does_not_mutate() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping achievement GET claim web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-achievement-get");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -114,17 +111,15 @@ async fn achievements_claim_get_query_does_not_mutate() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn achievements_overview_renders_other_players_tracks() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping achievements overview web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-ach-overview");
     let viewer = format!("{prefix}-viewer");
     let target = format!("{prefix}-target");
@@ -218,17 +213,15 @@ async fn achievements_overview_unknown_user_shows_not_found() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn achievements_claim_rejected_shows_unable_banner() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping achievement claim reject web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-achievement-reject");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();

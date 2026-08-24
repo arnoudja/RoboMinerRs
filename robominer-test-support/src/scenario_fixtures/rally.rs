@@ -90,6 +90,18 @@ impl RallyFixture {
         }
     }
 
+    /// Backdate queue timing so the entry is rally-ready without wall-clock waits.
+    pub async fn make_rally_ready(&self, pool: &MySqlPool) {
+        sqlx::query(
+            "UPDATE MiningQueue SET creationTime = TIMESTAMPADD(SECOND, -3600, NOW()) \
+             WHERE id = ?",
+        )
+        .bind(self.mining_queue_id)
+        .execute(pool)
+        .await
+        .expect("failed to backdate rally queue creation time");
+    }
+
     pub async fn assert_persisted(&self, pool: &MySqlPool) {
         let queue = sqlx::query(
             "SELECT rallyResultId, playerNumber, score, miningEndTime IS NOT NULL AS ended \

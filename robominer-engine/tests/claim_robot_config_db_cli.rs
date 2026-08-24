@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn claim_results_updates_assets_totals_and_pending_changes() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -47,8 +47,7 @@ async fn claim_results_updates_assets_totals_and_pending_changes() {
 #[tokio::test]
 #[serial]
 async fn claim_results_includes_runs_whose_end_time_equals_now() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -84,8 +83,7 @@ async fn claim_results_includes_runs_whose_end_time_equals_now() {
 #[tokio::test]
 #[serial]
 async fn list_robot_config_reconciles_stale_pending_changes_without_claim() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -127,8 +125,7 @@ async fn list_robot_config_reconciles_stale_pending_changes_without_claim() {
 #[tokio::test]
 #[serial]
 async fn list_robot_config_applies_orphaned_pending_changes_when_idle() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

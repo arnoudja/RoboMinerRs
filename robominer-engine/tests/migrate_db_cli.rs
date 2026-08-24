@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn migrate_status_lists_embedded_migrations() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -50,8 +50,7 @@ async fn migrate_status_lists_embedded_migrations() {
 #[tokio::test]
 #[serial]
 async fn migrate_is_idempotent_on_current_schema() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

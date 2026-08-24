@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn update_user_account_updates_profile_and_password() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -79,8 +79,7 @@ async fn update_user_account_updates_profile_and_password() {
 #[tokio::test]
 #[serial]
 async fn update_user_account_leaves_password_when_hash_is_absent() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -142,8 +141,7 @@ async fn update_user_account_leaves_password_when_hash_is_absent() {
 #[tokio::test]
 #[serial]
 async fn account_state_reports_profile_fields() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -180,8 +178,7 @@ async fn account_state_reports_profile_fields() {
 #[tokio::test]
 #[serial]
 async fn update_user_account_rejects_duplicate_username_and_email() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -270,8 +267,7 @@ async fn update_user_account_rejects_duplicate_username_and_email() {
 #[tokio::test]
 #[serial]
 async fn update_user_account_rejects_invalid_profile_fields() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

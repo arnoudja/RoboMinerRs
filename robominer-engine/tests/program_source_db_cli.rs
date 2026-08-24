@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn create_program_source_inserts_and_verifies_source() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -60,8 +60,7 @@ async fn create_program_source_inserts_and_verifies_source() {
 #[tokio::test]
 #[serial]
 async fn program_source_states_report_editor_rows() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -109,8 +108,7 @@ async fn program_source_states_report_editor_rows() {
 #[tokio::test]
 #[serial]
 async fn update_program_source_applies_to_idle_robots_and_reports_warnings() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -155,8 +153,7 @@ async fn update_program_source_applies_to_idle_robots_and_reports_warnings() {
 #[tokio::test]
 #[serial]
 async fn apply_program_source_to_linked_robots_updates_idle_robots_and_warns() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -196,8 +193,7 @@ async fn apply_program_source_to_linked_robots_updates_idle_robots_and_warns() {
 #[tokio::test]
 #[serial]
 async fn apply_program_source_to_busy_robot_with_pending_updates_source_only() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -263,8 +259,7 @@ async fn apply_program_source_to_busy_robot_with_pending_updates_source_only() {
 #[tokio::test]
 #[serial]
 async fn delete_program_source_removes_unlinked_source() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -302,8 +297,7 @@ async fn delete_program_source_removes_unlinked_source() {
 #[tokio::test]
 #[serial]
 async fn delete_program_source_rejects_source_linked_to_robot() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -341,8 +335,7 @@ async fn delete_program_source_rejects_source_linked_to_robot() {
 #[tokio::test]
 #[serial]
 async fn update_program_source_rejects_wrong_owner() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

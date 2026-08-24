@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! Rally program benchmarks against real mining-area layouts from `gameData.sql`.
 //!
 //! Use this whenever you want to compare robot programs before changing game balance,

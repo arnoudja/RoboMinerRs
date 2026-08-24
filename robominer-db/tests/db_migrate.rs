@@ -1,17 +1,13 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     EMBEDDED_MIGRATIONS, migration_status, run_embedded_migrations, run_migrations,
 };
 use serial_test::serial;
 
-fn database_url() -> Option<String> {
-    std::env::var("ROBOMINER_DATABASE_URL").ok()
-}
-
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn migrate_on_current_schema_baselines_then_is_idempotent() {
-    let Some(database_url) = database_url() else {
-        eprintln!("skipping migrate test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -54,8 +50,7 @@ async fn migrate_on_current_schema_baselines_then_is_idempotent() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn migrate_applies_pending_version_when_tracking_is_partial() {
-    let Some(database_url) = database_url() else {
-        eprintln!("skipping migrate partial test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -98,8 +93,7 @@ async fn migrate_applies_pending_version_when_tracking_is_partial() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn failed_migration_does_not_record_version() {
-    let Some(database_url) = database_url() else {
-        eprintln!("skipping migrate failed-version test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

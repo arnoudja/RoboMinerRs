@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 #[path = "support/pool.rs"]
 mod pool;
 

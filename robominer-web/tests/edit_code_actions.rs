@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use std::collections::HashMap;
@@ -13,17 +14,15 @@ use support::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn edit_code_create_post_inserts_program_source() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping edit code web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-code");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -97,17 +96,15 @@ async fn edit_code_create_post_inserts_program_source() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn edit_code_save_post_applies_verified_program_to_linked_robots() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping edit code save-apply web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-save-apply");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -280,17 +277,15 @@ async fn edit_code_save_post_warns_when_verified_program_exceeds_linked_robot_me
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn edit_code_delete_post_removes_unlinked_program_source() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping edit code delete web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-delete");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -366,17 +361,15 @@ async fn edit_code_delete_post_removes_unlinked_program_source() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn edit_code_delete_post_rejects_foreign_program_source() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping edit code IDOR web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-idor");
     let owner_username = format!("{prefix}-owner");
     let attacker_username = format!("{prefix}-attacker");

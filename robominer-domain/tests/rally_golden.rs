@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_domain::{run_rally_loadout_with_animation_seed, simulation::completed_rally_record};

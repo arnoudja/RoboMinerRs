@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn mining_area_overview_states_report_lifetime_averages() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

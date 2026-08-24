@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     CompletedPoolItemOreRecord, CompletedPoolItemRecord, CompletedPoolRallyRecord,
     persist_completed_pool_rally,
@@ -8,8 +9,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn persist_completed_pool_rally_updates_scores_and_ore_totals() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db pool test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

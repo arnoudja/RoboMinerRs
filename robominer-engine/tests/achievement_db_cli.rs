@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn claim_achievement_step_applies_rewards() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -36,8 +36,7 @@ async fn claim_achievement_step_applies_rewards() {
 #[tokio::test]
 #[serial]
 async fn claim_achievement_step_unlocks_successor() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -63,8 +62,7 @@ async fn claim_achievement_step_unlocks_successor() {
 #[tokio::test]
 #[serial]
 async fn reconcile_successor_unlocks_after_late_predecessor_link() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -97,8 +95,7 @@ async fn reconcile_successor_unlocks_after_late_predecessor_link() {
 #[tokio::test]
 #[serial]
 async fn claim_achievement_step_adds_robot_reward() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -124,8 +121,7 @@ async fn claim_achievement_step_adds_robot_reward() {
 #[tokio::test]
 #[serial]
 async fn claim_achievement_step_rejects_unmet_requirements() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -154,8 +150,7 @@ async fn claim_achievement_step_rejects_unmet_requirements() {
 #[tokio::test]
 #[serial]
 async fn achievement_states_report_claimable_and_progress() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -265,8 +260,7 @@ async fn achievement_states_report_claimable_and_progress() {
 #[tokio::test]
 #[serial]
 async fn achievement_page_states_report_display_model() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

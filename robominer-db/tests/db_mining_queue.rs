@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{DbOutcome, EnqueueMiningRejection, EnqueueMiningRequest, enqueue_mining};
 use robominer_test_support::{EnqueueMiningFixture, unique_prefix};
 use serial_test::serial;
@@ -18,8 +19,7 @@ async fn waiting_queue_count(pool: &sqlx::MySqlPool, robot_id: i64) -> i64 {
 #[tokio::test]
 #[serial]
 async fn enqueue_mining_rejects_when_queue_is_full() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -63,8 +63,7 @@ async fn enqueue_mining_rejects_when_queue_is_full() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 #[serial]
 async fn enqueue_mining_concurrent_add_respects_queue_limit() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining queue test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

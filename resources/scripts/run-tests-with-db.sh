@@ -14,5 +14,5 @@ cd "${ROOT}"
 if cargo nextest --version >/dev/null 2>&1; then
     cargo nextest run --workspace --profile ci "$@"
 else
-    cargo test --workspace "$@"
+    cargo test --workspace "$@" -- --test-threads 1
 fi

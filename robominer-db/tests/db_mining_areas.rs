@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     get_mining_area, list_mining_area_ore_supplies, list_mining_area_overview_areas_for_user,
     list_mining_area_overview_ore_averages_for_user, list_mining_area_overview_ores_for_user,
@@ -11,8 +12,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn list_mining_area_ore_supplies_returns_seeded_rows() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining areas test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -60,8 +60,7 @@ async fn list_mining_area_ore_supplies_returns_seeded_rows() {
 #[tokio::test]
 #[serial]
 async fn mining_area_overview_helpers_respect_user_area_grant() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db mining areas test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

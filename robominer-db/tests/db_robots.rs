@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     UpdateRobotConfigRequest, list_robot_config_part_asset_states, list_robot_config_states,
     list_robot_lifetime_ore_stats, list_robot_mining_area_stats, load_robot_stats_header,
@@ -9,8 +10,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn list_robot_config_states_reflects_pending_loadout_after_update() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db robots test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -64,8 +64,7 @@ async fn list_robot_config_states_reflects_pending_loadout_after_update() {
 #[tokio::test]
 #[serial]
 async fn list_robot_config_part_asset_states_counts_pending_parts_as_assigned() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db robots test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -119,8 +118,7 @@ async fn list_robot_config_part_asset_states_counts_pending_parts_as_assigned() 
 #[tokio::test]
 #[serial]
 async fn robot_stats_loaders_return_header_ore_and_area_totals() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db robots stats test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

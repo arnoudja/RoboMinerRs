@@ -1,24 +1,25 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use std::collections::HashMap;
 
 use robominer_test_support::RobotApplyFixture;
 use robominer_web::test_support::route;
+use serial_test::serial;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, get_request_query,
     login_with_credentials, post_request_query, response_body, server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn robot_apply_post_persists_part_change_across_refresh() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping robot apply integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");

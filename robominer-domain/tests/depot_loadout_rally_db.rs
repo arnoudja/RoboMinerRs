@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_domain::{
     load_next_rally_loadout, persist_rally_outcome, run_rally_loadout_with_animation_seed,
 };
@@ -7,8 +8,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn load_next_rally_loadout_applies_depot_capacity_and_banks_home_dump() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping depot loadout→rally DB test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

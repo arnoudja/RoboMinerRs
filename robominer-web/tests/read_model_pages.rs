@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_test_support::{CancelMiningQueueFixture, insert_row_id};
@@ -13,14 +14,12 @@ use std::collections::HashMap;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn read_model_pages_render_with_seeded_data() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping read-model web tests: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
@@ -50,14 +49,12 @@ async fn read_model_pages_render_with_seeded_data() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn rally_view_renders_from_mining_results_and_activity() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping rally-view web tests: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
@@ -154,14 +151,12 @@ async fn rally_view_renders_from_mining_results_and_activity() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn robot_stats_renders_seeded_robot_from_db() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping robot stats web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
@@ -199,14 +194,12 @@ async fn robot_stats_renders_seeded_robot_from_db() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn robot_stats_missing_or_unknown_shows_not_found() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping robot stats not-found web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");

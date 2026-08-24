@@ -1,8 +1,10 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_db::{MySqlPool, claim_user_results};
 use robominer_test_support::assert_or_update_golden_async;
 use serde::{Deserialize, Serialize};
+use serial_test::serial;
 use sqlx::Row;
 use support::{ClaimScenario, ClaimScenarioId, ore_index, queue_index};
 
@@ -207,9 +209,9 @@ async fn load_pending_robot_changes_count(pool: &MySqlPool, robot_id: i64) -> i6
 }
 
 #[tokio::test]
+#[serial]
 async fn claim_outcomes_match_golden_fixtures() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping claim golden test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

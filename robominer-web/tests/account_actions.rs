@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use std::collections::HashMap;
@@ -12,17 +13,15 @@ use support::{
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn account_update_post_persists_profile_changes() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping account web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-account");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
@@ -74,17 +73,15 @@ async fn account_update_post_persists_profile_changes() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn account_password_change_persists_and_invalidates_other_sessions() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping account web test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-account-pw");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();

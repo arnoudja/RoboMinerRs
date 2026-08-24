@@ -1,20 +1,21 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
 use robominer_web::test_support::route;
+use serial_test::serial;
 use support::{
     WebSmokeFixture, cookie_header, ensure_session_configured, response_body, server_config,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn web_db_smoke_suite() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!("skipping web DB smoke tests: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let database_url = std::env::var("ROBOMINER_DATABASE_URL").expect("database url");
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");

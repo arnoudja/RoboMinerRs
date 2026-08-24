@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
     CompletedRallyRecord, cleanup_old_claimed_mining_queue_items_for_robot,
@@ -15,8 +16,7 @@ use sqlx::Row;
 #[tokio::test]
 #[serial]
 async fn persist_completed_rally_updates_queue_and_score_tables() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -116,8 +116,7 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
 #[tokio::test]
 #[serial]
 async fn cleanup_old_claimed_mining_queue_items_trims_beyond_retention() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -181,8 +180,7 @@ async fn cleanup_old_claimed_mining_queue_items_trims_beyond_retention() {
 #[tokio::test]
 #[serial]
 async fn list_mining_result_states_for_robot_returns_claimed_only() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -263,8 +261,7 @@ async fn list_mining_result_states_for_robot_returns_claimed_only() {
 #[tokio::test]
 #[serial]
 async fn list_mining_result_states_for_user_returns_newest_claimed_across_robots() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -413,8 +410,7 @@ async fn list_mining_result_states_for_user_returns_newest_claimed_across_robots
 #[tokio::test]
 #[serial]
 async fn claim_taxes_container_and_depot_ore_separately() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db rally test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

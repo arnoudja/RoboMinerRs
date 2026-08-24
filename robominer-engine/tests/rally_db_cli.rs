@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 use serial_test::serial;
 
@@ -6,8 +7,7 @@ use support::*;
 #[tokio::test]
 #[serial]
 async fn run_rally_persist_writes_completed_rally_tables() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -46,8 +46,7 @@ async fn run_rally_persist_writes_completed_rally_tables() {
 #[tokio::test]
 #[serial]
 async fn run_rallies_once_persist_advances_ready_queue() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -55,9 +54,7 @@ async fn run_rallies_once_persist_advances_ready_queue() {
         .await
         .expect("failed to connect to test database");
     let fixture = TestRallyFixture::create(&pool).await;
-
-    // Let miningTime/recharge windows elapse so the queue is rally-ready before polling.
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    fixture.make_rally_ready(&pool).await;
 
     let output = run_engine(&[
         "--database-url".to_string(),
@@ -113,8 +110,7 @@ async fn run_rallies_once_persist_advances_ready_queue() {
 #[tokio::test]
 #[serial]
 async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -210,8 +206,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
 #[tokio::test]
 #[serial]
 async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -327,8 +322,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
 #[tokio::test]
 #[serial]
 async fn run_rally_dry_run_does_not_persist() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -376,8 +370,7 @@ async fn run_rally_dry_run_does_not_persist() {
 #[tokio::test]
 #[serial]
 async fn run_rally_result_data_file_overrides_sim_payload() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -434,8 +427,7 @@ async fn run_rally_result_data_file_overrides_sim_payload() {
 #[tokio::test]
 #[serial]
 async fn run_rally_missing_result_data_file_fails() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping DB integration test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 

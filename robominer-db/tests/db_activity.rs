@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 use robominer_db::{
     list_activity_rally_participants_for_queues, list_activity_recent_rally_feed,
     list_activity_recent_users, rally_view_metadata, rally_view_state,
@@ -8,8 +9,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db activity test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
@@ -92,8 +92,7 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
 #[tokio::test]
 #[serial]
 async fn rally_view_state_requires_claimed_viewer_result_when_requested() {
-    let Ok(database_url) = std::env::var("ROBOMINER_DATABASE_URL") else {
-        eprintln!("skipping robominer-db activity test: ROBOMINER_DATABASE_URL is not set");
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
