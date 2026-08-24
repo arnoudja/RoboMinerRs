@@ -11,7 +11,6 @@ The database scripts are kept under `resources/database/`:
 
 - `createDatabase.sql` — database schema
 - `gameData.sql` — seed data (ores, parts, areas, achievements)
-- `balanceTestData.sql` — optional test fixtures
 
 Further docs: [CONTRIBUTING.md](CONTRIBUTING.md) (tests, coverage, **db vs domain
 boundary**), [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
@@ -213,6 +212,16 @@ Show all available engine commands:
 
 ```sh
 cargo run -p robominer-engine -- --help
+```
+
+## Offline tooling
+
+`robominer-optimize` is an offline genetic-programming optimizer for experimenting
+with robot programs against the live database schema. It is not part of the production
+web/engine path:
+
+```sh
+cargo run -p robominer-optimize -- --help
 ```
 
 

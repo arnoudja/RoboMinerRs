@@ -47,7 +47,24 @@ resources/scripts/run-tests-with-db.sh -p robominer-web -- login
 ```
 
 Without a database URL, DB-backed integration tests skip themselves (they print a message and
-return). Golden and unit tests still run.
+return). Golden and unit tests still run. When `CI=true`, missing `ROBOMINER_DATABASE_URL` fails
+the run instead of skipping.
+
+Use `robominer_test_support::require_test_db()` in new DB integration tests instead of copying the
+skip boilerplate.
+
+### Updating golden fixtures
+
+Golden JSON fixtures live under `*/tests/fixtures/`. To refresh them locally after an intentional
+simulation or claim change, set the update env var and re-run the matching test binary:
+
+| Test | Env var |
+|------|---------|
+| `robominer-domain/tests/rally_golden.rs` | `UPDATE_RALLY_GOLDEN=1` |
+| `robominer-domain/tests/pool_golden.rs` | `UPDATE_POOL_GOLDEN=1` |
+| `robominer-db/tests/claim_golden.rs` | `UPDATE_CLAIM_GOLDEN=1` |
+
+Do not commit updated fixtures unless the behavior change is deliberate. CI never sets these vars.
 
 ### Fast tests (no database)
 
