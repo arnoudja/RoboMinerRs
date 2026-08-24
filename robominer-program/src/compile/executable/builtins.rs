@@ -93,8 +93,9 @@ pub(super) fn reject_builtin_property_mutation(
     kind: &ExecutableExpressionKind,
 ) -> Result<(), CompileError> {
     if input.eat_sequence("++") || input.eat_sequence("--") {
-        let object = BuiltinObject::from_expression_kind(kind)
-            .expect("builtin property expression kinds map to an object");
+        let Some(object) = BuiltinObject::from_expression_kind(kind) else {
+            return Ok(());
+        };
         return Err(object.mutation_error(input.current_line));
     }
     Ok(())

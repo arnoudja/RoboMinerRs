@@ -28,11 +28,10 @@ pub fn run_ga(
     rng: &mut impl Rng,
 ) -> Vec<RankedIndividual> {
     if fix_program && let Some(part_ids) = fixed_parts {
-        let program = initial_programs
-            .first()
-            .expect("fix_program requires an injected program")
-            .clone();
-        let genome = Genome::with_parts(part_ids, program);
+        let Some(program) = initial_programs.first() else {
+            return Vec::new();
+        };
+        let genome = Genome::with_parts(part_ids, program.clone());
         let individual = RankedIndividual {
             fitness: evaluate_genome(&genome, fitness_ctx, 0),
             genome,
@@ -159,9 +158,9 @@ fn build_initial_population(
     rng: &mut impl Rng,
 ) -> Vec<Genome> {
     if fix_program {
-        let program = initial_programs
-            .first()
-            .expect("fix_program requires an injected program");
+        let Some(program) = initial_programs.first() else {
+            return Vec::new();
+        };
         return (0..population_size)
             .map(|_| match fixed_parts {
                 Some(part_ids) => Genome::with_parts(part_ids, program.clone()),

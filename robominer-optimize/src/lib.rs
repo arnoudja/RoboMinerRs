@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! Offline genetic optimizer over robot parts/programs against area loadouts.
 //! Not part of the production web/engine path.
 
@@ -400,26 +402,8 @@ async fn connect_database(
     database_url: Option<String>,
     config: Option<std::path::PathBuf>,
 ) -> Result<robominer_db::MySqlPool> {
-    let database_url =
-        robominer_db::resolve_database_url(database_url, config.clone(), "robominer-optimize")
-            .map_err(|error| anyhow!(error))?;
-
-    let config_value = match robominer_db::load_legacy_config(config, "robominer-optimize") {
-        Ok((_, config_map)) => {
-            robominer_db::config_value(&config_map, "dbmaxconnections").map(str::to_owned)
-        }
-        Err(robominer_db::ConfigError::MissingConfigFile) => None,
-        Err(error) => return Err(anyhow!(error)),
-    };
-    let max_connections = robominer_db::resolve_max_connections(
-        std::env::var("ROBOMINER_DB_MAX_CONNECTIONS")
-            .ok()
-            .as_deref(),
-        config_value.as_deref(),
-    )
-    .map_err(|error| anyhow!(error))?;
-
-    robominer_db::connect_with_max_connections(&database_url, max_connections)
+    robominer_db::connect_from_cli(database_url, config, "robominer-optimize")
         .await
+        .map_err(|error| anyhow!(error))
         .context("failed to connect to database")
 }

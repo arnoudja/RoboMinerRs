@@ -24,3 +24,6 @@ robominer-test-support = { workspace = true }
 serial_test = "3.2.0"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
 tokio = { version = "1.53.1", features = ["io-util", "macros", "net", "rt-multi-thread", "time"] }
+
+[lints]
+workspace = true

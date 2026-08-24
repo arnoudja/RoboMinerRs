@@ -23,3 +23,7 @@ robominer-program = { path = "robominer-program" }
 robominer-sim = { path = "robominer-sim" }
 robominer-test-support = { path = "robominer-test-support" }
 robominer-web = { path = "robominer-web" }
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"

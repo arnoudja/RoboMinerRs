@@ -56,10 +56,9 @@ fn render_robot_stats_not_found() -> String {
 }
 
 fn render_robot_stats_overview(state: &RobotStatsPageState, now_millis: i64) -> String {
-    let header = state
-        .header
-        .as_ref()
-        .expect("overview render requires robot header");
+    let Some(header) = state.header.as_ref() else {
+        return String::new();
+    };
     let total_ore = state.total_ore_mined();
     let total_tax = state.total_tax();
     let ore_per_run = state

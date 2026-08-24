@@ -4,6 +4,10 @@ use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::MySqlPool;
+use crate::connect_with_max_connections;
+use crate::resolve_max_connections;
+
 pub const SHARED_CONFIG_PATH: &str = "/etc/robominer/robominer.conf";
 pub const LEGACY_ENGINE_CONFIG_PATH: &str = "/etc/robominer/robominer-engine.conf";
 
@@ -39,6 +43,58 @@ impl From<std::io::Error> for ConfigError {
     fn from(error: std::io::Error) -> Self {
         Self::Io(error)
     }
+}
+
+#[derive(Debug)]
+pub enum ConnectError {
+    Config(ConfigError),
+    MaxConnections(String),
+    Sqlx(sqlx::Error),
+}
+
+impl fmt::Display for ConnectError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Config(error) => write!(f, "{error}"),
+            Self::MaxConnections(message) => write!(f, "{message}"),
+            Self::Sqlx(error) => write!(f, "{error}"),
+        }
+    }
+}
+
+impl std::error::Error for ConnectError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Config(error) => Some(error),
+            Self::MaxConnections(_) => None,
+            Self::Sqlx(error) => Some(error),
+        }
+    }
+}
+
+/// Connect to MySQL using CLI/env/config resolution shared by binaries.
+pub async fn connect_from_cli(
+    database_url: Option<String>,
+    config: Option<PathBuf>,
+    executable_stem: &str,
+) -> Result<MySqlPool, ConnectError> {
+    let database_url = resolve_database_url(database_url, config.clone(), executable_stem)
+        .map_err(ConnectError::Config)?;
+
+    let config_value = match load_legacy_config(config, executable_stem) {
+        Ok((_, config_map)) => config_value(&config_map, "dbmaxconnections").map(str::to_owned),
+        Err(ConfigError::MissingConfigFile) => None,
+        Err(error) => return Err(ConnectError::Config(error)),
+    };
+    let max_connections = resolve_max_connections(
+        env::var("ROBOMINER_DB_MAX_CONNECTIONS").ok().as_deref(),
+        config_value.as_deref(),
+    )
+    .map_err(ConnectError::MaxConnections)?;
+
+    connect_with_max_connections(&database_url, max_connections)
+        .await
+        .map_err(ConnectError::Sqlx)
 }
 
 pub fn read_legacy_config(config_path: &Path) -> Result<HashMap<String, String>, ConfigError> {

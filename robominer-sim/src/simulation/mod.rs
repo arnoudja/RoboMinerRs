@@ -197,10 +197,10 @@ impl Simulation {
         self.animation = Some(AnimationRecorder::new(self.robots.len()));
         self.run_internal();
 
-        self.animation
-            .take()
-            .expect("animation recorder should be available")
-            .into_animation_data(&self.ground, &self.robots, ore_data)
+        let Some(recorder) = self.animation.take() else {
+            return String::new();
+        };
+        recorder.into_animation_data(&self.ground, &self.robots, ore_data)
     }
 
     fn run_internal(&mut self) {

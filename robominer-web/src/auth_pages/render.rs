@@ -22,7 +22,7 @@ pub(super) fn render_login_page(state: &LoginPageState) -> String {
 
     format!(
         r##"<!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

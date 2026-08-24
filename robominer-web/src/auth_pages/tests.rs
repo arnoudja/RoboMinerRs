@@ -4,11 +4,12 @@ use std::path::PathBuf;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::{Request, ServerConfig};
 
-use super::render::render_login_page;
-use super::{
-    LoginPageState, auth_redirect_response, create_user_rejection_message, login_failure_message,
-    login_page, logoff_page, remember_cookie, signup_password_mismatch_message,
+use super::process::{
+    auth_redirect_response, create_user_rejection_message, login_failure_message, remember_cookie,
+    signup_password_mismatch_message,
 };
+use super::render::render_login_page;
+use super::{LoginPageState, login_page, logoff_page};
 
 fn request(path: &str) -> Request {
     Request {

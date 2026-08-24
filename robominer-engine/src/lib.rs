@@ -1,3 +1,4 @@
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! CLI and background worker for RoboMiner (rally polling, shop/user/robot ops,
 //! migrate). Shares domain façades with `robominer-web`. See `CONTRIBUTING.md`.
 

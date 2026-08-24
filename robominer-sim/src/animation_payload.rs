@@ -24,8 +24,8 @@ impl AnimationPayload {
     pub fn to_embedded_json(&self) -> String {
         // Prevent `</script>` breakout when the JSON is embedded in HTML.
         serde_json::to_string(self)
-            .expect("animation payload should serialize")
-            .replace('<', "\\u003c")
+            .map(|json| json.replace('<', "\\u003c"))
+            .unwrap_or_else(|_| "{}".to_string())
     }
 
     pub fn with_version(mut self) -> Self {

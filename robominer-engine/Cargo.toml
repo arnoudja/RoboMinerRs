@@ -3,7 +3,7 @@ name = "robominer-engine"
 version.workspace = true
 edition = "2024"
 license = "MIT OR Apache-2.0"
-description = "RoboMiner engine and web host"
+description = "RoboMiner engine CLI and rally worker"
 [lib]
 name = "robominer_engine"
 path = "src/lib.rs"
@@ -65,3 +65,6 @@ systemd-units = [
     { unit-scripts = "../deploy/systemd", unit-name = "robominer-engine", enable = true, start = false },
     { unit-scripts = "../deploy/systemd", unit-name = "robominer-web", enable = true, start = false },
 ]
+
+[lints]
+workspace = true

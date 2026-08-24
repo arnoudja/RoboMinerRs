@@ -275,9 +275,9 @@ fn robots_animation(
     let mut robot_values = Vec::with_capacity(robot_steps.len());
 
     for (index, steps) in robot_steps.iter().enumerate() {
-        let first_step = steps
-            .first()
-            .expect("animation should record at least one step per robot");
+        let Some(first_step) = steps.first() else {
+            continue;
+        };
         let spec = robots[index].spec();
         let depot_capacity = robots[index].depot_capacity();
         let record_depot = depot_capacity.iter().take(3).any(|&cap| cap > 0);

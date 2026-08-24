@@ -1,3 +1,4 @@
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! HTTP host for RoboMiner: Axum transport shell, session/CSRF, HTML pages, and
 //! static assets. Game mutations and rejection copy live in `robominer-domain`;
 //! SQL and typed contracts live in `robominer-db`. See `CONTRIBUTING.md`.
@@ -99,7 +100,7 @@ where
             tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .expect("database runtime should initialize")
+                .unwrap_or_else(|error| panic!("database runtime should initialize: {error}"))
         })
         .block_on(future)
 }

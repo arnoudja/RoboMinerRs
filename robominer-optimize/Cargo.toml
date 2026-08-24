@@ -20,3 +20,6 @@ tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
 
 [dev-dependencies]
 robominer-test-support = { workspace = true }
+
+[lints]
+workspace = true

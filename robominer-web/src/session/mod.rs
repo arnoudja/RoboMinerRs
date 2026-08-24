@@ -58,6 +58,10 @@ pub fn resolve_session_secret(
 pub fn configure_session_secret(secret: &str) {
     let secret = secret.trim();
     assert!(!secret.is_empty(), "session secret must not be empty");
+    assert!(
+        HmacSha256::new_from_slice(secret.as_bytes()).is_ok(),
+        "session secret length should be valid for HMAC"
+    );
     let _ = SESSION_SECRET.get_or_init(|| secret.as_bytes().to_vec());
 }
 
@@ -250,8 +254,9 @@ fn verify_session_token(token: &str) -> Option<SessionClaims> {
 }
 
 fn sign_payload(payload: &str) -> String {
-    let mut mac = HmacSha256::new_from_slice(session_secret())
-        .expect("session secret length should be valid for HMAC");
+    let Ok(mut mac) = HmacSha256::new_from_slice(session_secret()) else {
+        return String::new();
+    };
     mac.update(payload.as_bytes());
     encode_hex(&mac.finalize().into_bytes())
 }

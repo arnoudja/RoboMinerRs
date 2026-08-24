@@ -1,3 +1,4 @@
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! Robot program compiler and interpreter.
 //!
 //! Multi-cycle move/rotate coordination with the simulator is documented in

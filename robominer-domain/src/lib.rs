@@ -1,3 +1,4 @@
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! Domain layer: loadouts, simulation, compile-linked program writes, and shared
 //! rejection copy. Persistence and typed mutation contracts live in `robominer-db`.
 //! See `CONTRIBUTING.md` for the crate boundary.
