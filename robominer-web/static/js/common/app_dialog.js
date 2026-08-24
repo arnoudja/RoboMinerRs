@@ -21,6 +21,8 @@
         panel.setAttribute('aria-describedby', 'robominerDialogMessage');
     }
 
+    var focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
     var pendingCallback = null;
     var alertMode = false;
     var choiceMode = false;
@@ -120,6 +122,26 @@
         if (event.key === 'Escape') {
             event.preventDefault();
             finish(alertMode ? true : false);
+            return;
+        }
+        if (event.key !== 'Tab' || !panel) {
+            return;
+        }
+        var focusable = Array.prototype.slice.call(panel.querySelectorAll(focusableSelector))
+            .filter(function(element) {
+                return !element.hidden && !element.disabled;
+            });
+        if (focusable.length === 0) {
+            return;
+        }
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
         }
     });
 })();

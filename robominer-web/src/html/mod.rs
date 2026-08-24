@@ -3,6 +3,7 @@ mod auth_fields;
 mod banners;
 mod csrf;
 mod format;
+mod json;
 mod layout;
 mod ore_costs;
 mod shell;
@@ -20,6 +21,7 @@ pub(crate) use csrf::inject_csrf_tokens;
 pub(crate) use format::{
     escape_html, format_period, format_relative_time_millis, format_utc_millis, selected_attr,
 };
+pub(crate) use json::embed_json_script;
 pub(crate) use layout::layout;
 pub(crate) use ore_costs::{format_ore_shortfall, ore_costs_affordable, render_ore_entry_costs};
 pub(crate) use shell::page_footer;

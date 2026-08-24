@@ -172,7 +172,8 @@ fn render_mining_queue_clear_config(body: &mut String, state: &MiningQueuePageSt
         "areaCosts": area_costs,
         "initialOreWalletMax": robominer_db::INITIAL_ORE_WALLET_MAX,
     });
-    body.push_str(r#"<script type="application/json" id="mining-queue-clear-config">"#);
-    body.push_str(&config.to_string());
-    body.push_str("</script>");
+    body.push_str(&crate::html::embed_json_script(
+        "mining-queue-clear-config",
+        &config.to_string(),
+    ));
 }

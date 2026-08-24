@@ -14,7 +14,7 @@ pub(super) fn app_shell_header(
         <a class="app-shell-home" href="miningQueue">RoboMiner</a>
         {}
         <input type="checkbox" id="app-shell-nav-toggle" class="app-shell-nav-toggle">
-        <label for="app-shell-nav-toggle" class="app-shell-menu-toggle">
+        <label for="app-shell-nav-toggle" class="app-shell-menu-toggle" aria-controls="app-shell-nav-panel" aria-expanded="false">
             <span class="app-shell-menu-toggle-icon" aria-hidden="true"></span>
             <span class="app-shell-menu-toggle-text">Menu</span>
         </label>

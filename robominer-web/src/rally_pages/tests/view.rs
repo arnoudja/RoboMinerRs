@@ -238,8 +238,8 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
             r#"<script type="application/json" id="rally-view-config">"#,
             r#""v":1"#,
             r#""viewerSlot":null"#,
-            // Ore names are JSON-encoded in config (angle brackets stay literal in JSON strings).
-            "Ore <A>",
+            // Ore names are JSON-encoded in config; `<` is escaped for safe script embedding.
+            r#""Ore \u003cA> & 'B'""#,
         ],
     );
     for absent in [
@@ -268,8 +268,9 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
         assert!(html.contains(path), "expected script src for {path}");
     }
     assert!(
-        html.contains(r#""Ore <A> & 'B'""#) || html.contains(r#""Ore <A> & \'B\'""#),
-        "expected HTML to contain an ore name encoded as `\"Ore <A> & 'B'\"` or with an escaped apostrophe\nHTML:\n{html}"
+        html.contains(r#""Ore \u003cA> & 'B'""#)
+            || html.contains(r#""Ore \u003cA> & \'B\'""#),
+        "expected HTML to contain an ore name JSON-escaped for script embedding\nHTML:\n{html}"
     );
 }
 

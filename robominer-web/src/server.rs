@@ -139,6 +139,18 @@ async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse
         header::REFERRER_POLICY,
         HeaderValue::from_static("strict-origin-when-cross-origin"),
     );
+    headers.insert(
+        header::CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static(
+            "default-src 'self'; \
+             script-src 'self'; \
+             style-src 'self' 'unsafe-inline'; \
+             img-src 'self' data:; \
+             object-src 'none'; \
+             base-uri 'self'; \
+             frame-ancestors 'self'",
+        ),
+    );
     response
 }
 

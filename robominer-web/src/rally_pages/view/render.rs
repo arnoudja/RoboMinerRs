@@ -143,9 +143,10 @@ fn render_rally_view_bootstrap_data(
     state: &RallyViewPageState,
 ) {
     // Versioned JSON only — never inject stored resultData as executable script.
-    body.push_str(r#"<script type="application/json" id="rally-result-data">"#);
-    body.push_str(result_data);
-    body.push_str("</script>");
+    body.push_str(&crate::html::embed_json_script(
+        "rally-result-data",
+        result_data,
+    ));
 
     let mut ore_names = serde_json::Map::new();
     for ore in &state.ores {
@@ -158,7 +159,8 @@ fn render_rally_view_bootstrap_data(
         "viewerSlot": state.viewer_player_number,
         "oreNames": ore_names,
     });
-    body.push_str(r#"<script type="application/json" id="rally-view-config">"#);
-    body.push_str(&config.to_string());
-    body.push_str("</script>");
+    body.push_str(&crate::html::embed_json_script(
+        "rally-view-config",
+        &config.to_string(),
+    ));
 }
