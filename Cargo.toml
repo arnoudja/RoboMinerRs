@@ -15,6 +15,12 @@ resolver = "2"
 version = "0.9.2"
 
 [workspace.dependencies]
+anyhow = "1.0.104"
+argon2 = "0.5.3"
+axum = "0.8.9"
+clap = { version = "4.6.6", features = ["derive"] }
+hmac = "0.12.1"
+rand = "0.8.7"
 robominer-db = { path = "robominer-db" }
 robominer-domain = { path = "robominer-domain" }
 robominer-engine = { path = "robominer-engine" }
@@ -23,6 +29,15 @@ robominer-program = { path = "robominer-program" }
 robominer-sim = { path = "robominer-sim" }
 robominer-test-support = { path = "robominer-test-support" }
 robominer-web = { path = "robominer-web" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+serial_test = "3.2.0"
+sha2 = "0.10.9"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+tokio = { version = "1.53.1", features = ["macros", "rt", "rt-multi-thread"] }
+tower-http = { version = "0.6.8", features = ["timeout"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [workspace.lints.clippy]
 unwrap_used = "warn"

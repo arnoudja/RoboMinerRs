@@ -13,20 +13,20 @@ name = "robominer-engine"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0.104"
-clap = { version = "4.6.6", features = ["derive"] }
+anyhow = { workspace = true }
+clap = { workspace = true }
 robominer-db = { workspace = true }
 robominer-domain = { workspace = true }
 robominer-program = { workspace = true }
 robominer-sim = { workspace = true }
-tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "signal"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [dev-dependencies]
 robominer-test-support = { workspace = true }
-serial_test = "3.2.0"
-sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
+serial_test = { workspace = true }
+sqlx = { workspace = true }
 
 [package.metadata.deb]
 name = "robominer"
@@ -34,7 +34,7 @@ maintainer = "RoboMiner maintainers"
 copyright = "RoboMiner contributors"
 maintainer-scripts = "debian/"
 depends = "$auto, systemd, default-mysql-client | mariadb-client | mysql-client"
-section = "team"
+section = "games"
 priority = "optional"
 assets = [
     ["target/release/robominer-engine", "opt/robominer/bin/", "755"],

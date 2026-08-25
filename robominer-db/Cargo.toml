@@ -5,16 +5,18 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-argon2 = "0.5.3"
-sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
-tokio = { version = "1.53.1", features = ["rt"] }
+argon2 = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true, features = ["rt"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [dev-dependencies]
 robominer-test-support = { workspace = true }
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-serial_test = "3.2.0"
-tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serial_test = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [lints]
 workspace = true

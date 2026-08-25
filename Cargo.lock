@@ -1205,6 +1205,8 @@ dependencies = [
  "serial_test",
  "sqlx",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

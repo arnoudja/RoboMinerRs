@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(name = "robominer-engine")]
-#[command(about = "Rust migration engine for RoboMiner")]
+#[command(about = "RoboMiner engine CLI and rally worker")]
 pub(crate) struct Cli {
     #[arg(long)]
     pub(crate) database_url: Option<String>,
