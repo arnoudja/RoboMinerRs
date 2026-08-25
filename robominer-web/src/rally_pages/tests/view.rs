@@ -268,8 +268,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
         assert!(html.contains(path), "expected script src for {path}");
     }
     assert!(
-        html.contains(r#""Ore \u003cA> & 'B'""#)
-            || html.contains(r#""Ore \u003cA> & \'B\'""#),
+        html.contains(r#""Ore \u003cA> & 'B'""#) || html.contains(r#""Ore \u003cA> & \'B\'""#),
         "expected HTML to contain an ore name JSON-escaped for script embedding\nHTML:\n{html}"
     );
 }

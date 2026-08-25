@@ -1,6 +1,6 @@
 use crate::cpu_step_result::{CpuStepResult, CpuStepResultKind};
-use crate::runner::expression_eval::schedule::{ExpressionWork, Truthy, evaluate_operator};
 use crate::runner::ExecutableRunner;
+use crate::runner::expression_eval::schedule::{ExpressionWork, Truthy, evaluate_operator};
 use crate::types::*;
 
 impl ExecutableRunner {

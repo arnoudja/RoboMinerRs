@@ -57,7 +57,8 @@ pub(super) async fn login_page(request: &Request, config: &ServerConfig) -> Resp
     };
 
     let result =
-        process::process_login_request(pool, request, config.allow_signup, config.trust_proxy).await;
+        process::process_login_request(pool, request, config.allow_signup, config.trust_proxy)
+            .await;
 
     match result {
         Ok(response) => response,
