@@ -44,9 +44,11 @@ impl ActivityFeedQuery {
     fn from_request(request: &Request) -> Self {
         let filter = ActivityRallyFilter::from_request(request);
         let area_id = query_i64(request, "areaId");
-        let limit = query_i64(request, "limit")
-            .unwrap_or(ACTIVITY_RALLY_PAGE_SIZE)
-            .clamp(ACTIVITY_RALLY_PAGE_SIZE, ACTIVITY_RALLY_MAX_LIMIT);
+        let limit = crate::page_context::clamp_page_limit(
+            query_i64(request, "limit"),
+            ACTIVITY_RALLY_PAGE_SIZE,
+            ACTIVITY_RALLY_MAX_LIMIT,
+        );
         Self {
             filter,
             area_id,

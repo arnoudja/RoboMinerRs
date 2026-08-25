@@ -19,12 +19,14 @@ pub(super) struct ShopPageState {
 }
 
 pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
-    let session = match crate::page_context::PageSession::require(
+    let (session, _claimed) = match crate::page_context::require_session_and_claim(
         request,
         config,
         "Shop requires ROBOMINER_DATABASE_URL to be configured",
-    ) {
-        Ok(session) => session,
+    )
+    .await
+    {
+        Ok(value) => value,
         Err(response) => return response,
     };
 
@@ -69,8 +71,6 @@ async fn load_shop_state(
     selected_tier_id: Option<i64>,
     selected_part_id: Option<i64>,
 ) -> Result<ShopPageState, crate::page_context::PageLoadError> {
-    crate::page_context::claim_user_results(pool, user_id).await?;
-
     let mut message = None;
     if let Some(robot_part_id) = buy_part_id {
         message = Some(

@@ -6,6 +6,7 @@ pub(crate) const URL_QUERY_JS: &str = include_str!("../static/js/common/url_quer
 pub(crate) const SESSION_STORE_JS: &str = include_str!("../static/js/common/session_store.js");
 pub(crate) const PANEL_STATE_JS: &str = include_str!("../static/js/common/panel_state.js");
 pub(crate) const AREA_FILTER_JS: &str = include_str!("../static/js/common/area_filter.js");
+pub(crate) const FILTER_RESTORE_JS: &str = include_str!("../static/js/common/filter_restore.js");
 
 /// First 16 bytes of SHA-256 as lowercase hex (32 chars).
 /// Shared by `?v=` query busting and HTTP `ETag` so validators stay coherent.
@@ -57,6 +58,17 @@ pub(crate) fn page_scripts_with_url_query_and_session(page_src: &str, page_js: &
     ])
 }
 
+/// Page scripts with URL/session helpers plus shared filter restore.
+pub(crate) fn page_scripts_with_filter_restore(page_src: &str, page_js: &str) -> String {
+    let mut out =
+        page_scripts_with_url_query_and_session("js/common/filter_restore.js", FILTER_RESTORE_JS);
+    // page_scripts_with_url_query_and_session already ends with a script tag + newline for
+    // its "page" slot; append the real page script after the filter helper.
+    out.push_str(&script_src_tag(page_src, page_js));
+    out.push('\n');
+    out
+}
+
 /// Page scripts that need panel state + URL query helpers, then page logic.
 pub(crate) fn page_scripts_with_panel_and_url_query(page_src: &str, page_js: &str) -> String {
     script_src_tags(&[
@@ -73,10 +85,12 @@ const AUTH_CSS: &str = include_str!("../static/css/pages/auth.css");
 const ACCOUNT_CSS: &str = include_str!("../static/css/pages/account.css");
 const PAGE_WALLET_CSS: &str = include_str!("../static/css/pages/page_wallet.css");
 const MINING_QUEUE_CSS: &str = include_str!("../static/css/pages/mining_queue.css");
+const MINING_QUEUE_ROBOTS_CSS: &str = include_str!("../static/css/pages/mining_queue_robots.css");
 const MINING_AREA_ATLAS_CSS: &str = include_str!("../static/css/pages/mining_area_atlas.css");
 const MINING_RESULTS_CSS: &str = include_str!("../static/css/pages/mining_results.css");
 const ACTIVITY_CSS: &str = include_str!("../static/css/pages/activity.css");
 const RALLY_CSS: &str = include_str!("../static/css/pages/rally.css");
+const RALLY_SIDEBAR_CSS: &str = include_str!("../static/css/pages/rally_sidebar.css");
 const EDIT_CODE_CSS: &str = include_str!("../static/css/pages/edit_code.css");
 const ROBOT_CSS: &str = include_str!("../static/css/pages/robot.css");
 const ACHIEVEMENTS_CSS: &str = include_str!("../static/css/pages/achievements.css");
@@ -110,23 +124,29 @@ pub(crate) enum PageStylesheet {
 }
 
 impl PageStylesheet {
-    fn entry(self) -> (&'static str, &'static str) {
+    fn entries(self) -> &'static [(&'static str, &'static str)] {
         match self {
-            Self::Auth => ("css/pages/auth.css", AUTH_CSS),
-            Self::Account => ("css/pages/account.css", ACCOUNT_CSS),
-            Self::PageWallet => ("css/pages/page_wallet.css", PAGE_WALLET_CSS),
-            Self::MiningQueue => ("css/pages/mining_queue.css", MINING_QUEUE_CSS),
-            Self::MiningAreaAtlas => ("css/pages/mining_area_atlas.css", MINING_AREA_ATLAS_CSS),
-            Self::MiningResults => ("css/pages/mining_results.css", MINING_RESULTS_CSS),
-            Self::Activity => ("css/pages/activity.css", ACTIVITY_CSS),
-            Self::Rally => ("css/pages/rally.css", RALLY_CSS),
-            Self::EditCode => ("css/pages/edit_code.css", EDIT_CODE_CSS),
-            Self::Robot => ("css/pages/robot.css", ROBOT_CSS),
-            Self::Achievements => ("css/pages/achievements.css", ACHIEVEMENTS_CSS),
-            Self::Shop => ("css/pages/shop.css", SHOP_CSS),
-            Self::Help => ("css/pages/help.css", HELP_CSS),
-            Self::Leaderboard => ("css/pages/leaderboard.css", LEADERBOARD_CSS),
-            Self::RobotStats => ("css/pages/robot_stats.css", ROBOT_STATS_CSS),
+            Self::Auth => &[("css/pages/auth.css", AUTH_CSS)],
+            Self::Account => &[("css/pages/account.css", ACCOUNT_CSS)],
+            Self::PageWallet => &[("css/pages/page_wallet.css", PAGE_WALLET_CSS)],
+            Self::MiningQueue => &[
+                ("css/pages/mining_queue.css", MINING_QUEUE_CSS),
+                ("css/pages/mining_queue_robots.css", MINING_QUEUE_ROBOTS_CSS),
+            ],
+            Self::MiningAreaAtlas => &[("css/pages/mining_area_atlas.css", MINING_AREA_ATLAS_CSS)],
+            Self::MiningResults => &[("css/pages/mining_results.css", MINING_RESULTS_CSS)],
+            Self::Activity => &[("css/pages/activity.css", ACTIVITY_CSS)],
+            Self::Rally => &[
+                ("css/pages/rally.css", RALLY_CSS),
+                ("css/pages/rally_sidebar.css", RALLY_SIDEBAR_CSS),
+            ],
+            Self::EditCode => &[("css/pages/edit_code.css", EDIT_CODE_CSS)],
+            Self::Robot => &[("css/pages/robot.css", ROBOT_CSS)],
+            Self::Achievements => &[("css/pages/achievements.css", ACHIEVEMENTS_CSS)],
+            Self::Shop => &[("css/pages/shop.css", SHOP_CSS)],
+            Self::Help => &[("css/pages/help.css", HELP_CSS)],
+            Self::Leaderboard => &[("css/pages/leaderboard.css", LEADERBOARD_CSS)],
+            Self::RobotStats => &[("css/pages/robot_stats.css", ROBOT_STATS_CSS)],
         }
     }
 }
@@ -157,9 +177,10 @@ pub(crate) fn robominer_stylesheet_tags(pages: &[PageStylesheet]) -> String {
             continue;
         }
         emitted[index] = true;
-        let (href_path, contents) = page.entry();
-        out.push('\n');
-        out.push_str(&stylesheet_href_tag(href_path, contents));
+        for (href_path, contents) in page.entries() {
+            out.push('\n');
+            out.push_str(&stylesheet_href_tag(href_path, contents));
+        }
     }
     out
 }
@@ -236,6 +257,17 @@ mod tests {
             !MINING_QUEUE_CSS.contains(".claim-banner-label"),
             "mining_queue.css must not own shared claim-banner innards"
         );
+    }
+
+    #[test]
+    fn robominer_stylesheet_tags_emit_split_page_sheets() {
+        let tags = robominer_stylesheet_tags(&[PageStylesheet::MiningQueue]);
+        assert!(tags.contains(r#"href="css/pages/mining_queue.css?v="#));
+        assert!(tags.contains(r#"href="css/pages/mining_queue_robots.css?v="#));
+
+        let rally = robominer_stylesheet_tags(&[PageStylesheet::Rally]);
+        assert!(rally.contains(r#"href="css/pages/rally.css?v="#));
+        assert!(rally.contains(r#"href="css/pages/rally_sidebar.css?v="#));
     }
 
     #[test]
