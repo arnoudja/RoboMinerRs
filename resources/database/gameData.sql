@@ -2348,7 +2348,7 @@ insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, a
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward, maxDepotReward)
                      values (13,            3,    10,                10,    600,          300);
 insert into AchievementStepMiningTotalRequirement (achievementId, step, oreId, amount)
-                                           values (13,            3,    10,    6000);
+                                           values (13,            3,    10,    5000);
 insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, amount)
                                            values (13,            3,    10,    100);
 
