@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, is_post, query_i64};
+use crate::{Request, Response, ServerConfig, is_post, mutation_i64, query_i64};
 
 #[derive(Debug)]
 pub(super) struct RobotPageState {
@@ -45,8 +45,8 @@ async fn load_robot_page_state(
 
     let mut message = None;
     if is_post(request)
-        && let Some(robot_id) = requested_robot_id
-        && request.form.contains_key(&format!("robotName{robot_id}"))
+        && let Some(robot_id) = mutation_i64(request, "robotId")
+        && crate::mutation_form_has(request, &format!("robotName{robot_id}"))
     {
         let robot_name = request
             .form
@@ -59,17 +59,19 @@ async fn load_robot_page_state(
                 user_id,
                 robot_id,
                 robot_name,
-                program_source_id: query_i64(request, &format!("programSourceId{robot_id}"))
+                program_source_id: mutation_i64(request, &format!("programSourceId{robot_id}"))
                     .unwrap_or(0),
-                ore_container_id: query_i64(request, &format!("oreContainerId{robot_id}"))
+                ore_container_id: mutation_i64(request, &format!("oreContainerId{robot_id}"))
                     .unwrap_or(0),
-                mining_unit_id: query_i64(request, &format!("miningUnitId{robot_id}")).unwrap_or(0),
-                battery_id: query_i64(request, &format!("batteryId{robot_id}")).unwrap_or(0),
-                memory_module_id: query_i64(request, &format!("memoryModuleId{robot_id}"))
+                mining_unit_id: mutation_i64(request, &format!("miningUnitId{robot_id}"))
                     .unwrap_or(0),
-                cpu_id: query_i64(request, &format!("cpuId{robot_id}")).unwrap_or(0),
-                engine_id: query_i64(request, &format!("engineId{robot_id}")).unwrap_or(0),
-                ore_scanner_id: query_i64(request, &format!("oreScannerId{robot_id}")).unwrap_or(0),
+                battery_id: mutation_i64(request, &format!("batteryId{robot_id}")).unwrap_or(0),
+                memory_module_id: mutation_i64(request, &format!("memoryModuleId{robot_id}"))
+                    .unwrap_or(0),
+                cpu_id: mutation_i64(request, &format!("cpuId{robot_id}")).unwrap_or(0),
+                engine_id: mutation_i64(request, &format!("engineId{robot_id}")).unwrap_or(0),
+                ore_scanner_id: mutation_i64(request, &format!("oreScannerId{robot_id}"))
+                    .unwrap_or(0),
             },
         )
         .await?;

@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, is_post, query_i64, query_signed_i64};
+use crate::{Request, Response, ServerConfig, is_post, mutation_i64, query_i64, query_signed_i64};
 
 #[derive(Debug)]
 pub(super) struct EditCodePageState {
@@ -69,7 +69,11 @@ async fn load_edit_code_page_state(
 
     let mut message = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
-    let program_source_id = query_i64(request, "programSourceId").unwrap_or(0);
+    let program_source_id = if is_post(request) {
+        mutation_i64(request, "programSourceId").unwrap_or(0)
+    } else {
+        query_i64(request, "programSourceId").unwrap_or(0)
+    };
     // Client may restore the last selected program only on plain GET navigations.
     let prefer_stored_selection =
         !is_post(request) && !next_program_source_id.is_some_and(|source_id| source_id > 0);

@@ -1,17 +1,19 @@
 use std::collections::HashMap;
 
-use crate::{Request, Response, ServerConfig, is_post, query_i64};
+use crate::{Request, Response, ServerConfig, is_post, mutation_i64, query_i64};
 
 mod actions;
 mod inspector;
 mod render;
 mod robots;
 mod scripts;
+mod view_model;
 
 #[cfg(test)]
 mod tests;
 
 use actions::{cancel_queued_items, format_cancel_batch_message};
+use view_model::load_mining_queue_display_items;
 
 #[derive(Debug)]
 pub(super) struct MiningQueuePageState {
@@ -87,9 +89,9 @@ async fn load_mining_queue_page_state(
     if is_post(request) {
         match request.form.get("submitType").map(String::as_str) {
             Some("add") | Some("fill") => {
-                let robot_id = query_i64(request, "robotId").unwrap_or(0);
+                let robot_id = mutation_i64(request, "robotId").unwrap_or(0);
                 let mining_area_id =
-                    query_i64(request, &format!("miningArea{}", robot_id)).unwrap_or(0);
+                    mutation_i64(request, &format!("miningArea{}", robot_id)).unwrap_or(0);
                 if robot_id <= 0 {
                     error_message = Some("Unknown robot".to_string());
                 } else if mining_area_id <= 0 {
@@ -117,7 +119,7 @@ async fn load_mining_queue_page_state(
                 }
             }
             Some("remove") => {
-                let robot_id = query_i64(request, "robotId").unwrap_or(0);
+                let robot_id = mutation_i64(request, "robotId").unwrap_or(0);
                 if robot_id > 0 {
                     let items = load_mining_queue_display_items(pool, user_id).await?;
                     let queue_ids: Vec<i64> = items
@@ -134,7 +136,7 @@ async fn load_mining_queue_page_state(
                 }
             }
             Some("clear") => {
-                let robot_id = query_i64(request, "robotId").unwrap_or(0);
+                let robot_id = mutation_i64(request, "robotId").unwrap_or(0);
                 if robot_id > 0 {
                     let require_refund_fits = request
                         .form
@@ -187,38 +189,6 @@ async fn load_mining_queue_page_state(
         error_message,
         claimed_results: claim_result,
     })
-}
-
-async fn load_mining_queue_display_items(
-    pool: &robominer_db::MySqlPool,
-    user_id: i64,
-) -> Result<Vec<MiningQueueDisplayItem>, crate::page_context::PageLoadError> {
-    let items = robominer_db::list_mining_queue_page_items(pool, user_id).await?;
-    let states = robominer_db::list_mining_queue_states_for_user(pool, user_id).await?;
-    let state_map: HashMap<i64, robominer_db::MiningQueueStateRecord> = states
-        .into_iter()
-        .map(|state| (state.mining_queue_id, state))
-        .collect();
-
-    Ok(items
-        .into_iter()
-        .map(|item| {
-            let state = state_map.get(&item.mining_queue_id);
-            MiningQueueDisplayItem {
-                mining_queue_id: item.mining_queue_id,
-                robot_id: item.robot_id,
-                mining_area_id: item.mining_area_id,
-                area_name: item.area_name,
-                rally_result_id: item.rally_result_id,
-                status: state
-                    .map(|state| state.status)
-                    .unwrap_or(robominer_db::MiningQueueStatus::Queued),
-                time_left_seconds: state
-                    .map(|state| state.time_left_seconds)
-                    .unwrap_or_default(),
-            }
-        })
-        .collect())
 }
 
 fn form_i64_values(request: &Request, name: &str) -> Vec<i64> {
