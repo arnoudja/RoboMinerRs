@@ -2,6 +2,10 @@
 //! Persistence layer: SQL, migrations, pool/config, record DTOs, and typed
 //! `*Request` / `*Rejection` contracts. Game logic, simulation, and rejection
 //! copy live in `robominer-domain`. See `CONTRIBUTING.md` for the crate boundary.
+//!
+//! Public surface is intentionally flat (`pub use module::*`) so call sites can
+//! use `robominer_db::enqueue_mining` without deep paths. Prefer adding new
+//! exports through the owning module's `pub use` rather than new wildcards.
 
 pub use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;
@@ -69,8 +73,19 @@ pub async fn connect_with_max_connections(
 ) -> Result<MySqlPool, sqlx::Error> {
     MySqlPoolOptions::new()
         .max_connections(max_connections)
+        .acquire_timeout(std::time::Duration::from_secs(30))
         .connect(database_url)
         .await
+}
+
+/// Shared stderr `EnvFilter` tracing init for binaries (web + engine).
+pub fn init_default_tracing() {
+    let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn"));
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_writer(std::io::stderr)
+        .init();
 }
 
 /// Resolve pool size from env (`ROBOMINER_DB_MAX_CONNECTIONS`) or config (`dbmaxconnections`).

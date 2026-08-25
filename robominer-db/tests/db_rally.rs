@@ -50,7 +50,8 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
         },
     )
     .await
-    .expect("persist should succeed");
+    .expect("persist should succeed")
+    .expect("persist should not reject");
 
     let queue = sqlx::query(
         "SELECT rallyResultId, playerNumber, score, miningEndTime IS NOT NULL AS ended \
@@ -109,6 +110,32 @@ async fn persist_completed_rally_updates_queue_and_score_tables() {
     .expect("failed to load robot score");
     assert_eq!(total_runs, 1);
     assert!(smoothed_score > 0.0);
+
+    let rejected = persist_completed_rally(
+        &pool,
+        &CompletedRallyRecord {
+            result_data: r#"{"robots":[]}"#.to_string(),
+            participants: vec![CompletedRallyParticipantRecord {
+                mining_queue_id: fixture.mining_queue_id,
+                robot_id: fixture.queued_robot_id,
+                mining_area_id: fixture.mining_area_id,
+                player_number: 0,
+                mining_end_seconds_from_now: 10,
+                score: 99.0,
+                executed_source_code: Some("mine();".to_string()),
+                ore_results: vec![],
+                action_results: vec![],
+            }],
+        },
+    )
+    .await
+    .expect("second persist should not fail at the SQL layer");
+    assert!(matches!(
+        rejected,
+        robominer_db::DbOutcome::Rejected(
+            robominer_db::PersistRallyRejection::QueueAlreadyFinished
+        )
+    ));
 
     fixture.cleanup(&pool).await;
 }

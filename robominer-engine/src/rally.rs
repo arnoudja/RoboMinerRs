@@ -31,14 +31,18 @@ pub(crate) async fn run_rally(
     pool: &robominer_db::MySqlPool,
     options: RunRallyOptions,
 ) -> Result<bool> {
-    let loadout = robominer_domain::load_next_rally_loadout(pool, options.mining_area_id)
-        .await
-        .with_context(|| {
-            format!(
-                "failed to load next rally for mining area {}",
-                options.mining_area_id
-            )
-        })?;
+    let loadout = robominer_domain::load_next_rally_loadout_with_claim(
+        pool,
+        options.mining_area_id,
+        options.persist,
+    )
+    .await
+    .with_context(|| {
+        format!(
+            "failed to load next rally for mining area {}",
+            options.mining_area_id
+        )
+    })?;
     let Some(loadout) = loadout else {
         if !options.quiet_when_empty {
             println!("No ready rally for mining area {}", options.mining_area_id);
@@ -73,12 +77,33 @@ pub(crate) async fn run_rally(
             .context("result data file read task failed")??,
             None => run.result_data,
         };
-        let rally_result_id =
+        let persist_outcome =
             robominer_domain::persist_rally_outcome(pool, &loadout, outcome, &result_data)
                 .await
                 .context("failed to persist rally outcome")?;
 
-        println!("Persisted rally result {rally_result_id}");
+        match persist_outcome {
+            robominer_db::DbOutcome::Success(rally_result_id) => {
+                tracing::info!(
+                    mining_area_id,
+                    rally_result_id,
+                    queue_len = loadout.queue_entries.len(),
+                    "Persisted rally result"
+                );
+                println!("Persisted rally result {rally_result_id}");
+            }
+            robominer_db::DbOutcome::Rejected(rejection) => {
+                tracing::warn!(
+                    mining_area_id,
+                    ?rejection,
+                    "Skipped persist: queue already finished by another worker"
+                );
+                println!(
+                    "Skipped persist for mining area {mining_area_id}: queue already finished"
+                );
+                return Ok(false);
+            }
+        }
     } else {
         println!("Dry run: no database writes performed");
     }
@@ -207,12 +232,13 @@ pub(crate) async fn run_rallies(
                 cycle,
                 ran = summary.ran,
                 skipped = summary.skipped,
+                failed = summary.failed,
                 persist = options.persist,
                 "Completed rally poll cycle"
             );
             println!(
-                "Completed rally poll cycle {cycle}: ran={} skipped={} persist={}",
-                summary.ran, summary.skipped, options.persist
+                "Completed rally poll cycle {cycle}: ran={} skipped={} failed={} persist={}",
+                summary.ran, summary.skipped, summary.failed, options.persist
             );
 
             if shutdown.requested() {
@@ -234,8 +260,8 @@ pub(crate) async fn run_rallies(
 
     let summary = run_rallies_cycle(pool, &options, 0).await?;
     println!(
-        "Processed mining areas: ran={} skipped={} persist={}",
-        summary.ran, summary.skipped, options.persist
+        "Processed mining areas: ran={} skipped={} failed={} persist={}",
+        summary.ran, summary.skipped, summary.failed, options.persist
     );
 
     Ok(())
@@ -251,9 +277,10 @@ async fn run_rallies_cycle(
         .context("failed to load mining areas")?;
     let mut ran = 0;
     let mut skipped = 0;
+    let mut failed = 0;
 
     for mining_area in mining_areas {
-        let did_run = run_rally(
+        match run_rally(
             pool,
             RunRallyOptions {
                 mining_area_id: mining_area.id,
@@ -267,17 +294,32 @@ async fn run_rallies_cycle(
             },
         )
         .await
-        .with_context(|| format!("failed to process mining area {}", mining_area.id))?;
-
-        if did_run {
-            tracing::info!(mining_area_id = mining_area.id, cycle, "rally completed");
-            ran += 1;
-        } else {
-            skipped += 1;
+        {
+            Ok(true) => {
+                tracing::info!(mining_area_id = mining_area.id, cycle, "rally completed");
+                ran += 1;
+            }
+            Ok(false) => {
+                skipped += 1;
+            }
+            Err(error) => {
+                tracing::error!(
+                    mining_area_id = mining_area.id,
+                    cycle,
+                    error = %error,
+                    "rally area failed; continuing cycle"
+                );
+                eprintln!("Failed mining area {}: {error:#}", mining_area.id);
+                failed += 1;
+            }
         }
     }
 
-    Ok(RunRalliesSummary { ran, skipped })
+    Ok(RunRalliesSummary {
+        ran,
+        skipped,
+        failed,
+    })
 }
 
 pub(crate) fn validate_run_rallies_options(options: &RunRalliesOptions) -> Result<()> {
@@ -300,6 +342,7 @@ pub(crate) fn validate_run_rallies_options(options: &RunRalliesOptions) -> Resul
 struct RunRalliesSummary {
     ran: usize,
     skipped: usize,
+    failed: usize,
 }
 
 struct ShutdownSignal {

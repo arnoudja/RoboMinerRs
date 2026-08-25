@@ -90,16 +90,43 @@ pub async fn load_next_rally_loadout(
     pool: &MySqlPool,
     mining_area_id: i64,
 ) -> Result<Option<RallyLoadout>, DomainError> {
+    load_next_rally_loadout_with_claim(pool, mining_area_id, false).await
+}
+
+/// Load the next ready rally, optionally claiming a processing lease first.
+///
+/// When `claim` is true, queue rows are locked with `SKIP LOCKED` and leased so
+/// concurrent workers cannot simulate the same unfinished queues.
+pub async fn load_next_rally_loadout_with_claim(
+    pool: &MySqlPool,
+    mining_area_id: i64,
+    claim: bool,
+) -> Result<Option<RallyLoadout>, DomainError> {
     let Some(mining_area) = load_mining_area_loadout(pool, mining_area_id).await? else {
         return Ok(None);
     };
 
-    let queue_rows =
-        robominer_db::list_next_mining_rally_queue_for_area(pool, mining_area_id).await?;
+    let queue_rows = if claim {
+        let Some(queue_rows) = robominer_db::claim_next_mining_rally_queue_for_area(
+            pool,
+            mining_area_id,
+            RALLY_SIZE,
+            RALLY_EXPIRY_START_SECONDS,
+        )
+        .await?
+        else {
+            return Ok(None);
+        };
+        queue_rows
+    } else {
+        let queue_rows =
+            robominer_db::list_next_mining_rally_queue_for_area(pool, mining_area_id).await?;
 
-    if !mining_rally_queue_is_ready(&queue_rows) {
-        return Ok(None);
-    }
+        if !mining_rally_queue_is_ready(&queue_rows) {
+            return Ok(None);
+        }
+        queue_rows
+    };
 
     let mut queue_entries = Vec::with_capacity(queue_rows.len());
     let ore_type_ids = area_ore_type_ids(&mining_area.ore_supplies);

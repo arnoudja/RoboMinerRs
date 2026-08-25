@@ -1,7 +1,7 @@
 use robominer_db::{
     CompletedPoolItemOreRecord, CompletedPoolItemRecord, CompletedPoolRallyRecord,
     CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
-    CompletedRallyRecord, MySqlPool,
+    CompletedRallyRecord, DbOutcome, MySqlPool, PersistRallyRejection,
 };
 use robominer_sim::MAX_ORE_TYPES;
 
@@ -18,7 +18,7 @@ pub async fn persist_rally_outcome(
     loadout: &RallyLoadout,
     outcome: &RallyOutcome,
     result_data: &str,
-) -> Result<i64, DomainError> {
+) -> Result<DbOutcome<i64, PersistRallyRejection>, DomainError> {
     let record = completed_rally_record(loadout, outcome, result_data)?;
 
     robominer_db::persist_completed_rally(pool, &record)

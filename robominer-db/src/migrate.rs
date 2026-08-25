@@ -48,6 +48,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
             "../../resources/database/migrations/010_achievement_step_depot_total_requirement.sql"
         ),
     ),
+    (
+        "011_mining_queue_processing_lease",
+        include_str!("../../resources/database/migrations/011_mining_queue_processing_lease.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -116,6 +120,20 @@ pub async fn run_migrations(
     pool: &MySqlPool,
     migrations: &[(&str, &str)],
 ) -> Result<MigrationReport, MigrateError> {
+    // Serialize migrators across web/engine startups so two processes cannot
+    // interleave DDL on the same schema. GET_LOCK is connection-scoped, so the
+    // lock connection is held for the whole migrate.
+    let mut lock_conn = pool.acquire().await?;
+    acquire_migration_lock(&mut lock_conn).await?;
+    let result = run_migrations_locked(pool, migrations).await;
+    release_migration_lock(&mut lock_conn).await?;
+    result
+}
+
+async fn run_migrations_locked(
+    pool: &MySqlPool,
+    migrations: &[(&str, &str)],
+) -> Result<MigrationReport, MigrateError> {
     ensure_schema_migration_table(pool).await?;
 
     let applied_versions = list_applied_versions(pool).await?;
@@ -155,6 +173,35 @@ pub async fn run_migrations(
     }
 
     Ok(report)
+}
+
+const MIGRATION_LOCK_NAME: &str = "robominer_schema_migrate";
+const MIGRATION_LOCK_TIMEOUT_SECONDS: i32 = 60;
+
+async fn acquire_migration_lock(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::MySql>,
+) -> Result<(), MigrateError> {
+    let acquired: Option<i64> = sqlx::query_scalar("SELECT GET_LOCK(?, ?)")
+        .bind(MIGRATION_LOCK_NAME)
+        .bind(MIGRATION_LOCK_TIMEOUT_SECONDS)
+        .fetch_one(&mut **conn)
+        .await?;
+    if acquired != Some(1) {
+        return Err(MigrateError::InvalidMigration(format!(
+            "could not acquire migration lock {MIGRATION_LOCK_NAME} within {MIGRATION_LOCK_TIMEOUT_SECONDS}s"
+        )));
+    }
+    Ok(())
+}
+
+async fn release_migration_lock(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::MySql>,
+) -> Result<(), MigrateError> {
+    let _: Option<i64> = sqlx::query_scalar("SELECT RELEASE_LOCK(?)")
+        .bind(MIGRATION_LOCK_NAME)
+        .fetch_one(&mut **conn)
+        .await?;
+    Ok(())
 }
 
 pub async fn migration_status(
@@ -394,6 +441,7 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
         column_exists(pool, "MiningAreaLifetimeResult", "totalRuns").await?;
     let has_depot_total_requirement =
         table_exists(pool, "AchievementStepDepotTotalRequirement").await?;
+    let has_processing_lease = column_exists(pool, "MiningQueue", "processingLeaseUntil").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
@@ -402,7 +450,8 @@ async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> 
         && has_depot_tax_rate
         && has_depot_amount
         && has_lifetime_total_runs
-        && has_depot_total_requirement)
+        && has_depot_total_requirement
+        && has_processing_lease)
 }
 
 async fn table_exists(pool: &MySqlPool, table_name: &str) -> Result<bool, MigrateError> {

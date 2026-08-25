@@ -238,3 +238,9 @@ pub enum ClaimAchievementStepRejection {
     MissingDefaultRobotPart,
     InvalidDefaultRobotConfiguration,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PersistRallyRejection {
+    /// One or more queue rows were already finished or leased by another worker.
+    QueueAlreadyFinished,
+}

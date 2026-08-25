@@ -92,7 +92,8 @@ async fn load_next_rally_loadout_applies_depot_capacity_and_banks_home_dump() {
 
     persist_rally_outcome(&pool, &loadout, &run.outcome, &run.result_data)
         .await
-        .expect("persist should succeed");
+        .expect("persist should succeed")
+        .expect("persist should not reject");
 
     let ore_amount: i32 = sqlx::query_scalar(
         "SELECT amount FROM MiningOreResult WHERE miningQueueId = ? AND oreId = ?",

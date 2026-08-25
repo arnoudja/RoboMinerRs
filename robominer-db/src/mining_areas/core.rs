@@ -76,6 +76,8 @@ pub async fn list_next_mining_rally_queue_for_area(
          FROM MiningQueue, Robot, MiningArea \
          WHERE MiningQueue.miningAreaId = ? \
            AND MiningQueue.miningEndTime IS NULL \
+           AND (MiningQueue.processingLeaseUntil IS NULL \
+                OR MiningQueue.processingLeaseUntil < NOW()) \
            AND Robot.id = MiningQueue.robotId \
            AND (Robot.rechargeEndTime IS NULL OR Robot.rechargeEndTime <= NOW()) \
            AND (Robot.miningEndTime IS NULL OR Robot.miningEndTime <= NOW()) \

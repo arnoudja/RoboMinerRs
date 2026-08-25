@@ -1,14 +1,19 @@
 use sqlx::MySqlPool;
 
+use crate::mappers::{MiningRallyQueueRow, mining_rally_queue_rows};
 use crate::{
     CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
-    CompletedRallyRecord,
+    CompletedRallyRecord, DbOutcome, MiningRallyQueueRecord, PersistRallyRejection, db_ok,
+    db_reject,
 };
+
+/// How long a worker holds unfinished queue rows while simulating.
+pub const PROCESSING_LEASE_SECONDS: i32 = 1_800;
 
 pub async fn persist_completed_rally(
     pool: &MySqlPool,
     rally: &CompletedRallyRecord,
-) -> Result<i64, sqlx::Error> {
+) -> Result<DbOutcome<i64, PersistRallyRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
     let result = sqlx::query("INSERT INTO RallyResult (resultData) VALUES (?)")
         .bind(&rally.result_data)
@@ -18,8 +23,12 @@ pub async fn persist_completed_rally(
 
     for participant in &rally.participants {
         update_robot_for_completed_rally(&mut transaction, participant).await?;
-        update_mining_queue_for_completed_rally(&mut transaction, participant, rally_result_id)
-            .await?;
+        if !update_mining_queue_for_completed_rally(&mut transaction, participant, rally_result_id)
+            .await?
+        {
+            transaction.rollback().await?;
+            return db_reject(PersistRallyRejection::QueueAlreadyFinished);
+        }
         apply_pending_robot_changes(&mut transaction, participant).await?;
         super::cleanup::cleanup_old_claimed_mining_queue_items(
             &mut transaction,
@@ -54,7 +63,75 @@ pub async fn persist_completed_rally(
 
     transaction.commit().await?;
 
-    Ok(rally_result_id)
+    db_ok(rally_result_id)
+}
+
+/// Lock and lease the next ready rally queue for an area.
+///
+/// Uses `FOR UPDATE OF MiningQueue SKIP LOCKED` so concurrent workers skip rows
+/// already locked. Sets `processingLeaseUntil` before commit so unlocked readers
+/// also skip in-flight work. Does not hold row locks across simulation.
+pub async fn claim_next_mining_rally_queue_for_area(
+    pool: &MySqlPool,
+    mining_area_id: i64,
+    rally_size: usize,
+    expiry_start_seconds: i32,
+) -> Result<Option<Vec<MiningRallyQueueRecord>>, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+    let rows = sqlx::query_as::<_, MiningRallyQueueRow>(
+        "SELECT MiningQueue.id, MiningQueue.miningAreaId, MiningQueue.robotId, \
+                Robot.userId, \
+                MiningQueue.rallyResultId, MiningQueue.playerNumber, MiningQueue.score, \
+                MiningQueue.claimed, \
+                TIMESTAMPDIFF(SECOND, NOW(), \
+                    TIMESTAMPADD(SECOND, MiningArea.miningTime, \
+                        IF(Robot.rechargeEndTime < MiningQueue.creationTime, \
+                           MiningQueue.creationTime, Robot.rechargeEndTime))) AS secondsLeft \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
+         WHERE MiningQueue.miningAreaId = ? \
+           AND MiningQueue.miningEndTime IS NULL \
+           AND (MiningQueue.processingLeaseUntil IS NULL \
+                OR MiningQueue.processingLeaseUntil < NOW()) \
+           AND (Robot.rechargeEndTime IS NULL OR Robot.rechargeEndTime <= NOW()) \
+           AND (Robot.miningEndTime IS NULL OR Robot.miningEndTime <= NOW()) \
+           AND NOT EXISTS ( \
+               SELECT prev.id \
+               FROM MiningQueue prev \
+               WHERE prev.id < MiningQueue.id \
+                 AND prev.robotId = MiningQueue.robotId \
+                 AND prev.miningEndTime IS NULL \
+           ) \
+         ORDER BY secondsLeft, MiningQueue.id \
+         FOR UPDATE OF MiningQueue SKIP LOCKED",
+    )
+    .bind(mining_area_id)
+    .fetch_all(&mut *transaction)
+    .await?;
+
+    let queue_rows = mining_rally_queue_rows(rows);
+    let ready = !queue_rows.is_empty()
+        && (queue_rows.len() >= rally_size || queue_rows[0].seconds_left < expiry_start_seconds);
+    if !ready {
+        transaction.rollback().await?;
+        return Ok(None);
+    }
+
+    for row in &queue_rows {
+        sqlx::query(
+            "UPDATE MiningQueue \
+             SET processingLeaseUntil = TIMESTAMPADD(SECOND, ?, NOW()) \
+             WHERE id = ?",
+        )
+        .bind(PROCESSING_LEASE_SECONDS)
+        .bind(row.queue.id)
+        .execute(&mut *transaction)
+        .await?;
+    }
+
+    transaction.commit().await?;
+    Ok(Some(queue_rows))
 }
 
 async fn update_robot_for_completed_rally(
@@ -76,18 +153,21 @@ async fn update_robot_for_completed_rally(
     Ok(())
 }
 
+/// Returns `true` when the queue row was still unfinished and was updated.
 async fn update_mining_queue_for_completed_rally(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     participant: &CompletedRallyParticipantRecord,
     rally_result_id: i64,
-) -> Result<(), sqlx::Error> {
-    sqlx::query(
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query(
         "UPDATE MiningQueue \
          SET rallyResultId = ?, \
              miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), \
              playerNumber = ?, \
-             executedSourceCode = ? \
-         WHERE id = ?",
+             executedSourceCode = ?, \
+             processingLeaseUntil = NULL \
+         WHERE id = ? \
+           AND miningEndTime IS NULL",
     )
     .bind(rally_result_id)
     .bind(participant.mining_end_seconds_from_now)
@@ -97,7 +177,7 @@ async fn update_mining_queue_for_completed_rally(
     .execute(&mut **transaction)
     .await?;
 
-    Ok(())
+    Ok(result.rows_affected() == 1)
 }
 
 async fn apply_pending_robot_changes(
