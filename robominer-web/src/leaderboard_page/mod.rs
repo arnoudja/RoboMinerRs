@@ -39,9 +39,11 @@ impl LeaderboardTab {
 
 impl LeaderboardQuery {
     fn from_request(request: &Request) -> Self {
-        let limit = query_i64(request, "limit")
-            .unwrap_or(LEADERBOARD_PAGE_SIZE)
-            .clamp(LEADERBOARD_PAGE_SIZE, LEADERBOARD_MAX_LIMIT);
+        let limit = crate::page_context::clamp_page_limit(
+            query_i64(request, "limit"),
+            LEADERBOARD_PAGE_SIZE,
+            LEADERBOARD_MAX_LIMIT,
+        );
         Self {
             tab: LeaderboardTab::from_request(request),
             area_id: query_i64(request, "areaId"),
@@ -138,7 +140,7 @@ pub(super) async fn leaderboard_page(request: &Request, config: &ServerConfig) -
             query,
             &state,
         )),
-        Err(error) => Response::service_unavailable(format!("Unable to load leaderboard: {error}")),
+        Err(error) => crate::page_context::page_load_error("leaderboard", error),
     }
 }
 

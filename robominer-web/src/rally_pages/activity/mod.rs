@@ -46,7 +46,7 @@ pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response
             &state,
             feed_query,
         )),
-        Err(error) => Response::service_unavailable(format!("Unable to load activity: {error}")),
+        Err(error) => crate::page_context::page_load_error("activity", error),
     }
 }
 

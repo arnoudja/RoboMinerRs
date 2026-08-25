@@ -66,7 +66,8 @@ pub fn prepare_server_config(
         robominer_db::config_value(legacy_config, "sessionttlhours"),
     )
     .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
-    crate::configure_session_secret(&session_secret);
+    crate::configure_session_secret(&session_secret)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     crate::configure_secure_cookies(settings.secure_cookies);
     crate::configure_session_ttl_secs(session_ttl_secs);
 

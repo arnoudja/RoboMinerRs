@@ -37,9 +37,7 @@ pub(super) async fn mining_area_overview_page(
                 .as_deref(),
             &state,
         )),
-        Err(error) => {
-            Response::service_unavailable(format!("Unable to load mining area overview: {error}"))
-        }
+        Err(error) => crate::page_context::page_load_error("mining area overview", error),
     }
 }
 

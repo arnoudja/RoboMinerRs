@@ -12,7 +12,8 @@ use crate::session::{self, session_from_cookie_header};
 fn ensure_secret() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
-        crate::session::configure_session_secret("csrf-unit-test-secret");
+        crate::session::configure_session_secret("csrf-unit-test-secret")
+            .expect("configure csrf test secret");
     });
 }
 

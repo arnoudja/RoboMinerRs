@@ -129,7 +129,31 @@ pub fn database_url_from_config(config: &HashMap<String, String>) -> Result<Stri
     let password = required_config_value(config, "dbpassword")?;
     let database = required_config_value(config, "dbdatabase")?;
 
-    Ok(format!("mysql://{user}:{password}@{server}/{database}"))
+    Ok(format!(
+        "mysql://{}:{}@{}/{}",
+        percent_encode_userinfo(&user),
+        percent_encode_userinfo(&password),
+        server,
+        database
+    ))
+}
+
+/// Encode userinfo components so passwords with `@`, `:`, `/`, etc. stay valid in URLs.
+fn percent_encode_userinfo(value: &str) -> String {
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                encoded.push(byte as char);
+            }
+            _ => {
+                encoded.push('%');
+                encoded.push(char::from(b"0123456789ABCDEF"[(byte >> 4) as usize]));
+                encoded.push(char::from(b"0123456789ABCDEF"[(byte & 0xf) as usize]));
+            }
+        }
+    }
+    encoded
 }
 
 pub fn resolve_database_url(
@@ -241,6 +265,21 @@ mod tests {
         assert_eq!(
             database_url_from_config(&config).expect("database url"),
             "mysql://robominer:secret@localhost/RoboMiner"
+        );
+    }
+
+    #[test]
+    fn database_url_from_config_percent_encodes_password_specials() {
+        let config = parse_legacy_config(
+            "dbserver localhost\n\
+             dbuser robominer\n\
+             dbpassword p@ss:w/ord\n\
+             dbdatabase RoboMiner\n",
+        );
+
+        assert_eq!(
+            database_url_from_config(&config).expect("database url"),
+            "mysql://robominer:p%40ss%3Aw%2Ford@localhost/RoboMiner"
         );
     }
 

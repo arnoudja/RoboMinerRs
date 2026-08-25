@@ -12,7 +12,7 @@ use crate::Request;
 fn ensure_test_session_secret() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
-        super::configure_session_secret("test-session-secret");
+        super::configure_session_secret("test-session-secret").expect("configure secret");
         super::configure_secure_cookies(false);
     });
 }
@@ -180,7 +180,7 @@ fn session_clear_cookie_expires_session() {
 
 #[test]
 fn secure_cookie_suffix_is_applied_when_enabled() {
-    super::configure_session_secret("secure-cookie-test-secret");
+    super::configure_session_secret("secure-cookie-test-secret").expect("configure secret");
     super::configure_secure_cookies(true);
 
     let cookie = session_set_cookie_header(42, false, 0);

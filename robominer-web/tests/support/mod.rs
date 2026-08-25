@@ -16,7 +16,8 @@ static SESSION_CONFIGURED: OnceLock<()> = OnceLock::new();
 
 pub fn ensure_session_configured() {
     SESSION_CONFIGURED.get_or_init(|| {
-        configure_session_secret("robominer-web-integration-test-secret");
+        configure_session_secret("robominer-web-integration-test-secret")
+            .expect("configure test session secret");
     });
 }
 

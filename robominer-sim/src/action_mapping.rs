@@ -224,7 +224,8 @@ mod tests {
                 }
                 ExecutableAction::Dump(_) => result.push(RobotAction::DumpAll),
                 ExecutableAction::StartScan(_) | ExecutableAction::AwaitScanResult => {
-                    panic!(
+                    debug_assert!(
+                        false,
                         "scan actions cannot be statically expanded; use ActionSource::Program via from_executable_program"
                     );
                 }

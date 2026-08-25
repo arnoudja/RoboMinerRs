@@ -55,14 +55,16 @@ pub fn resolve_session_secret(
     )
 }
 
-pub fn configure_session_secret(secret: &str) {
+pub fn configure_session_secret(secret: &str) -> Result<(), String> {
     let secret = secret.trim();
-    assert!(!secret.is_empty(), "session secret must not be empty");
-    assert!(
-        HmacSha256::new_from_slice(secret.as_bytes()).is_ok(),
-        "session secret length should be valid for HMAC"
-    );
+    if secret.is_empty() {
+        return Err("session secret must not be empty".to_string());
+    }
+    if HmacSha256::new_from_slice(secret.as_bytes()).is_err() {
+        return Err("session secret length is invalid for HMAC".to_string());
+    }
     let _ = SESSION_SECRET.get_or_init(|| secret.as_bytes().to_vec());
+    Ok(())
 }
 
 pub fn configure_secure_cookies(enabled: bool) {

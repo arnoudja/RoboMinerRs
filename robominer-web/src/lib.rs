@@ -41,8 +41,8 @@ mod static_files;
 
 pub use server::serve;
 pub use settings::{WebSettings, web_settings};
-pub fn configure_session_secret(secret: &str) {
-    session::configure_session_secret(secret);
+pub fn configure_session_secret(secret: &str) -> Result<(), String> {
+    session::configure_session_secret(secret)
 }
 pub fn configure_secure_cookies(enabled: bool) {
     session::configure_secure_cookies(enabled);

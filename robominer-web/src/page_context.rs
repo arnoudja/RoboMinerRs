@@ -128,7 +128,29 @@ pub(crate) async fn claim_user_results(
     Ok(robominer_db::claim_user_results(pool, user_id).await?)
 }
 
+/// Authenticate, then claim pending rewards for pages that show wallet/claim UI.
+pub(crate) async fn require_session_and_claim<'a>(
+    request: &Request,
+    config: &'a ServerConfig,
+    missing_db_message: &str,
+) -> Result<(PageSession<'a>, ClaimedUserResults), Response> {
+    let session = PageSession::require(request, config, missing_db_message)?;
+    let claimed = claim_user_results(session.pool, session.user_id)
+        .await
+        .map_err(|error| page_load_error("page", error))?;
+    Ok((session, claimed))
+}
+
+/// Clamp a positive page-size query into `[default_limit, max_limit]`.
+pub(crate) fn clamp_page_limit(raw: Option<i64>, default_limit: i64, max_limit: i64) -> i64 {
+    raw.unwrap_or(default_limit).clamp(default_limit, max_limit)
+}
+
 /// Map a page-load database failure to an HTTP response.
+///
+/// Client bodies stay generic so SQL details are not leaked; the full error is
+/// logged server-side for operators.
 pub(crate) fn page_load_error(page: &str, error: PageLoadError) -> Response {
-    Response::service_unavailable(format!("Unable to load {page}: {error}"))
+    tracing::error!(page, error = %error, "Unable to load page");
+    Response::service_unavailable(format!("Unable to load {page}. Please try again shortly."))
 }
