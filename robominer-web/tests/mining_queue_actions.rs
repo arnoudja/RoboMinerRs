@@ -35,6 +35,9 @@ async fn mining_queue_remove_post_deletes_queued_item() {
     let login_response = login_with_credentials(&config, &username, &password).await;
     let cookie = cookie_header(&login_response);
 
+    let mut query = HashMap::new();
+    query.insert("fragment".to_string(), "queue".to_string());
+
     let mut form = HashMap::new();
     form.insert("submitType".to_string(), "remove".to_string());
     form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
@@ -51,17 +54,21 @@ async fn mining_queue_remove_post_deletes_queued_item() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let response = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
+    let response = route(
+        &post_request_query("/miningQueue", query, form, Some(&cookie)),
+        &config,
+    )
+    .await;
     let body = response_body(&response);
 
-    assert_eq!(response.status, 200, "mining queue page should render");
+    assert_eq!(response.status, 200, "fragment POST remove should succeed");
     assert!(
-        body.contains(&fixture.inner.area_name),
-        "expected mining area still on page after removing queued run:\n{body}"
+        body.contains(r#"id="mining-queue-fragment""#),
+        "expected fragment wrapper:\n{body}"
     );
     assert!(
         !body.contains("mining-queue-run-queued"),
-        "expected queued run to be removed from page body:\n{body}"
+        "expected queued run to be removed from fragment:\n{body}"
     );
 
     let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
