@@ -170,6 +170,14 @@
         }
     }
 
+    function formDataToUrlEncoded(formData) {
+        var params = new URLSearchParams();
+        formData.forEach(function(value, key) {
+            params.append(key, value);
+        });
+        return params.toString();
+    }
+
     function fetchFragment(method, url, body) {
         var scrollEl = document.getElementById('main-content');
         var scrollTop = scrollEl ? scrollEl.scrollTop : 0;
@@ -178,7 +186,10 @@
             credentials: 'same-origin'
         };
         if (body) {
-            options.body = body;
+            options.body = body instanceof FormData ? formDataToUrlEncoded(body) : body;
+            options.headers = {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            };
         }
 
         return window.fetch(url, options).then(function(response) {
@@ -654,6 +665,7 @@
         REFRESH_DEBOUNCE_MS: REFRESH_DEBOUNCE_MS,
         applyFragment: applyFragment,
         buildFragmentUrl: buildFragmentUrl,
+        formDataToUrlEncoded: formDataToUrlEncoded,
         init: init,
         refreshQueue: refreshQueue,
         performRefresh: performRefresh

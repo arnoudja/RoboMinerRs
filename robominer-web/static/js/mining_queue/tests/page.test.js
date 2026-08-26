@@ -303,7 +303,25 @@ function loadMiningQueuePage(contextOverrides) {
             constructor(form) {
                 this.entries = form ? [['csrfToken', 'token-1'], ['robotId', '7']] : [];
             }
+            append(key, value) {
+                this.entries.push([key, String(value)]);
+            }
+            set(key, value) {
+                for (var index = 0; index < this.entries.length; index += 1) {
+                    if (this.entries[index][0] === key) {
+                        this.entries[index][1] = String(value);
+                        return;
+                    }
+                }
+                this.entries.push([key, String(value)]);
+            }
+            forEach(callback) {
+                for (var index = 0; index < this.entries.length; index += 1) {
+                    callback(this.entries[index][1], this.entries[index][0]);
+                }
+            }
         },
+        URLSearchParams: URLSearchParams,
         DOMParser: FakeDOMParser,
         document: {
             querySelector(selector) {
@@ -441,6 +459,18 @@ describe('mining queue page partial updates', () => {
         assert.equal(doc.config.textContent, '{"ores":{"1":{"amount":3}}}');
         assert.match(doc.page.querySelector('.mining-queue-error').textContent, /new error/);
         assert.equal(doc.inspector.textContent, 'inspector stays');
+    });
+
+    it('formDataToUrlEncoded serializes fields for urlencoded POST bodies', () => {
+        const { context } = loadMiningQueuePage();
+        const formData = new context.FormData();
+        formData.append('submitType', 'add');
+        formData.append('robotId', '1');
+        formData.append('miningArea1', '20');
+        const encoded = context.RoboMinerMiningQueuePage.formDataToUrlEncoded(formData);
+        assert.match(encoded, /(^|&)submitType=add(&|$)/);
+        assert.match(encoded, /robotId=1/);
+        assert.match(encoded, /miningArea1=20/);
     });
 
     it('refreshQueue debounces multiple timer completions into one fetch', () => {
