@@ -14,82 +14,6 @@ use support::{
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
-async fn mining_queue_remove_post_deletes_queued_item() {
-    let Some(database_url) = robominer_test_support::require_test_db() else {
-        return;
-    };
-
-    ensure_session_configured();
-
-    let pool = robominer_db::connect(&database_url)
-        .await
-        .expect("failed to connect to test database");
-    let prefix = unique_prefix("rust-web-queue-remove");
-    let username = format!("{prefix}-user");
-    let password = "test-password-1".to_string();
-    let user_id =
-        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
-    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
-    let config = server_config(pool.clone());
-
-    let login_response = login_with_credentials(&config, &username, &password).await;
-    let cookie = cookie_header(&login_response);
-
-    let mut query = HashMap::new();
-    query.insert("fragment".to_string(), "queue".to_string());
-
-    let mut form = HashMap::new();
-    form.insert("submitType".to_string(), "remove".to_string());
-    form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
-    form.insert(
-        "selectedQueueItemId".to_string(),
-        fixture.queued_queue_id.to_string(),
-    );
-    form.insert(
-        format!("miningArea{}", fixture.inner.robot_id),
-        fixture.inner.mining_area_id.to_string(),
-    );
-    form.insert(
-        "infoMiningAreaId".to_string(),
-        fixture.inner.mining_area_id.to_string(),
-    );
-
-    let response = route(
-        &post_request_query("/miningQueue", query, form, Some(&cookie)),
-        &config,
-    )
-    .await;
-    let body = response_body(&response);
-
-    assert_eq!(response.status, 200, "fragment POST remove should succeed");
-    assert!(
-        body.contains(r#"id="mining-queue-fragment""#),
-        "expected fragment wrapper:\n{body}"
-    );
-    assert!(
-        !body.contains("mining-queue-run-queued"),
-        "expected queued run to be removed from fragment:\n{body}"
-    );
-
-    let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
-        .bind(fixture.queued_queue_id)
-        .fetch_one(&pool)
-        .await
-        .expect("failed to count mining queue rows");
-    assert_eq!(remaining, 0);
-
-    let active_remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
-        .bind(fixture.active_queue_id)
-        .fetch_one(&pool)
-        .await
-        .expect("failed to count active mining queue row");
-    assert_eq!(active_remaining, 1);
-
-    fixture.inner.cleanup(&pool, true).await;
-}
-
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[serial]
 async fn mining_queue_add_post_inserts_queue_item() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
@@ -699,6 +623,13 @@ async fn mining_queue_fragment_post_remove_updates_robot_deck() {
         .await
         .expect("failed to count mining queue rows");
     assert_eq!(remaining, 0);
+
+    let active_remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(fixture.active_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count active mining queue row");
+    assert_eq!(active_remaining, 1);
 
     fixture.inner.cleanup(&pool, true).await;
 }
