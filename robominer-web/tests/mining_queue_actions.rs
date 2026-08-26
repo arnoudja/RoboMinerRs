@@ -722,11 +722,9 @@ async fn mining_queue_fragment_post_without_csrf_is_rejected() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let response = route(
-        &support::post_request_without_csrf("/miningQueue?fragment=queue", form, Some(&cookie)),
-        &config,
-    )
-    .await;
+    let mut request = post_request_without_csrf("/miningQueue", form, Some(&cookie));
+    request.query = query;
+    let response = route(&request, &config).await;
 
     assert_eq!(response.status, 403);
     assert!(
