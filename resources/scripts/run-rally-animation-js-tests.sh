@@ -13,7 +13,7 @@ cd "${ROOT}/robominer-web/static/js/rally_animation/tests"
 node --test viewer.test.js
 
 cd "${ROOT}/robominer-web/static/js/mining_queue/tests"
-node --test clear_wallet.test.js
+node --test clear_wallet.test.js page.test.js
 
 cd "${ROOT}/robominer-web/static/js/mining_results/tests"
 node --test page.test.js

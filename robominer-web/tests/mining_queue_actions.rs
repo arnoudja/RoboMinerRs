@@ -7,8 +7,9 @@ use robominer_test_support::{IdleMiningAreaFixture, QueuedMiningAreaFixture};
 use robominer_web::test_support::route;
 use serial_test::serial;
 use support::{
-    cookie_header, create_user_via_engine, ensure_session_configured, login_with_credentials,
-    post_request, post_request_without_csrf, response_body, server_config, unique_prefix,
+    cookie_header, create_user_via_engine, ensure_session_configured, get_request_query,
+    login_with_credentials, post_request, post_request_query, post_request_without_csrf,
+    response_body, server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -546,4 +547,192 @@ async fn mining_queue_clear_safe_skips_overflow_and_keeps_later_safe_items() {
         .execute(&pool)
         .await;
     fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn mining_queue_fragment_get_returns_dynamic_sections_only() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-queue-fragment-get");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut query = HashMap::new();
+    query.insert("fragment".to_string(), "queue".to_string());
+    query.insert(
+        "infoMiningAreaId".to_string(),
+        fixture.inner.mining_area_id.to_string(),
+    );
+    query.insert(
+        format!("miningArea{}", fixture.inner.robot_id),
+        fixture.inner.mining_area_id.to_string(),
+    );
+
+    let response = route(
+        &get_request_query("/miningQueue", query, Some(&cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "fragment GET should succeed");
+    assert!(
+        body.contains(r#"id="mining-queue-fragment""#),
+        "expected fragment wrapper:\n{body}"
+    );
+    assert!(
+        body.contains(r#"id="mining-queue-robots-fragment""#),
+        "expected robot deck fragment:\n{body}"
+    );
+    assert!(
+        body.contains("app-shell-hud"),
+        "expected HUD markup in fragment:\n{body}"
+    );
+    assert!(
+        !body.contains("mining-queue-inspector"),
+        "fragment should omit inspector:\n{body}"
+    );
+    assert!(
+        !body.contains("<!DOCTYPE html>"),
+        "fragment should omit full page layout:\n{body}"
+    );
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn mining_queue_fragment_post_remove_updates_robot_deck() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-queue-fragment-remove");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut query = HashMap::new();
+    query.insert("fragment".to_string(), "queue".to_string());
+
+    let mut form = HashMap::new();
+    form.insert("submitType".to_string(), "remove".to_string());
+    form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
+    form.insert(
+        "selectedQueueItemId".to_string(),
+        fixture.queued_queue_id.to_string(),
+    );
+    form.insert(
+        format!("miningArea{}", fixture.inner.robot_id),
+        fixture.inner.mining_area_id.to_string(),
+    );
+    form.insert(
+        "infoMiningAreaId".to_string(),
+        fixture.inner.mining_area_id.to_string(),
+    );
+
+    let response = route(
+        &post_request_query("/miningQueue", query, form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "fragment POST should succeed");
+    assert!(
+        body.contains(r#"id="mining-queue-fragment""#),
+        "expected fragment wrapper:\n{body}"
+    );
+    assert!(
+        !body.contains("mining-queue-run-queued"),
+        "expected queued run to be removed from fragment:\n{body}"
+    );
+    assert!(
+        !body.contains("<!DOCTYPE html>"),
+        "fragment should omit full page layout:\n{body}"
+    );
+
+    let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
+        .bind(fixture.queued_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("failed to count mining queue rows");
+    assert_eq!(remaining, 0);
+
+    fixture.inner.cleanup(&pool, true).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn mining_queue_fragment_post_without_csrf_is_rejected() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-queue-fragment-csrf");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = IdleMiningAreaFixture::create(&pool, user_id, 25).await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut query = HashMap::new();
+    query.insert("fragment".to_string(), "queue".to_string());
+
+    let mut form = HashMap::new();
+    form.insert("submitType".to_string(), "add".to_string());
+    form.insert("robotId".to_string(), fixture.inner.robot_id.to_string());
+    form.insert(
+        format!("miningArea{}", fixture.inner.robot_id),
+        fixture.inner.mining_area_id.to_string(),
+    );
+
+    let response = route(
+        &support::post_request_without_csrf("/miningQueue?fragment=queue", form, Some(&cookie)),
+        &config,
+    )
+    .await;
+
+    assert_eq!(response.status, 403);
+    assert!(
+        response_body(&response).contains("CSRF"),
+        "expected CSRF rejection for fragment POST"
+    );
+
+    fixture.inner.cleanup(&pool, false).await;
 }

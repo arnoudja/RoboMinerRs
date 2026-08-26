@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use crate::ServerConfig;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
-use super::super::render::render_mining_queue_page;
+use super::super::render::{render_mining_queue_fragment, render_mining_queue_page};
 use super::super::{MiningQueueDisplayItem, MiningQueuePageState, mining_queue_page};
 use super::fixtures::authenticated_request;
 
@@ -470,4 +470,80 @@ fn mining_queue_shows_no_robots_empty_state() {
     );
     assert_html_not_contains(&html, r#"class="page-help-hint""#);
     assert_html_not_contains(&html, r#"class="mining-queue-card""#);
+}
+
+#[test]
+fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
+    let mut selected_robot_area_ids = HashMap::new();
+    selected_robot_area_ids.insert(1, 20);
+    let state = MiningQueuePageState {
+        asset_summary: robominer_db::UserAssetSummaryRecord {
+            username: "Player".to_string(),
+            achievement_points: 0,
+            mining_queue_size: 3,
+            robot_count: 1,
+        },
+        ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+            ore_id: 2,
+            ore_name: "Iron".to_string(),
+            amount: 40,
+            max_allowed: 100,
+            depot_max_allowed: 250,
+        }],
+        robots: vec![robominer_db::MiningQueuePageRobotRecord {
+            robot_id: 1,
+            robot_name: "Bot".to_string(),
+            recharge_time: 300,
+        }],
+        areas: vec![robominer_db::MiningQueuePageAreaRecord {
+            mining_area_id: 20,
+            area_name: "Area".to_string(),
+            tax_rate: 0,
+            depot_tax_rate: 0,
+            mining_time: 120,
+            max_moves: 10,
+            size_x: 5,
+            size_y: 5,
+            score_ore_target: 30,
+        }],
+        costs: vec![],
+        supplies: vec![],
+        scores: vec![],
+        items: vec![MiningQueueDisplayItem {
+            mining_queue_id: 10,
+            robot_id: 1,
+            mining_area_id: 20,
+            area_name: "Area".to_string(),
+            rally_result_id: Some(55),
+            status: robominer_db::MiningQueueStatus::Mining,
+            time_left_seconds: 60,
+        }],
+        selected_info_area_id: 20,
+        selected_robot_area_ids,
+        error_message: Some("Queue full for this robot.".to_string()),
+        claimed_results: robominer_db::ClaimedUserResults {
+            claimed_queues: 0,
+            ore_rewards: vec![],
+        },
+    };
+    let hud = r#"<div class="app-shell-hud"><a class="app-shell-hud-item">2/6</a></div>"#;
+    let html = render_mining_queue_fragment(hud, &state);
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"id="mining-queue-fragment""#,
+            r#"id="mining-queue-hud-fragment""#,
+            r#"id="mining-queue-dynamic-fragment""#,
+            r#"id="mining-queue-robots-fragment""#,
+            r#"class="page-wallet mining-queue-wallet""#,
+            r#"class="mining-queue-card""#,
+            r#"class="error mining-queue-error">Queue full for this robot."#,
+            r#"id="mining-queue-clear-config""#,
+            r#"app-shell-hud-item">2/6</a>"#,
+        ],
+    );
+    assert_html_not_contains(&html, "mining-queue-inspector");
+    assert_html_not_contains(&html, "miningAreaDetails");
+    assert_html_not_contains(&html, "<!DOCTYPE html>");
 }

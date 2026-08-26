@@ -15,6 +15,8 @@ mod tests;
 use actions::{cancel_queued_items, format_cancel_batch_message};
 use view_model::load_mining_queue_display_items;
 
+pub(super) const FRAGMENT_QUEUE: &str = "queue";
+
 #[derive(Debug)]
 pub(super) struct MiningQueuePageState {
     pub(super) asset_summary: robominer_db::UserAssetSummaryRecord,
@@ -67,6 +69,13 @@ pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) 
 
     match result {
         Ok(state) => {
+            if wants_queue_fragment(request) {
+                let hud = crate::app_shell::hud_markup(request, config)
+                    .await
+                    .unwrap_or_default();
+                let html = render::render_mining_queue_fragment(&hud, &state);
+                return crate::csrf::html_with_csrf(request, session.user_id, html);
+            }
             session
                 .html_with_hud(request, config, |username, hud| {
                     render::render_mining_queue_page(username, hud, &state)
@@ -200,6 +209,14 @@ fn form_i64_values(request: &Request, name: &str) -> Vec<i64> {
         .filter_map(|value| value.parse::<i64>().ok())
         .filter(|value| *value > 0)
         .collect()
+}
+
+fn wants_queue_fragment(request: &Request) -> bool {
+    request
+        .query
+        .get("fragment")
+        .or_else(|| request.form.get("fragment"))
+        .is_some_and(|value| value == FRAGMENT_QUEUE)
 }
 
 pub(super) fn mining_queue_status_description(

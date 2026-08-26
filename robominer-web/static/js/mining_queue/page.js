@@ -1,8 +1,18 @@
 (function() {
+    var FRAGMENT_PARAM = 'queue';
+    var REFRESH_DEBOUNCE_MS = 300;
+
     var pageRoot = document.querySelector('.mining-queue-page');
     var STORAGE_KEY = pageRoot
         ? pageRoot.getAttribute('data-area-storage-key') || 'robominer.miningQueue.areaSelections'
         : 'robominer.miningQueue.areaSelections';
+
+    var timerIntervals = [];
+    var resizeObserver = null;
+    var refreshDebounceTimer = null;
+    var refreshInFlight = false;
+    var refreshPending = false;
+    var inspectorSelect = document.getElementById('infoMiningAreaId');
 
     function readStoredAreaSelections() {
         return window.RoboMinerSessionStore.readJson(STORAGE_KEY);
@@ -84,9 +94,133 @@
         return params;
     }
 
+    function buildFragmentUrl(extraParams) {
+        var params = collectQueueQueryParams();
+        params.fragment = FRAGMENT_PARAM;
+        if (extraParams) {
+            Object.keys(extraParams).forEach(function(name) {
+                params[name] = extraParams[name];
+            });
+        }
+        var query = window.RoboMinerUrlQuery.buildQueryString(params);
+        return query ? 'miningQueue?' + query : 'miningQueue?fragment=' + FRAGMENT_PARAM;
+    }
+
+    function clearTimers() {
+        for (var index = 0; index < timerIntervals.length; index += 1) {
+            window.clearInterval(timerIntervals[index]);
+        }
+        timerIntervals = [];
+    }
+
+    function disconnectObserver() {
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
+        }
+    }
+
+    function applyFragment(html, root) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, 'text/html');
+        var fragmentRoot = root || pageRoot || document;
+        var fragment = doc.getElementById('mining-queue-fragment');
+        if (!fragment) {
+            throw new Error('missing mining queue fragment');
+        }
+
+        var hudSource = doc.getElementById('mining-queue-hud-fragment');
+        var hudTarget = document.querySelector('.app-shell-hud');
+        if (hudSource && hudTarget) {
+            hudTarget.innerHTML = hudSource.innerHTML;
+        }
+
+        var dynamicSource = doc.getElementById('mining-queue-dynamic-fragment');
+        if (!dynamicSource) {
+            throw new Error('missing mining queue dynamic fragment');
+        }
+
+        var walletSource = dynamicSource.querySelector('.mining-queue-wallet');
+        var walletTarget = fragmentRoot.querySelector('.mining-queue-wallet');
+        if (walletSource && walletTarget) {
+            walletTarget.outerHTML = walletSource.outerHTML;
+        }
+
+        var deck = fragmentRoot.querySelector('.mining-queue-deck');
+        fragmentRoot.querySelectorAll('.page-help-hint, .mining-queue-error').forEach(function(node) {
+            node.remove();
+        });
+        var messages = dynamicSource.querySelectorAll('.page-help-hint, .mining-queue-error');
+        for (var messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
+            if (deck) {
+                fragmentRoot.insertBefore(messages[messageIndex].cloneNode(true), deck);
+            }
+        }
+
+        var robotsSource = doc.getElementById('mining-queue-robots-fragment');
+        var robotsTarget = fragmentRoot.querySelector('.mining-queue-robots');
+        if (robotsSource && robotsTarget) {
+            robotsTarget.innerHTML = robotsSource.innerHTML;
+        }
+
+        var configSource = doc.getElementById('mining-queue-clear-config');
+        var configTarget = document.getElementById('mining-queue-clear-config');
+        if (configSource && configTarget) {
+            configTarget.textContent = configSource.textContent;
+        }
+    }
+
+    function fetchFragment(method, url, body) {
+        var scrollEl = document.getElementById('main-content');
+        var scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+        var options = {
+            method: method,
+            credentials: 'same-origin'
+        };
+        if (body) {
+            options.body = body;
+        }
+
+        return window.fetch(url, options).then(function(response) {
+            if (!response.ok) {
+                throw new Error('mining queue fragment request failed');
+            }
+            return response.text();
+        }).then(function(html) {
+            applyFragment(html);
+            init({ skipRestore: true });
+            if (scrollEl) {
+                scrollEl.scrollTop = scrollTop;
+            }
+        });
+    }
+
+    function performRefresh() {
+        if (refreshInFlight) {
+            refreshPending = true;
+            return Promise.resolve();
+        }
+        refreshInFlight = true;
+        return fetchFragment('GET', buildFragmentUrl()).catch(function() {
+            var query = window.RoboMinerUrlQuery.buildQueryString(collectQueueQueryParams());
+            window.location.replace(query ? 'miningQueue?' + query : 'miningQueue');
+        }).finally(function() {
+            refreshInFlight = false;
+            if (refreshPending) {
+                refreshPending = false;
+                performRefresh();
+            }
+        });
+    }
+
     function refreshQueue() {
-        var query = window.RoboMinerUrlQuery.buildQueryString(collectQueueQueryParams());
-        window.location.replace(query ? 'miningQueue?' + query : 'miningQueue');
+        if (refreshDebounceTimer) {
+            window.clearTimeout(refreshDebounceTimer);
+        }
+        refreshDebounceTimer = window.setTimeout(function() {
+            refreshDebounceTimer = null;
+            performRefresh();
+        }, REFRESH_DEBOUNCE_MS);
     }
 
     function showMiningAreaDetails(areaId) {
@@ -120,6 +254,7 @@
         if (inspectorSelect && applyStoredAreaSelection(inspectorSelect, stored.infoMiningAreaId)) {
             changed = true;
         }
+        var robotAreaSelects = document.querySelectorAll('select[name^="miningArea"]');
         for (var restoreIndex = 0; restoreIndex < robotAreaSelects.length; restoreIndex += 1) {
             var robotSelect = robotAreaSelects[restoreIndex];
             if (applyStoredAreaSelection(robotSelect, stored[robotSelect.name])) {
@@ -134,7 +269,7 @@
         }
     }
 
-    function submitFormWithHiddenFields(form, markerAttr, fields) {
+    function appendHiddenFields(form, markerAttr, fields) {
         var staleInputs = form.querySelectorAll('input[' + markerAttr + '="true"]');
         for (var staleIndex = 0; staleIndex < staleInputs.length; staleIndex += 1) {
             staleInputs[staleIndex].remove();
@@ -151,7 +286,14 @@
                 form.appendChild(input);
             }
         });
-        form.submit();
+    }
+
+    function submitFormPartial(form, markerAttr, fields) {
+        appendHiddenFields(form, markerAttr, fields);
+        var formData = new FormData(form);
+        return fetchFragment('POST', buildFragmentUrl(), formData).catch(function() {
+            form.submit();
+        });
     }
 
     function updateClearButtonLabel(form) {
@@ -164,7 +306,7 @@
     }
 
     function submitQueuedRunRemoval(form, queueItemId) {
-        submitFormWithHiddenFields(form, 'data-mining-queue-remove', {
+        submitFormPartial(form, 'data-mining-queue-remove', {
             selectedQueueItemId: queueItemId,
             submitType: 'remove'
         });
@@ -222,7 +364,7 @@
         if (selectedQueueItemIds && selectedQueueItemIds.length > 0) {
             fields.selectedQueueItemId = selectedQueueItemIds;
         }
-        submitFormWithHiddenFields(form, 'data-mining-queue-clear', fields);
+        submitFormPartial(form, 'data-mining-queue-clear', fields);
     }
 
     function clearQueuedRuns(button) {
@@ -261,8 +403,6 @@
             var lossMessage = selectedOnly
                 ? 'Clearing the selected runs would refund ore past your wallet maximum, so some ore would be lost. Clear selected runs anyway, or only clear runs that fit without losing ore?'
                 : 'Clearing this queue would refund ore past your wallet maximum, so some ore would be lost. Clear all queued runs anyway, or only clear runs that fit without losing ore?';
-            // Three-way choice requires robominerConfirmChoice; do not degrade to
-            // window.confirm (that cannot offer the safe-clear path).
             if (typeof window.robominerConfirmChoice === 'function') {
                 window.robominerConfirmChoice(
                     lossMessage,
@@ -299,31 +439,6 @@
         }
     }
 
-    document.addEventListener('change', function(event) {
-        var checkbox = event.target.closest('.mining-queue-item-check');
-        if (!checkbox) {
-            return;
-        }
-        var form = checkbox.closest('.mining-queue-card');
-        if (form) {
-            updateClearButtonLabel(form);
-        }
-    });
-
-    document.addEventListener('click', function(event) {
-        var removeButton = event.target.closest('.mining-queue-remove-btn');
-        if (removeButton) {
-            event.preventDefault();
-            removeQueuedRun(removeButton);
-            return;
-        }
-        var clearButton = event.target.closest('.mining-queue-clear-btn');
-        if (clearButton) {
-            event.preventDefault();
-            clearQueuedRuns(clearButton);
-        }
-    });
-
     function updateRobotEnqueueState(select) {
         var form = select.closest('.mining-queue-card');
         if (!form) {
@@ -352,40 +467,12 @@
         }
     }
 
-    var inspectorSelect = document.getElementById('infoMiningAreaId');
-    if (inspectorSelect) {
-        inspectorSelect.addEventListener('change', function() {
-            syncInspectorArea(inspectorSelect.value);
-        });
-    }
-
-    var robotAreaSelects = document.querySelectorAll('select[name^="miningArea"]');
-    for (var selectIndex = 0; selectIndex < robotAreaSelects.length; selectIndex += 1) {
-        updateRobotEnqueueState(robotAreaSelects[selectIndex]);
-        robotAreaSelects[selectIndex].addEventListener('change', function(event) {
-            var areaId = event.target.value;
-            updateRobotEnqueueState(event.target);
-            if (inspectorSelect && areaId) {
-                inspectorSelect.value = areaId;
-                syncInspectorArea(areaId);
-            } else {
-                writeStoredAreaSelections();
-            }
-        });
-    }
-
-    try {
-        restoreAreaSelectionsFromStorage();
-    } catch (error) {
-    }
-
     function startTimer(cell) {
         var seconds = Number(cell.getAttribute('data-seconds-left'));
         if (!isFinite(seconds)) {
             return;
         }
         var refreshOnComplete = cell.getAttribute('data-refresh-on-complete') === 'true';
-        // data-seconds-left / data-progress-total already include a +1s pad for auto-refresh runs.
         var progressTotal = Number(cell.getAttribute('data-progress-total'));
         function updateProgress(secondsLeft) {
             if (!isFinite(progressTotal) || progressTotal <= 0) {
@@ -426,6 +513,7 @@
                 refreshQueue();
             }
         }, 200);
+        timerIntervals.push(interval);
         cell.textContent = formatTimeLeft(seconds);
     }
 
@@ -460,21 +548,114 @@
             });
         }
         scheduleSync();
-        window.addEventListener('resize', scheduleSync);
         if (typeof ResizeObserver === 'undefined') {
             return;
         }
-        var observer = new ResizeObserver(scheduleSync);
+        resizeObserver = new ResizeObserver(scheduleSync);
         var containers = document.querySelectorAll('.mining-queue-card, .mining-queue-run, .mining-queue-upcoming-list li');
         for (var containerIndex = 0; containerIndex < containers.length; containerIndex += 1) {
-            observer.observe(containers[containerIndex]);
+            resizeObserver.observe(containers[containerIndex]);
         }
     }
 
-    observeQueuedStatusVisibility();
+    function init(options) {
+        options = options || {};
+        clearTimers();
+        disconnectObserver();
 
-    var cells = document.querySelectorAll('.miningqueuetime[data-seconds-left]');
-    for (var cellIndex = 0; cellIndex < cells.length; cellIndex += 1) {
-        startTimer(cells[cellIndex]);
+        var robotAreaSelects = document.querySelectorAll('.mining-queue-card select[name^="miningArea"]');
+        for (var selectIndex = 0; selectIndex < robotAreaSelects.length; selectIndex += 1) {
+            updateRobotEnqueueState(robotAreaSelects[selectIndex]);
+        }
+
+        var forms = document.querySelectorAll('.mining-queue-card');
+        for (var formIndex = 0; formIndex < forms.length; formIndex += 1) {
+            updateClearButtonLabel(forms[formIndex]);
+        }
+
+        observeQueuedStatusVisibility();
+
+        var cells = document.querySelectorAll('.miningqueuetime[data-seconds-left]');
+        for (var cellIndex = 0; cellIndex < cells.length; cellIndex += 1) {
+            startTimer(cells[cellIndex]);
+        }
+
+        if (!options.skipRestore) {
+            try {
+                restoreAreaSelectionsFromStorage();
+            } catch (error) {
+            }
+        }
     }
+
+    document.addEventListener('change', function(event) {
+        var checkbox = event.target.closest('.mining-queue-item-check');
+        if (checkbox) {
+            var checkboxForm = checkbox.closest('.mining-queue-card');
+            if (checkboxForm) {
+                updateClearButtonLabel(checkboxForm);
+            }
+            return;
+        }
+
+        var robotSelect = event.target.closest('.mining-queue-card select[name^="miningArea"]');
+        if (!robotSelect) {
+            return;
+        }
+        var areaId = robotSelect.value;
+        updateRobotEnqueueState(robotSelect);
+        if (inspectorSelect && areaId) {
+            inspectorSelect.value = areaId;
+            syncInspectorArea(areaId);
+        } else {
+            writeStoredAreaSelections();
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        var removeButton = event.target.closest('.mining-queue-remove-btn');
+        if (removeButton) {
+            event.preventDefault();
+            removeQueuedRun(removeButton);
+            return;
+        }
+        var clearButton = event.target.closest('.mining-queue-clear-btn');
+        if (clearButton) {
+            event.preventDefault();
+            clearQueuedRuns(clearButton);
+        }
+    });
+
+    document.addEventListener('submit', function(event) {
+        var form = event.target.closest('.mining-queue-card');
+        if (!form || form.tagName !== 'FORM') {
+            return;
+        }
+        event.preventDefault();
+        var formData = new FormData(form);
+        if (event.submitter && event.submitter.name) {
+            formData.set(event.submitter.name, event.submitter.value);
+        }
+        fetchFragment('POST', buildFragmentUrl(), formData).catch(function() {
+            form.submit();
+        });
+    });
+
+    if (inspectorSelect) {
+        inspectorSelect.addEventListener('change', function() {
+            syncInspectorArea(inspectorSelect.value);
+        });
+    }
+
+    init();
+
+    window.RoboMinerMiningQueuePage = {
+        FRAGMENT_PARAM: FRAGMENT_PARAM,
+        REFRESH_DEBOUNCE_MS: REFRESH_DEBOUNCE_MS,
+        applyFragment: applyFragment,
+        buildFragmentUrl: buildFragmentUrl,
+        init: init,
+        refreshQueue: refreshQueue,
+        performRefresh: performRefresh
+    };
 })();
