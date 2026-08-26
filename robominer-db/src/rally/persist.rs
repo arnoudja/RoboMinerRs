@@ -68,9 +68,10 @@ pub async fn persist_completed_rally(
 
 /// Lock and lease the next ready rally queue for an area.
 ///
-/// Uses `FOR UPDATE OF MiningQueue SKIP LOCKED` so concurrent workers skip rows
-/// already locked. Sets `processingLeaseUntil` before commit so unlocked readers
-/// also skip in-flight work. Does not hold row locks across simulation.
+/// Uses `FOR UPDATE SKIP LOCKED` so concurrent workers skip rows already locked.
+/// Avoids MySQL-only `FOR UPDATE OF table` (unsupported on MariaDB). Sets
+/// `processingLeaseUntil` before commit so unlocked readers also skip in-flight
+/// work. Does not hold row locks across simulation.
 pub async fn claim_next_mining_rally_queue_for_area(
     pool: &MySqlPool,
     mining_area_id: i64,
@@ -104,7 +105,7 @@ pub async fn claim_next_mining_rally_queue_for_area(
                  AND prev.miningEndTime IS NULL \
            ) \
          ORDER BY secondsLeft, MiningQueue.id \
-         FOR UPDATE OF MiningQueue SKIP LOCKED",
+         FOR UPDATE SKIP LOCKED",
     )
     .bind(mining_area_id)
     .fetch_all(&mut *transaction)

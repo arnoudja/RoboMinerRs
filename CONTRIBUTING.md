@@ -245,7 +245,7 @@ domain, sim, or program.**
 ### Examples
 
 - **Rejection split:** `robominer_db::claim_achievement_step` returns `ClaimAchievementStepRejection`; web/engine use `robominer_domain::claim_achievement_step_rejection_message`.
-- **Sim pipeline:** engine `rally rallies` uses domain `load_next_rally_loadout_with_claim` (persist path) → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for claim/lease + persist stays in `robominer-db`. Concurrent workers use `FOR UPDATE SKIP LOCKED` leases and conditional `miningEndTime IS NULL` updates.
+- **Sim pipeline:** engine `rally rallies` uses domain `load_next_rally_loadout_with_claim` (persist path) → `run_rally_loadout_*` → `persist_rally_outcome`; SQL for claim/lease + persist stays in `robominer-db`. Concurrent workers use `FOR UPDATE SKIP LOCKED` (MariaDB-compatible; no MySQL-only `OF table`) leases and conditional `miningEndTime IS NULL` updates.
 - **Anti-pattern:** Calling `robominer_db::create_program_source` from web/engine and skipping domain drops verify-and-mark. Embedding `"Unknown robot"`-style strings inside db mutation modules likewise breaks the split. Returning `DomainError` from a page `list_*` loader (via `From<sqlx::Error>`) is the same anti-pattern—use `PageLoadError`.
 
 See also [User-facing rejection messages](#user-facing-rejection-messages) below and the layer table in [ACHIEVEMENTS.md](ACHIEVEMENTS.md).

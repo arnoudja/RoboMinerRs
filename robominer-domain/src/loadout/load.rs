@@ -95,8 +95,8 @@ pub async fn load_next_rally_loadout(
 
 /// Load the next ready rally, optionally claiming a processing lease first.
 ///
-/// When `claim` is true, queue rows are locked with `SKIP LOCKED` and leased so
-/// concurrent workers cannot simulate the same unfinished queues.
+/// When `claim` is true, queue rows are locked with `FOR UPDATE SKIP LOCKED` and
+/// leased so concurrent workers cannot simulate the same unfinished queues.
 pub async fn load_next_rally_loadout_with_claim(
     pool: &MySqlPool,
     mining_area_id: i64,
