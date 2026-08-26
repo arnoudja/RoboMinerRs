@@ -205,7 +205,7 @@ async fn mining_queue_fill_post_inserts_multiple_queue_items() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
-async fn mining_queue_remove_post_without_csrf_is_rejected() {
+async fn mining_queue_fragment_post_remove_without_csrf_is_rejected() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
@@ -215,7 +215,7 @@ async fn mining_queue_remove_post_without_csrf_is_rejected() {
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
-    let prefix = unique_prefix("rust-web-queue-csrf");
+    let prefix = unique_prefix("rust-web-queue-fragment-remove-csrf");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
     let user_id =
@@ -224,7 +224,14 @@ async fn mining_queue_remove_post_without_csrf_is_rejected() {
     let config = server_config(pool.clone());
 
     let login_response = login_with_credentials(&config, &username, &password).await;
+    assert_eq!(
+        login_response.status, 302,
+        "login should redirect after successful authentication"
+    );
     let cookie = cookie_header(&login_response);
+
+    let mut query = HashMap::new();
+    query.insert("fragment".to_string(), "queue".to_string());
 
     let mut form = HashMap::new();
     form.insert("submitType".to_string(), "remove".to_string());
@@ -242,11 +249,10 @@ async fn mining_queue_remove_post_without_csrf_is_rejected() {
         fixture.inner.mining_area_id.to_string(),
     );
 
-    let missing = route(
-        &post_request_without_csrf("/miningQueue", form.clone(), Some(&cookie)),
-        &config,
-    )
-    .await;
+    let mut missing_request =
+        post_request_without_csrf("/miningQueue", form.clone(), Some(&cookie));
+    missing_request.query = query.clone();
+    let missing = route(&missing_request, &config).await;
     assert_eq!(missing.status, 403);
     assert!(
         response_body(&missing).contains("CSRF"),
@@ -254,7 +260,9 @@ async fn mining_queue_remove_post_without_csrf_is_rejected() {
     );
 
     form.insert("csrfToken".to_string(), "not-a-valid-token".to_string());
-    let forged = route(&post_request("/miningQueue", form, Some(&cookie)), &config).await;
+    let mut forged_request = post_request_without_csrf("/miningQueue", form, Some(&cookie));
+    forged_request.query = query;
+    let forged = route(&forged_request, &config).await;
     assert_eq!(forged.status, 403);
 
     let remaining: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM MiningQueue WHERE id = ?")
@@ -751,7 +759,10 @@ async fn mining_queue_fragment_post_add_inserts_queue_item() {
     .fetch_one(&pool)
     .await
     .expect("failed to count mining queue rows");
-    assert_eq!(queue_count, 1, "expected one queue item after fragment add POST");
+    assert_eq!(
+        queue_count, 1,
+        "expected one queue item after fragment add POST"
+    );
 
     fixture.inner.cleanup(&pool, false).await;
 }
