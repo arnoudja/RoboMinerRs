@@ -123,6 +123,9 @@ fn account_rendering_preserves_form_contract_and_escapes_fields() {
             r#"<button type="submit" class="auth-submit">Save changes</button>"#,
             r#"class="auth-password-toggle""#,
             r#"src="js/common/password_toggle.js?v="#,
+            // Account reuses auth form chrome; both sheets must load.
+            r#"href="css/pages/auth.css?v="#,
+            r#"href="css/pages/account.css?v="#,
         ],
     );
     assert_html_not_contains(&html, r#"<table>"#);

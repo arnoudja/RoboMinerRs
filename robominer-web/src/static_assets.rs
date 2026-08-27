@@ -287,6 +287,22 @@ mod tests {
     }
 
     #[test]
+    fn account_stylesheet_defines_auth_tokens_for_shared_form_classes() {
+        assert!(
+            ACCOUNT_CSS.contains("--auth-border:"),
+            "account.css must define --auth-border so auth-card borders resolve outside .auth-page"
+        );
+        assert!(
+            ACCOUNT_CSS.contains("--auth-accent:"),
+            "account.css must define --auth-accent so auth-submit colors resolve outside .auth-page"
+        );
+        assert!(
+            ACCOUNT_CSS.contains("--auth-text-muted:"),
+            "account.css must define --auth-text-muted so auth field hints resolve outside .auth-page"
+        );
+    }
+
+    #[test]
     fn page_script_helpers_include_shared_modules_first() {
         let with_url = page_scripts_with_url_query("js/x.js", "x");
         assert!(with_url.contains("js/common/url_query.js?v="));

@@ -85,6 +85,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         &state.current_username,
         hud,
         &body,
-        &[PageStylesheet::Account],
+        // Auth form/control classes live in auth.css; account.css adds page chrome.
+        &[PageStylesheet::Auth, PageStylesheet::Account],
     )
 }
