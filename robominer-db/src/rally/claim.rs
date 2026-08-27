@@ -82,16 +82,32 @@ async fn load_claimed_ore_rewards(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     ore_rewards: HashMap<i64, i32>,
 ) -> Result<Vec<ClaimedOreRewardRecord>, sqlx::Error> {
-    let mut rewards: Vec<ClaimedOreRewardRecord> = Vec::new();
+    let positive: Vec<(i64, i32)> = ore_rewards
+        .into_iter()
+        .filter(|(_, reward)| *reward > 0)
+        .collect();
+    if positive.is_empty() {
+        return Ok(Vec::new());
+    }
 
-    for (ore_id, reward) in ore_rewards {
-        if reward <= 0 {
-            continue;
-        }
-        let ore_name: String = sqlx::query_scalar("SELECT oreName FROM Ore WHERE id = ?")
-            .bind(ore_id)
-            .fetch_one(&mut **transaction)
-            .await?;
+    let ore_ids: Vec<i64> = positive.iter().map(|(ore_id, _)| *ore_id).collect();
+    let placeholders = vec!["?"; ore_ids.len()].join(", ");
+    let query = format!("SELECT id, oreName FROM Ore WHERE id IN ({placeholders})");
+    let mut query_builder = sqlx::query_as::<_, (i64, String)>(&query);
+    for ore_id in &ore_ids {
+        query_builder = query_builder.bind(ore_id);
+    }
+    let names: HashMap<i64, String> = query_builder
+        .fetch_all(&mut **transaction)
+        .await?
+        .into_iter()
+        .collect();
+
+    let mut rewards: Vec<ClaimedOreRewardRecord> = Vec::with_capacity(positive.len());
+    for (ore_id, reward) in positive {
+        let Some(ore_name) = names.get(&ore_id).cloned() else {
+            return Err(sqlx::Error::RowNotFound);
+        };
         rewards.push(ClaimedOreRewardRecord {
             ore_id,
             ore_name,
