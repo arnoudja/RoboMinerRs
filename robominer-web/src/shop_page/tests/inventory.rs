@@ -119,6 +119,10 @@ fn shop_inventory_sorts_sellable_parts_first() {
         &html,
         r#"class="shop-action-form shop-sell-all-form" data-unassigned-count="2""#,
     );
+    assert_html_contains(
+        &html,
+        r#"<div class="shop-inventory-table-wrap"><table class="shop-inventory-table">"#,
+    );
 }
 
 #[test]

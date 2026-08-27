@@ -14,7 +14,7 @@ pub(super) fn render_shop_inventory(
     body.push_str(r#"<h2 id="shop-inventory-title" class="shop-section-title">Owned items</h2>"#);
     render_shop_sell_all_action(body, state);
     body.push_str("</div>");
-    body.push_str(r#"<table class="shop-inventory-table"><thead><tr><th>Item name</th><th>Quality</th><th>Amount</th><th>Unassigned</th><th></th></tr></thead><tbody>"#);
+    body.push_str(r#"<div class="shop-inventory-table-wrap"><table class="shop-inventory-table"><thead><tr><th>Item name</th><th>Quality</th><th>Amount</th><th>Unassigned</th><th></th></tr></thead><tbody>"#);
 
     let mut owned_rows: Vec<(
         &robominer_db::ShopRobotPartCatalogRecord,
@@ -54,7 +54,7 @@ pub(super) fn render_shop_inventory(
         }
     }
 
-    body.push_str("</tbody></table>");
+    body.push_str("</tbody></table></div>");
     body.push_str("</section>");
 }
 
