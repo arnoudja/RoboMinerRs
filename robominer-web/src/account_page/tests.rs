@@ -134,9 +134,12 @@ fn account_password_mismatch_message_is_distinct_from_invalid_password() {
         account_password_mismatch_message(),
         "The passwords do not match."
     );
-    assert_ne!(account_password_mismatch_message()(
-        robominer_db::UpdateUserAccountRejection::InvalidPassword
-    ));
+    assert_ne!(
+        account_password_mismatch_message(),
+        robominer_domain::rejection_messages::update_user_account_rejection_player_message(
+            robominer_db::UpdateUserAccountRejection::InvalidPassword
+        )
+    );
 }
 
 #[test]
