@@ -1,4 +1,4 @@
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 use crate::robot_page::RobotPageState;
 
 pub(super) fn render_robot_summary(body: &mut String, robot_count: usize, pending_count: usize) {
@@ -63,7 +63,7 @@ pub(super) fn render_robot_fleet_card(
     ));
     body.push_str(&format!(
         r#"<span class="robot-fleet-heading"><span class="robot-fleet-name">{}</span><span class="robot-fleet-status {status_class}">{status_label}</span></span>"#,
-        escape_html(&robot.robot_name)
+        EscapedHtml::from_untrusted(&robot.robot_name)
     ));
     body.push_str(&format!(
         r#"<span class="robot-fleet-highlights"><span>Ore {}</span><span>Turns {}</span><span>Scan {}</span></span>"#,

@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub(crate) fn selected_attr(selected: bool) -> &'static str {
     if selected { " selected" } else { "" }
 }
@@ -9,6 +11,37 @@ pub(crate) fn escape_html(value: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
+}
+
+/// HTML text/attribute content that has already been escaped.
+///
+/// Construct with [`EscapedHtml::from_untrusted`] (or `From<&str>`) so callers
+/// cannot accidentally embed raw user/robot/ore names.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct EscapedHtml(String);
+
+impl EscapedHtml {
+    pub(crate) fn from_untrusted(value: &str) -> Self {
+        Self(escape_html(value))
+    }
+}
+
+impl fmt::Display for EscapedHtml {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl From<&str> for EscapedHtml {
+    fn from(value: &str) -> Self {
+        Self::from_untrusted(value)
+    }
+}
+
+impl From<String> for EscapedHtml {
+    fn from(value: String) -> Self {
+        Self::from_untrusted(&value)
+    }
 }
 
 pub(crate) fn format_utc_millis(millis: i64) -> String {
@@ -100,4 +133,15 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     year += if month <= 2 { 1 } else { 0 };
 
     (year, month, day)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn escaped_html_escapes_untrusted_input_on_display() {
+        let escaped = EscapedHtml::from_untrusted(r#"A <b> "&'"#);
+        assert_eq!(escaped.to_string(), "A &lt;b&gt; &quot;&amp;&#39;");
+    }
 }

@@ -1,5 +1,5 @@
 use crate::edit_code_page::EditCodeProgramSource;
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 use super::default_edit_code_program_source;
 
@@ -23,7 +23,7 @@ pub(super) fn render_edit_code_program_card(
     ));
     body.push_str(&format!(
         r#"<span class="edit-code-program-heading"><span class="edit-code-program-name">{}</span><span class="edit-code-program-status {status_class}">{status_label}</span></span>"#,
-        escape_html(&program.source_name)
+        EscapedHtml::from_untrusted(&program.source_name)
     ));
     body.push_str(&format!(
         r#"<span class="edit-code-program-highlights"><span>Size {}</span><span>Robots {}</span></span>"#,

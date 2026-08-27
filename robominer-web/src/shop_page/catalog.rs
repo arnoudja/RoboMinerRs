@@ -6,7 +6,7 @@ use super::helpers::{
     shop_total_cost,
 };
 use super::{ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID};
-use crate::html::{escape_html, format_ore_shortfall, format_period};
+use crate::html::{EscapedHtml, escape_html, format_ore_shortfall, format_period};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, render_mining_area_atlas_ore_link};
 
 pub(super) fn render_shop_part_compact_card(
@@ -148,7 +148,7 @@ pub(super) fn render_shop_part_detail_panel(
         let user_amount = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
         body.push_str(&format!(
             r#"<li><span>{}: {}</span><span class="{}">({})</span>{}</li>"#,
-            escape_html(&cost.ore_name),
+            EscapedHtml::from_untrusted(&cost.ore_name),
             cost.amount,
             if user_amount >= cost.amount {
                 "sufficientbalance"

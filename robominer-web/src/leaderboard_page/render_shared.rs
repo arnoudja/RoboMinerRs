@@ -1,5 +1,5 @@
 use super::{LEADERBOARD_MAX_LIMIT, LeaderboardQuery};
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, escape_html};
 
 pub(super) fn leaderboard_activity_area_href(area_id: i64) -> String {
     format!("activity?areaId={area_id}")
@@ -73,7 +73,7 @@ pub(super) fn render_leaderboard_owner_cell(
         } else {
             ""
         },
-        escape_html(username),
+        EscapedHtml::from_untrusted(username),
         you_badge,
     ));
 }
@@ -104,8 +104,8 @@ pub(super) fn render_leaderboard_player_cell(
         } else {
             ""
         },
-        escape_html(&href),
-        escape_html(username),
+        EscapedHtml::from_untrusted(&href),
+        EscapedHtml::from_untrusted(username),
         you_badge,
     ));
 }
