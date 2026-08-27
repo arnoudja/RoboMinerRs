@@ -189,7 +189,7 @@ async fn load_account_page_state(
                     username = submitted_username;
                     email = submitted_email;
                     error_message =
-                        Some(update_user_account_rejection_message(rejection).to_string());
+                        Some(robominer_domain::rejection_messages::update_user_account_rejection_player_message(rejection).to_string());
                 }
             }
         }
@@ -207,12 +207,6 @@ async fn load_account_page_state(
 
 pub(super) fn account_password_mismatch_message() -> &'static str {
     "The passwords do not match."
-}
-
-pub(super) fn update_user_account_rejection_message(
-    rejection: robominer_db::UpdateUserAccountRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::update_user_account_rejection_player_message(rejection)
 }
 
 mod render;

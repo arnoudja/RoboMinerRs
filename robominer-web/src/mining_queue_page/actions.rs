@@ -71,7 +71,7 @@ pub(super) fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<S
     if batch.failed > 0 {
         let detail = batch
             .last_rejection
-            .map(super::cancel_mining_rejection_message)
+            .map(robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message)
             .unwrap_or("Unable to cancel mining queue item.");
         if batch.cleared == 0 && batch.skipped == 0 {
             parts.push(detail.to_string());

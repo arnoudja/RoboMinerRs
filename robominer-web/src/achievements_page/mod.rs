@@ -77,7 +77,9 @@ async fn load_achievements_state(
             Ok(_) => Some("Achievement claimed".to_string()),
             Err(rejection) => Some(format!(
                 "Unable to claim achievement: {}",
-                claim_achievement_step_rejection_message(rejection)
+                robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
+                    rejection
+                )
             )),
         }
     } else {
@@ -149,12 +151,6 @@ async fn load_achievements_overview(
         .await?,
         claim_message: None,
     })
-}
-
-pub(super) fn claim_achievement_step_rejection_message(
-    rejection: robominer_db::ClaimAchievementStepRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::claim_achievement_step_rejection_message(rejection)
 }
 
 mod card;

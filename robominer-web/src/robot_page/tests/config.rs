@@ -1,7 +1,7 @@
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
 use super::super::render::render_robot_page;
-use super::super::{robot_apply_block_reason, update_robot_config_rejection_message};
+use super::super::robot_apply_block_reason;
 use super::fixtures::sample_robot_state;
 
 #[test]
@@ -77,19 +77,19 @@ fn robot_apply_block_reason_matches_server_rejections() {
 #[test]
 fn robot_update_rejection_messages_are_user_facing() {
     assert_eq!(
-        update_robot_config_rejection_message(
+        robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
             robominer_db::UpdateRobotConfigRejection::ChangeAlreadyPending
         ),
         "Changes are already pending for this robot."
     );
     assert_eq!(
-        update_robot_config_rejection_message(
+        robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
             robominer_db::UpdateRobotConfigRejection::ProgramTooLarge
         ),
         "Not enough memory available."
     );
     assert_eq!(
-        update_robot_config_rejection_message(
+        robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
             robominer_db::UpdateRobotConfigRejection::NoUnassignedRobotPart
         ),
         "No unassigned robot part is available."

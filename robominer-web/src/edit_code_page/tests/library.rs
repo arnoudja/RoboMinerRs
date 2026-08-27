@@ -1,4 +1,4 @@
-use super::super::{program_source_write_rejection_message, selected_edit_code_source};
+use super::super::selected_edit_code_source;
 
 #[test]
 fn edit_code_new_program_selection_does_not_fall_back_to_first_source() {
@@ -68,19 +68,19 @@ fn edit_code_create_selection_prefers_created_source_id() {
 #[test]
 fn edit_code_rejection_messages_are_user_facing() {
     assert_eq!(
-        program_source_write_rejection_message(
+        robominer_domain::rejection_messages::program_source_write_rejection_player_message(
             robominer_db::ProgramSourceWriteRejection::SourceInUse
         ),
         "Unable to delete program source because it is used by a robot."
     );
     assert_eq!(
-        program_source_write_rejection_message(
+        robominer_domain::rejection_messages::program_source_write_rejection_player_message(
             robominer_db::ProgramSourceWriteRejection::EmptySourceName
         ),
         "Program name may not be empty."
     );
     assert_eq!(
-        program_source_write_rejection_message(
+        robominer_domain::rejection_messages::program_source_write_rejection_player_message(
             robominer_db::ProgramSourceWriteRejection::EmptySourceCode
         ),
         "Program source may not be empty."

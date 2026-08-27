@@ -1,7 +1,6 @@
 use crate::html::{assert_contains_all, assert_html_contains};
 
 use super::super::render::render_shop_page;
-use super::super::robot_part_transaction_rejection_message;
 use super::fixtures::sample_shop_state;
 
 #[test]
@@ -151,13 +150,13 @@ fn shop_sell_all_unassigned_is_disabled_without_stock() {
 #[test]
 fn shop_transaction_rejection_messages_match_engine_output() {
     assert_eq!(
-        robot_part_transaction_rejection_message(
+        robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
             robominer_db::RobotPartTransactionRejection::InsufficientFunds
         ),
         "insufficient funds to pay robot part costs"
     );
     assert_eq!(
-        robot_part_transaction_rejection_message(
+        robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
             robominer_db::RobotPartTransactionRejection::NoUnassignedRobotPart
         ),
         "no unassigned robot part is available"

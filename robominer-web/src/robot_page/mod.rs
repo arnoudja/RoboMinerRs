@@ -79,7 +79,9 @@ async fn load_robot_page_state(
         message = Some(if let Err(rejection) = result.into_result() {
             format!(
                 "Unable to apply robot changes: {}",
-                update_robot_config_rejection_message(rejection)
+                robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
+                    rejection
+                )
             )
         } else {
             "Robot changes queued".to_string()
@@ -122,10 +124,4 @@ pub(super) fn robot_apply_block_reason(
         return Some("Not enough memory available.");
     }
     None
-}
-
-pub(super) fn update_robot_config_rejection_message(
-    rejection: robominer_db::UpdateRobotConfigRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::update_robot_config_rejection_player_message(rejection)
 }

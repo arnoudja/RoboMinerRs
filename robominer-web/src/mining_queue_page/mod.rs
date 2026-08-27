@@ -123,7 +123,7 @@ async fn load_mining_queue_page_state(
                     .into_result()
                     {
                         error_message =
-                            Some(enqueue_mining_rejection_message(rejection).to_string());
+                            Some(robominer_domain::rejection_messages::enqueue_mining_rejection_player_message(rejection).to_string());
                     }
                 }
             }
@@ -228,16 +228,4 @@ pub(super) fn mining_queue_status_description(
         robominer_db::MiningQueueStatus::Queued => "Waiting for rally",
         robominer_db::MiningQueueStatus::Updating => "Finishing rally",
     }
-}
-
-pub(super) fn enqueue_mining_rejection_message(
-    rejection: robominer_db::EnqueueMiningRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::enqueue_mining_rejection_player_message(rejection)
-}
-
-pub(super) fn cancel_mining_rejection_message(
-    rejection: robominer_db::CancelMiningQueueRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message(rejection)
 }

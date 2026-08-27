@@ -11,10 +11,7 @@ use crate::session::format_authenticated_cookie;
 use crate::{Request, ServerConfig};
 
 use super::render::render_account_page;
-use super::{
-    AccountPageState, account_page, account_password_mismatch_message,
-    update_user_account_rejection_message,
-};
+use super::{AccountPageState, account_page, account_password_mismatch_message};
 
 fn authenticated_request(path: &str) -> Request {
     Request {
@@ -137,30 +134,27 @@ fn account_password_mismatch_message_is_distinct_from_invalid_password() {
         account_password_mismatch_message(),
         "The passwords do not match."
     );
-    assert_ne!(
-        account_password_mismatch_message(),
-        update_user_account_rejection_message(
-            robominer_db::UpdateUserAccountRejection::InvalidPassword
-        )
-    );
+    assert_ne!(account_password_mismatch_message()(
+        robominer_db::UpdateUserAccountRejection::InvalidPassword
+    ));
 }
 
 #[test]
 fn account_update_rejection_messages_match_legacy_copy() {
     assert_eq!(
-        update_user_account_rejection_message(
+        robominer_domain::rejection_messages::update_user_account_rejection_player_message(
             robominer_db::UpdateUserAccountRejection::DuplicateUsername
         ),
         "That username is already taken"
     );
     assert_eq!(
-        update_user_account_rejection_message(
+        robominer_domain::rejection_messages::update_user_account_rejection_player_message(
             robominer_db::UpdateUserAccountRejection::DuplicateEmail
         ),
         "Only one account per e-mail address is allowed"
     );
     assert_eq!(
-        update_user_account_rejection_message(
+        robominer_domain::rejection_messages::update_user_account_rejection_player_message(
             robominer_db::UpdateUserAccountRejection::InvalidPassword
         ),
         "Invalid password"

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::html::assert_html_contains;
 use crate::{ServerConfig, mutation_i64};
 
-use super::super::{achievements_page, claim_achievement_step_rejection_message};
+use super::super::achievements_page;
 use super::fixtures::{authenticated_request, form_request};
 
 #[tokio::test(flavor = "current_thread")]
@@ -37,13 +37,13 @@ fn form_fields_are_available_to_mutation_parser() {
 #[test]
 fn achievement_rejection_messages_match_engine_output() {
     assert_eq!(
-        claim_achievement_step_rejection_message(
+        robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
             robominer_db::ClaimAchievementStepRejection::RequirementsNotMet
         ),
         "achievement requirements are not met"
     );
     assert_eq!(
-        claim_achievement_step_rejection_message(
+        robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
             robominer_db::ClaimAchievementStepRejection::InvalidDefaultRobotConfiguration
         ),
         "invalid default robot configuration"

@@ -87,7 +87,9 @@ async fn load_shop_state(
                 Ok(_) => "Robot part bought".to_string(),
                 Err(rejection) => format!(
                     "Unable to buy robot part: {}",
-                    robot_part_transaction_rejection_message(rejection)
+                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
+                        rejection
+                    )
                 ),
             },
         );
@@ -106,7 +108,9 @@ async fn load_shop_state(
                 }
                 Err(rejection) => format!(
                     "Unable to sell robot parts: {}",
-                    robot_part_transaction_rejection_message(rejection)
+                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
+                        rejection
+                    )
                 ),
             },
         );
@@ -125,7 +129,9 @@ async fn load_shop_state(
                 Ok(_) => "Robot part sold".to_string(),
                 Err(rejection) => format!(
                     "Unable to sell robot part: {}",
-                    robot_part_transaction_rejection_message(rejection)
+                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
+                        rejection
+                    )
                 ),
             },
         );
@@ -194,12 +200,6 @@ fn resolve_selected_part_id(
         .map(|part| part.robot_part_id)
         .or_else(|| parts.first().map(|part| part.robot_part_id))
         .unwrap_or(0)
-}
-
-pub(super) fn robot_part_transaction_rejection_message(
-    rejection: robominer_db::RobotPartTransactionRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(rejection)
 }
 
 mod catalog;

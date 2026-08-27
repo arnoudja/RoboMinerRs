@@ -135,7 +135,12 @@ pub(super) async fn process_login_request(
                 }
                 Err(rejection) => {
                     log_auth_failure(&ip, &new_username, "signup_rejected");
-                    Some(create_user_rejection_message(rejection).to_string())
+                    Some(
+                        robominer_domain::rejection_messages::create_user_rejection_player_message(
+                            rejection,
+                        )
+                        .to_string(),
+                    )
                 }
             }
         };
@@ -248,10 +253,4 @@ pub(super) fn signup_password_mismatch_message() -> &'static str {
 
 fn signup_disabled_message() -> &'static str {
     "Sign up is not available on this server."
-}
-
-pub(super) fn create_user_rejection_message(
-    rejection: robominer_db::CreateUserRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::create_user_rejection_player_message(rejection)
 }

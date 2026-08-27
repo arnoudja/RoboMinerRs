@@ -88,7 +88,7 @@ async fn load_edit_code_page_state(
                 {
                     message = Some(format!(
                         "Unable to delete program: {}",
-                        program_source_write_rejection_message(rejection)
+                        robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
                     ));
                 } else {
                     next_program_source_id = None;
@@ -114,7 +114,7 @@ async fn load_edit_code_page_state(
                     {
                         message = Some(format!(
                             "Unable to save program: {}",
-                            program_source_write_rejection_message(rejection)
+                            robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
                         ));
                     } else {
                         let applied = robominer_db::apply_verified_program_source_to_idle_robots(
@@ -159,7 +159,7 @@ async fn load_edit_code_page_state(
                         Err(rejection) => {
                             message = Some(format!(
                                 "Unable to save program: {}",
-                                program_source_write_rejection_message(rejection)
+                                robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
                             ));
                         }
                     }
@@ -262,12 +262,6 @@ pub(super) fn default_edit_code_program_source() -> EditCodeProgramSource {
         linked_robot_count: 0,
         verified: false,
     }
-}
-
-pub(super) fn program_source_write_rejection_message(
-    rejection: robominer_db::ProgramSourceWriteRejection,
-) -> &'static str {
-    robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
 }
 
 mod editor;
