@@ -147,8 +147,8 @@ pub async fn claim_next_mining_rally_queue_for_area(
 pub async fn list_next_claim_rally_candidates(
     pool: &MySqlPool,
 ) -> Result<Vec<crate::NextClaimRallyCandidate>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i32, i32)>(
-        "SELECT MiningQueue.miningAreaId, \
+    sqlx::query_as::<_, (i64, i64, i32, i32)>(
+        "SELECT MiningQueue.miningAreaId, Robot.userId, \
                 GREATEST( \
                     0, \
                     COALESCE(TIMESTAMPDIFF(SECOND, NOW(), Robot.miningEndTime), 0), \
@@ -176,13 +176,14 @@ pub async fn list_next_claim_rally_candidates(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_area_id, busy_seconds, seconds_left)| crate::NextClaimRallyCandidate {
+            .map(|(mining_area_id, user_id, busy_seconds, seconds_left)| {
+                crate::NextClaimRallyCandidate {
                     mining_area_id,
+                    user_id,
                     busy_seconds,
                     seconds_left,
-                },
-            )
+                }
+            })
             .collect()
     })
 }

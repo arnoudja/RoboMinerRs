@@ -519,10 +519,19 @@ async fn claim_next_mining_rally_leases_at_most_rally_size() {
 
     let mut queue_ids = Vec::new();
     let mut robot_ids = Vec::new();
+    let mut user_ids = Vec::new();
     for index in 0..6 {
+        let owner_id = insert_test_user(
+            &pool,
+            &format!("{prefix}-user-{index}"),
+            &format!("{prefix}-{index}@example.invalid"),
+            "test-password",
+        )
+        .await;
+        user_ids.push(owner_id);
         let robot_id = insert_robot(
             &pool,
-            user_id,
+            owner_id,
             &format!("{prefix}-robot-{index}"),
             "mine();",
         )
@@ -600,6 +609,9 @@ async fn claim_next_mining_rally_leases_at_most_rally_size() {
             .bind(robot_id)
             .execute(&pool)
             .await;
+    }
+    for owner_id in user_ids {
+        cleanup_created_user(&pool, owner_id).await;
     }
     cleanup_created_user(&pool, user_id).await;
 }
