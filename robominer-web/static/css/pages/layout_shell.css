@@ -369,6 +369,20 @@ div.interface {
     color: #b8d4ff;
 }
 
+.app-shell-logoff-form {
+    display: block;
+    margin: 0;
+}
+
+.app-shell-logoff-button {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+}
+
 .app-shell-footer {
     background: var(--shell-bg-footer);
     border-top: 1px solid var(--shell-border);

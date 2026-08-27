@@ -5,7 +5,7 @@ use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_con
 use crate::{Request, ServerConfig};
 
 use super::process::{
-    auth_redirect_response, create_user_rejection_message, login_failure_message, remember_cookie,
+    auth_redirect_response, login_failure_message, remember_cookie,
     signup_password_mismatch_message,
 };
 use super::render::render_login_page;
@@ -23,8 +23,36 @@ fn request(path: &str) -> Request {
 }
 
 #[test]
-fn logoff_route_expires_session_cookies() {
-    let response = logoff_page();
+fn get_logoff_page_does_not_expire_session_cookies() {
+    let response = logoff_page(&request("/logoff"));
+    let cookie_headers: Vec<_> = response
+        .headers
+        .iter()
+        .filter(|(name, _)| *name == "Set-Cookie")
+        .map(|(_, value)| value.as_str())
+        .collect();
+
+    assert_eq!(response.status, 200);
+    assert!(
+        cookie_headers.is_empty(),
+        "GET /logoff must not emit Set-Cookie clears"
+    );
+
+    let body = String::from_utf8(response.body).expect("body should be utf-8");
+    assert_contains_all(
+        &body,
+        &[
+            r#"class="auth-page auth-logoff-page""#,
+            r#"href="login">Log in again</a>"#,
+        ],
+    );
+}
+
+#[test]
+fn post_logoff_without_session_expires_legacy_cookies() {
+    let mut request = request("/logoff");
+    request.method = "POST".to_string();
+    let response = logoff_page(&request);
     let cookie_headers: Vec<_> = response
         .headers
         .iter()
@@ -49,18 +77,10 @@ fn logoff_route_expires_session_cookies() {
             .any(|header| header.starts_with("robominer_username=;"))
     );
     assert!(
-        cookie_headers
+        !cookie_headers
             .iter()
-            .any(|header| header.starts_with("JSESSIONID=;"))
-    );
-
-    let body = String::from_utf8(response.body).expect("body should be utf-8");
-    assert_contains_all(
-        &body,
-        &[
-            r#"class="auth-page auth-logoff-page""#,
-            r#"href="login">Log in again</a>"#,
-        ],
+            .any(|header| header.starts_with("JSESSIONID=;")),
+        "JSESSIONID clear is legacy Java noise and should be removed"
     );
 }
 
@@ -251,22 +271,30 @@ fn signup_password_mismatch_message_is_distinct_from_invalid_password() {
     );
     assert_ne!(
         signup_password_mismatch_message(),
-        create_user_rejection_message(robominer_db::CreateUserRejection::InvalidPassword)
+        robominer_domain::rejection_messages::create_user_rejection_player_message(
+            robominer_db::CreateUserRejection::InvalidPassword
+        )
     );
 }
 
 #[test]
 fn signup_rejection_messages_match_legacy_copy() {
     assert_eq!(
-        create_user_rejection_message(robominer_db::CreateUserRejection::DuplicateUsername),
+        robominer_domain::rejection_messages::create_user_rejection_player_message(
+            robominer_db::CreateUserRejection::DuplicateUsername
+        ),
         "Username already taken, please choose another one"
     );
     assert_eq!(
-        create_user_rejection_message(robominer_db::CreateUserRejection::DuplicateEmail),
+        robominer_domain::rejection_messages::create_user_rejection_player_message(
+            robominer_db::CreateUserRejection::DuplicateEmail
+        ),
         "You already have an account, please login using your e-mail address"
     );
     assert_eq!(
-        create_user_rejection_message(robominer_db::CreateUserRejection::InvalidPassword),
+        robominer_domain::rejection_messages::create_user_rejection_player_message(
+            robominer_db::CreateUserRejection::InvalidPassword
+        ),
         "The password doesn't meet the requirements"
     );
 }

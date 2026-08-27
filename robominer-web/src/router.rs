@@ -2,7 +2,7 @@ use crate::Request;
 use crate::session::{self, session_clear_cookie_header};
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page, health,
-    help_page, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
+    help_pages, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
     mining_results_page, query_i64, rally_pages, request_user_id, robot_page, robot_stats_page,
     shop_page, static_files,
 };
@@ -15,38 +15,61 @@ pub async fn route(request: &Request, config: &ServerConfig) -> Response {
     }
 
     let mut request = request.clone();
-    let clear_stale_session = match config.database_pool.as_ref() {
+    let session_strip = match config.database_pool.as_ref() {
         Some(pool) => strip_stale_session_cookie(&mut request, pool).await,
-        None => false,
+        None => SessionStrip::Keep,
     };
 
     let mut response = dispatch(&request, config).await;
-    if clear_stale_session {
+    if matches!(session_strip, SessionStrip::InvalidatePermanently) {
         response = clear_stale_session_cookies(response);
     }
     response
 }
 
-async fn strip_stale_session_cookie(request: &mut Request, pool: &robominer_db::MySqlPool) -> bool {
-    let Some(session) = session::session_from_request(request) else {
-        return false;
-    };
+/// How to treat the request session after checking `User.sessionVersion`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SessionStrip {
+    /// Session matches DB (or no session cookie).
+    Keep,
+    /// Version mismatch / unknown user: strip request cookie and clear via Set-Cookie.
+    InvalidatePermanently,
+    /// DB lookup failed: strip request auth for this request only (do not clear cookie).
+    TreatAsAnonymous,
+}
 
-    let Ok(current_version) = robominer_db::get_user_session_version(pool, session.user_id).await
-    else {
-        // Fail open on transient DB errors so a blip does not mass-log everyone out.
-        return false;
-    };
-
-    let session_valid = current_version == Some(session.session_version);
-    if session_valid {
-        return false;
+/// Map a session-version lookup to a strip action. `Err` means the DB was unreachable.
+fn session_strip_for_version_lookup(
+    lookup: Result<Option<i32>, ()>,
+    session_version: i32,
+) -> SessionStrip {
+    match lookup {
+        Err(()) => SessionStrip::TreatAsAnonymous,
+        Ok(current) if current == Some(session_version) => SessionStrip::Keep,
+        Ok(_) => SessionStrip::InvalidatePermanently,
     }
+}
 
-    if let Some(cookies) = request.headers.get_mut("cookie") {
+async fn strip_stale_session_cookie(
+    request: &mut Request,
+    pool: &robominer_db::MySqlPool,
+) -> SessionStrip {
+    let Some(session) = session::session_from_request(request) else {
+        return SessionStrip::Keep;
+    };
+
+    let lookup = robominer_db::get_user_session_version(pool, session.user_id)
+        .await
+        .map_err(|_| ());
+    let action = session_strip_for_version_lookup(lookup, session.session_version);
+    if matches!(
+        action,
+        SessionStrip::InvalidatePermanently | SessionStrip::TreatAsAnonymous
+    ) && let Some(cookies) = request.headers.get_mut("cookie")
+    {
         *cookies = strip_named_cookie(cookies, "robominer_session");
     }
-    true
+    action
 }
 
 fn strip_named_cookie(cookies: &str, name: &str) -> String {
@@ -107,26 +130,26 @@ async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
         "/activity" | "/Activity" => rally_pages::activity_page(request, config).await,
         "/editCode" | "/EditCode" => edit_code_page::edit_code_page(request, config).await,
         "/help" | "/Help" => {
-            help_page::help_page(request, config, request.query.contains_key("welcome")).await
+            help_pages::help_page(request, config, request.query.contains_key("welcome")).await
         }
         "/helpTutorial" | "/help_tutorial.html" => {
-            help_page::help_text_page(request, config, "helpTutorial", query_i64(request, "step"))
+            help_pages::help_text_page(request, config, "helpTutorial", query_i64(request, "step"))
                 .await
         }
         "/helpProgramTips" | "/help_programtips.html" => {
-            help_page::help_text_page(request, config, "helpProgramTips", None).await
+            help_pages::help_text_page(request, config, "helpProgramTips", None).await
         }
         "/helpRobotProgram" | "/help_robotprogram.html" => {
-            help_page::help_text_page(request, config, "helpRobotProgram", None).await
+            help_pages::help_text_page(request, config, "helpRobotProgram", None).await
         }
         "/helpMechanics" | "/help_mechanics.html" => {
-            help_page::help_text_page(request, config, "helpMechanics", None).await
+            help_pages::help_text_page(request, config, "helpMechanics", None).await
         }
         "/leaderboard" | "/Leaderboard" => {
             leaderboard_page::leaderboard_page(request, config).await
         }
         "/login" | "/Login" => auth_pages::login_page(request, config).await,
-        "/logoff" | "/Logoff" => auth_pages::logoff_page(),
+        "/logoff" | "/Logoff" => auth_pages::logoff_page(request),
         "/miningQueue" | "/MiningQueue" => {
             mining_queue_page::mining_queue_page(request, config).await
         }
@@ -153,7 +176,35 @@ mod tests {
     use crate::static_files::static_file_path;
     use crate::{Request, Response, ServerConfig};
 
-    use super::route;
+    use super::{SessionStrip, route, session_strip_for_version_lookup};
+
+    #[test]
+    fn session_strip_keeps_matching_version() {
+        assert_eq!(
+            session_strip_for_version_lookup(Ok(Some(3)), 3),
+            SessionStrip::Keep
+        );
+    }
+
+    #[test]
+    fn session_strip_invalidates_mismatched_or_missing_version() {
+        assert_eq!(
+            session_strip_for_version_lookup(Ok(Some(4)), 3),
+            SessionStrip::InvalidatePermanently
+        );
+        assert_eq!(
+            session_strip_for_version_lookup(Ok(None), 0),
+            SessionStrip::InvalidatePermanently
+        );
+    }
+
+    #[test]
+    fn session_strip_treats_db_errors_as_anonymous_without_permanent_clear() {
+        assert_eq!(
+            session_strip_for_version_lookup(Err(()), 1),
+            SessionStrip::TreatAsAnonymous
+        );
+    }
 
     fn request(path: &str) -> Request {
         let (path, query) = split_target(path);
@@ -273,7 +324,7 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn logoff_route_clears_session_cookie() {
+    async fn get_logoff_does_not_clear_session_cookie() {
         let config = ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
@@ -281,7 +332,56 @@ mod tests {
             trust_proxy: false,
         };
 
-        let response = route(&request("/logoff"), &config).await;
+        let response = route(&authenticated_request("/logoff"), &config).await;
+        let cookie_headers: Vec<_> = response
+            .headers
+            .iter()
+            .filter(|(name, _)| *name == "Set-Cookie")
+            .map(|(_, value)| value.as_str())
+            .collect();
+
+        assert_eq!(response.status, 200);
+        assert!(
+            !cookie_headers
+                .iter()
+                .any(|header| header.starts_with("robominer_session=; Max-Age=0;")),
+            "GET /logoff must not clear the session cookie"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn post_logoff_without_csrf_is_forbidden_when_authenticated() {
+        let config = ServerConfig {
+            static_root: PathBuf::from("robominer-web/static"),
+            database_pool: None,
+            allow_signup: true,
+            trust_proxy: false,
+        };
+
+        let mut request = authenticated_request("/logoff");
+        request.method = "POST".to_string();
+        let response = route(&request, &config).await;
+        assert_eq!(response.status, 403);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn post_logoff_with_csrf_clears_session_cookie() {
+        let config = ServerConfig {
+            static_root: PathBuf::from("robominer-web/static"),
+            database_pool: None,
+            allow_signup: true,
+            trust_proxy: false,
+        };
+
+        let cookie = format_authenticated_cookie(42, "Player");
+        let token = crate::csrf::csrf_token_from_cookie(&cookie).expect("csrf token");
+        let mut request = request_with_cookie("/logoff", &cookie);
+        request.method = "POST".to_string();
+        request
+            .form
+            .insert(crate::csrf::CSRF_FIELD_NAME.to_string(), token);
+
+        let response = route(&request, &config).await;
         let cookie_headers: Vec<_> = response
             .headers
             .iter()

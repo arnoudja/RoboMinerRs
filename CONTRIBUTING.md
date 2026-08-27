@@ -171,7 +171,7 @@ follow this layout: handlers and state in `mod.rs`, HTML in `render.rs`, pure te
 | Layer | Location | When to use |
 |-------|----------|-------------|
 | Page render/helpers | `robominer-web/src/<page>/tests.rs` | Pure HTML and helper logic; no live HTTP or DB |
-| Help content | `robominer-web/static/help/*.html` | Guide bodies loaded with `include_str!`; rendering in `help_pages/render.rs` |
+| Help content | `robominer-web/static/help/*.html` | Guide bodies loaded with `include_str!`; rendering in `help_pages/` |
 | HTTP + DB integration | `robominer-web/tests/*.rs` | POST/GET through `route()` with real MySQL |
 | Engine CLI integration | `robominer-engine/tests/*_db_cli.rs` | Subprocess `robominer-engine` against MySQL |
 | DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_robots.rs`, `db_migrate.rs`, `claim_golden.rs`) |
@@ -195,7 +195,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 |-----------------|-----------|--------|------------|-------|
 | `/` redirect | `router` tests | `web_db_smoke` | — | Logged-in → mining queue |
 | `/login`, signup | `auth_pages/tests.rs` | `login.rs` | `user_create_db_cli.rs`, `user_login_db_cli.rs` | Session cookie minted at login; signup POST covered |
-| `/logoff` | `auth_pages/tests.rs`, `router` | — | — | Router test clears session cookie |
+| `/logoff` | `auth_pages/tests.rs`, `router` | — | — | POST + CSRF clears session; GET shows page without clearing |
 | `/account` | `account_page` | `account_actions.rs` | `user_account_update_db_cli.rs` | Profile/password updates |
 | `/achievements` | `achievements_page` | `achievement_claim.rs` | `achievement_db_cli.rs` | Claim rewards |
 | `/editCode` | `edit_code_page/tests.rs` | `edit_code_actions.rs` | `program_source_db_cli.rs` | Create, apply, and delete sources |
@@ -206,7 +206,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/leaderboard` | `leaderboard_page/tests.rs` | `read_model_pages.rs` | `leaderboard_read_model_db_cli.rs` | |
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
 | `/activity` | `rally_pages/tests/` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
-| `/help*` | `help_page/tests.rs`, `help_pages/render.rs` | — | — | Route handler in `help_page/`; content/rendering in `help_pages/`; bodies in `static/help/` |
+| `/help*` | `help_pages/tests.rs`, `help_pages/render.rs` | — | — | Routes + content/rendering in `help_pages/`; bodies in `static/help/` |
 | Rally worker / claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs` | Background engine, not a page POST |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |
 | Simulation goldens | — | — | — | `robominer-domain/tests/rally_golden.rs`, `pool_golden.rs` |

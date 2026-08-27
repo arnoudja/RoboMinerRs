@@ -1,4 +1,4 @@
-use super::format::escape_html;
+use super::format::{EscapedHtml, escape_html};
 
 pub(super) fn app_shell_header(
     current_form: &str,
@@ -69,7 +69,7 @@ pub(super) fn app_shell_header(
         menu_link("activity", "activity", "Activity"),
         nav_link(current_form == "help", "help", "Help"),
         account_nav_link(current_form == "account", username),
-        r#"<li><a class="app-shell-link" href="logoff">Log off</a></li>"#,
+        r#"<li><form class="app-shell-logoff-form" action="logoff" method="post"><button type="submit" class="app-shell-link app-shell-logoff-button">Log off</button></form></li>"#,
     )
 }
 
@@ -103,10 +103,9 @@ fn account_nav_link(selected: bool, username: &str) -> String {
         ""
     };
 
+    let safe_username = EscapedHtml::from_untrusted(username);
     format!(
-        r#"<li><a class="{class_name} app-shell-account-link" href="account"{aria_current} title="{}"><span class="app-shell-account-label">Account</span><span class="app-shell-account-user">{}</span></a></li>"#,
-        escape_html(username),
-        escape_html(username)
+        r#"<li><a class="{class_name} app-shell-account-link" href="account"{aria_current} title="{safe_username}"><span class="app-shell-account-label">Account</span><span class="app-shell-account-user">{safe_username}</span></a></li>"#
     )
 }
 

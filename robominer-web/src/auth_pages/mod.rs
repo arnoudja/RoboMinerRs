@@ -1,4 +1,5 @@
 use crate::html::page_footer;
+use crate::request_helpers::{is_post, request_user_id};
 use crate::session;
 use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags};
 use crate::{Request, Response, ServerConfig};
@@ -14,7 +15,34 @@ pub(super) struct LoginPageState {
     pub(super) return_to: Option<String>,
 }
 
-pub(super) fn logoff_page() -> Response {
+pub(super) fn logoff_page(request: &Request) -> Response {
+    if is_post(request) {
+        if let Some(user_id) = request_user_id(request)
+            && let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id)
+        {
+            return response;
+        }
+        return logoff_response_clearing_cookies();
+    }
+
+    // GET must not clear cookies (logout CSRF). Show the page only.
+    logoff_html_response()
+}
+
+fn logoff_response_clearing_cookies() -> Response {
+    logoff_html_response()
+        .with_header("Set-Cookie", session::session_clear_cookie_header())
+        .with_header(
+            "Set-Cookie",
+            "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
+        )
+        .with_header(
+            "Set-Cookie",
+            "robominer_username=; Max-Age=0; Path=/; SameSite=Lax",
+        )
+}
+
+fn logoff_html_response() -> Response {
     Response::html(format!(
         r##"<!DOCTYPE html>
 <html lang="en">
@@ -37,16 +65,6 @@ pub(super) fn logoff_page() -> Response {
         render::render_logoff_body(),
         page_footer()
     ))
-    .with_header("Set-Cookie", session::session_clear_cookie_header())
-    .with_header(
-        "Set-Cookie",
-        "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
-    )
-    .with_header(
-        "Set-Cookie",
-        "robominer_username=; Max-Age=0; Path=/; SameSite=Lax",
-    )
-    .with_header("Set-Cookie", "JSESSIONID=; Max-Age=0; Path=/; HttpOnly")
 }
 
 pub(super) async fn login_page(request: &Request, config: &ServerConfig) -> Response {
