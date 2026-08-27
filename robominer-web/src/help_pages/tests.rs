@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::help_pages;
+use crate::help_pages::{self, help_page, help_text_page};
 use crate::html::{assert_contains_all, assert_html_not_contains};
 use crate::{Request, ServerConfig};
-
-use super::{help_page, help_text_page};
 
 fn request(path: &str) -> Request {
     let (path, query) = crate::http::split_target(path);

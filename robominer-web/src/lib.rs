@@ -15,7 +15,6 @@ mod auth_pages;
 mod csrf;
 mod edit_code_page;
 mod health;
-mod help_page;
 mod help_pages;
 mod html;
 mod http;
