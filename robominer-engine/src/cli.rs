@@ -374,6 +374,7 @@ pub(crate) enum RallyCommand {
         #[arg(long = "loop")]
         loop_mode: bool,
 
+        /// Maximum seconds between poll cycles; shortened when the next claimable rally is sooner.
         #[arg(long, default_value_t = 5)]
         sleep_seconds: u64,
 

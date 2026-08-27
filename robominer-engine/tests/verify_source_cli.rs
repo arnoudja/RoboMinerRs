@@ -481,6 +481,10 @@ fn run_rallies_help_documents_once_and_persist() {
         stdout.contains("--sleep-seconds"),
         "unexpected stdout:\n{stdout}"
     );
+    assert!(
+        stdout.to_lowercase().contains("maximum") || stdout.to_lowercase().contains("shortened"),
+        "help should document adaptive max poll interval\nstdout:\n{stdout}"
+    );
     assert!(stdout.contains("--persist"), "unexpected stdout:\n{stdout}");
     assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
 }

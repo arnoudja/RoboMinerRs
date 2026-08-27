@@ -96,3 +96,13 @@ pub struct MiningRallyQueueRecord {
     pub user_id: i64,
     pub seconds_left: i32,
 }
+
+/// Queue-head candidate for predicting when a rally becomes claimable.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NextClaimRallyCandidate {
+    pub mining_area_id: i64,
+    /// Seconds until the robot (and any processing lease) is free for claim.
+    pub busy_seconds: i32,
+    /// Engagement countdown used by claim readiness (`seconds_left`).
+    pub seconds_left: i32,
+}

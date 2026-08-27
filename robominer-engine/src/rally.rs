@@ -246,12 +246,15 @@ pub(crate) async fn run_rallies(
                 break;
             }
 
+            let sleep_seconds = next_poll_sleep_seconds(pool, options.sleep_seconds).await?;
+            tracing::info!(cycle, sleep_seconds, "Sleeping until next rally poll cycle");
+
             tokio::select! {
                 _ = shutdown.wait() => {
                     println!("Shutdown requested; exiting before next rally poll cycle");
                     break;
                 }
-                _ = tokio::time::sleep(std::time::Duration::from_secs(options.sleep_seconds)) => {}
+                _ = tokio::time::sleep(std::time::Duration::from_secs(sleep_seconds)) => {}
             }
         }
 
@@ -337,6 +340,19 @@ pub(crate) fn validate_run_rallies_options(options: &RunRalliesOptions) -> Resul
     );
 
     Ok(())
+}
+
+/// Max poll interval, shortened when the next claimable rally is sooner.
+async fn next_poll_sleep_seconds(
+    pool: &robominer_db::MySqlPool,
+    max_sleep_seconds: u64,
+) -> Result<u64> {
+    let candidates = robominer_db::list_next_claim_rally_candidates(pool)
+        .await
+        .context("failed to load next claim rally candidates")?;
+    let delay = robominer_domain::next_claimable_rally_delay_seconds(&candidates)
+        .unwrap_or(max_sleep_seconds);
+    Ok(delay.min(max_sleep_seconds))
 }
 
 struct RunRalliesSummary {

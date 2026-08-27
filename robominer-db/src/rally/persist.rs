@@ -111,12 +111,16 @@ pub async fn claim_next_mining_rally_queue_for_area(
     .fetch_all(&mut *transaction)
     .await?;
 
-    let queue_rows = mining_rally_queue_rows(rows);
+    let mut queue_rows = mining_rally_queue_rows(rows);
     let ready = !queue_rows.is_empty()
         && (queue_rows.len() >= rally_size || queue_rows[0].seconds_left < expiry_start_seconds);
     if !ready {
         transaction.rollback().await?;
         return Ok(None);
+    }
+
+    if queue_rows.len() > rally_size {
+        queue_rows.truncate(rally_size);
     }
 
     for row in &queue_rows {
@@ -133,6 +137,54 @@ pub async fn claim_next_mining_rally_queue_for_area(
 
     transaction.commit().await?;
     Ok(Some(queue_rows))
+}
+
+/// Queue heads across all areas for predicting the next claimable rally delay.
+///
+/// Includes robots that are still mining/recharging and rows with an active
+/// processing lease; callers use `busy_seconds` (lease + robot free times) to
+/// decide when each head becomes claimable.
+pub async fn list_next_claim_rally_candidates(
+    pool: &MySqlPool,
+) -> Result<Vec<crate::NextClaimRallyCandidate>, sqlx::Error> {
+    sqlx::query_as::<_, (i64, i32, i32)>(
+        "SELECT MiningQueue.miningAreaId, \
+                GREATEST( \
+                    0, \
+                    COALESCE(TIMESTAMPDIFF(SECOND, NOW(), Robot.miningEndTime), 0), \
+                    COALESCE(TIMESTAMPDIFF(SECOND, NOW(), Robot.rechargeEndTime), 0), \
+                    COALESCE(TIMESTAMPDIFF(SECOND, NOW(), MiningQueue.processingLeaseUntil), 0) \
+                ) AS busySeconds, \
+                TIMESTAMPDIFF(SECOND, NOW(), \
+                    TIMESTAMPADD(SECOND, MiningArea.miningTime, \
+                        IF(Robot.rechargeEndTime < MiningQueue.creationTime, \
+                           MiningQueue.creationTime, Robot.rechargeEndTime))) AS secondsLeft \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
+         WHERE MiningQueue.miningEndTime IS NULL \
+           AND NOT EXISTS ( \
+               SELECT prev.id \
+               FROM MiningQueue prev \
+               WHERE prev.id < MiningQueue.id \
+                 AND prev.robotId = MiningQueue.robotId \
+                 AND prev.miningEndTime IS NULL \
+           ) \
+         ORDER BY MiningQueue.miningAreaId, busySeconds, secondsLeft, MiningQueue.id",
+    )
+    .fetch_all(pool)
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(
+                |(mining_area_id, busy_seconds, seconds_left)| crate::NextClaimRallyCandidate {
+                    mining_area_id,
+                    busy_seconds,
+                    seconds_left,
+                },
+            )
+            .collect()
+    })
 }
 
 async fn update_robot_for_completed_rally(

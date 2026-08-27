@@ -1,6 +1,7 @@
 mod ground;
 mod legacy_ore;
 mod load;
+mod next_claim;
 mod types;
 
 #[cfg(test)]
@@ -15,6 +16,7 @@ pub use load::{
     load_next_rally_loadout_with_claim, load_pool_loadout, load_robot_loadout,
     mining_rally_queue_is_ready,
 };
+pub use next_claim::next_claimable_rally_delay_seconds;
 pub use types::{
     MiningAreaLoadout, PoolItemLoadout, PoolLoadout, RallyLoadout, RallyQueueEntry, RobotLoadout,
     RobotLoadoutParts,
