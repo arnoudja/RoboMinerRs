@@ -67,6 +67,12 @@ impl<'a> PageSession<'a> {
         if let Some(response) = csrf::reject_invalid_csrf(request, user_id) {
             return Err(response);
         }
+        if crate::request_helpers::is_post(request)
+            && let Some(response) =
+                crate::rate_limit::reject_rate_limited_mutation(request, user_id)
+        {
+            return Err(response);
+        }
         let Some(pool) = config.database_pool.as_ref() else {
             return Err(Response::service_unavailable(missing_db_message));
         };
