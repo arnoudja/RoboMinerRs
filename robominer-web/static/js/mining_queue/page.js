@@ -1,6 +1,7 @@
 (function() {
     var FRAGMENT_PARAM = 'queue';
     var REFRESH_DEBOUNCE_MS = 300;
+    var CLAIM_REFRESH_BACKOFF_MS = [1000, 2000, 4000, 8000];
 
     var pageRoot = document.querySelector('.mining-queue-page');
     var STORAGE_KEY = pageRoot
@@ -12,6 +13,8 @@
     var refreshDebounceTimer = null;
     var refreshInFlight = false;
     var refreshPending = false;
+    var claimRefreshAttempt = 0;
+    var claimRefreshTimer = null;
     var inspectorSelect = document.getElementById('infoMiningAreaId');
 
     function readStoredAreaSelections() {
@@ -120,8 +123,77 @@
         }
     }
 
+    function applyHudFragment(hudSource) {
+        if (!hudSource) {
+            return;
+        }
+        var incomingHud = hudSource.querySelector('.app-shell-hud');
+        var hudTarget = document.querySelector('.app-shell-hud');
+        if (incomingHud) {
+            var hudParent = hudTarget && (hudTarget.parentNode || hudTarget.parent);
+            if (!hudParent) {
+                return;
+            }
+            hudTarget.outerHTML = incomingHud.outerHTML;
+            return;
+        }
+        var trimmed = (hudSource.innerHTML || '').trim();
+        if (!trimmed) {
+            return;
+        }
+        if (hudTarget) {
+            hudTarget.innerHTML = hudSource.innerHTML;
+        }
+    }
+
+    function walletSignature(root) {
+        var fragmentRoot = root || pageRoot || document;
+        var wallet = fragmentRoot.querySelector('.mining-queue-wallet');
+        var hud = document.querySelector('.app-shell-hud');
+        return [
+            wallet ? wallet.innerHTML : '',
+            hud ? hud.innerHTML : ''
+        ].join('\n');
+    }
+
+    function hasFinishingRuns(root) {
+        var fragmentRoot = root || pageRoot || document;
+        if (fragmentRoot.querySelector('.mining-queue-status-updating')) {
+            return true;
+        }
+        var timers = fragmentRoot.querySelectorAll('.miningqueuetime[data-refresh-on-complete="true"]');
+        for (var index = 0; index < timers.length; index += 1) {
+            var seconds = Number(timers[index].getAttribute('data-seconds-left'));
+            if (!isFinite(seconds) || seconds <= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function clearClaimRefreshTimer() {
+        if (claimRefreshTimer) {
+            window.clearTimeout(claimRefreshTimer);
+            claimRefreshTimer = null;
+        }
+    }
+
+    function scheduleClaimRefreshRetry() {
+        if (claimRefreshAttempt >= CLAIM_REFRESH_BACKOFF_MS.length) {
+            claimRefreshAttempt = 0;
+            return;
+        }
+        var delay = CLAIM_REFRESH_BACKOFF_MS[claimRefreshAttempt];
+        claimRefreshAttempt += 1;
+        clearClaimRefreshTimer();
+        claimRefreshTimer = window.setTimeout(function() {
+            claimRefreshTimer = null;
+            performRefresh({ forClaim: true });
+        }, delay);
+    }
+
     function applyFragment(html, root) {
-        var parser = new DOMParser();
+        var parser = new window.DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
         var fragmentRoot = root || pageRoot || document;
         var fragment = doc.getElementById('mining-queue-fragment');
@@ -130,10 +202,7 @@
         }
 
         var hudSource = doc.getElementById('mining-queue-hud-fragment');
-        var hudTarget = document.querySelector('.app-shell-hud');
-        if (hudSource && hudTarget) {
-            hudTarget.innerHTML = hudSource.innerHTML;
-        }
+        applyHudFragment(hudSource);
 
         var dynamicSource = doc.getElementById('mining-queue-dynamic-fragment');
         if (!dynamicSource) {
@@ -206,31 +275,47 @@
         });
     }
 
-    function performRefresh() {
+    function performRefresh(options) {
+        options = options || {};
         if (refreshInFlight) {
             refreshPending = true;
             return Promise.resolve();
         }
         refreshInFlight = true;
-        return fetchFragment('GET', buildFragmentUrl()).catch(function() {
+        return fetchFragment('GET', buildFragmentUrl()).then(function() {
+            if (!options.forClaim) {
+                return;
+            }
+            var root = pageRoot || document.querySelector('.mining-queue-page');
+            if (!hasFinishingRuns(root)) {
+                claimRefreshAttempt = 0;
+                return;
+            }
+            scheduleClaimRefreshRetry();
+        }).catch(function() {
             var query = window.RoboMinerUrlQuery.buildQueryString(collectQueueQueryParams());
             window.location.replace(query ? 'miningQueue?' + query : 'miningQueue');
         }).finally(function() {
             refreshInFlight = false;
             if (refreshPending) {
                 refreshPending = false;
-                performRefresh();
+                performRefresh(options);
             }
         });
     }
 
-    function refreshQueue() {
+    function refreshQueue(options) {
+        options = options || {};
+        if (options.forClaim) {
+            claimRefreshAttempt = 0;
+            clearClaimRefreshTimer();
+        }
         if (refreshDebounceTimer) {
             window.clearTimeout(refreshDebounceTimer);
         }
         refreshDebounceTimer = window.setTimeout(function() {
             refreshDebounceTimer = null;
-            performRefresh();
+            performRefresh(options);
         }, REFRESH_DEBOUNCE_MS);
     }
 
@@ -504,7 +589,7 @@
         if (seconds <= 0) {
             updateProgress(0);
             if (refreshOnComplete) {
-                refreshQueue();
+                refreshQueue({ forClaim: true });
             }
             return;
         }
@@ -521,7 +606,7 @@
             cell.textContent = formatTimeLeft(0);
             updateProgress(0);
             if (refreshOnComplete) {
-                refreshQueue();
+                refreshQueue({ forClaim: true });
             }
         }, 200);
         timerIntervals.push(interval);
@@ -663,7 +748,11 @@
     window.RoboMinerMiningQueuePage = {
         FRAGMENT_PARAM: FRAGMENT_PARAM,
         REFRESH_DEBOUNCE_MS: REFRESH_DEBOUNCE_MS,
+        CLAIM_REFRESH_BACKOFF_MS: CLAIM_REFRESH_BACKOFF_MS,
         applyFragment: applyFragment,
+        applyHudFragment: applyHudFragment,
+        hasFinishingRuns: hasFinishingRuns,
+        walletSignature: walletSignature,
         buildFragmentUrl: buildFragmentUrl,
         formDataToUrlEncoded: formDataToUrlEncoded,
         init: init,

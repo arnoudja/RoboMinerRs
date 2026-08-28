@@ -43,13 +43,36 @@ function createElement(tagName, attrs) {
         hidden: false,
         value: attrs && attrs.value !== undefined ? String(attrs.value) : '',
         textContent: attrs && attrs.textContent !== undefined ? String(attrs.textContent) : '',
-        innerHTML: attrs && attrs.innerHTML !== undefined ? String(attrs.innerHTML) : '',
+        _innerHTML: attrs && attrs.innerHTML !== undefined ? String(attrs.innerHTML) : '',
         options: [],
         disabled: false,
     };
     element.classList = new FakeClassList(element, element.attrs.class || '');
     element.id = element.attrs.id || '';
     element.name = element.attrs.name || '';
+    Object.defineProperty(element, 'innerHTML', {
+        get() {
+            if (element.children.length > 0) {
+                return element.children.map((child) => serializeElement(child)).join('');
+            }
+            return element._innerHTML;
+        },
+        set(value) {
+            element._innerHTML = String(value);
+            element.children = [];
+            const parsed = parseHtmlTree(element._innerHTML);
+            for (const child of parsed) {
+                element.appendChild(child);
+            }
+        },
+        configurable: true,
+    });
+    if (element._innerHTML) {
+        const parsed = parseHtmlTree(element._innerHTML);
+        for (const child of parsed) {
+            element.appendChild(child);
+        }
+    }
     element.getAttribute = function(name) {
         if (name === 'class') {
             return Array.from(element.classList.tokens).join(' ');
@@ -326,7 +349,7 @@ function loadMiningQueuePage(contextOverrides) {
         document: {
             querySelector(selector) {
                 if (selector === '.app-shell-hud') {
-                    return doc.hud;
+                    return doc.body.querySelector('.app-shell-hud') || doc.hud;
                 }
                 if (selector === '.mining-queue-page') {
                     return doc.page;
@@ -459,6 +482,180 @@ describe('mining queue page partial updates', () => {
         assert.equal(doc.config.textContent, '{"ores":{"1":{"amount":3}}}');
         assert.match(doc.page.querySelector('.mining-queue-error').textContent, /new error/);
         assert.equal(doc.inspector.textContent, 'inspector stays');
+    });
+
+    it('applyFragment replaces nested app-shell-hud without double wrapping', () => {
+        const { context, doc } = loadMiningQueuePage();
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    const node = createElement('div', { id: id });
+                    const nestedHud = createElement('div', { class: 'app-shell-hud' });
+                    nestedHud.appendChild(createElement('span', {
+                        id: 'new-hud',
+                        textContent: '4/8',
+                    }));
+                    node.appendChild(nestedHud);
+                    return node;
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'new-wallet', textContent: 'wallet' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return createElement('div', { id: id, class: 'mining-queue-robots' });
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+
+        const hud = doc.body.querySelector('.app-shell-hud');
+        assert.ok(hud);
+        assert.match(hud.outerHTML, /new-hud/);
+        assert.equal(
+            Array.from(doc.body.querySelectorAll('.app-shell-hud')).length,
+            1,
+            'live header must contain exactly one .app-shell-hud'
+        );
+    });
+
+    it('applyFragment skips empty HUD markup so the live header is not wiped', () => {
+        const { context, doc } = loadMiningQueuePage();
+        const original = doc.hud.innerHTML;
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    return createElement('div', { id: id, innerHTML: '   ' });
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'new-wallet', textContent: 'wallet' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return createElement('div', { id: id, class: 'mining-queue-robots' });
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+        assert.equal(doc.hud.innerHTML, original);
+    });
+
+    it('claim refresh schedules backoff retries while finishing runs remain', async () => {
+        const { context, timers, fetches, doc } = loadMiningQueuePage();
+        // Match fragment wallet/HUD so a finishing-run poll does not look "already claimed".
+        doc.hud.innerHTML = '';
+        doc.hud.appendChild(createElement('span', { id: 'hud-amt', textContent: '1' }));
+        const seededWallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+        seededWallet.appendChild(createElement('span', { id: 'wallet-amt', textContent: '1' }));
+        doc.page.querySelector('.mining-queue-wallet').outerHTML = seededWallet.outerHTML;
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    const node = createElement('div', { id: id });
+                    const nestedHud = createElement('div', { class: 'app-shell-hud' });
+                    nestedHud.appendChild(createElement('span', {
+                        id: 'hud-amt',
+                        textContent: '1',
+                    }));
+                    node.appendChild(nestedHud);
+                    return node;
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'wallet-amt', textContent: '1' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    const robots = createElement('div', { id: id, class: 'mining-queue-robots' });
+                    robots.appendChild(createElement('span', {
+                        class: 'mining-queue-status mining-queue-status-updating',
+                        textContent: 'Finishing rally',
+                    }));
+                    robots.appendChild(createElement('span', {
+                        class: 'miningqueuetime',
+                        'data-seconds-left': '0',
+                        'data-refresh-on-complete': 'true',
+                    }));
+                    return robots;
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+        context.fetch = function(url) {
+            fetches.push({ url: url });
+            return Promise.resolve({
+                ok: true,
+                text() {
+                    return Promise.resolve('<fragment>');
+                },
+            });
+        };
+
+        // Ensure fragment application itself installs finishing-run markers.
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+        assert.ok(
+            context.RoboMinerMiningQueuePage.hasFinishingRuns(doc.page),
+            'applyFragment should install finishing-run markers'
+        );
+
+        await context.RoboMinerMiningQueuePage.performRefresh({ forClaim: true });
+        assert.equal(fetches.length, 1);
+        assert.ok(context.RoboMinerMiningQueuePage.hasFinishingRuns(doc.page));
+
+        const retry = timers.find((timer) => timer.delay === context.RoboMinerMiningQueuePage.CLAIM_REFRESH_BACKOFF_MS[0]);
+        assert.ok(retry, 'expected claim-refresh backoff timer');
     });
 
     it('formDataToUrlEncoded serializes fields for urlencoded POST bodies', () => {
