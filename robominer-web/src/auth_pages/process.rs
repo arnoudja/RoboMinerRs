@@ -203,14 +203,7 @@ pub(super) fn auth_redirect_response(
             "Set-Cookie",
             session::session_set_cookie_header(user_id, persistent_session, session_version),
         )
-        .with_header(
-            "Set-Cookie",
-            format!(
-                "robominer_username={}; Path=/; SameSite=Lax{}",
-                cookie_encode(username),
-                session::secure_cookie_suffix()
-            ),
-        );
+        .with_header("Set-Cookie", session::username_set_cookie_header(username));
     if let Some(cookie) = remember_cookie {
         response = response.with_header("Set-Cookie", cookie);
     }

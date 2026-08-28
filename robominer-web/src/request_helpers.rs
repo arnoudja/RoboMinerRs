@@ -91,7 +91,12 @@ pub(crate) fn login_return_to_from_request(request: &Request) -> Option<String> 
 }
 
 pub(crate) fn valid_login_return_to(value: &str) -> Option<&str> {
-    if value.is_empty() || value.contains("://") || value.starts_with('/') {
+    if value.is_empty()
+        || value.contains("://")
+        || value.starts_with("//")
+        || value.starts_with('/')
+        || value.contains('\\')
+    {
         return None;
     }
     let path = value.split('?').next().unwrap_or(value);
@@ -217,6 +222,13 @@ mod tests {
                 .iter()
                 .any(|(name, value)| *name == "Location" && value == "login")
         );
+    }
+
+    #[test]
+    fn valid_login_return_to_rejects_protocol_relative_and_backslash_paths() {
+        assert_eq!(valid_login_return_to("//evil.com"), None);
+        assert_eq!(valid_login_return_to("/shop"), None);
+        assert_eq!(valid_login_return_to(r"shop\admin"), None);
     }
 
     #[test]

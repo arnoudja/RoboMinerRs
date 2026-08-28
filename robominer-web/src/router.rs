@@ -6,6 +6,7 @@ use crate::{
     mining_results_page, query_i64, rally_pages, request_user_id, robot_page, robot_stats_page,
     shop_page, static_files,
 };
+use std::borrow::Cow;
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
     if matches!(request.path.as_str(), "/health" | "/Health")
@@ -18,13 +19,17 @@ pub async fn route(request: &Request, config: &ServerConfig) -> Response {
         return response;
     }
 
-    let mut request = request.clone();
-    let session_strip = match config.database_pool.as_ref() {
-        Some(pool) => strip_stale_session_cookie(&mut request, pool).await,
-        None => SessionStrip::Keep,
+    let (session_strip, effective_request) = match config.database_pool.as_ref() {
+        Some(pool) if session::session_from_request(request).is_some() => {
+            let mut owned = request.clone();
+            let strip = strip_stale_session_cookie(&mut owned, pool).await;
+            (strip, Cow::Owned(owned))
+        }
+        Some(_) => (SessionStrip::Keep, Cow::Borrowed(request)),
+        None => (SessionStrip::Keep, Cow::Borrowed(request)),
     };
 
-    let mut response = dispatch(&request, config).await;
+    let mut response = dispatch(effective_request.as_ref(), config).await;
     if matches!(session_strip, SessionStrip::InvalidatePermanently) {
         response = clear_stale_session_cookies(response);
     }
@@ -62,9 +67,17 @@ async fn strip_stale_session_cookie(
         return SessionStrip::Keep;
     };
 
-    let lookup = robominer_db::get_user_session_version(pool, session.user_id)
-        .await
-        .map_err(|_| ());
+    let lookup = match robominer_db::get_user_session_version(pool, session.user_id).await {
+        Ok(version) => Ok(version),
+        Err(error) => {
+            tracing::warn!(
+                user_id = session.user_id,
+                error = %error,
+                "session version lookup failed; treating request as anonymous"
+            );
+            Err(())
+        }
+    };
     let action = session_strip_for_version_lookup(lookup, session.session_version);
     if matches!(
         action,
@@ -102,10 +115,7 @@ fn clear_stale_session_cookies(response: Response) -> Response {
             "Set-Cookie",
             "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
         )
-        .with_header(
-            "Set-Cookie",
-            "robominer_username=; Max-Age=0; Path=/; SameSite=Lax",
-        )
+        .with_header("Set-Cookie", session::username_clear_cookie_header())
 }
 
 /// Redirect legacy PascalCase paths (`/Shop`, `/MiningQueue`, …) to canonical camelCase.
