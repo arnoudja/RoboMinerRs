@@ -1,6 +1,6 @@
 use crate::Request;
-use crate::session::{self, session_clear_cookie_header};
 use crate::Response;
+use crate::session::{self, session_clear_cookie_header};
 
 /// How to treat the request session after checking `User.sessionVersion`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

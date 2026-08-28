@@ -206,4 +206,3 @@ pub(crate) fn validate_run_pool_options(options: &RunPoolOptions) -> Result<()> 
 
     Ok(())
 }
-

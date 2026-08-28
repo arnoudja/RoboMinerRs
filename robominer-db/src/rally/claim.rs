@@ -515,7 +515,10 @@ async fn batch_update_mining_area_lifetime_results(
 
     for area_id in &area_ids {
         let run_count = runs_by_area.get(area_id).copied().unwrap_or(0);
-        let supply_ores = supply_ores_by_area.get(area_id).cloned().unwrap_or_default();
+        let supply_ores = supply_ores_by_area
+            .get(area_id)
+            .cloned()
+            .unwrap_or_default();
         for ore_id in supply_ores {
             let amount = amount_by_area_ore
                 .get(&(*area_id, ore_id))

@@ -150,9 +150,7 @@ async fn protected_routes_redirect_to_login_when_logged_out() {
 #[test]
 fn static_paths_cannot_escape_web_root() {
     assert!(static_file_path("/../Cargo.toml", Path::new("robominer-web/static")).is_none());
-    assert!(
-        static_file_path("/css/../robominer.css", Path::new("robominer-web/static")).is_none()
-    );
+    assert!(static_file_path("/css/../robominer.css", Path::new("robominer-web/static")).is_none());
 }
 
 #[test]

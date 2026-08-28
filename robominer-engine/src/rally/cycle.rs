@@ -213,4 +213,3 @@ fn shutdown_signal() -> ShutdownSignal {
 
     ShutdownSignal { receiver }
 }
-
