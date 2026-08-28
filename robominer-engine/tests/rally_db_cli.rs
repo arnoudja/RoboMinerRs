@@ -109,6 +109,49 @@ async fn run_rallies_once_persist_advances_ready_queue() {
 
 #[tokio::test]
 #[serial]
+async fn run_rallies_once_persist_claims_ready_wallet_results() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = TestClaimResultsFixture::create(&pool).await;
+
+    let output = run_engine(&[
+        "--database-url".to_string(),
+        database_url,
+        "rally".to_string(),
+        "rallies".to_string(),
+        "--once".to_string(),
+        "--persist".to_string(),
+        "--seed".to_string(),
+        "0".to_string(),
+    ]);
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(
+        output.status.success(),
+        "expected rally rallies --once --persist to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert_eq!(
+        stdout.matches("Wallet claim pass:").count(),
+        1,
+        "persist cycle should run exactly one wallet claim pass\nstdout:\n{stdout}"
+    );
+    assert!(
+        stdout.contains("Claimed 1 mining result(s)") && stdout.contains("Added to wallet:"),
+        "wallet claim pass should credit the fixture user\nstdout:\n{stdout}"
+    );
+    assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
+
+    fixture.assert_claimed(&pool).await;
+    fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
 async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
