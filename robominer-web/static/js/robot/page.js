@@ -100,7 +100,7 @@
         }
         var percent = Math.min(100, Math.max(0, (programSize / memorySize) * 100));
         var valueElement = panel.querySelector('.robot-progress-value');
-        var barElement = panel.querySelector('.robot-progress-bar');
+        var barElement = panel.querySelector('.robot-progress-meter');
         if (valueElement) {
             valueElement.textContent = programSize + '/' + memorySize;
         }
@@ -109,7 +109,7 @@
             progressElement.classList.toggle('robot-progress-over', programSize > memorySize);
         }
         if (barElement) {
-            barElement.style.width = percent.toFixed(1) + '%';
+            barElement.value = percent.toFixed(1);
         }
     }
 

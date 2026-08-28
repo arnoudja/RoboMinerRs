@@ -71,7 +71,7 @@ fn achievements_rendering_groups_requirements_and_escapes_fields() {
             r#"class="sufficientbalance">(11)"#,
             r#"class="insufficientbalance">(5)"#,
             ">12.3<",
-            r#"class="achievement-progress-bar" style="width: 33.3%"#,
+            r#"class="achievement-progress-meter" value="33.3" max="100""#,
             r#"name="achievementId" value="5""#,
             r#"achievement-claim-badge">Claim</button>"#,
             r#">Points earned</span><span class="achievements-summary-value">45/150</span>"#,

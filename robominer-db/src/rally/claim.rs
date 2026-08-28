@@ -13,8 +13,8 @@ pub async fn claim_user_results(
     let claimed_queues = claimable_queues.len() as u64;
     let mut ore_rewards: HashMap<i64, i32> = HashMap::new();
 
-    for queue in &claimable_queues {
-        let queue_rewards = claim_mining_queue(&mut transaction, queue).await?;
+    if !claimable_queues.is_empty() {
+        let queue_rewards = claim_mining_queues_batch(&mut transaction, &claimable_queues).await?;
         for (ore_id, reward) in queue_rewards {
             *ore_rewards.entry(ore_id).or_default() += reward;
         }
@@ -62,6 +62,7 @@ struct ClaimableMiningQueue {
 
 #[derive(Debug, Clone, Copy)]
 struct ClaimableMiningOreResult {
+    mining_queue_id: i64,
     ore_id: i64,
     amount: i32,
     tax: i32,
@@ -140,42 +141,101 @@ async fn load_claimed_ore_rewards(
     Ok(rewards)
 }
 
-async fn claim_mining_queue(
+async fn claim_mining_queues_batch(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    queue: &ClaimableMiningQueue,
+    claimable_queues: &[ClaimableMiningQueue],
 ) -> Result<Vec<(i64, i32)>, sqlx::Error> {
-    sqlx::query("UPDATE Robot SET totalMiningRuns = totalMiningRuns + 1 WHERE id = ?")
-        .bind(queue.robot_id)
-        .execute(&mut **transaction)
-        .await?;
+    let queue_ids: Vec<i64> = claimable_queues
+        .iter()
+        .map(|queue| queue.mining_queue_id)
+        .collect();
 
-    sqlx::query("UPDATE MiningQueue SET claimed = true WHERE id = ?")
-        .bind(queue.mining_queue_id)
-        .execute(&mut **transaction)
-        .await?;
+    increment_robot_mining_runs_batch(transaction, claimable_queues).await?;
+    mark_mining_queues_claimed_batch(transaction, &queue_ids).await?;
+    calculate_mining_ore_result_tax_batch(transaction, &queue_ids).await?;
+    let ore_results = list_claimable_mining_ore_results_batch(transaction, &queue_ids).await?;
 
-    calculate_mining_ore_result_tax(transaction, queue.mining_queue_id).await?;
-    let ore_results = list_claimable_mining_ore_results(transaction, queue.mining_queue_id).await?;
-
-    for ore_result in &ore_results {
-        upsert_robot_lifetime_result(transaction, queue.robot_id, ore_result).await?;
-        upsert_user_ore_asset_from_reward(transaction, queue.robot_id, ore_result).await?;
+    let mut ore_results_by_queue: HashMap<i64, Vec<ClaimableMiningOreResult>> = HashMap::new();
+    for ore_result in ore_results {
+        ore_results_by_queue
+            .entry(ore_result.mining_queue_id)
+            .or_default()
+            .push(ore_result);
     }
 
-    update_mining_area_lifetime_results(transaction, queue, &ore_results).await?;
+    let mut rewards = Vec::new();
+    for queue in claimable_queues {
+        let queue_ore_results = ore_results_by_queue
+            .remove(&queue.mining_queue_id)
+            .unwrap_or_default();
 
-    Ok(ore_results
-        .iter()
-        .map(|ore_result| (ore_result.ore_id, ore_result.amount - ore_result.tax))
-        .filter(|(_, reward)| *reward > 0)
-        .collect())
+        for ore_result in &queue_ore_results {
+            upsert_robot_lifetime_result(transaction, queue.robot_id, ore_result).await?;
+            upsert_user_ore_asset_from_reward(transaction, queue.robot_id, ore_result).await?;
+        }
+
+        update_mining_area_lifetime_results(transaction, queue, &queue_ore_results).await?;
+
+        for ore_result in &queue_ore_results {
+            let reward = ore_result.amount - ore_result.tax;
+            if reward > 0 {
+                rewards.push((ore_result.ore_id, reward));
+            }
+        }
+    }
+
+    Ok(rewards)
 }
 
-async fn calculate_mining_ore_result_tax(
+async fn increment_robot_mining_runs_batch(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    mining_queue_id: i64,
+    claimable_queues: &[ClaimableMiningQueue],
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    let mut run_counts: HashMap<i64, u32> = HashMap::new();
+    for queue in claimable_queues {
+        *run_counts.entry(queue.robot_id).or_default() += 1;
+    }
+
+    for (robot_id, count) in run_counts {
+        sqlx::query("UPDATE Robot SET totalMiningRuns = totalMiningRuns + ? WHERE id = ?")
+            .bind(count)
+            .bind(robot_id)
+            .execute(&mut **transaction)
+            .await?;
+    }
+
+    Ok(())
+}
+
+async fn mark_mining_queues_claimed_batch(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    queue_ids: &[i64],
+) -> Result<(), sqlx::Error> {
+    if queue_ids.is_empty() {
+        return Ok(());
+    }
+
+    let placeholders = vec!["?"; queue_ids.len()].join(", ");
+    let query = format!("UPDATE MiningQueue SET claimed = true WHERE id IN ({placeholders})");
+    let mut query_builder = sqlx::query(&query);
+    for queue_id in queue_ids {
+        query_builder = query_builder.bind(queue_id);
+    }
+    query_builder.execute(&mut **transaction).await?;
+
+    Ok(())
+}
+
+async fn calculate_mining_ore_result_tax_batch(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    queue_ids: &[i64],
+) -> Result<(), sqlx::Error> {
+    if queue_ids.is_empty() {
+        return Ok(());
+    }
+
+    let placeholders = vec!["?"; queue_ids.len()].join(", ");
+    let query = format!(
         "UPDATE MiningOreResult \
          INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
@@ -184,36 +244,48 @@ async fn calculate_mining_ore_result_tax(
                    * MiningArea.taxRate / 100) \
            + FLOOR(LEAST(MiningOreResult.depotAmount, MiningOreResult.amount) \
                    * MiningArea.depotTaxRate / 100) \
-         WHERE MiningOreResult.miningQueueId = ?",
-    )
-    .bind(mining_queue_id)
-    .execute(&mut **transaction)
-    .await?;
+         WHERE MiningOreResult.miningQueueId IN ({placeholders})"
+    );
+    let mut query_builder = sqlx::query(&query);
+    for queue_id in queue_ids {
+        query_builder = query_builder.bind(queue_id);
+    }
+    query_builder.execute(&mut **transaction).await?;
 
     Ok(())
 }
 
-async fn list_claimable_mining_ore_results(
+async fn list_claimable_mining_ore_results_batch(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    mining_queue_id: i64,
+    queue_ids: &[i64],
 ) -> Result<Vec<ClaimableMiningOreResult>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i32, i32)>(
-        "SELECT oreId, amount, COALESCE(tax, 0) \
+    if queue_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let placeholders = vec!["?"; queue_ids.len()].join(", ");
+    let query = format!(
+        "SELECT miningQueueId, oreId, amount, COALESCE(tax, 0) \
          FROM MiningOreResult \
-         WHERE miningQueueId = ? \
-         ORDER BY oreId",
-    )
-    .bind(mining_queue_id)
-    .fetch_all(&mut **transaction)
-    .await?;
+         WHERE miningQueueId IN ({placeholders}) \
+         ORDER BY miningQueueId, oreId"
+    );
+    let mut query_builder = sqlx::query_as::<_, (i64, i64, i32, i32)>(&query);
+    for queue_id in queue_ids {
+        query_builder = query_builder.bind(queue_id);
+    }
+    let rows = query_builder.fetch_all(&mut **transaction).await?;
 
     Ok(rows
         .into_iter()
-        .map(|(ore_id, amount, tax)| ClaimableMiningOreResult {
-            ore_id,
-            amount,
-            tax,
-        })
+        .map(
+            |(mining_queue_id, ore_id, amount, tax)| ClaimableMiningOreResult {
+                mining_queue_id,
+                ore_id,
+                amount,
+                tax,
+            },
+        )
         .collect())
 }
 

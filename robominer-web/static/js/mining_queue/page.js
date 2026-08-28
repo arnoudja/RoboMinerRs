@@ -493,13 +493,13 @@
             if (!run) {
                 return;
             }
-            var progressBar = run.querySelector('.mining-queue-progress-bar');
+            var progressBar = run.querySelector('progress.mining-queue-progress');
             if (!progressBar) {
                 return;
             }
             var elapsed = progressTotal - Math.max(0, secondsLeft);
             var percent = Math.min(100, Math.max(0, (elapsed / progressTotal) * 100));
-            progressBar.style.width = percent + '%';
+            progressBar.value = percent.toFixed(1);
         }
         if (seconds <= 0) {
             updateProgress(0);

@@ -1,5 +1,5 @@
 use super::super::ACTIVITY_SIDEBAR_QUEUE_PREVIEW;
-use crate::html::{escape_html, format_relative_time_millis, format_utc_millis};
+use crate::html::{EscapedHtml, format_relative_time_millis, format_utc_millis};
 use crate::rally_pages::ActivityPageState;
 
 pub(super) fn render_activity_sidebar(
@@ -27,7 +27,7 @@ fn render_activity_sidebar_queue(
     if let Some(summary) = asset_summary {
         body.push_str(&format!(
             r#"<p class="activity-section-hint">{}</p>"#,
-            escape_html(&activity_queue_usage_hint(queue_items.len(), summary)),
+            EscapedHtml::from(activity_queue_usage_hint(queue_items.len(), summary).as_str()),
         ));
     }
     body.push_str(r#"<ul class="activity-queue-list">"#);
@@ -35,7 +35,7 @@ fn render_activity_sidebar_queue(
         body.push_str(&format!(
             r#"<li class="activity-queue-item"><a class="activity-queue-link" href="miningQueue?robotId={}">{}</a></li>"#,
             item.robot_id,
-            escape_html(&item.area_name),
+            EscapedHtml::from(item.area_name.as_str()),
         ));
     }
     if queue_items.len() > ACTIVITY_SIDEBAR_QUEUE_PREVIEW {
@@ -83,9 +83,9 @@ fn render_activity_sidebar_recent_players(
         let login_absolute = format_utc_millis(user.last_login_time_millis);
         body.push_str(&format!(
             r#"<li class="activity-player-item"><span class="activity-player-name">{}</span><span class="activity-player-login" title="{}">{}</span></li>"#,
-            escape_html(&user.username),
-            escape_html(&login_absolute),
-            escape_html(&login_relative),
+            EscapedHtml::from(user.username.as_str()),
+            EscapedHtml::from(login_absolute.as_str()),
+            EscapedHtml::from(login_relative.as_str()),
         ));
     }
     body.push_str("</ul></section>");

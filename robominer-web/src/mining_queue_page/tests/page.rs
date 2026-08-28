@@ -173,7 +173,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"href="robot?robotId=1">Bot &lt;One&gt;</a>"#,
             r#"mining-queue-status-mining">Mining</span>"#,
             r#"data-seconds-left="61" data-refresh-on-complete="true" data-progress-total="121""#,
-            r#"class="mining-queue-progress-bar" style="width: 49.6%""#,
+            r#"class="mining-queue-progress" value="49.6" max="100""#,
             r#"href="miningResults?rallyResultId=55">Area &amp; Two</a>"#,
             r#"class="mining-queue-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
             r#"class="claim-banner-reward-amount">+9</span>"#,

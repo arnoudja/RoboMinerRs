@@ -1,5 +1,5 @@
 use crate::animation_script;
-use crate::html::{escape_html, layout};
+use crate::html::{EscapedHtml, layout};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, mining_area_atlas_url};
 use crate::rally_pages::{RallyViewBackLink, RallyViewPageState};
 use crate::static_assets::PageStylesheet;
@@ -52,13 +52,13 @@ fn render_rally_view_header(body: &mut String, back_link: Option<RallyViewBackLi
         Some(RallyViewBackLink::MiningResults(query)) => {
             body.push_str(&format!(
                 r#"<a class="rally-view-back-link" href="miningResults?{}">Back to results</a>"#,
-                escape_html(query)
+                EscapedHtml::from(query)
             ));
         }
         Some(RallyViewBackLink::Activity(feed_query)) => {
             body.push_str(&format!(
                 r#"<a class="rally-view-back-link" href="{}">Back to activity</a>"#,
-                escape_html(&feed_query.href()),
+                EscapedHtml::from(feed_query.href().as_str()),
             ));
         }
         None => {}
@@ -71,7 +71,7 @@ fn render_rally_view_context(body: &mut String, state: &RallyViewPageState) {
     body.push_str(r#"<dl class="rally-view-context-stats">"#);
     body.push_str(&format!(
         r#"<div class="rally-view-context-item"><dt>Area</dt><dd>{}</dd></div>"#,
-        escape_html(&state.mining_area_name),
+        EscapedHtml::from(state.mining_area_name.as_str()),
     ));
 
     if let Some(player_number) = state.viewer_player_number {
@@ -79,8 +79,8 @@ fn render_rally_view_context(body: &mut String, state: &RallyViewPageState) {
             .viewer_robot_name
             .as_deref()
             .filter(|name| !name.is_empty())
-            .map(escape_html)
-            .unwrap_or_else(|| "Your robot".to_string());
+            .map(EscapedHtml::from)
+            .unwrap_or_else(|| EscapedHtml::from("Your robot"));
         body.push_str(&format!(
             r#"<div class="rally-view-context-item rally-view-context-item-self"><dt>Your robot</dt><dd>{} · {} slot</dd></div>"#,
             robot_name,
@@ -128,11 +128,9 @@ fn render_rally_view_quick_links(body: &mut String, state: &RallyViewPageState) 
     body.push_str(r#"<a class="rally-view-quick-link" href="shop">Shop parts</a>"#);
     body.push_str(&format!(
         r#"<a class="rally-view-quick-link" href="{}">Compare areas</a>"#,
-        escape_html(&mining_area_atlas_url(
-            MiningAreaAtlasLinkTarget::StandalonePage,
-            None,
-            false,
-        )),
+        EscapedHtml::from(
+            mining_area_atlas_url(MiningAreaAtlasLinkTarget::StandalonePage, None, false,).as_str(),
+        ),
     ));
     body.push_str("</nav>");
 }

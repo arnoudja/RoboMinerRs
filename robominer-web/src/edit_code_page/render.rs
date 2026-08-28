@@ -1,6 +1,6 @@
 use super::{default_edit_code_program_source, edit_code_program_source_from_state};
 use crate::edit_code_page::EditCodePageState;
-use crate::html::{escape_html, layout};
+use crate::html::{EscapedHtml, layout};
 use crate::static_assets::PageStylesheet;
 
 use super::editor::render_edit_code_panel;
@@ -113,7 +113,7 @@ fn render_edit_code_summary(
     ));
     body.push_str(&format!(
         r#"<li class="edit-code-summary-item"><span class="edit-code-summary-label">Selected</span><span class="edit-code-summary-value" id="editCodeSummarySelected">{}</span></li>"#,
-        escape_html(selected_name)
+        EscapedHtml::from(selected_name)
     ));
     body.push_str(&format!(
         r#"<li class="edit-code-summary-item"><span class="edit-code-summary-label">Linked robots</span><span class="edit-code-summary-value" id="editCodeSummaryLinkedRobots">{}</span></li>"#,

@@ -169,11 +169,10 @@ pub(super) fn render_achievement_progress(
         r#"<div class="achievement-progress-heading"><span>{}</span><span class="achievement-progress-value">{}/{}</span></div>"#,
         label, current, total
     ));
-    body.push_str(r#"<div class="achievement-progress-track" aria-hidden="true">"#);
     body.push_str(&format!(
-        r#"<div class="achievement-progress-bar" style="width: {percent:.1}%"></div>"#
+        r#"<progress class="achievement-progress-meter" value="{percent:.1}" max="100" aria-hidden="true"></progress>"#,
     ));
-    body.push_str("</div></div>");
+    body.push_str("</div>");
 }
 
 pub(super) fn achievement_progress_percent(current: i64, total: i64) -> f64 {

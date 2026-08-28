@@ -14,6 +14,10 @@ pub async fn route(request: &Request, config: &ServerConfig) -> Response {
         return health::health_response(config).await;
     }
 
+    if let Some(response) = canonical_path_redirect(request) {
+        return response;
+    }
+
     let mut request = request.clone();
     let session_strip = match config.database_pool.as_ref() {
         Some(pool) => strip_stale_session_cookie(&mut request, pool).await,
@@ -104,6 +108,41 @@ fn clear_stale_session_cookies(response: Response) -> Response {
         )
 }
 
+/// Redirect legacy PascalCase paths (`/Shop`, `/MiningQueue`, …) to canonical camelCase.
+fn canonical_path_redirect(request: &Request) -> Option<Response> {
+    let canonical = canonicalize_path(&request.path)?;
+    if canonical == request.path {
+        return None;
+    }
+
+    let mut location = canonical;
+    if !request.query.is_empty() {
+        let mut pairs: Vec<_> = request.query.iter().collect();
+        pairs.sort_by_key(|(key, _)| *key);
+        location.push('?');
+        for (index, (key, value)) in pairs.into_iter().enumerate() {
+            if index > 0 {
+                location.push('&');
+            }
+            location.push_str(key);
+            location.push('=');
+            location.push_str(value);
+        }
+    }
+
+    Some(Response::redirect(location))
+}
+
+fn canonicalize_path(path: &str) -> Option<String> {
+    let rest = path.strip_prefix('/')?;
+    let mut chars = rest.chars();
+    let first = chars.next()?;
+    if !first.is_ascii_uppercase() {
+        return None;
+    }
+    Some(format!("/{}{}", first.to_ascii_lowercase(), chars.as_str()))
+}
+
 async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
     // Auth policy (by path family):
     // - Public: /health, /login|/signup|/logoff, /help*, /activity (read)
@@ -175,7 +214,7 @@ mod tests {
     use crate::static_files::static_file_path;
     use crate::{Request, Response, ServerConfig};
 
-    use super::{SessionStrip, route, session_strip_for_version_lookup};
+    use super::{SessionStrip, canonicalize_path, route, session_strip_for_version_lookup};
 
     #[test]
     fn session_strip_keeps_matching_version() {
@@ -319,6 +358,35 @@ mod tests {
         assert!(static_file_path("/../Cargo.toml", Path::new("robominer-web/static")).is_none());
         assert!(
             static_file_path("/css/../robominer.css", Path::new("robominer-web/static")).is_none()
+        );
+    }
+
+    #[test]
+    fn canonicalize_path_lowercases_leading_letter_only() {
+        assert_eq!(canonicalize_path("/Shop").as_deref(), Some("/shop"));
+        assert_eq!(
+            canonicalize_path("/MiningQueue").as_deref(),
+            Some("/miningQueue")
+        );
+        assert_eq!(canonicalize_path("/shop"), None);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn legacy_pascal_case_paths_redirect_to_canonical_routes() {
+        let config = ServerConfig {
+            static_root: PathBuf::from("robominer-web/static"),
+            database_pool: None,
+            allow_signup: true,
+            trust_proxy: false,
+        };
+
+        let response = route(&request("/Shop"), &config).await;
+        assert_eq!(response.status, 302);
+        assert!(
+            response
+                .headers
+                .iter()
+                .any(|(name, value)| *name == "Location" && value == "/shop")
         );
     }
 

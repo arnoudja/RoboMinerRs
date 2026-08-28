@@ -34,9 +34,8 @@ pub(super) fn render_robot_memory_progress(
         r#"<div class="robot-progress-heading"><span>Memory used</span><span class="robot-progress-value">{}/{}</span></div>"#,
         program_size, memory_size
     ));
-    body.push_str(r#"<div class="robot-progress-track" aria-hidden="true">"#);
     body.push_str(&format!(
-        r#"<div class="robot-progress-bar" style="width: {percent:.1}%"></div>"#
+        r#"<progress class="robot-progress-meter" value="{percent:.1}" max="100" aria-hidden="true"></progress>"#,
     ));
-    body.push_str("</div></div>");
+    body.push_str("</div>");
 }

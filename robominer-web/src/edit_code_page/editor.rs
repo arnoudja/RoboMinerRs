@@ -1,5 +1,5 @@
 use crate::edit_code_page::EditCodeProgramSource;
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, html_attr};
 
 use super::edit_code_save_block_reason;
 
@@ -22,7 +22,7 @@ pub(super) fn render_edit_code_source_field(
     format!(
         r#"<label class="edit-code-field edit-code-field-source"><span class="edit-code-field-label">Source code</span><div class="edit-code-source-editor"><div class="edit-code-line-numbers" id="sourceCodeLines{program_source_id}" aria-hidden="true">{}</div><textarea id="sourceCode{program_source_id}" name="sourceCode" class="edit-code-textarea" rows="25" cols="100" required{disabled_attr}>{}</textarea></div></label>"#,
         render_edit_code_line_numbers(source_code),
-        escape_html(source_code),
+        EscapedHtml::from(source_code),
     )
 }
 
@@ -40,9 +40,9 @@ pub(super) fn render_edit_code_panel(
     let hidden_attr = if active { "" } else { " hidden" };
     let disabled_attr = if active { "" } else { " disabled" };
     let panel_title = if program_source_id > 0 {
-        escape_html(&program.source_name)
+        EscapedHtml::from(program.source_name.as_str())
     } else {
-        "New program".to_string()
+        EscapedHtml::from("New program")
     };
     let compiled_size = if program.compiled_size >= 0 {
         program.compiled_size.to_string()
@@ -87,13 +87,13 @@ pub(super) fn render_edit_code_panel(
     if !program.error_description.is_empty() {
         body.push_str(&format!(
             r#"<p class="edit-code-banner edit-code-banner-compile">{}</p>"#,
-            escape_html(&program.error_description)
+            EscapedHtml::from(program.error_description.as_str())
         ));
     }
 
     body.push_str(&format!(
         r#"<form id="editCodeForm{program_source_id}" action="editCode" method="post" class="edit-code-save-form"><input type="hidden" name="requestType" value="update"{disabled_attr}/><input type="hidden" name="nextProgramSourceId" value="{program_source_id}"{disabled_attr}/><input type="hidden" name="programSourceId" value="{program_source_id}"{disabled_attr}/><label class="edit-code-field"><span class="edit-code-field-label">Program name</span><input id="sourceName{program_source_id}" type="text" name="sourceName" class="edit-code-text-input" value="{}" size="40" placeholder="Please choose a name for your program" required{disabled_attr} /></label>{}{}"#,
-        escape_html(&program.source_name),
+        EscapedHtml::from(program.source_name.as_str()),
         render_edit_code_source_field(program_source_id, &program.source_code, disabled_attr),
         render_edit_code_save_action(&program.source_name, &program.source_code, disabled_attr)
     ));
@@ -122,7 +122,7 @@ pub(super) fn render_edit_code_save_action(
     if let Some(reason) = block_reason {
         html.push_str(&format!(
             r#"<p class="edit-code-action-hint edit-code-save-hint">{}</p>"#,
-            escape_html(reason)
+            EscapedHtml::from(reason)
         ));
     } else {
         html.push_str(r#"<p class="edit-code-action-hint edit-code-save-hint" hidden></p>"#);
@@ -135,7 +135,7 @@ pub(super) fn render_edit_code_save_action(
 
 pub(super) fn edit_code_save_button(block_reason: Option<&str>, disabled_attr: &str) -> String {
     let title_attr = block_reason
-        .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
+        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
         .unwrap_or_default();
     if block_reason.is_some() || !disabled_attr.is_empty() {
         format!(
@@ -155,7 +155,7 @@ pub(super) fn render_edit_code_delete_action(
     if program.linked_robot_count > 0 {
         return format!(
             r#"<div class="edit-code-delete"><button type="button" class="edit-code-btn edit-code-btn-danger" disabled title="{}">Delete program</button><p class="edit-code-action-hint">Used by {} robot(s). <a class="edit-code-action-link" href="robot">Open robot workshop</a></p></div>"#,
-            escape_html("Unable to delete program source because it is used by a robot."),
+            EscapedHtml::from("Unable to delete program source because it is used by a robot."),
             program.linked_robot_count
         );
     }
