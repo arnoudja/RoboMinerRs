@@ -6,6 +6,8 @@ pub(super) struct CancelBatchResult {
     pub(super) skipped: usize,
     pub(super) failed: usize,
     pub(super) last_rejection: Option<robominer_db::CancelMiningQueueRejection>,
+    pub(super) rejection_counts:
+        std::collections::HashMap<robominer_db::CancelMiningQueueRejection, usize>,
 }
 
 pub(super) async fn cancel_queued_items(
@@ -14,30 +16,20 @@ pub(super) async fn cancel_queued_items(
     mining_queue_ids: &[i64],
     require_refund_fits: bool,
 ) -> Result<CancelBatchResult, crate::page_context::PageLoadError> {
-    let mut batch = CancelBatchResult::default();
-    for &mining_queue_id in mining_queue_ids {
-        match robominer_db::cancel_mining_queue(
-            pool,
-            robominer_db::CancelMiningQueueRequest {
-                user_id,
-                mining_queue_id,
-                require_refund_fits,
-            },
-        )
-        .await?
-        .into_result()
-        {
-            Ok(_) => batch.cleared += 1,
-            Err(robominer_db::CancelMiningQueueRejection::RefundWouldClamp) => {
-                batch.skipped += 1;
-            }
-            Err(rejection) => {
-                batch.failed += 1;
-                batch.last_rejection = Some(rejection);
-            }
-        }
-    }
-    Ok(batch)
+    let batch = robominer_db::cancel_mining_queue_batch(
+        pool,
+        user_id,
+        mining_queue_ids,
+        require_refund_fits,
+    )
+    .await?;
+    Ok(CancelBatchResult {
+        cleared: batch.cleared,
+        skipped: batch.skipped,
+        failed: batch.failed,
+        last_rejection: batch.last_rejection,
+        rejection_counts: batch.rejection_counts,
+    })
 }
 
 pub(super) fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<String> {
@@ -69,12 +61,25 @@ pub(super) fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<S
         }
     }
     if batch.failed > 0 {
-        let detail = batch
-            .last_rejection
-            .map(robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message)
-            .unwrap_or("Unable to cancel mining queue item.");
+        let detail = if batch.rejection_counts.len() > 1 {
+            let summaries: Vec<String> = batch
+                .rejection_counts
+                .iter()
+                .map(|(rejection, count)| {
+                    let message = robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message(*rejection);
+                    format!("{count} {message}")
+                })
+                .collect();
+            summaries.join("; ")
+        } else {
+            batch
+                .last_rejection
+                .map(robominer_domain::rejection_messages::cancel_mining_queue_rejection_player_message)
+                .unwrap_or("Unable to cancel mining queue item.")
+                .to_string()
+        };
         if batch.cleared == 0 && batch.skipped == 0 {
-            parts.push(detail.to_string());
+            parts.push(detail);
         } else {
             parts.push(format!(
                 "{} could not be canceled ({detail}).",
@@ -88,6 +93,7 @@ pub(super) fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<S
 #[cfg(test)]
 mod batch_message_tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn format_cancel_batch_message_covers_partial_outcomes() {
@@ -128,5 +134,22 @@ mod batch_message_tests {
         .expect("message");
         assert!(failed.contains("Cleared 1 queued run."));
         assert!(failed.contains("could not be canceled"));
+    }
+
+    #[test]
+    fn format_cancel_batch_message_summarizes_multiple_rejection_types() {
+        let message = format_cancel_batch_message(&CancelBatchResult {
+            failed: 3,
+            last_rejection: Some(robominer_db::CancelMiningQueueRejection::NotCancelable),
+            rejection_counts: HashMap::from([
+                (robominer_db::CancelMiningQueueRejection::NotCancelable, 2),
+                (robominer_db::CancelMiningQueueRejection::UnknownQueue, 1),
+            ]),
+            ..CancelBatchResult::default()
+        })
+        .expect("message");
+        assert!(message.contains("2 "));
+        assert!(message.contains("1 "));
+        assert!(message.contains(';'));
     }
 }

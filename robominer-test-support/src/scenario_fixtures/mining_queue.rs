@@ -1,8 +1,8 @@
 use robominer_db::MySqlPool;
 
 use crate::{
-    insert_ai_robot, insert_mining_queue, insert_robot, insert_row_id, insert_user_ore_asset,
-    unique_prefix,
+    insert_ai_robot, insert_mining_queue, insert_ore, insert_robot, insert_row_id,
+    insert_user_ore_asset, unique_prefix,
 };
 
 pub struct RobotMiningAreaFixture {
@@ -24,11 +24,7 @@ impl RobotMiningAreaFixture {
         user_ore_amount: Option<i32>,
     ) -> Self {
         let area_name = format!("{prefix}-area");
-        let ore_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-        )
-        .await;
+        let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;
         let ore_price_id = insert_row_id(
             pool,
             sqlx::query("INSERT INTO OrePrice (description) VALUES (?)")

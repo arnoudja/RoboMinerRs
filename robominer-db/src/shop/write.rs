@@ -171,9 +171,21 @@ async fn list_user_sellable_robot_part_counts(
     .fetch_all(&mut **transaction)
     .await?;
 
+    let usage_rows = sqlx::query_as::<_, (i64, i64)>(
+        "SELECT RobotPart.robotPartId, COUNT(*) \
+         FROM RobotPart \
+         INNER JOIN Robot ON Robot.id = RobotPart.robotId \
+         WHERE Robot.userId = ? \
+         GROUP BY RobotPart.robotPartId",
+    )
+    .bind(user_id)
+    .fetch_all(&mut **transaction)
+    .await?;
+    let usage_by_part: std::collections::HashMap<i64, i64> = usage_rows.into_iter().collect();
+
     let mut sellable_parts = Vec::new();
     for (robot_part_id, total_owned) in rows {
-        let usage_count = user_robot_part_usage_count(transaction, user_id, robot_part_id).await?;
+        let usage_count = usage_by_part.get(&robot_part_id).copied().unwrap_or(0);
         let unassigned = unassigned_robot_part_count(total_owned, usage_count);
         if unassigned > 0 {
             sellable_parts.push((robot_part_id, unassigned));

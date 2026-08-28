@@ -173,9 +173,7 @@ pub async fn list_activity_rally_participants_for_queues(
         return Ok(Vec::new());
     }
 
-    let placeholders = std::iter::repeat_n("?", mining_queue_ids.len())
-        .collect::<Vec<_>>()
-        .join(", ");
+    let placeholders = crate::in_placeholders(mining_queue_ids.len());
     let query = format!(
         "SELECT RecentQueue.id, MiningQueue.playerNumber, Robot.robotName, User.username \
          FROM MiningQueue RecentQueue \

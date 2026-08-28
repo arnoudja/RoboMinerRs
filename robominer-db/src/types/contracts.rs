@@ -33,7 +33,16 @@ pub struct CanceledMiningQueue {
     pub mining_queue_id: i64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct CancelMiningQueueBatchResult {
+    pub cleared: usize,
+    pub skipped: usize,
+    pub failed: usize,
+    pub last_rejection: Option<CancelMiningQueueRejection>,
+    pub rejection_counts: std::collections::HashMap<CancelMiningQueueRejection, usize>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CancelMiningQueueRejection {
     UnknownQueue,
     WrongOwner,

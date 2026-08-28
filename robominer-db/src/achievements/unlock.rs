@@ -67,18 +67,33 @@ async fn successor_requirements_met(
     .fetch_all(&mut **transaction)
     .await?;
 
-    for (predecessor_id, predecessor_step) in predecessors {
-        let steps_claimed: Option<i32> = sqlx::query_scalar(
-            "SELECT stepsClaimed \
-             FROM UserAchievement \
-             WHERE userId = ? AND achievementId = ?",
-        )
-        .bind(user_id)
-        .bind(predecessor_id)
-        .fetch_optional(&mut **transaction)
-        .await?;
+    if predecessors.is_empty() {
+        return Ok(true);
+    }
 
-        if !predecessor_step_met(steps_claimed.unwrap_or_default(), predecessor_step) {
+    let predecessor_ids: Vec<i64> = predecessors.iter().map(|(id, _)| *id).collect();
+    let placeholders = crate::in_placeholders(predecessor_ids.len());
+    let query = format!(
+        "SELECT achievementId, stepsClaimed \
+         FROM UserAchievement \
+         WHERE userId = ? AND achievementId IN ({placeholders})"
+    );
+    let mut query_builder = sqlx::query_as::<_, (i64, i32)>(&query).bind(user_id);
+    for predecessor_id in &predecessor_ids {
+        query_builder = query_builder.bind(predecessor_id);
+    }
+    let claimed_steps: std::collections::HashMap<i64, i32> = query_builder
+        .fetch_all(&mut **transaction)
+        .await?
+        .into_iter()
+        .collect();
+
+    for (predecessor_id, predecessor_step) in predecessors {
+        let steps_claimed = claimed_steps
+            .get(&predecessor_id)
+            .copied()
+            .unwrap_or_default();
+        if !predecessor_step_met(steps_claimed, predecessor_step) {
             return Ok(false);
         }
     }
