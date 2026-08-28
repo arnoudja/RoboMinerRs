@@ -35,7 +35,7 @@ serial_test = "4.0.1"
 sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
 tokio = { version = "1.53.1", features = ["macros", "rt", "rt-multi-thread"] }
-tower-http = { version = "0.6.8", features = ["timeout"] }
+tower-http = { version = "0.7.0", features = ["timeout"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
