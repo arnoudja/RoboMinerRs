@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::AchievementsPageState;
 use super::card::render_achievement_card;
 use super::overview::{render_achievements_not_found, render_achievements_overview};
-use crate::html::layout;
+use crate::html::{EscapedHtml, layout};
 use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_achievements_page(
@@ -132,7 +132,7 @@ pub(super) fn render_achievements_summary(
     body.push_str(r#"<div class="achievements-summary-heading">"#);
     body.push_str(&format!(
         r#"<h1 class="achievements-page-title">{}</h1>"#,
-        crate::html::escape_html(title)
+        EscapedHtml::from(title)
     ));
     body.push_str("</div>");
     body.push_str(r#"<ul class="achievements-summary-list">"#);

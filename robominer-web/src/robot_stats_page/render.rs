@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::html::{escape_html, format_relative_time_millis, format_utc_millis, layout};
+use crate::html::{EscapedHtml, format_relative_time_millis, format_utc_millis, html_attr, layout};
 use crate::robot_stats_page::RobotStatsPageState;
 use crate::static_assets::PageStylesheet;
 
@@ -71,11 +71,11 @@ fn render_robot_stats_overview(state: &RobotStatsPageState, now_millis: i64) -> 
     body.push_str(r#"<div class="robot-stats-summary-heading">"#);
     body.push_str(&format!(
         r#"<h1 class="robot-stats-page-title">{}</h1>"#,
-        escape_html(&header.robot_name)
+        EscapedHtml::from(header.robot_name.as_str())
     ));
     body.push_str(&format!(
         r#"<p class="robot-stats-owner">Owned by {}</p>"#,
-        escape_html(&header.username)
+        EscapedHtml::from(header.username.as_str())
     ));
     body.push_str("</div>");
     body.push_str(r#"<ul class="robot-stats-summary-list">"#);
@@ -93,7 +93,7 @@ fn render_robot_stats_overview(state: &RobotStatsPageState, now_millis: i64) -> 
     ));
     body.push_str(&format!(
         r#"<li class="robot-stats-summary-item"><span class="robot-stats-summary-label">Ore per run</span><span class="robot-stats-summary-value">{}</span></li>"#,
-        escape_html(&ore_per_run)
+        EscapedHtml::from(ore_per_run.as_str())
     ));
     body.push_str("</ul></section>");
 
@@ -143,7 +143,7 @@ fn render_recent_runs_section(
             body.push_str("<tr>");
             body.push_str(&format!(
                 r#"<td>{}</td>"#,
-                escape_html(&run.mining_area_name)
+                EscapedHtml::from(run.mining_area_name.as_str())
             ));
             body.push_str(&format!(
                 r#"<td class="robot-stats-col-numeric">{:.1}</td>"#,
@@ -163,9 +163,9 @@ fn render_recent_runs_section(
             ));
             body.push_str(&format!(
                 r#"<td><time datetime="{}" title="{}">{}</time></td>"#,
-                escape_html(&ended_absolute),
-                escape_html(&ended_absolute),
-                escape_html(&ended_relative)
+                html_attr(&ended_absolute),
+                html_attr(&ended_absolute),
+                EscapedHtml::from(ended_relative.as_str())
             ));
             if let Some(rally_result_id) = run.rally_result_id {
                 body.push_str(&format!(
@@ -205,7 +205,10 @@ fn render_area_stats_section(
         body.push_str("</tr></thead><tbody>");
         for area in area_stats {
             body.push_str("<tr>");
-            body.push_str(&format!(r#"<td>{}</td>"#, escape_html(&area.area_name)));
+            body.push_str(&format!(
+                r#"<td>{}</td>"#,
+                EscapedHtml::from(area.area_name.as_str())
+            ));
             body.push_str(&format!(
                 r#"<td class="robot-stats-col-numeric">{}</td>"#,
                 area.total_runs
@@ -247,7 +250,10 @@ fn render_ore_stats_section(
         for ore in ore_stats {
             let net = ore.amount.saturating_sub(ore.tax);
             body.push_str("<tr>");
-            body.push_str(&format!(r#"<td>{}</td>"#, escape_html(&ore.ore_name)));
+            body.push_str(&format!(
+                r#"<td>{}</td>"#,
+                EscapedHtml::from(ore.ore_name.as_str())
+            ));
             body.push_str(&format!(
                 r#"<td class="robot-stats-col-numeric">{}</td>"#,
                 ore.amount

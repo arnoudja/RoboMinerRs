@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use robominer_domain::{SCORE_TIER_COUNT, ScoreTierBreakdown, ore_amounts, score_breakdown};
 
 use crate::help_pages;
-use crate::html::{escape_html, format_utc_millis};
+use crate::html::{EscapedHtml, format_utc_millis, html_attr};
 use crate::mining_results_page::MiningResultsPageState;
 
 #[derive(Clone, Copy)]
@@ -74,7 +74,7 @@ fn render_mining_result_detail_panel(
         result.mining_queue_id,
         result.mining_queue_id,
         result.robot_id,
-        escape_html(&result.mining_area_name),
+        html_attr(&result.mining_area_name),
         result.mining_end_time_millis,
         result.total_reward,
         result.score
@@ -82,9 +82,9 @@ fn render_mining_result_detail_panel(
     body.push_str(r#"<header class="mining-results-detail-header">"#);
     body.push_str(&format!(
         r#"<div><h2 class="mining-results-detail-title">{}</h2><p class="mining-results-detail-subtitle">{} · Ended {} · Score {:.1}</p></div>"#,
-        escape_html(&result.mining_area_name),
-        escape_html(robot_name),
-        escape_html(&format_utc_millis(result.mining_end_time_millis)),
+        EscapedHtml::from(result.mining_area_name.as_str()),
+        EscapedHtml::from(robot_name),
+        EscapedHtml::from(format_utc_millis(result.mining_end_time_millis)),
         result.score
     ));
     body.push_str(&render_mining_result_replay_action(result));
@@ -128,7 +128,7 @@ fn render_mining_result_breakdown(
         for ore_result in sorted_ores {
             body.push_str(&format!(
                 r#"<li><span class="mining-results-ore-name">{}</span><span class="mining-results-ore-values">{} mined · {} tax · +{} net</span></li>"#,
-                escape_html(&ore_result.ore_name),
+                EscapedHtml::from(ore_result.ore_name.as_str()),
                 ore_result.amount,
                 ore_result.tax,
                 ore_result.reward,
@@ -239,7 +239,7 @@ fn push_score_tier_row(
 ) {
     let ore_name = slot
         .name
-        .map(escape_html)
+        .map(|name| EscapedHtml::from(name).to_string())
         .unwrap_or_else(|| "—".to_string());
     let overflow = if tier.overflow_out > 0 {
         format!("{} × 2 = {}", tier.overflow_out, tier.overflow_converted)

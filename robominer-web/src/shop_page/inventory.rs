@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::ShopPageState;
 use super::catalog::render_shop_sell_action;
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 pub(super) fn render_shop_inventory(
     body: &mut String,
@@ -45,8 +45,8 @@ pub(super) fn render_shop_inventory(
         for (part, part_state) in owned_rows {
             body.push_str(&format!(
                 r#"<tr><td class="shop-inventory-name">{}</td><td>{} quality</td><td>{}</td><td>{}</td><td class="shop-inventory-action">{}</td></tr>"#,
-                escape_html(&part.part_name),
-                escape_html(&part.tier_name),
+                EscapedHtml::from(part.part_name.as_str()),
+                EscapedHtml::from(part.tier_name.as_str()),
                 part_state.total_owned,
                 part_state.unassigned,
                 render_shop_sell_action(part, part_state, state)

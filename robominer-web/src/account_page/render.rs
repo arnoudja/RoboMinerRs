@@ -1,5 +1,7 @@
 use crate::account_page::AccountPageState;
-use crate::html::{escape_html, layout, render_password_field, render_password_toggle_script};
+use crate::html::{
+    EscapedHtml, html_attr, layout, render_password_field, render_password_toggle_script,
+};
 use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -> String {
@@ -9,7 +11,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
     body.push_str(r#"<h1 class="account-page-title">Account</h1>"#);
     body.push_str(&format!(
         r#"<p class="account-page-subtitle">Signed in as {}</p>"#,
-        escape_html(&state.current_username)
+        EscapedHtml::from(state.current_username.as_str())
     ));
     body.push_str("</header>");
     body.push_str(r#"<div class="account-card auth-card">"#);
@@ -17,13 +19,13 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
     if let Some(message) = &state.message {
         body.push_str(&format!(
             r#"<p class="auth-banner-success">{}</p>"#,
-            escape_html(message)
+            EscapedHtml::from(message.as_str())
         ));
     }
     if let Some(error_message) = &state.error_message {
         body.push_str(&format!(
             r#"<p class="auth-banner-error">{}</p>"#,
-            escape_html(error_message)
+            EscapedHtml::from(error_message.as_str())
         ));
     }
     body.push_str(r#"<h2 class="account-section-title">Profile</h2>"#);
@@ -31,7 +33,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
     body.push_str(r#"<label class="auth-label" for="username">Username</label>"#);
     body.push_str(&format!(
         r#"<input class="auth-input" type="text" id="username" name="username" pattern="[A-Za-z0-9]{{3,30}}" value="{}" required placeholder="Choose your in-game name" />"#,
-        escape_html(&state.username),
+        html_attr(&state.username),
     ));
     body.push_str(
         r#"<p class="auth-field-hint">3 to 30 characters, letters and numbers only.</p>"#,
@@ -41,7 +43,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
     body.push_str(r#"<label class="auth-label" for="email">E-mail address</label>"#);
     body.push_str(&format!(
         r#"<input class="auth-input" type="email" id="email" name="email" value="{}" required placeholder="Enter your e-mail address" />"#,
-        escape_html(&state.email),
+        html_attr(&state.email),
     ));
     body.push_str("</div>");
     body.push_str(r#"<h2 class="account-section-title">Password</h2>"#);

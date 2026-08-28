@@ -1,7 +1,7 @@
 use super::LEADERBOARD_SIDEBAR_AREA_STANDINGS;
 use super::LeaderboardTab;
 use super::render_shared::leaderboard_activity_area_href;
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, html_attr};
 
 pub(super) fn render_leaderboard_climb_hint(body: &mut String, tab: LeaderboardTab) {
     let (summary, links): (&str, &[(&str, &str)]) = match tab {
@@ -34,7 +34,7 @@ pub(super) fn render_leaderboard_climb_hint(body: &mut String, tab: LeaderboardT
     body.push_str(r#"<h3 class="leaderboard-climb-title">How to climb</h3>"#);
     body.push_str(&format!(
         r#"<p class="leaderboard-climb-copy">{}</p>"#,
-        escape_html(summary)
+        EscapedHtml::from(summary)
     ));
     body.push_str(r#"<p class="leaderboard-climb-links">"#);
     for (index, (href, label)) in links.iter().enumerate() {
@@ -43,8 +43,8 @@ pub(super) fn render_leaderboard_climb_hint(body: &mut String, tab: LeaderboardT
         }
         body.push_str(&format!(
             r#"<a class="leaderboard-section-action" href="{}">{}</a>"#,
-            escape_html(href),
-            escape_html(label),
+            html_attr(href),
+            EscapedHtml::from(*label),
         ));
     }
     body.push_str("</p></aside>");
@@ -146,7 +146,7 @@ fn render_leaderboard_sidebar_standings(
     if let Some(insight) = viewer_climb_insight(standing, mining_area_scores) {
         body.push_str(&format!(
             r#"<li class="leaderboard-standing-item leaderboard-standing-climb"><span class="leaderboard-standing-label">Closest to #1</span><span class="leaderboard-standing-value">{}</span></li>"#,
-            escape_html(&insight),
+            EscapedHtml::from(insight.as_str()),
         ));
     }
 
@@ -158,7 +158,7 @@ fn render_leaderboard_sidebar_standings(
         body.push_str(&format!(
             r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label">Top robot list</span><span class="leaderboard-standing-value">#{} · {} ({:.1} ore/run)</span></li>"#,
             index + 1,
-            escape_html(&robot.robot_name),
+            EscapedHtml::from(robot.robot_name.as_str()),
             robot.ore_per_run,
         ));
     }
@@ -170,11 +170,11 @@ fn render_leaderboard_sidebar_standings(
     {
         body.push_str(&format!(
             r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label"><a class="leaderboard-standing-link" href="{}">{}</a></span><span class="leaderboard-standing-value">#{} · {:.1} with {}</span></li>"#,
-            escape_html(&leaderboard_activity_area_href(area.mining_area_id)),
-            escape_html(&area.area_name),
+            html_attr(&leaderboard_activity_area_href(area.mining_area_id)),
+            EscapedHtml::from(area.area_name.as_str()),
             area.rank,
             area.score,
-            escape_html(&area.robot_name),
+            EscapedHtml::from(area.robot_name.as_str()),
         ));
     }
 

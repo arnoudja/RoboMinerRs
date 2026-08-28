@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, format_utc_millis};
+use crate::html::{EscapedHtml, format_utc_millis, html_attr};
 use crate::mining_results_page::{
     MINING_RESULTS_INITIAL_VISIBLE, MINING_RESULTS_LOAD_MORE_STEP, MiningResultsPageState,
 };
@@ -65,7 +65,7 @@ fn render_mining_result_log_card(
         r#"<button type="button" class="mining-results-run-card{active_class}" data-run-id="{}" data-robot-id="{}" data-area-name="{}" data-sort-end="{}" data-sort-reward="{}" data-sort-score="{}">"#,
         result.mining_queue_id,
         result.robot_id,
-        escape_html(&result.mining_area_name),
+        html_attr(&result.mining_area_name),
         result.mining_end_time_millis,
         result.total_reward,
         result.score
@@ -74,25 +74,25 @@ fn render_mining_result_log_card(
     body.push_str(r#"<span class="mining-results-run-heading-main">"#);
     body.push_str(&format!(
         r#"<span class="mining-results-run-area">{}</span>"#,
-        escape_html(&result.mining_area_name)
+        EscapedHtml::from(result.mining_area_name.as_str())
     ));
     if !ore_summary.is_empty() {
         body.push_str(&format!(
             r#"<span class="mining-results-run-ores">{}</span>"#,
-            escape_html(&ore_summary)
+            EscapedHtml::from(ore_summary.as_str())
         ));
     }
     body.push_str("</span>");
     body.push_str(&format!(
         r#"<span class="mining-results-run-robot">{}</span>"#,
-        escape_html(robot_name)
+        EscapedHtml::from(robot_name)
     ));
     body.push_str("</span>");
     body.push_str(&format!(
         r#"<span class="mining-results-run-stats"><span class="mining-results-run-reward">+{} net</span><span class="mining-results-run-score">Score {:.1}</span><span class="mining-results-run-ended">Ended {}</span></span>"#,
         result.total_reward,
         result.score,
-        escape_html(&format_utc_millis(result.mining_end_time_millis))
+        EscapedHtml::from(format_utc_millis(result.mining_end_time_millis))
     ));
     body.push_str("</button>");
 }

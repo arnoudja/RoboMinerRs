@@ -4,7 +4,7 @@ use super::render_robots::render_leaderboard_top_robots_section;
 use super::render_sidebar::render_leaderboard_sidebar;
 use super::{LeaderboardPageState, LeaderboardQuery, LeaderboardTab};
 use crate::help_pages;
-use crate::html::{AreaFilterOption, escape_html, layout, render_area_filter_select};
+use crate::html::{AreaFilterOption, EscapedHtml, html_attr, layout, render_area_filter_select};
 use crate::static_assets::PageStylesheet;
 
 pub(super) fn render_leaderboard_page(
@@ -140,8 +140,8 @@ fn render_leaderboard_tab_filter(body: &mut String, query: LeaderboardQuery) {
         };
         body.push_str(&format!(
             r#"<a class="{class_name}" href="{}">{}</a>"#,
-            escape_html(&query.tab_href(tab)),
-            escape_html(tab.label()),
+            html_attr(&query.tab_href(tab)),
+            EscapedHtml::from(tab.label()),
         ));
     }
     body.push_str("</nav>");

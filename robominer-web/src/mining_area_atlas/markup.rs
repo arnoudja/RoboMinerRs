@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, html_attr};
 
 use super::costs::{area_costs_affordable, render_area_entry_costs};
 use super::script::render_mining_area_atlas_script;
@@ -116,7 +116,7 @@ fn render_mining_area_atlas_controls(
         body.push_str(&format!(
             r#"<option value="{}">{}</option>"#,
             ore.ore_id,
-            escape_html(&ore.ore_name)
+            EscapedHtml::from(ore.ore_name.as_str())
         ));
     }
     body.push_str("</select></label>");
@@ -146,7 +146,7 @@ fn render_mining_area_atlas_matrix(
     for ore in ores {
         body.push_str(&format!(
             r#"<th scope="col">{}</th>"#,
-            escape_html(&ore.ore_name)
+            EscapedHtml::from(ore.ore_name.as_str())
         ));
     }
     body.push_str("</tr></thead><tbody id=\"miningAreaAtlasRows\">");
@@ -169,7 +169,7 @@ fn render_mining_area_atlas_matrix(
         body.push_str(&format!(
             r#"<tr class="mining-area-atlas-row" data-area-id="{}" data-area-name="{}" data-total-yield="{}" data-affordable="{}"{ore_yield_attrs}><th scope="row" class="mining-area-atlas-area-col">"#,
             area.mining_area_id,
-            escape_html(&area.area_name),
+            html_attr(&area.area_name),
             area.total_average_ore_per_run,
             if affordable { "1" } else { "0" },
         ));
@@ -208,7 +208,7 @@ fn render_mining_area_atlas_area_cell(
     body.push_str(&format!(
         r#"<a class="mining-area-atlas-area-link" href="miningQueue?infoMiningAreaId={}">{}</a>"#,
         area.mining_area_id,
-        escape_html(&area.area_name)
+        EscapedHtml::from(area.area_name.as_str())
     ));
 }
 

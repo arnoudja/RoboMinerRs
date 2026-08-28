@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::ShopPageState;
 use crate::help_pages;
-use crate::html::{escape_html, layout, selected_attr};
+use crate::html::{EscapedHtml, html_attr, layout, selected_attr};
 use crate::static_assets::PageStylesheet;
 
 use super::catalog::{render_shop_part_compact_card, render_shop_part_detail_panel};
@@ -40,7 +40,7 @@ pub(super) fn render_shop_page(
     );
     let mut body = String::from(&format!(
         r#"<div class="shop-page" data-filter-storage-key="{}">"#,
-        escape_html(&filter_storage_key)
+        html_attr(&filter_storage_key)
     ));
     render_shop_wallet_strip(&mut body, state);
     render_shop_message(&mut body, state);
@@ -190,7 +190,7 @@ fn render_shop_filters(body: &mut String, state: &ShopPageState) {
             r#"<option value="{}"{}>{}</option>"#,
             part_type.id,
             selected_attr(part_type.id == state.selected_part_type_id),
-            escape_html(&part_type.type_name)
+            EscapedHtml::from(part_type.type_name.as_str())
         ));
     }
     body.push_str("</select></label>");
@@ -200,13 +200,13 @@ fn render_shop_filters(body: &mut String, state: &ShopPageState) {
             r#"<option value="{}"{}>{} quality</option>"#,
             ore.id,
             selected_attr(ore.id == state.selected_tier_id),
-            escape_html(&ore.ore_name)
+            EscapedHtml::from(ore.ore_name.as_str())
         ));
     }
     body.push_str("</select></label></div>");
     body.push_str(&format!(
         r#"<p class="shop-atlas-helper">Need ore for parts? <a class="shop-atlas-link" href="{}">Compare all areas</a>.</p>"#,
-        escape_html(&mining_area_atlas_url(
+        html_attr(&mining_area_atlas_url(
             MiningAreaAtlasLinkTarget::StandalonePage,
             None,
             false,

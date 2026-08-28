@@ -1,4 +1,4 @@
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, html_attr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MiningAreaAtlasLinkTarget {
@@ -45,7 +45,7 @@ pub(crate) fn render_mining_area_atlas_ore_link(
 ) -> String {
     format!(
         r#"<a class="{class}" href="{}">{}</a>"#,
-        escape_html(&mining_area_atlas_url_for_ore(ore_id, target)),
-        escape_html(&mining_area_atlas_ore_link_label(ore_name)),
+        html_attr(&mining_area_atlas_url_for_ore(ore_id, target)),
+        EscapedHtml::from(mining_area_atlas_ore_link_label(ore_name)),
     )
 }

@@ -2,7 +2,7 @@ use super::AchievementsPageState;
 use super::render::{
     achievement_progress_percent, render_achievement_progress, render_achievements_summary,
 };
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 pub(super) fn render_achievements_overview(
     viewed_username: &str,
@@ -44,7 +44,7 @@ pub(super) fn render_achievements_not_found(viewed_username: &str) -> String {
     body.push_str(r#"<div class="achievements-summary-heading">"#);
     body.push_str(&format!(
         r#"<h1 class="achievements-page-title">{}'s achievements</h1>"#,
-        escape_html(viewed_username)
+        EscapedHtml::from(viewed_username)
     ));
     body.push_str("</div></section>");
     body.push_str(r#"<p class="achievements-empty">Player not found.</p>"#);
@@ -76,8 +76,8 @@ fn render_overview_track_card(
     body.push_str(r#"<header class="achievement-card-header">"#);
     body.push_str(&format!(
         r#"<div><h2 class="achievement-card-title">{}</h2><p class="achievement-card-description">{}</p></div>"#,
-        escape_html(&track.title),
-        escape_html(&track.description)
+        EscapedHtml::from(track.title.as_str()),
+        EscapedHtml::from(track.description.as_str())
     ));
     if completed {
         body.push_str(r#"<span class="achievement-status-badge achievement-status-complete">Completed</span>"#);

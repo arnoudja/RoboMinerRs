@@ -6,7 +6,7 @@ use super::render_shared::{
     render_leaderboard_section_actions,
 };
 use super::render_sidebar::render_leaderboard_climb_hint;
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 pub(super) fn render_leaderboard_top_robots_section(
     body: &mut String,
@@ -60,7 +60,7 @@ pub(super) fn render_leaderboard_top_robots_section(
             body.push_str(&format!(
                 r#"<td class="leaderboard-name"><a class="leaderboard-row-link" href="robotStats?robotId={}">{}</a></td>"#,
                 robot.robot_id,
-                escape_html(&robot.robot_name),
+                EscapedHtml::from(robot.robot_name.as_str()),
             ));
             render_leaderboard_owner_cell(body, &robot.username, viewer_username);
             body.push_str(&format!(

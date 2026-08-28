@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::html::escape_html;
+use crate::html::{EscapedHtml, html_attr};
 use crate::mining_area_atlas::{
     MiningAreaAtlasLinkTarget, mining_area_atlas_url, render_mining_area_atlas_ore_link,
 };
@@ -69,7 +69,7 @@ pub(super) fn render_mining_results_wallet_delta(
                 "mining-results-atlas-link",
             )
         } else {
-            escape_html(&ore_name)
+            EscapedHtml::from(ore_name.as_str()).to_string()
         };
         body.push_str(&format!(
             r#"<li class="mining-results-wallet-delta-item"><span class="mining-results-wallet-delta-ore">{}</span><span class="mining-results-wallet-delta-amount">+{}</span></li>"#,
@@ -86,7 +86,7 @@ pub(super) fn render_mining_results_filters(body: &mut String, state: &MiningRes
     body.push_str(r#"<section class="mining-results-filters" aria-label="Result filters">"#);
     body.push_str(&format!(
         r#"<p class="mining-results-atlas-helper">Find stronger yields in the <a class="mining-results-atlas-link" href="{}">area atlas</a>.</p>"#,
-        escape_html(&mining_area_atlas_url(
+        html_attr(&mining_area_atlas_url(
             MiningAreaAtlasLinkTarget::StandalonePage,
             None,
             false,
@@ -101,7 +101,7 @@ pub(super) fn render_mining_results_filters(body: &mut String, state: &MiningRes
         body.push_str(&format!(
             r#"<option value="{}">{}</option>"#,
             robot.robot_id,
-            escape_html(&robot.robot_name)
+            EscapedHtml::from(robot.robot_name.as_str())
         ));
     }
     body.push_str("</select></label>");
@@ -112,8 +112,8 @@ pub(super) fn render_mining_results_filters(body: &mut String, state: &MiningRes
     for area_name in &unique_areas {
         body.push_str(&format!(
             r#"<option value="{}">{}</option>"#,
-            escape_html(area_name),
-            escape_html(area_name)
+            html_attr(area_name),
+            EscapedHtml::from(area_name.as_str())
         ));
     }
     body.push_str("</select></label>");

@@ -1,5 +1,5 @@
 use super::render::{achievement_progress_percent, render_achievement_progress};
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 pub(super) fn render_achievement_card(
     body: &mut String,
@@ -33,8 +33,8 @@ pub(super) fn render_achievement_card(
     body.push_str(r#"<header class="achievement-card-header">"#);
     body.push_str(&format!(
         r#"<div><h2 class="achievement-card-title">{}</h2><p class="achievement-card-description">{}</p></div>"#,
-        escape_html(&achievement.title),
-        escape_html(&achievement.description)
+        EscapedHtml::from(achievement.title.as_str()),
+        EscapedHtml::from(achievement.description.as_str())
     ));
     if achievement.claimable {
         body.push_str(&render_achievement_claim_badge(achievement.achievement_id));
@@ -78,7 +78,7 @@ pub(super) fn render_achievement_card(
         if new_ore_maximum > achievement.current_ore_maximum {
             body.push_str(&format!(
                 r#"<li><span class="achievement-reward-label">{} ore maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
-                escape_html(ore_name),
+                EscapedHtml::from(ore_name.as_str()),
                 achievement.current_ore_maximum,
                 new_ore_maximum
             ));
@@ -89,7 +89,7 @@ pub(super) fn render_achievement_card(
         if new_depot_maximum > achievement.current_depot_maximum {
             body.push_str(&format!(
                 r#"<li><span class="achievement-reward-label">{} depot maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
-                escape_html(ore_name),
+                EscapedHtml::from(ore_name.as_str()),
                 achievement.current_depot_maximum,
                 new_depot_maximum
             ));
@@ -101,7 +101,7 @@ pub(super) fn render_achievement_card(
     if let Some(mining_area_name) = &achievement.mining_area_name {
         body.push_str(&format!(
             r#"<li><span class="achievement-reward-label">Mining area</span><span class="achievement-reward-value">{}</span></li>"#,
-            escape_html(mining_area_name)
+            EscapedHtml::from(mining_area_name.as_str())
         ));
     }
     body.push_str("</ul></section>");
@@ -114,7 +114,7 @@ pub(super) fn render_achievement_card(
         for requirement in total_requirements {
             body.push_str(&format!(
                 r#"<li><span>{} mined</span><span class="achievement-requirement-target">{}</span><span class="{}">({})</span></li>"#,
-                escape_html(&requirement.ore_name),
+                EscapedHtml::from(requirement.ore_name.as_str()),
                 requirement.amount,
                 if requirement.current_amount >= requirement.amount {
                     "sufficientbalance"
@@ -127,7 +127,7 @@ pub(super) fn render_achievement_card(
         for requirement in depot_total_requirements {
             body.push_str(&format!(
                 r#"<li><span>{} dumped in depot</span><span class="achievement-requirement-target">{}</span><span class="{}">({})</span></li>"#,
-                escape_html(&requirement.ore_name),
+                EscapedHtml::from(requirement.ore_name.as_str()),
                 requirement.amount,
                 if requirement.current_amount >= requirement.amount {
                     "sufficientbalance"
@@ -140,7 +140,7 @@ pub(super) fn render_achievement_card(
         for requirement in score_requirements {
             body.push_str(&format!(
                 r#"<li><span>Average {} score</span><span class="achievement-requirement-target">{:.1}</span><span class="{}">{}</span></li>"#,
-                escape_html(&requirement.area_name),
+                EscapedHtml::from(requirement.area_name.as_str()),
                 requirement.minimum_score,
                 if robominer_db::achievement_score_meets_requirement(
                     requirement.current_score,
@@ -176,7 +176,7 @@ fn current_score_display(
         .map(str::trim)
         .filter(|name| robot_count >= 2 && !name.is_empty())
     {
-        Some(name) => format!("({}: {score})", escape_html(name)),
+        Some(name) => format!("({}: {score})", EscapedHtml::from(name)),
         None => format!("({score})"),
     }
 }

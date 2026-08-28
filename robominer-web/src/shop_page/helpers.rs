@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::ShopPageState;
-use crate::html::{escape_html, format_ore_shortfall};
+use crate::html::{format_ore_shortfall, html_attr};
 
 pub(super) fn shop_total_cost(costs: &[&robominer_db::ShopRobotPartCostRecord]) -> i32 {
     costs.iter().map(|cost| cost.amount).sum()
@@ -57,7 +57,7 @@ pub(super) fn shop_button(
 ) -> String {
     let disabled_attr = if enabled { "" } else { " disabled" };
     let title_attr = block_reason
-        .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
+        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
         .unwrap_or_default();
     let class_name = match style {
         ShopButtonStyle::Primary => "shop-btn shop-btn-primary",
