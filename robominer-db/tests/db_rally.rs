@@ -5,10 +5,10 @@ use robominer_db::{
     persist_completed_rally,
 };
 use robominer_test_support::{
-    RallyFixture, insert_ai_robot, insert_area_supply, insert_claimed_mining_queue,
-    insert_finished_queue, insert_mining_area, insert_ore, insert_ore_price,
-    insert_ore_result_with_depot, insert_robot, insert_row_id, insert_user, insert_user_ore_asset,
-    unique_prefix,
+    ClaimResultsFixture, RallyFixture, insert_ai_robot, insert_area_supply,
+    insert_claimed_mining_queue, insert_finished_queue, insert_mining_area, insert_ore,
+    insert_ore_price, insert_ore_result_with_depot, insert_robot, insert_row_id, insert_user,
+    insert_user_ore_asset, unique_prefix,
 };
 use serial_test::serial;
 use sqlx::Row;
@@ -598,4 +598,58 @@ async fn claimable_mining_queue_query_can_use_claimable_index() {
         plan.contains("idx_mining_queue_claimable"),
         "expected EXPLAIN JSON to mention idx_mining_queue_claimable, got:\n{plan}"
     );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+#[serial]
+async fn claim_user_results_concurrent_workers_do_not_double_credit() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = ClaimResultsFixture::create(&pool).await;
+
+    let mut handles = Vec::with_capacity(4);
+    for _ in 0..4 {
+        let pool = pool.clone();
+        let user_id = fixture.user_id;
+        handles.push(tokio::spawn(async move {
+            robominer_db::claim_user_results(&pool, user_id)
+                .await
+                .expect("claim should not fail at sql layer")
+        }));
+    }
+
+    let mut total_claimed_queues = 0_u64;
+    for handle in handles {
+        let result = handle.await.expect("claim task should complete");
+        total_claimed_queues += result.claimed_queues;
+    }
+
+    assert_eq!(
+        total_claimed_queues, 1,
+        "exactly one worker should claim the finished queue"
+    );
+
+    let claimed: i8 = sqlx::query_scalar("SELECT claimed FROM MiningQueue WHERE id = ?")
+        .bind(fixture.mining_queue_id)
+        .fetch_one(&pool)
+        .await
+        .expect("claimed flag");
+    assert_eq!(claimed, 1);
+
+    let wallet: i32 =
+        sqlx::query_scalar("SELECT amount FROM UserOreAsset WHERE userId = ? AND oreId = ?")
+            .bind(fixture.user_id)
+            .bind(fixture.primary_ore_id)
+            .fetch_one(&pool)
+            .await
+            .expect("wallet amount");
+    // Fixture starts at 2; reward after 25% tax on 10 is 8; cap maxAllowed=8 → wallet stays 8.
+    assert_eq!(wallet, 8);
+
+    fixture.cleanup(&pool).await;
 }
