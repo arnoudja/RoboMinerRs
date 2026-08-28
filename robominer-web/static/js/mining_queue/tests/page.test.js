@@ -9,6 +9,9 @@ const vm = require('vm');
 const JS_ROOT = path.join(__dirname, '..', '..');
 const URL_QUERY_JS = fs.readFileSync(path.join(JS_ROOT, 'common', 'url_query.js'), 'utf8');
 const SESSION_STORE_JS = fs.readFileSync(path.join(JS_ROOT, 'common', 'session_store.js'), 'utf8');
+const VIEW_JS = fs.readFileSync(path.join(__dirname, '..', 'view.js'), 'utf8');
+const CLAIM_POLL_JS = fs.readFileSync(path.join(__dirname, '..', 'claim_poll.js'), 'utf8');
+const ACTIONS_JS = fs.readFileSync(path.join(__dirname, '..', 'actions.js'), 'utf8');
 const PAGE_JS = fs.readFileSync(path.join(__dirname, '..', 'page.js'), 'utf8');
 
 class FakeClassList {
@@ -413,6 +416,9 @@ function loadMiningQueuePage(contextOverrides) {
     vm.createContext(context);
     vm.runInContext(URL_QUERY_JS.replace('window', 'globalThis'), context, { filename: 'url_query.js' });
     vm.runInContext(SESSION_STORE_JS.replace('window', 'globalThis'), context, { filename: 'session_store.js' });
+    vm.runInContext(VIEW_JS, context, { filename: 'view.js' });
+    vm.runInContext(CLAIM_POLL_JS, context, { filename: 'claim_poll.js' });
+    vm.runInContext(ACTIONS_JS, context, { filename: 'actions.js' });
     vm.runInContext(PAGE_JS, context, { filename: 'page.js' });
     return { context, doc, timers, fetches };
 }

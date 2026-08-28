@@ -132,6 +132,8 @@ fn canonical_path_redirect(request: &Request) -> Option<Response> {
         return None;
     }
 
+    log_legacy_path_redirect(request, &canonical);
+
     let mut location = canonical;
     if !request.query.is_empty() {
         let mut pairs: Vec<_> = request.query.iter().collect();
@@ -148,6 +150,15 @@ fn canonical_path_redirect(request: &Request) -> Option<Response> {
     }
 
     Some(Response::redirect(location))
+}
+
+fn log_legacy_path_redirect(request: &Request, canonical: &str) {
+    tracing::info!(
+        legacy_path = %request.path,
+        canonical_path = %canonical,
+        method = %request.method,
+        "legacy_pascal_case_redirect"
+    );
 }
 
 fn canonicalize_path(path: &str) -> Option<String> {

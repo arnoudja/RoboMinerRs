@@ -60,3 +60,11 @@ pub async fn get_user_session_version(
         .fetch_optional(pool)
         .await
 }
+
+/// Count users still storing legacy `sha256:` password hashes (upgraded on login).
+pub async fn count_legacy_password_hashes(pool: &MySqlPool) -> Result<u64, sqlx::Error> {
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM User WHERE password LIKE 'sha256:%'")
+        .fetch_one(pool)
+        .await?;
+    Ok(count.max(0) as u64)
+}
