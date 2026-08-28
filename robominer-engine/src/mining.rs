@@ -1,6 +1,7 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use std::collections::HashMap;
 
+use crate::db_outcome::finish_db_outcome;
 use crate::output::escape_state_field;
 
 pub(crate) async fn claim_results(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {
@@ -27,45 +28,51 @@ pub(crate) async fn enqueue_mining(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::EnqueueMiningRequest,
 ) -> Result<()> {
-    match robominer_db::enqueue_mining(pool, request)
-        .await
-        .context("failed to enqueue mining run")?
-        .into_result()
-    {
-        Ok(result) => {
+    let robot_id = request.robot_id;
+    let mining_area_id = request.mining_area_id;
+    finish_db_outcome(
+        robominer_db::enqueue_mining(pool, request)
+            .await
+            .context("failed to enqueue mining run")?,
+        |result| {
             println!(
                 "Enqueued {} mining run(s) for robot {} in mining area {}",
-                result.inserted_queues, request.robot_id, request.mining_area_id
+                result.inserted_queues, robot_id, mining_area_id
             );
             Ok(())
-        }
-        Err(rejection) => Err(anyhow!(
-            "unable to enqueue mining run: {}",
-            robominer_domain::rejection_messages::enqueue_mining_rejection_cli_message(rejection)
-        )),
-    }
+        },
+        |rejection| {
+            format!(
+                "unable to enqueue mining run: {}",
+                robominer_domain::rejection_messages::enqueue_mining_rejection_cli_message(
+                    rejection
+                )
+            )
+        },
+    )
 }
 
 pub(crate) async fn cancel_mining_queue(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::CancelMiningQueueRequest,
 ) -> Result<()> {
-    match robominer_db::cancel_mining_queue(pool, request)
-        .await
-        .context("failed to cancel mining queue item")?
-        .into_result()
-    {
-        Ok(result) => {
+    finish_db_outcome(
+        robominer_db::cancel_mining_queue(pool, request)
+            .await
+            .context("failed to cancel mining queue item")?,
+        |result| {
             println!("Canceled mining queue {}", result.mining_queue_id);
             Ok(())
-        }
-        Err(rejection) => Err(anyhow!(
-            "unable to cancel mining queue item: {}",
-            robominer_domain::rejection_messages::cancel_mining_queue_rejection_cli_message(
-                rejection
+        },
+        |rejection| {
+            format!(
+                "unable to cancel mining queue item: {}",
+                robominer_domain::rejection_messages::cancel_mining_queue_rejection_cli_message(
+                    rejection
+                )
             )
-        )),
-    }
+        },
+    )
 }
 
 pub(crate) async fn mining_queue_states(

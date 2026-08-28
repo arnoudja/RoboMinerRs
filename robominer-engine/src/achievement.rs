@@ -1,29 +1,31 @@
+use crate::db_outcome::finish_db_outcome;
 use crate::output::{escape_state_field, optional_id};
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 
 pub(crate) async fn claim_achievement_step(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::ClaimAchievementStepRequest,
 ) -> Result<()> {
-    match robominer_db::claim_achievement_step(pool, request)
-        .await
-        .context("failed to claim achievement step")?
-        .into_result()
-    {
-        Ok(result) => {
+    finish_db_outcome(
+        robominer_db::claim_achievement_step(pool, request)
+            .await
+            .context("failed to claim achievement step")?,
+        |result| {
             println!(
                 "Claimed achievement {} step {}",
                 result.achievement_id, result.step
             );
             Ok(())
-        }
-        Err(rejection) => Err(anyhow!(
-            "unable to claim achievement step: {}",
-            robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
-                rejection
+        },
+        |rejection| {
+            format!(
+                "unable to claim achievement step: {}",
+                robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
+                    rejection
+                )
             )
-        )),
-    }
+        },
+    )
 }
 
 pub(crate) async fn achievement_states(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {

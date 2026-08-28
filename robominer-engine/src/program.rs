@@ -1,6 +1,7 @@
+use crate::db_outcome::finish_db_outcome;
 use crate::output::escape_state_field;
 use crate::verify::mark_program_source_verification;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, bail};
 
 pub(crate) async fn create_program_source(
     pool: &robominer_db::MySqlPool,
@@ -11,19 +12,22 @@ pub(crate) async fn create_program_source(
     match robominer_domain::create_program_source(pool, request)
         .await
         .context("failed to create program source")?
-        .into_result()
     {
-        Ok(result) => {
+        robominer_db::DbOutcome::Success(result) => {
             mark_program_source_verification(pool, result.program_source_id, &source_code).await?;
             println!("Created program source {}", result.program_source_id);
             Ok(())
         }
-        Err(rejection) => Err(anyhow!(
-            "unable to create program source: {}",
-            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
-                rejection
-            )
-        )),
+        robominer_db::DbOutcome::Rejected(rejection) => {
+            let message = format!(
+                "unable to create program source: {}",
+                robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                    rejection
+                )
+            );
+            eprintln!("{message}");
+            bail!(message)
+        }
     }
 }
 
@@ -38,9 +42,8 @@ pub(crate) async fn update_program_source(
     match robominer_domain::update_program_source(pool, request)
         .await
         .context("failed to update program source")?
-        .into_result()
     {
-        Ok(()) => {
+        robominer_db::DbOutcome::Success(()) => {
             mark_program_source_verification(pool, program_source_id, &source_code).await?;
             let applied = robominer_db::apply_verified_program_source_to_idle_robots(
                 pool,
@@ -56,12 +59,16 @@ pub(crate) async fn update_program_source(
             print_program_source_warnings(&applied.warnings);
             Ok(())
         }
-        Err(rejection) => Err(anyhow!(
-            "unable to update program source: {}",
-            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
-                rejection
-            )
-        )),
+        robominer_db::DbOutcome::Rejected(rejection) => {
+            let message = format!(
+                "unable to update program source: {}",
+                robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                    rejection
+                )
+            );
+            eprintln!("{message}");
+            bail!(message)
+        }
     }
 }
 
@@ -70,22 +77,23 @@ pub(crate) async fn delete_program_source(
     user_id: i64,
     program_source_id: i64,
 ) -> Result<()> {
-    match robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
-        .await
-        .context("failed to delete program source")?
-        .into_result()
-    {
-        Ok(()) => {
+    finish_db_outcome(
+        robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
+            .await
+            .context("failed to delete program source")?,
+        |_| {
             println!("Deleted program source {program_source_id}");
             Ok(())
-        }
-        Err(rejection) => Err(anyhow!(
-            "unable to delete program source: {}",
-            robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
-                rejection
+        },
+        |rejection| {
+            format!(
+                "unable to delete program source: {}",
+                robominer_domain::rejection_messages::program_source_write_rejection_cli_message(
+                    rejection
+                )
             )
-        )),
-    }
+        },
+    )
 }
 
 fn print_program_source_warnings(warnings: &[robominer_db::ProgramSourceApplyWarning]) {

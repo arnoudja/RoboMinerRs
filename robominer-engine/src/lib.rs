@@ -7,6 +7,7 @@ mod activity;
 mod assets;
 mod cli;
 mod database;
+mod db_outcome;
 mod dispatch;
 mod leaderboard;
 mod migrate;
