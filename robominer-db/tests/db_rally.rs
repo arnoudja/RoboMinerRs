@@ -532,6 +532,22 @@ async fn next_wallet_claim_delay_seconds_uses_soonest_unclaimed_end_time() {
         .expect("capped claim delay");
     assert_eq!(capped, 10, "delay must respect max_sleep_seconds");
 
+    sqlx::query(
+        "UPDATE MiningQueue SET miningEndTime = TIMESTAMPADD(SECOND, -5, NOW()) WHERE id = ?",
+    )
+    .bind(queue_id)
+    .execute(&pool)
+    .await
+    .expect("failed to mark queue ready-now");
+
+    let ready_delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 60)
+        .await
+        .expect("ready-now claim delay");
+    assert_eq!(
+        ready_delay, 1,
+        "finished unclaimed runs must shorten poll sleep to 1s, got {ready_delay}"
+    );
+
     let _ = sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
         .bind(queue_id)
         .execute(&pool)

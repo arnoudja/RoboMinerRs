@@ -50,11 +50,25 @@ pub async fn list_user_ids_with_claimable_mining_queues(
 
 /// Seconds until the next unclaimed mining run finishes, capped at `max_sleep_seconds`.
 ///
-/// When nothing is queued, returns `max_sleep_seconds`.
+/// When finished unclaimed runs are already ready, returns `1` so poll loops retry promptly
+/// without a busy-spin. When nothing is queued, returns `max_sleep_seconds`.
 pub async fn next_wallet_claim_delay_seconds(
     pool: &MySqlPool,
     max_sleep_seconds: u64,
 ) -> Result<u64, sqlx::Error> {
+    let ready_now: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) \
+         FROM MiningQueue \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime <= NOW() \
+           AND MiningQueue.claimed = false",
+    )
+    .fetch_one(pool)
+    .await?;
+    if ready_now > 0 {
+        return Ok(1.min(max_sleep_seconds));
+    }
+
     let delay: Option<i64> = sqlx::query_scalar(
         "SELECT TIMESTAMPDIFF(SECOND, NOW(), MIN(MiningQueue.miningEndTime)) \
          FROM MiningQueue \
@@ -346,8 +360,9 @@ async fn batch_upsert_user_ore_assets_from_rewards(
         }
 
         // Existing wallets need the raw reward on UPDATE; new rows need LEAST(reward, INITIAL).
-        // Multi-VALUES cannot bind an extra per-row UPDATE param, so amount is raw for
-        // duplicates (read via row alias) and pre-capped only for true inserts.
+        // Use VALUES(amount) (MySQL + MariaDB) rather than INSERT ... AS new_row (MySQL-only;
+        // MariaDB MDEV-29919). Pre-check existence so multi-VALUES can bind raw reward
+        // for duplicates and the initial cap only for true inserts.
         let pair_placeholders = chunk
             .iter()
             .map(|_| "(?, ?)")
@@ -366,17 +381,15 @@ async fn batch_upsert_user_ore_assets_from_rewards(
             .into_iter()
             .collect();
 
-        // INSERT amount is LEAST(reward, INITIAL) for new rows; raw reward for existing
-        // rows so ON DUPLICATE KEY UPDATE can add the full delta via new_row.amount.
         let value_placeholders = chunk
             .iter()
             .map(|_| "(?, ?, ?, ?)")
             .collect::<Vec<_>>()
             .join(", ");
         let query = format!(
-            "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES {value_placeholders} AS new_row \
+            "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES {value_placeholders} \
              ON DUPLICATE KEY UPDATE \
-             amount = LEAST(UserOreAsset.maxAllowed, UserOreAsset.amount + new_row.amount)"
+             amount = LEAST(maxAllowed, amount + VALUES(amount))"
         );
         let mut query_builder = sqlx::query(&query);
         for (user_id, ore_id, reward) in chunk {
