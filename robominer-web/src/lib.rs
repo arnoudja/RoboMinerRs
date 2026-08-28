@@ -144,4 +144,11 @@ pub mod test_support {
         };
         crate::request_user_id(&request)
     }
+
+    pub const MAX_MUTATIONS_PER_USER_ACTION: usize =
+        crate::rate_limit::MAX_MUTATIONS_PER_USER_ACTION;
+
+    pub fn reset_mutation_rate_limiter_for_tests() {
+        crate::rate_limit::reset_mutation_rate_limiter_for_tests();
+    }
 }

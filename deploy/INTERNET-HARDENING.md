@@ -88,11 +88,18 @@ curl -I https://robominer.example.com/login
 Expect `Strict-Transport-Security` (after HTTPS is working) and a `200`/`302` from
 the app.
 
-## 4. Login rate limiting
+## 4. Login and mutation rate limiting
 
 Application-level rate limits apply to `POST /login` (login and signup) by client
 IP and license plate (`login_name` / signup username), returning HTTP `429` when
 exceeded. Prefer keeping the reverse-proxy limit as defense in depth.
+
+Authenticated **mutation** endpoints (shop buy/sell, mining queue changes, robot
+config apply, edit-code save/delete, achievement claims, account updates) are also
+limited in-app: **30 requests per 60 seconds per user**, keyed by action family
+(`shop`, `mining_queue`, `robot`, `edit_code`, `achievements`, `account`). Over
+the limit returns HTTP `429` with a generic retry message. Proxy rate limits
+remain defense in depth; tune both layers for your player base.
 
 `deploy/reverse-proxy/nginx.conf` also includes a `limit_req` zone on
 `POST /login` (5 requests/minute per IP, burst 3). Tune for your player base.
@@ -166,7 +173,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Gap | Mitigation today |
 | --- | --- |
 | No HSTS in app | Proxy adds `Strict-Transport-Security` (app serves plain HTTP on loopback) |
-| No full CSP yet | New rally `resultData` is versioned JSON (not executable). Replay page still uses inline bootstrap/player JS; legacy executable `var myRobots` rows are refused and shown as unavailable |
+| No full CSP yet | Page CSS is external; progress bars use `<progress>` without inline styles. CSP `style-src` is `'self'` only (no `'unsafe-inline'`) |
 
 ### Already covered in-app
 
@@ -178,6 +185,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Request timeouts | 30s |
 | POST-only form mutations | GET cannot drive shop/queue/account writes |
 | App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
+| App mutation rate limit | 30 POSTs per 60s per user and action family → 429 |
 | Account password rate limit | `/account` POSTs limited by IP and `user:{id}` before Argon2 verify |
 | Session invalidation on password change | `User.sessionVersion` bumped; cookie version checked on each request |
 | Client IP | Peer address by default; `trustproxy 1` enables proxy headers |

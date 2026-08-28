@@ -282,7 +282,6 @@ pub(crate) fn reset_auth_rate_limiter_for_tests() {
     limiter.last_sweep = None;
 }
 
-#[cfg(test)]
 pub(crate) fn reset_mutation_rate_limiter_for_tests() {
     let mut limiter = mutation_rate_limiter()
         .lock()

@@ -144,7 +144,7 @@ async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse
         HeaderValue::from_static(
             "default-src 'self'; \
              script-src 'self'; \
-             style-src 'self' 'unsafe-inline'; \
+             style-src 'self'; \
              img-src 'self' data:; \
              object-src 'none'; \
              base-uri 'self'; \
