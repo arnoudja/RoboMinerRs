@@ -1,7 +1,7 @@
 use robominer_db::MySqlPool;
 
 use crate::{
-    insert_ai_robot, insert_cli_robot, insert_mining_queue, insert_row_id,
+    insert_ai_robot, insert_cli_robot, insert_mining_queue, insert_ore, insert_row_id,
     insert_user_with_credentials, unique_prefix,
 };
 
@@ -22,11 +22,7 @@ pub struct CancelMiningQueueFixture {
 impl CancelMiningQueueFixture {
     pub async fn create(pool: &MySqlPool) -> Self {
         let prefix = unique_prefix("rust-cancel-queue-cli");
-        let ore_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-        )
-        .await;
+        let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;
         let ore_price_id = insert_row_id(
             pool,
             sqlx::query("INSERT INTO OrePrice (description) VALUES (?)")

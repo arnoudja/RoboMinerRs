@@ -1,7 +1,7 @@
 use robominer_db::MySqlPool;
 use sqlx::Row;
 
-use crate::{insert_row_id, unique_prefix};
+use crate::{insert_ore, insert_row_id, unique_prefix};
 
 pub struct RobotConfigFixture {
     pub user_id: i64,
@@ -26,11 +26,7 @@ impl RobotConfigFixture {
     ) -> Self {
         let prefix = unique_prefix("rust-robot-config-cli");
 
-        let ore_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-        )
-        .await;
+        let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;
         let ore_price_id = insert_row_id(
             pool,
             sqlx::query("INSERT INTO OrePrice (description) VALUES (?)")
