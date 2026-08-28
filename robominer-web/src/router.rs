@@ -109,7 +109,14 @@ fn clear_stale_session_cookies(response: Response) -> Response {
 }
 
 /// Redirect legacy PascalCase paths (`/Shop`, `/MiningQueue`, …) to canonical camelCase.
+///
+/// GET/HEAD only: mutating POSTs must reach the handler directly so form bodies and
+/// CSRF tokens are not dropped by a redirect.
 fn canonical_path_redirect(request: &Request) -> Option<Response> {
+    if !matches!(request.method.as_str(), "GET" | "HEAD") {
+        return None;
+    }
+
     let canonical = canonicalize_path(&request.path)?;
     if canonical == request.path {
         return None;
@@ -387,6 +394,31 @@ mod tests {
                 .headers
                 .iter()
                 .any(|(name, value)| *name == "Location" && value == "/shop")
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn legacy_pascal_case_post_requests_are_not_redirected() {
+        let config = ServerConfig {
+            static_root: PathBuf::from("robominer-web/static"),
+            database_pool: None,
+            allow_signup: true,
+            trust_proxy: false,
+        };
+
+        let mut request = request("/Login");
+        request.method = "POST".to_string();
+        request
+            .form
+            .insert("loginName".to_string(), "player".to_string());
+        request
+            .form
+            .insert("password".to_string(), "secret".to_string());
+
+        let response = route(&request, &config).await;
+        assert_ne!(
+            response.status, 302,
+            "POST /Login must not canonical-redirect and drop the form body"
         );
     }
 

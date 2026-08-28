@@ -103,7 +103,7 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
     };
 
     body.push_str(&format!(
-        r#"<form id="loginForm" class="auth-form" action="Login" method="post"{hidden}>"#,
+        r#"<form id="loginForm" class="auth-form" action="login" method="post"{hidden}>"#,
     ));
     body.push_str(r#"<h1 class="auth-form-title">Welcome back</h1>"#);
     body.push_str(
@@ -164,7 +164,7 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
     };
 
     body.push_str(&format!(
-        r#"<form id="signupForm" class="auth-form" action="Login" method="post"{hidden}>"#,
+        r#"<form id="signupForm" class="auth-form" action="login" method="post"{hidden}>"#,
     ));
     body.push_str(r#"<h1 class="auth-form-title">Create account</h1>"#);
     body.push_str(

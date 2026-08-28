@@ -119,10 +119,10 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
             r#"name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover""#,
             r#"id="loginmenuitem" class="auth-tab""#,
             r#"id="signupmenuitem" class="auth-tab auth-tab-active""#,
-            r#"id="loginForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+            r#"id="loginForm" class="auth-form" action="login" method="post" hidden="hidden""#,
             r#"name="loginName" value="user@example.com""#,
             r#"name="remember" value="remember" checked"#,
-            r#"id="signupForm" class="auth-form" action="Login" method="post">"#,
+            r#"id="signupForm" class="auth-form" action="login" method="post">"#,
             r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#,
             r#"name="email" value="new&amp;user@example.com""#,
             r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#,
@@ -170,7 +170,7 @@ fn login_rendering_shows_login_form_by_default() {
         &html,
         &[
             r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
-            r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+            r#"id="signupForm" class="auth-form" action="login" method="post" hidden="hidden""#,
             r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#,
         ],
     );
@@ -214,7 +214,7 @@ fn login_rendering_hides_signup_when_disabled() {
         &html,
         &[
             r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
-            r#"id="signupForm" class="auth-form" action="Login" method="post" hidden="hidden""#,
+            r#"id="signupForm" class="auth-form" action="login" method="post" hidden="hidden""#,
         ],
     );
     for absent in [r#"id="signupmenuitem""#, "Sign up</a> for free"] {

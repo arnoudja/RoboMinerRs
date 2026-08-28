@@ -68,6 +68,52 @@ async fn login_post_redirects_to_mining_queue_with_session_cookie() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
+async fn login_post_to_legacy_pascal_case_path_still_authenticates() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-login-legacy");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+
+    let (csrf_cookie, token) = support::anonymous_login_csrf(&config).await;
+    let mut form = std::collections::HashMap::new();
+    form.insert("loginName".to_string(), username.clone());
+    form.insert("password".to_string(), password.clone());
+    form.insert("csrfToken".to_string(), token);
+
+    let response = route(&post_request("/Login", form, Some(&csrf_cookie)), &config).await;
+
+    assert_eq!(
+        response.status, 302,
+        "legacy POST /Login should authenticate, not redirect-canonicalize"
+    );
+    assert!(
+        cookie_header(&response).contains("robominer_session="),
+        "legacy POST /Login should mint a session cookie"
+    );
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn signup_post_redirects_to_welcome_with_session_cookie() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
