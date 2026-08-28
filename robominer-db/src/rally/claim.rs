@@ -344,23 +344,51 @@ async fn batch_upsert_user_ore_assets_from_rewards(
         if chunk.is_empty() {
             continue;
         }
+
+        // Existing wallets need the raw reward on UPDATE; new rows need LEAST(reward, INITIAL).
+        // Multi-VALUES cannot bind an extra per-row UPDATE param, so amount is raw for
+        // duplicates (read via row alias) and pre-capped only for true inserts.
+        let pair_placeholders = chunk
+            .iter()
+            .map(|_| "(?, ?)")
+            .collect::<Vec<_>>()
+            .join(", ");
+        let existing_query = format!(
+            "SELECT userId, oreId FROM UserOreAsset WHERE (userId, oreId) IN ({pair_placeholders})"
+        );
+        let mut existing_builder = sqlx::query_as::<_, (i64, i64)>(&existing_query);
+        for (user_id, ore_id, _) in chunk {
+            existing_builder = existing_builder.bind(user_id).bind(ore_id);
+        }
+        let existing: std::collections::HashSet<(i64, i64)> = existing_builder
+            .fetch_all(&mut **transaction)
+            .await?
+            .into_iter()
+            .collect();
+
+        // INSERT amount is LEAST(reward, INITIAL) for new rows; raw reward for existing
+        // rows so ON DUPLICATE KEY UPDATE can add the full delta via new_row.amount.
         let value_placeholders = chunk
             .iter()
-            .map(|_| "(?, ?, LEAST(?, ?), ?)")
+            .map(|_| "(?, ?, ?, ?)")
             .collect::<Vec<_>>()
             .join(", ");
         let query = format!(
-            "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES {value_placeholders} \
+            "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES {value_placeholders} AS new_row \
              ON DUPLICATE KEY UPDATE \
-             amount = LEAST(maxAllowed, amount + VALUES(amount))"
+             amount = LEAST(UserOreAsset.maxAllowed, UserOreAsset.amount + new_row.amount)"
         );
         let mut query_builder = sqlx::query(&query);
         for (user_id, ore_id, reward) in chunk {
+            let amount_value = if existing.contains(&(*user_id, *ore_id)) {
+                *reward
+            } else {
+                (*reward).min(INITIAL_ORE_WALLET_MAX)
+            };
             query_builder = query_builder
                 .bind(user_id)
                 .bind(ore_id)
-                .bind(reward)
-                .bind(INITIAL_ORE_WALLET_MAX)
+                .bind(amount_value)
                 .bind(INITIAL_ORE_WALLET_MAX);
         }
         query_builder.execute(&mut **transaction).await?;
