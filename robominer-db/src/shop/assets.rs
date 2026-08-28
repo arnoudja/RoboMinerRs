@@ -67,12 +67,39 @@ pub(crate) async fn user_robot_part_total_owned(
     Ok(total_owned.unwrap_or_default())
 }
 
+fn robot_part_usage_counts_from_slot_rows(
+    robot_rows: &[RobotPartSlotsRow],
+    pending_rows: &[RobotPartSlotsRow],
+) -> std::collections::HashMap<i64, i64> {
+    use std::collections::HashMap;
+
+    let pending_by_robot: HashMap<i64, &RobotPartSlotsRow> =
+        pending_rows.iter().map(|row| (row.robot_id, row)).collect();
+
+    let mut usage_by_part = HashMap::new();
+    for row in robot_rows {
+        let pending = pending_by_robot.get(&row.robot_id);
+        let mut seen_for_robot = std::collections::HashSet::new();
+        for part_id in part_slot_values(row) {
+            seen_for_robot.insert(part_id);
+        }
+        if let Some(pending_row) = pending {
+            for part_id in part_slot_values(pending_row) {
+                seen_for_robot.insert(part_id);
+            }
+        }
+        for part_id in seen_for_robot {
+            *usage_by_part.entry(part_id).or_default() += 1;
+        }
+    }
+
+    usage_by_part
+}
+
 pub(crate) async fn user_robot_part_usage_counts_for_user(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<std::collections::HashMap<i64, i64>, sqlx::Error> {
-    use std::collections::HashMap;
-
     let robot_rows = sqlx::query_as::<_, RobotPartSlotsRow>(
         "SELECT id AS robot_id, oreContainerId AS ore_container_id, miningUnitId AS mining_unit_id, \
                 batteryId AS battery_id, memoryModuleId AS memory_module_id, cpuId AS cpu_id, \
@@ -101,34 +128,10 @@ pub(crate) async fn user_robot_part_usage_counts_for_user(
     .fetch_all(&mut **transaction)
     .await?;
 
-    let mut part_ids = std::collections::HashSet::new();
-    for row in &robot_rows {
-        for part_id in part_slot_values(row) {
-            part_ids.insert(part_id);
-        }
-    }
-    for row in &pending_rows {
-        for part_id in part_slot_values(row) {
-            part_ids.insert(part_id);
-        }
-    }
-
-    let mut usage_by_part = HashMap::new();
-    for part_id in part_ids {
-        let usage_count = robot_rows
-            .iter()
-            .filter(|row| {
-                part_slot_values(row).any(|slot| slot == part_id)
-                    || pending_rows.iter().any(|pending| {
-                        pending.robot_id == row.robot_id
-                            && part_slot_values(pending).any(|slot| slot == part_id)
-                    })
-            })
-            .count() as i64;
-        usage_by_part.insert(part_id, usage_count);
-    }
-
-    Ok(usage_by_part)
+    Ok(robot_part_usage_counts_from_slot_rows(
+        &robot_rows,
+        &pending_rows,
+    ))
 }
 
 pub(crate) async fn user_robot_part_usage_count(
@@ -178,16 +181,18 @@ pub(crate) async fn user_robot_part_usage_count(
     .await
 }
 
-pub(crate) async fn remove_user_robot_part_asset(
+pub(crate) async fn remove_user_robot_part_assets(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
     robot_part_id: i64,
+    count: i32,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
         "UPDATE UserRobotPartAsset \
-         SET totalOwned = totalOwned - 1 \
+         SET totalOwned = totalOwned - ? \
          WHERE userId = ? AND robotPartId = ?",
     )
+    .bind(count)
     .bind(user_id)
     .bind(robot_part_id)
     .execute(&mut **transaction)
@@ -210,12 +215,56 @@ pub(crate) async fn delete_zero_owned_robot_part_assets(
 
 #[cfg(test)]
 mod tests {
-    use super::unassigned_robot_part_count;
+    use super::{
+        RobotPartSlotsRow, robot_part_usage_counts_from_slot_rows, unassigned_robot_part_count,
+    };
 
     #[test]
     fn unassigned_robot_part_count_never_goes_negative() {
         assert_eq!(unassigned_robot_part_count(3, 1), 2);
         assert_eq!(unassigned_robot_part_count(1, 1), 0);
         assert_eq!(unassigned_robot_part_count(0, 5), 0);
+    }
+
+    #[test]
+    fn robot_part_usage_counts_installed_and_pending_slots() {
+        let robot_rows = vec![
+            RobotPartSlotsRow {
+                robot_id: 1,
+                ore_container_id: Some(10),
+                mining_unit_id: None,
+                battery_id: Some(20),
+                memory_module_id: None,
+                cpu_id: None,
+                engine_id: None,
+                ore_scanner_id: None,
+            },
+            RobotPartSlotsRow {
+                robot_id: 2,
+                ore_container_id: Some(10),
+                mining_unit_id: None,
+                battery_id: None,
+                memory_module_id: None,
+                cpu_id: None,
+                engine_id: None,
+                ore_scanner_id: None,
+            },
+        ];
+        let pending_rows = vec![RobotPartSlotsRow {
+            robot_id: 1,
+            ore_container_id: None,
+            mining_unit_id: Some(30),
+            battery_id: None,
+            memory_module_id: None,
+            cpu_id: None,
+            engine_id: None,
+            ore_scanner_id: None,
+        }];
+
+        let usage = robot_part_usage_counts_from_slot_rows(&robot_rows, &pending_rows);
+        assert_eq!(usage.get(&10), Some(&2));
+        assert_eq!(usage.get(&20), Some(&1));
+        assert_eq!(usage.get(&30), Some(&1));
+        assert_eq!(usage.get(&99), None);
     }
 }
