@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::ServerConfig;
 use crate::http::Response;
 
@@ -51,13 +53,14 @@ fn plain(status: u16, reason: &'static str, body: &str) -> Response {
         reason,
         content_type: "text/plain; charset=utf-8",
         headers: vec![("Cache-Control", "no-store".to_string())],
-        body: body.as_bytes().to_vec(),
+        body: Arc::from(body.as_bytes()),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
+    use std::sync::Arc;
 
     use super::health_response;
     use crate::ServerConfig;

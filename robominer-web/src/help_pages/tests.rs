@@ -29,7 +29,7 @@ fn config() -> ServerConfig {
 #[tokio::test(flavor = "current_thread")]
 async fn help_route_renders_themed_help_center() {
     let response = help_page(&request("/help"), &config(), false).await;
-    let body = String::from_utf8(response.body).expect("html should be utf-8");
+    let body = response.body_utf8();
 
     assert_eq!(response.status, 200);
     assert_contains_all(
@@ -48,7 +48,7 @@ async fn help_route_renders_themed_help_center() {
 #[tokio::test(flavor = "current_thread")]
 async fn help_route_shows_signup_welcome_banner() {
     let response = help_page(&request("/help?welcome=1"), &config(), true).await;
-    let body = String::from_utf8(response.body).expect("html should be utf-8");
+    let body = response.body_utf8();
 
     assert_contains_all(
         &body,
@@ -80,7 +80,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
         help_text_page(&request("/helpMechanics"), &config(), "helpMechanics", None).await;
 
     assert_eq!(tutorial.status, 200);
-    let tutorial_body = String::from_utf8(tutorial.body).expect("html should be utf-8");
+    let tutorial_body = tutorial.body_utf8();
     assert_contains_all(
         &tutorial_body,
         &[
@@ -98,7 +98,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     assert_html_not_contains(&tutorial_body, "'add' button");
 
     assert_eq!(program_tips.status, 200);
-    let tips_body = String::from_utf8(program_tips.body).expect("html should be utf-8");
+    let tips_body = program_tips.body_utf8();
     assert_contains_all(
         &tips_body,
         &[
@@ -120,7 +120,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     );
 
     assert_eq!(robot_program.status, 200);
-    let robot_program_body = String::from_utf8(robot_program.body).expect("html should be utf-8");
+    let robot_program_body = robot_program.body_utf8();
     assert_contains_all(
         &robot_program_body,
         &[
@@ -143,7 +143,7 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
     );
 
     assert_eq!(mechanics.status, 200);
-    let mechanics_body = String::from_utf8(mechanics.body).expect("html should be utf-8");
+    let mechanics_body = mechanics.body_utf8();
     assert_contains_all(
         &mechanics_body,
         &[
@@ -179,7 +179,7 @@ async fn tutorial_step_navigation_links_previous_and_next() {
         Some(3),
     )
     .await;
-    let body = String::from_utf8(step_three.body).expect("html should be utf-8");
+    let body = step_three.body_utf8();
 
     assert_contains_all(
         &body,
@@ -203,7 +203,7 @@ async fn tutorial_final_step_links_to_programming_tips() {
         Some(5),
     )
     .await;
-    let body = String::from_utf8(step_five.body).expect("html should be utf-8");
+    let body = step_five.body_utf8();
 
     assert_contains_all(
         &body,

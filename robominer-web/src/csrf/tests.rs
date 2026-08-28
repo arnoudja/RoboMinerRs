@@ -123,7 +123,7 @@ fn html_with_csrf_rotates_session_nonce_after_post() {
     assert_eq!(after.expires_at, before.expires_at);
     assert_ne!(after.nonce, before.nonce);
 
-    let body = String::from_utf8(response.body).expect("utf8");
+    let body = response.body_utf8();
     assert!(body.contains(&csrf_token_for_session(after.user_id, after.nonce)));
 }
 
@@ -144,7 +144,7 @@ fn html_with_csrf_keeps_nonce_on_get() {
             .iter()
             .all(|(name, _)| *name != "Set-Cookie")
     );
-    let body = String::from_utf8(response.body).expect("utf8");
+    let body = response.body_utf8();
     assert!(body.contains(&csrf_token_for_session(before.user_id, before.nonce)));
 }
 
@@ -171,7 +171,7 @@ fn html_with_anonymous_csrf_sets_cookie_and_injects_form_field() {
     ensure_secret();
     let html = r#"<!DOCTYPE html><html><head></head><body><form method="post" action="Login"></form></body></html>"#;
     let response = html_with_anonymous_csrf(&request("GET", HashMap::new(), None), html.into());
-    let body = String::from_utf8(response.body.clone()).expect("utf8");
+    let body = response.body_utf8();
     assert!(body.contains(r#"name="csrfToken""#));
     assert!(
         response

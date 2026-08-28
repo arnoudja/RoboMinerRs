@@ -132,7 +132,7 @@ fn request_with_form(
 }
 
 pub fn response_body(response: &Response) -> String {
-    String::from_utf8(response.body.clone()).expect("response body should be utf-8")
+    String::from_utf8_lossy(&response.body).into_owned()
 }
 
 pub fn cookie_header(response: &Response) -> String {

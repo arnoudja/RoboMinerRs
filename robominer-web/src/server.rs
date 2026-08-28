@@ -172,7 +172,7 @@ fn to_axum_response(response: &Response, head_only: bool) -> AxumResponse {
     let body = if head_only {
         Body::empty()
     } else {
-        Body::from(response.body.clone())
+        Body::from(response.body.as_ref().to_vec())
     };
 
     builder.body(body).unwrap_or_else(|_| {
