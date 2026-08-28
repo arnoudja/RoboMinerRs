@@ -482,3 +482,120 @@ async fn claim_taxes_container_and_depot_ore_separately() {
             .expect("failed to load wallet");
     assert_eq!(wallet, 84);
 }
+
+#[tokio::test]
+#[serial]
+async fn next_wallet_claim_delay_seconds_uses_soonest_unclaimed_end_time() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("claim-delay");
+    let ore_price_id = insert_ore_price(&pool, &format!("{prefix}-price")).await;
+    let ai_robot_id = insert_ai_robot(&pool, &format!("{prefix}-ai"), "rotate(90);", 1).await;
+    let user_id = insert_user(&pool, &prefix).await;
+    let robot_id = insert_robot(&pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
+    let mining_area_id = insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 20).await;
+
+    let empty_delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 45)
+        .await
+        .expect("empty claim delay");
+    assert_eq!(
+        empty_delay, 45,
+        "with no unclaimed future runs, delay should fall back to max"
+    );
+
+    let queue_id = insert_row_id(
+        &pool,
+        sqlx::query(
+            "INSERT INTO MiningQueue (miningAreaId, robotId, miningEndTime, claimed) \
+             VALUES (?, ?, TIMESTAMPADD(SECOND, 30, NOW()), false)",
+        )
+        .bind(mining_area_id)
+        .bind(robot_id),
+    )
+    .await;
+
+    let delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 60)
+        .await
+        .expect("claim delay with future queue");
+    assert!(
+        (25..=35).contains(&delay),
+        "expected ~30s until finish, got {delay}"
+    );
+
+    let capped = robominer_db::next_wallet_claim_delay_seconds(&pool, 10)
+        .await
+        .expect("capped claim delay");
+    assert_eq!(capped, 10, "delay must respect max_sleep_seconds");
+
+    let _ = sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
+        .bind(queue_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Robot WHERE id = ?")
+        .bind(robot_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM MiningArea WHERE id = ?")
+        .bind(mining_area_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn claimable_mining_queue_query_can_use_claimable_index() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+
+    robominer_db::run_embedded_migrations(&pool)
+        .await
+        .expect("apply embedded migrations including claimable index");
+
+    let index_columns: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) \
+         FROM information_schema.statistics \
+         WHERE table_schema = DATABASE() \
+           AND table_name = 'MiningQueue' \
+           AND index_name = 'idx_mining_queue_claimable'",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("lookup claimable index");
+    assert_eq!(
+        index_columns, 2,
+        "expected (claimed, miningEndTime) claimable index columns"
+    );
+
+    // EXPLAIN FORMAT=JSON keeps the plan in one string column (sqlx-friendly).
+    let plan: String = sqlx::query_scalar(
+        "EXPLAIN FORMAT=JSON \
+         SELECT DISTINCT Robot.userId \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime <= NOW() \
+           AND MiningQueue.claimed = false \
+         ORDER BY Robot.userId",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("explain claimable scan");
+    assert!(
+        plan.contains("idx_mining_queue_claimable"),
+        "expected EXPLAIN JSON to mention idx_mining_queue_claimable, got:\n{plan}"
+    );
+}

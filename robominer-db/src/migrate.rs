@@ -52,6 +52,10 @@ pub const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         "011_mining_queue_processing_lease",
         include_str!("../../resources/database/migrations/011_mining_queue_processing_lease.sql"),
     ),
+    (
+        "012_mining_queue_claimable_index",
+        include_str!("../../resources/database/migrations/012_mining_queue_claimable_index.sql"),
+    ),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]

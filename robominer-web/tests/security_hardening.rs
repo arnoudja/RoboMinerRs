@@ -165,6 +165,24 @@ async fn authenticated_shop_post_returns_429_after_mutation_limit() {
         edit_response.status, 200,
         "edit-code POST should render after shop family is exhausted"
     );
+    cookie = apply_set_cookies(&cookie, &edit_response);
+
+    // Mining-queue family is also independent of shop exhaustion.
+    let mut queue_form = HashMap::new();
+    queue_form.insert("submitType".to_string(), "clear".to_string());
+    let queue_response = route(
+        &post_request("/miningQueue", queue_form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_ne!(
+        queue_response.status, 429,
+        "mining-queue family should still succeed after shop rate limit"
+    );
+    assert_eq!(
+        queue_response.status, 200,
+        "mining-queue POST should render after shop family is exhausted"
+    );
 
     let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
         .bind(user_id)
