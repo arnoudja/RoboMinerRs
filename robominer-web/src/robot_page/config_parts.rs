@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 
 #[derive(Clone, Copy)]
 pub(super) enum PartCapacityLabel {
@@ -60,11 +60,11 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
         field_prefix,
         robot_id,
         current_part_id,
-        escape_html(&part_option_label(
+        EscapedHtml::from(part_option_label(
             current_part_name,
             capacity_label,
             current_capacity,
-        ))
+        ).as_str())
     ));
     for asset in part_asset_map.get(&type_id).into_iter().flatten() {
         if asset.unassigned > 0 && asset.robot_part_id != current_part_id {
@@ -76,11 +76,14 @@ pub(super) fn render_robot_part_select(body: &mut String, select: RobotPartSelec
             body.push_str(&format!(
                 r#"<option value="{}"{capacity_attr}>{}</option>"#,
                 asset.robot_part_id,
-                escape_html(&part_option_label(
-                    &asset.part_name,
-                    capacity_label,
-                    asset_capacity(capacity_label, asset),
-                ))
+                EscapedHtml::from(
+                    part_option_label(
+                        &asset.part_name,
+                        capacity_label,
+                        asset_capacity(capacity_label, asset),
+                    )
+                    .as_str()
+                )
             ));
         }
     }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::super::ACTIVITY_RALLY_MAX_LIMIT;
 use crate::html::{
-    AreaFilterOption, escape_html, format_relative_time_millis, format_utc_millis,
+    AreaFilterOption, EscapedHtml, format_relative_time_millis, format_utc_millis,
     render_area_filter_select,
 };
 use crate::rally_pages::{ActivityFeedQuery, ActivityPageState, ActivityRallyFilter};
@@ -58,7 +58,7 @@ pub(super) fn render_activity_rallies(
         if state.has_more_rallies && feed_query.limit < ACTIVITY_RALLY_MAX_LIMIT {
             body.push_str(&format!(
                 r#"<p class="activity-load-more-wrap"><a class="activity-load-more-link" href="{}">Load more rallies</a></p>"#,
-                escape_html(&feed_query.load_more_href()),
+                EscapedHtml::from(feed_query.load_more_href().as_str()),
             ));
         }
     }
@@ -76,8 +76,8 @@ fn render_activity_rally_filter(body: &mut String, feed_query: ActivityFeedQuery
         };
         body.push_str(&format!(
             r#"<a class="{class_name}" href="{}">{}</a>"#,
-            escape_html(&feed_query.filter_href(filter)),
-            escape_html(filter.label()),
+            EscapedHtml::from(feed_query.filter_href(filter).as_str()),
+            EscapedHtml::from(filter.label()),
         ));
     }
     body.push_str("</nav>");
@@ -141,13 +141,13 @@ fn render_activity_feed_stats(
     if let Some(absolute) = latest_absolute {
         body.push_str(&format!(
             r#"<div class="activity-feed-stat"><dt>Latest</dt><dd title="{}">{}</dd></div>"#,
-            escape_html(&absolute),
-            escape_html(&latest_relative),
+            EscapedHtml::from(absolute.as_str()),
+            EscapedHtml::from(latest_relative.as_str()),
         ));
     } else {
         body.push_str(&format!(
             r#"<div class="activity-feed-stat"><dt>Latest</dt><dd>{}</dd></div>"#,
-            escape_html(&latest_relative),
+            EscapedHtml::from(latest_relative.as_str()),
         ));
     }
     body.push_str("</dl>");
@@ -217,7 +217,7 @@ fn render_activity_rally_card(
         ));
         body.push_str(&format!(
             r#"<{card_tag} class="{card_class}" href="{}">"#,
-            escape_html(&replay_href),
+            EscapedHtml::from(replay_href.as_str()),
         ));
     } else {
         body.push_str(&format!(r#"<{card_tag} class="{card_class}">"#));
@@ -227,12 +227,12 @@ fn render_activity_rally_card(
     body.push_str(r#"<div class="activity-rally-card-heading">"#);
     body.push_str(&format!(
         r#"<h3 class="activity-rally-area">{}</h3>"#,
-        escape_html(&rally.mining_area_name),
+        EscapedHtml::from(rally.mining_area_name.as_str()),
     ));
     body.push_str(&format!(
         r#"<p class="activity-rally-ended" title="{}">Ended {}</p>"#,
-        escape_html(&ended_absolute),
-        escape_html(&ended_relative),
+        EscapedHtml::from(ended_absolute.as_str()),
+        EscapedHtml::from(ended_relative.as_str()),
     ));
     body.push_str("</div>");
     body.push_str(r#"<div class="activity-rally-badges">"#);
@@ -243,7 +243,7 @@ fn render_activity_rally_card(
     }
     body.push_str(&format!(
         r#"<span class="activity-rally-badge activity-rally-badge-players">{}</span>"#,
-        escape_html(&player_count_label),
+        EscapedHtml::from(player_count_label.as_str()),
     ));
     if replay_available {
         body.push_str(
@@ -276,9 +276,9 @@ fn render_activity_rally_card(
         };
         body.push_str(&format!(
             r#"<li class="{participant_class}"><span class="activity-rally-participant-color" aria-hidden="true"></span><span class="activity-rally-participant-name">{}{}</span><span class="activity-rally-participant-robot">{}</span></li>"#,
-            escape_html(&username),
+            EscapedHtml::from(username.as_str()),
             you_badge,
-            escape_html(&robot_name),
+            EscapedHtml::from(robot_name.as_str()),
         ));
     }
 

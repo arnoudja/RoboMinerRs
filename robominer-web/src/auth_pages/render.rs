@@ -1,5 +1,5 @@
 use crate::auth_pages::LoginPageState;
-use crate::html::{escape_html, page_footer, render_password_field, render_password_toggle_script};
+use crate::html::{EscapedHtml, page_footer, render_password_field, render_password_toggle_script};
 use crate::request_helpers::auth_page_href;
 use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags};
 
@@ -114,14 +114,14 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
     {
         body.push_str(&format!(
             r#"<p class="auth-banner-error">{}</p>"#,
-            escape_html(message)
+            EscapedHtml::from(message.as_str())
         ));
     }
     body.push_str(r#"<div class="auth-field">"#);
     body.push_str(r#"<label class="auth-label" for="loginName">Login name</label>"#);
     body.push_str(&format!(
         r#"<input class="auth-input" type="text" id="loginName" name="loginName" value="{}" required placeholder="Username or e-mail address"{login_autofocus} />"#,
-        escape_html(&state.login_name),
+        EscapedHtml::from(state.login_name.as_str()),
     ));
     body.push_str("</div>");
     render_password_field(
@@ -144,7 +144,7 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
     if let Some(return_to) = &state.return_to {
         body.push_str(&format!(
             r#"<input type="hidden" name="returnTo" value="{}" />"#,
-            escape_html(return_to)
+            EscapedHtml::from(return_to.as_str())
         ));
     }
     if state.allow_signup {
@@ -173,14 +173,14 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
     if let Some(message) = &state.error_message {
         body.push_str(&format!(
             r#"<p class="auth-banner-error">{}</p>"#,
-            escape_html(message)
+            EscapedHtml::from(message.as_str())
         ));
     }
     body.push_str(r#"<div class="auth-field">"#);
     body.push_str(r#"<label class="auth-label" for="newusername">Username</label>"#);
     body.push_str(&format!(
         r#"<input class="auth-input" type="text" id="newusername" name="newusername" pattern="[A-Za-z0-9]{{3,30}}" value="{}" required placeholder="Choose your in-game name" autofocus="autofocus" />"#,
-        escape_html(&state.new_username),
+        EscapedHtml::from(state.new_username.as_str()),
     ));
     body.push_str(
         r#"<p class="auth-field-hint">3 to 30 characters, letters and numbers only.</p>"#,
@@ -190,7 +190,7 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
     body.push_str(r#"<label class="auth-label" for="email">E-mail address</label>"#);
     body.push_str(&format!(
         r#"<input class="auth-input" type="email" id="email" name="email" value="{}" required placeholder="Enter your e-mail address" />"#,
-        escape_html(&state.email),
+        EscapedHtml::from(state.email.as_str()),
     ));
     body.push_str("</div>");
     render_password_field(

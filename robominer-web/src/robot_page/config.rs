@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::html::{escape_html, format_period, selected_attr};
+use crate::html::{EscapedHtml, format_period, html_attr, selected_attr};
 
 use super::config_parts::{PartCapacityLabel, RobotPartSelect, render_robot_part_select};
 use super::config_stats::{
@@ -57,7 +57,7 @@ pub(super) fn render_robot_config_panel(
     body.push_str(r#"<header class="robot-config-header">"#);
     body.push_str(&format!(
         r#"<div><h2 class="robot-config-title">{}</h2><p class="robot-config-subtitle">Configure parts and program source</p></div>"#,
-        escape_html(&robot.robot_name)
+        EscapedHtml::from(robot.robot_name.as_str())
     ));
     if robot.change_pending {
         body.push_str(
@@ -82,7 +82,7 @@ pub(super) fn render_robot_config_panel(
         r#"<label class="robot-field"><span class="robot-field-label">Name</span><input type="text" id="robotName{}" name="robotName{}" class="robot-text-input" value="{}" maxlength="15" pattern="[A-Za-z0-9_]{{1,15}}" placeholder="1 to 15 characters, only letters and numbers" required{disabled_attr} /></label>"#,
         robot.robot_id,
         robot.robot_id,
-        escape_html(&robot.robot_name)
+        EscapedHtml::from(robot.robot_name.as_str())
     ));
     body.push_str(&format!(
         r#"<label class="robot-field"><span class="robot-field-label">Source code</span><select id="programSourceId{}" name="programSourceId{}" class="tableitem robot-select"{disabled_attr}>"#,
@@ -99,7 +99,7 @@ pub(super) fn render_robot_config_panel(
             program_source.id,
             program_source.compiled_size,
             selected_attr(robot.program_source_id == program_source.id),
-            escape_html(&program_source.source_name)
+            EscapedHtml::from(program_source.source_name.as_str())
         ));
     }
     body.push_str("</select>");
@@ -286,7 +286,7 @@ pub(super) fn render_robot_apply_action(
     if let Some(reason) = block_reason {
         html.push_str(&format!(
             r#"<p class="robot-action-hint">{}</p>"#,
-            escape_html(reason)
+            EscapedHtml::from(reason)
         ));
     } else {
         html.push_str(r#"<p class="robot-action-hint" hidden></p>"#);
@@ -299,7 +299,7 @@ pub(super) fn render_robot_apply_action(
 
 pub(super) fn robot_apply_button(block_reason: Option<&str>, disabled_attr: &str) -> String {
     let title_attr = block_reason
-        .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
+        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
         .unwrap_or_default();
     if block_reason.is_some() || !disabled_attr.is_empty() {
         format!(

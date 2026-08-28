@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, format_ore_shortfall, selected_attr};
+use crate::html::{EscapedHtml, format_ore_shortfall, html_attr, selected_attr};
 use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
 
 use super::inspector::render_mining_queue_selection_state_inputs;
@@ -68,7 +68,7 @@ pub(super) fn render_robot_card(
     let disabled_attr = if can_enqueue { "" } else { " disabled" };
     let title_attr = selected_enqueue_block_reason
         .as_ref()
-        .map(|reason| format!(r#" title="{}""#, escape_html(reason)))
+        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
         .unwrap_or_default();
 
     body.push_str(&format!(
@@ -81,7 +81,7 @@ pub(super) fn render_robot_card(
     body.push_str(&format!(
         r#"<h2 class="mining-queue-robot-name"><a href="robot?robotId={}">{}</a></h2>"#,
         robot.robot_id,
-        escape_html(&robot.robot_name)
+        EscapedHtml::from(robot.robot_name.as_str())
     ));
     body.push_str(&format!(
         r#"<p class="mining-queue-slot-count">{}/{} slots</p>"#,
@@ -138,14 +138,14 @@ pub(super) fn render_robot_card(
         );
         let block_reason_attr = area_block_reason
             .as_ref()
-            .map(|reason| format!(r#" data-block-reason="{}""#, escape_html(reason)))
+            .map(|reason| format!(r#" data-block-reason="{}""#, html_attr(reason)))
             .unwrap_or_default();
         body.push_str(&format!(
             r#"<option value="{}"{}{}>{}</option>"#,
             area.mining_area_id,
             selected_attr(area.mining_area_id == selected_area_id),
             block_reason_attr,
-            escape_html(&area.area_name)
+            EscapedHtml::from(area.area_name.as_str())
         ));
     }
     body.push_str("</select></label>");
@@ -184,7 +184,7 @@ pub(super) fn render_robot_card(
     };
     body.push_str(&format!(
         r#"<p class="mining-queue-action-hint"{hint_hidden}>{}</p>"#,
-        escape_html(selected_enqueue_block_reason.as_deref().unwrap_or(""))
+        EscapedHtml::from(selected_enqueue_block_reason.as_deref().unwrap_or(""))
     ));
     body.push_str("</div></div></form>");
 }
@@ -204,10 +204,10 @@ pub(super) fn render_queue_run_row(
             r#"<input type="checkbox" class="mining-queue-item-check" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Select queued run in {}"/><button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,
             item.mining_queue_id,
             item.mining_area_id,
-            escape_html(&item.area_name),
+            EscapedHtml::from(item.area_name.as_str()),
             item.mining_queue_id,
             item.mining_area_id,
-            escape_html(&item.area_name)
+            EscapedHtml::from(item.area_name.as_str())
         ));
     }
     body.push_str(r#"<span class="mining-queue-run-area">"#);
@@ -215,10 +215,10 @@ pub(super) fn render_queue_run_row(
         body.push_str(&format!(
             r#"<a href="miningResults?rallyResultId={}">{}</a>"#,
             item.rally_result_id.unwrap_or(0),
-            escape_html(&item.area_name)
+            EscapedHtml::from(item.area_name.as_str())
         ));
     } else {
-        body.push_str(&escape_html(&item.area_name));
+        body.push_str(&format!("{}", EscapedHtml::from(item.area_name.as_str())));
     }
     body.push_str("</span>");
     body.push_str(&format!(
@@ -288,11 +288,9 @@ pub(super) fn render_run_progress(body: &mut String, time_left_seconds: i64, tot
     } else {
         0.0
     };
-    body.push_str(r#"<div class="mining-queue-progress" aria-hidden="true">"#);
     body.push_str(&format!(
-        r#"<div class="mining-queue-progress-bar" style="width: {percent:.1}%"></div>"#
+        r#"<progress class="mining-queue-progress" value="{percent:.1}" max="100" aria-hidden="true"></progress>"#
     ));
-    body.push_str("</div>");
 }
 
 pub(super) fn enqueue_block_reason(

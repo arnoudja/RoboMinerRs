@@ -44,6 +44,10 @@ impl From<String> for EscapedHtml {
     }
 }
 
+pub(crate) fn html_attr(value: &str) -> EscapedHtml {
+    EscapedHtml::from_untrusted(value)
+}
+
 pub(crate) fn format_utc_millis(millis: i64) -> String {
     let seconds = millis.div_euclid(1000);
     let days = seconds.div_euclid(86_400);
