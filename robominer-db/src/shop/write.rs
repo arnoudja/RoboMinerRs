@@ -3,6 +3,7 @@ use sqlx::MySqlPool;
 use super::assets::{
     add_user_robot_part_asset, delete_zero_owned_robot_part_assets, remove_user_robot_part_asset,
     unassigned_robot_part_count, user_robot_part_total_owned, user_robot_part_usage_count,
+    user_robot_part_usage_counts_for_user,
 };
 use crate::assets::{
     can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_half_ore_costs,
@@ -171,17 +172,7 @@ async fn list_user_sellable_robot_part_counts(
     .fetch_all(&mut **transaction)
     .await?;
 
-    let usage_rows = sqlx::query_as::<_, (i64, i64)>(
-        "SELECT RobotPart.robotPartId, COUNT(*) \
-         FROM RobotPart \
-         INNER JOIN Robot ON Robot.id = RobotPart.robotId \
-         WHERE Robot.userId = ? \
-         GROUP BY RobotPart.robotPartId",
-    )
-    .bind(user_id)
-    .fetch_all(&mut **transaction)
-    .await?;
-    let usage_by_part: std::collections::HashMap<i64, i64> = usage_rows.into_iter().collect();
+    let usage_by_part = user_robot_part_usage_counts_for_user(transaction, user_id).await?;
 
     let mut sellable_parts = Vec::new();
     for (robot_part_id, total_owned) in rows {
