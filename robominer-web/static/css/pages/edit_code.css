@@ -112,23 +112,6 @@
     color: #9dffd4;
 }
 
-.edit-code-claim-banner {
-    background: rgba(0, 255, 157, 0.08);
-    border: 1px solid rgba(0, 255, 157, 0.35);
-    border-radius: 6px;
-    color: #9dffd4;
-    margin: 0 0 16px;
-    padding: 10px 14px;
-}
-
-.edit-code-claim-banner a {
-    color: #c4b5fd;
-}
-
-.edit-code-claim-banner a:hover {
-    color: #e9d5ff;
-}
-
 .edit-code-banner-compile {
     background: rgba(255, 209, 102, 0.1);
     border: 1px solid rgba(255, 209, 102, 0.45);

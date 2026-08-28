@@ -125,7 +125,7 @@ When adding a page: create `static/css/pages/<name>.css`, add a `PageStylesheet`
 link only that variant (do not reintroduce “load every CSS file” in layout). Shared strips used by
 more than one page (for example `PageStylesheet::PageWallet` → `page_wallet.css`) are requested
 alongside the page file, not baked into every layout. Truly cross-page chrome that every page may
-show (help hints, claim-banner label/amount innards) belongs in `layout_shell.css`.
+show (help hints) belongs in `layout_shell.css`.
 
 | Page / shell | Stylesheets |
 |--------------|-------------|
@@ -199,7 +199,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/account` | `account_page` | `account_actions.rs` | `user_account_update_db_cli.rs` | Profile/password updates |
 | `/achievements` | `achievements_page` | `achievement_claim.rs` | `achievement_db_cli.rs` | Claim rewards |
 | `/editCode` | `edit_code_page/tests.rs` | `edit_code_actions.rs` | `program_source_db_cli.rs` | Create, apply, and delete sources |
-| `/robot` | `robot_page/tests.rs` | `robot_apply.rs` | `robot_config_db_cli.rs`, `claim_robot_config_db_cli.rs` | Apply config + claim pending |
+| `/robot` | `robot_page/tests.rs` | `robot_apply.rs` | `robot_config_db_cli.rs`, `claim_robot_config_db_cli.rs` | Apply config (wallet claim is engine-side) |
 | `/shop` | `shop_page/tests.rs` | `shop_actions.rs` | `shop_db_cli.rs` | Buy/sell parts |
 | `/miningQueue` | `mining_queue_page/tests.rs` | `mining_queue_actions.rs` | `mining_queue_db_cli.rs` | Enqueue, fill, cancel |
 | `/miningResults` | `mining_results_page/tests.rs` | `read_model_pages.rs` | `mining_area_read_model_db_cli.rs` | |
@@ -207,7 +207,7 @@ page module. “Web DB” = `robominer-web/tests/`. “Engine CLI” = matching 
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
 | `/activity` | `rally_pages/tests/` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer logic in `rally_animation/tests/` |
 | `/help*` | `help_pages/tests.rs`, `help_pages/render.rs` | — | — | Routes + content/rendering in `help_pages/`; bodies in `static/help/` |
-| Rally worker / claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs` | Background engine, not a page POST |
+| Rally worker / wallet claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs`, `claim_robot_config_db_cli.rs` | `rally rallies --persist` runs a wallet claim pass; standalone `mining claim-all` |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |
 | Simulation goldens | — | — | — | `robominer-domain/tests/rally_golden.rs`, `pool_golden.rs` |
 
@@ -240,7 +240,7 @@ domain, sim, or program.**
 5. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
 6. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source`.
 7. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
-8. **Web page loads use `PageLoadError`, not `DomainError`.** HTML page loaders and claim-on-load helpers return `crate::page_context::PageLoadError` (SQL failures only). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
+8. **Web page loads use `PageLoadError`, not `DomainError`.** HTML page loaders return `crate::page_context::PageLoadError` (SQL failures only). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
 
 ### Examples
 

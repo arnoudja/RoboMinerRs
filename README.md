@@ -201,11 +201,12 @@ ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
   cargo run -p robominer-engine -- leaderboard states --max-entries 10
 ```
 
-Run the rally worker loop:
+Run the rally worker loop (`--persist` also credits finished mining runs into
+player wallets after each poll cycle; standalone: `mining claim-all --loop`):
 
 ```sh
 ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
-  cargo run -p robominer-engine -- rally rallies
+  cargo run -p robominer-engine -- rally rallies --loop --sleep-seconds 5 --persist
 ```
 
 Show all available engine commands:

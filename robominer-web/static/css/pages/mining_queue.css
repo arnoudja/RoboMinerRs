@@ -80,26 +80,6 @@
     color: var(--mq-text-muted);
 }
 
-.mining-queue-claim-banner {
-    background: rgba(0, 255, 157, 0.08);
-    border: 1px solid rgba(0, 255, 157, 0.45);
-    border-radius: 6px;
-    box-shadow: 0 0 18px rgba(0, 255, 157, 0.12);
-    color: #9dffd4;
-    margin: 0 0 12px;
-    padding: 8px 12px;
-}
-
-.mining-queue-claim-banner a {
-    color: var(--mq-success);
-    font-weight: bold;
-    text-decoration: none;
-}
-
-.mining-queue-claim-banner a:hover {
-    text-shadow: 0 0 10px rgba(0, 255, 157, 0.45);
-}
-
 .mining-queue-error,
 .mining-queue-page p.error.mining-queue-error {
     background: rgba(255, 92, 122, 0.12);

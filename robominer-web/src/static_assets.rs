@@ -248,18 +248,6 @@ mod tests {
     }
 
     #[test]
-    fn layout_shell_owns_shared_claim_banner_innards() {
-        assert!(
-            LAYOUT_SHELL_CSS.contains(".claim-banner-label"),
-            "layout_shell.css should style shared claim-banner innards"
-        );
-        assert!(
-            !MINING_QUEUE_CSS.contains(".claim-banner-label"),
-            "mining_queue.css must not own shared claim-banner innards"
-        );
-    }
-
-    #[test]
     fn robominer_stylesheet_tags_emit_split_page_sheets() {
         let tags = robominer_stylesheet_tags(&[PageStylesheet::MiningQueue]);
         assert!(tags.contains(r#"href="css/pages/mining_queue.css?v="#));
