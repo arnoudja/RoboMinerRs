@@ -364,7 +364,7 @@ pub(crate) fn validate_run_rallies_options(options: &RunRalliesOptions) -> Resul
     Ok(())
 }
 
-/// Max poll interval, shortened when the next claimable rally is sooner.
+/// Max poll interval, shortened when the next claimable rally or wallet claim is sooner.
 async fn next_poll_sleep_seconds(
     pool: &robominer_db::MySqlPool,
     max_sleep_seconds: u64,
@@ -372,9 +372,12 @@ async fn next_poll_sleep_seconds(
     let candidates = robominer_db::list_next_claim_rally_candidates(pool)
         .await
         .context("failed to load next claim rally candidates")?;
-    let delay = robominer_domain::next_claimable_rally_delay_seconds(&candidates)
+    let rally_delay = robominer_domain::next_claimable_rally_delay_seconds(&candidates)
         .unwrap_or(max_sleep_seconds);
-    Ok(delay.min(max_sleep_seconds))
+    let wallet_delay = robominer_db::next_wallet_claim_delay_seconds(pool, max_sleep_seconds)
+        .await
+        .context("failed to load next wallet claim delay")?;
+    Ok(rally_delay.min(wallet_delay).min(max_sleep_seconds))
 }
 
 struct RunRalliesSummary {
