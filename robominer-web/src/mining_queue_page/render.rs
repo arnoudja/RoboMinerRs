@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::help_pages;
-use crate::html::{escape_html, layout, selected_attr};
+use crate::html::{EscapedHtml, html_attr, layout, selected_attr};
 use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
 use crate::static_assets::PageStylesheet;
 
@@ -75,7 +75,7 @@ pub(super) fn render_mining_queue_page(
     );
     let mut body = String::from(&format!(
         r#"<div class="mining-queue-page" data-area-storage-key="{}">"#,
-        escape_html(&area_storage_key)
+        html_attr(&area_storage_key)
     ));
     render_mining_queue_dynamic_sections(&mut body, state);
     body.push_str(r#"<div class="mining-queue-deck">"#);
@@ -93,7 +93,7 @@ pub(super) fn render_mining_queue_page(
             r#"<option value="{}"{}>{}</option>"#,
             area.mining_area_id,
             selected_attr(area.mining_area_id == state.selected_info_area_id),
-            escape_html(&area.area_name)
+            EscapedHtml::from(area.area_name.as_str())
         ));
     }
     body.push_str("</select></label></div>");
@@ -167,7 +167,7 @@ fn render_mining_queue_messages(body: &mut String, state: &MiningQueuePageState)
     if let Some(error_message) = &state.error_message {
         body.push_str(&format!(
             r#"<p class="error mining-queue-error">{}</p>"#,
-            escape_html(error_message)
+            EscapedHtml::from(error_message.as_str())
         ));
     }
 }

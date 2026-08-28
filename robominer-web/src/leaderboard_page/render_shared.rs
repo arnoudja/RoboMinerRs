@@ -1,5 +1,5 @@
 use super::{LEADERBOARD_MAX_LIMIT, LeaderboardQuery};
-use crate::html::{EscapedHtml, escape_html};
+use crate::html::{EscapedHtml, html_attr};
 
 pub(super) fn leaderboard_activity_area_href(area_id: i64) -> String {
     format!("activity?areaId={area_id}")
@@ -13,8 +13,8 @@ pub(super) fn render_leaderboard_section_actions(body: &mut String, links: &[(&s
         }
         body.push_str(&format!(
             r#"<a class="leaderboard-section-action" href="{}">{}</a>"#,
-            escape_html(href),
-            escape_html(label),
+            html_attr(href),
+            EscapedHtml::from(*label),
         ));
     }
     body.push_str("</p>");
@@ -27,7 +27,7 @@ pub(super) fn render_leaderboard_load_more(body: &mut String, query: Leaderboard
 
     body.push_str(&format!(
         r#"<p class="leaderboard-load-more-wrap"><a class="leaderboard-load-more-link" href="{}">Load more entries</a></p>"#,
-        escape_html(&query.load_more_href()),
+        html_attr(&query.load_more_href()),
     ));
 }
 
@@ -37,7 +37,7 @@ pub(super) fn render_leaderboard_empty_state(
     links: &[(&str, &str)],
 ) {
     body.push_str(r#"<div class="leaderboard-empty-state">"#);
-    body.push_str(&format!(r#"<p>{}</p>"#, escape_html(message)));
+    body.push_str(&format!(r#"<p>{}</p>"#, EscapedHtml::from(message)));
     if !links.is_empty() {
         body.push_str(r#"<p class="leaderboard-empty-actions">"#);
         for (index, (href, label)) in links.iter().enumerate() {
@@ -46,8 +46,8 @@ pub(super) fn render_leaderboard_empty_state(
             }
             body.push_str(&format!(
                 r#"<a class="leaderboard-section-action" href="{}">{}</a>"#,
-                escape_html(href),
-                escape_html(label),
+                html_attr(href),
+                EscapedHtml::from(*label),
             ));
         }
         body.push_str("</p>");

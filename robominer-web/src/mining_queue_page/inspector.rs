@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{escape_html, format_period};
+use crate::html::{EscapedHtml, format_period};
 use crate::mining_queue_page::MiningQueuePageState;
 
 pub(super) fn render_mining_queue_selection_state_inputs(
@@ -51,7 +51,7 @@ pub(super) fn render_mining_area_details(
             let user_amount = ore_amount_map.get(&cost.ore_id).copied().unwrap_or(0);
             body.push_str(&format!(
                 r#"<tr><td></td><td>{}:</td><td>{}</td><td class="{}">({})</td></tr>"#,
-                escape_html(&cost.ore_name),
+                EscapedHtml::from(cost.ore_name.as_str()),
                 cost.amount,
                 if user_amount >= cost.amount {
                     "sufficientbalance"
@@ -95,7 +95,7 @@ pub(super) fn render_mining_area_details(
     for (_, ore_name, estimated) in estimated_by_ore {
         body.push_str(&format!(
             r#"<tr><td></td><td>{}:</td><td colspan="2">{}</td></tr>"#,
-            escape_html(ore_name),
+            EscapedHtml::from(ore_name),
             estimated
         ));
     }
@@ -110,7 +110,7 @@ pub(super) fn render_mining_area_details(
             }
             body.push_str(&format!(
                 r#"<tr><td></td><td>{}</td><td colspan="2">{:.1}</td></tr>"#,
-                escape_html(&robot.robot_name),
+                EscapedHtml::from(robot.robot_name.as_str()),
                 score
             ));
         }

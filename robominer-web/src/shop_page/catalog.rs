@@ -6,7 +6,7 @@ use super::helpers::{
     shop_total_cost,
 };
 use super::{ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID};
-use crate::html::{EscapedHtml, escape_html, format_ore_shortfall, format_period};
+use crate::html::{EscapedHtml, format_ore_shortfall, format_period};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, render_mining_area_atlas_ore_link};
 
 pub(super) fn render_shop_part_compact_card(
@@ -44,8 +44,8 @@ pub(super) fn render_shop_part_compact_card(
     ));
     body.push_str(&format!(
         r#"<span class="shop-part-heading"><span class="shop-part-name shopPartName">{}</span><span class="shop-part-tier">{} quality</span></span>"#,
-        escape_html(&part.part_name),
-        escape_html(&part.tier_name)
+        EscapedHtml::from(part.part_name.as_str()),
+        EscapedHtml::from(part.tier_name.as_str())
     ));
     body.push_str(r#"<span class="shop-part-highlights">"#);
     push_shop_highlight(body, "Ore", part.ore_capacity, " units");
@@ -64,7 +64,7 @@ pub(super) fn render_shop_part_compact_card(
     body.push_str("</span>");
     body.push_str(&format!(
         r#"<span class="shop-part-cost-summary">{}</span>"#,
-        escape_html(&shop_cost_summary(costs, ore_amount_map))
+        EscapedHtml::from(shop_cost_summary(costs, ore_amount_map))
     ));
     if state.total_owned > 0 {
         body.push_str(&format!(
@@ -102,8 +102,8 @@ pub(super) fn render_shop_part_detail_panel(
         part.robot_part_id,
         part.type_id,
         part.tier_id,
-        escape_html(&part.part_name),
-        escape_html(&part.tier_name),
+        EscapedHtml::from(part.part_name.as_str()),
+        EscapedHtml::from(part.tier_name.as_str()),
         render_shop_buy_action(part, state, costs, ore_amount_map, page_state),
     ));
 
@@ -187,7 +187,7 @@ pub(super) fn render_shop_buy_action(
     if let Some(reason) = block_reason {
         html.push_str(&format!(
             r#"<p class="shop-action-hint">{}</p>"#,
-            escape_html(&reason)
+            EscapedHtml::from(reason.as_str())
         ));
         if let Some(shortfall) = costs
             .iter()
@@ -222,7 +222,7 @@ pub(super) fn render_shop_sell_action(
     if let Some(reason) = block_reason {
         html.push_str(&format!(
             r#"<p class="shop-action-hint">{}</p>"#,
-            escape_html(&reason)
+            EscapedHtml::from(reason.as_str())
         ));
     }
     html
