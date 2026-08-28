@@ -34,13 +34,21 @@ pub(super) async fn cleanup_old_claimed_mining_queue_items(
 
     let mut summary = ClaimedMiningQueueCleanupSummary::default();
 
-    for (mining_queue_id, rally_result_id) in old_items {
-        sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
-            .bind(mining_queue_id)
-            .execute(&mut **transaction)
-            .await?;
-        summary.queues_deleted += 1;
+    if old_items.is_empty() {
+        return Ok(summary);
+    }
 
+    let queue_ids: Vec<i64> = old_items.iter().map(|(id, _)| *id).collect();
+    let placeholders = crate::in_placeholders(queue_ids.len());
+    let delete_query = format!("DELETE FROM MiningQueue WHERE id IN ({placeholders})");
+    let mut delete_builder = sqlx::query(&delete_query);
+    for queue_id in &queue_ids {
+        delete_builder = delete_builder.bind(queue_id);
+    }
+    delete_builder.execute(&mut **transaction).await?;
+    summary.queues_deleted = queue_ids.len() as u64;
+
+    for (_, rally_result_id) in old_items {
         if let Some(rally_result_id) = rally_result_id
             && !rally_result_still_referenced(transaction, rally_result_id).await?
         {

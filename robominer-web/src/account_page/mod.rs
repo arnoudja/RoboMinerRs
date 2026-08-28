@@ -80,14 +80,7 @@ fn reissue_session_cookies(
             "Set-Cookie",
             session::session_set_cookie_header(user_id, false, session_version),
         )
-        .with_header(
-            "Set-Cookie",
-            format!(
-                "robominer_username={}; Path=/; SameSite=Lax{}",
-                session::cookie_encode(username),
-                session::secure_cookie_suffix()
-            ),
-        )
+        .with_header("Set-Cookie", session::username_set_cookie_header(username))
 }
 
 fn is_account_update_post(request: &Request) -> bool {

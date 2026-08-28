@@ -61,7 +61,7 @@ async fn account_requires_database_configuration() {
     };
 
     let response = account_page(&authenticated_request("/account"), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
     assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
@@ -84,7 +84,7 @@ async fn account_update_is_rate_limited_before_database_work() {
     }
 
     let response = account_page(&authenticated_account_update_request(), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    let body = response.body_utf8();
     assert_eq!(response.status, 429);
     assert_html_contains(&body, "Too many account password checks");
 }

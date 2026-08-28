@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Upper bound for HTTP request bodies (program saves are the largest forms).
 pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
@@ -13,13 +14,13 @@ pub struct Request {
     pub headers: HashMap<String, String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Response {
     pub status: u16,
     pub reason: &'static str,
     pub content_type: &'static str,
     pub headers: Vec<(&'static str, String)>,
-    pub body: Vec<u8>,
+    pub body: Arc<[u8]>,
 }
 
 impl Response {
@@ -29,7 +30,7 @@ impl Response {
             reason: "OK",
             content_type: "text/html; charset=utf-8",
             headers: Vec::new(),
-            body: body.into_bytes(),
+            body: Arc::from(body.into_bytes()),
         }
     }
 
@@ -39,7 +40,7 @@ impl Response {
             reason: "Found",
             content_type: "text/plain; charset=utf-8",
             headers: vec![("Location", location.into())],
-            body: Vec::new(),
+            body: Arc::from([] as [u8; 0]),
         }
     }
 
@@ -49,7 +50,7 @@ impl Response {
             reason: "Not Found",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: b"Not found".to_vec(),
+            body: Arc::from(*b"Not found"),
         }
     }
 
@@ -59,7 +60,7 @@ impl Response {
             reason: "Method Not Allowed",
             content_type: "text/plain; charset=utf-8",
             headers: vec![("Allow", "GET, HEAD, POST".to_string())],
-            body: b"Method not allowed".to_vec(),
+            body: Arc::from(*b"Method not allowed"),
         }
     }
 
@@ -69,7 +70,7 @@ impl Response {
             reason: "Payload Too Large",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: b"Request body too large".to_vec(),
+            body: Arc::from(*b"Request body too large"),
         }
     }
 
@@ -79,7 +80,7 @@ impl Response {
             reason: "Forbidden",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: message.into().into_bytes(),
+            body: Arc::from(message.into().into_bytes()),
         }
     }
 
@@ -89,7 +90,7 @@ impl Response {
             reason: "Too Many Requests",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: message.into().into_bytes(),
+            body: Arc::from(message.into().into_bytes()),
         }
     }
 
@@ -99,7 +100,7 @@ impl Response {
             reason: "Internal Server Error",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: b"Internal server error".to_vec(),
+            body: Arc::from(*b"Internal server error"),
         }
     }
 
@@ -109,13 +110,20 @@ impl Response {
             reason: "Service Unavailable",
             content_type: "text/plain; charset=utf-8",
             headers: Vec::new(),
-            body: message.into().into_bytes(),
+            body: Arc::from(message.into().into_bytes()),
         }
     }
 
     pub(crate) fn with_header(mut self, name: &'static str, value: impl Into<String>) -> Self {
         self.headers.push((name, value.into()));
         self
+    }
+}
+
+#[cfg(test)]
+impl Response {
+    pub(crate) fn body_utf8(&self) -> String {
+        String::from_utf8_lossy(&self.body).into_owned()
     }
 }
 

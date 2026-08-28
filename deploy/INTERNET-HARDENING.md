@@ -156,7 +156,7 @@ curl -fsS http://127.0.0.1:8080/health
 | Check | Command / action |
 | --- | --- |
 | TLS works | Browser shows padlock on `https://your-host/login` |
-| Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax` |
+| Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax`; `robominer_username` is `HttpOnly` |
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
 | Health / migrations | `curl -fsS http://127.0.0.1:8080/health` → `ok` + `migrations=ok` |
 | Signup off (default) | `/login?signup=1` shows no sign-up tab unless `allowsignup 1` |

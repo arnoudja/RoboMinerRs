@@ -36,10 +36,7 @@ fn logoff_response_clearing_cookies() -> Response {
             "Set-Cookie",
             "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
         )
-        .with_header(
-            "Set-Cookie",
-            "robominer_username=; Max-Age=0; Path=/; SameSite=Lax",
-        )
+        .with_header("Set-Cookie", session::username_clear_cookie_header())
 }
 
 fn logoff_html_response() -> Response {

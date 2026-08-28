@@ -18,5 +18,17 @@ node --test clear_wallet.test.js page.test.js
 cd "${ROOT}/robominer-web/static/js/mining_results/tests"
 node --test page.test.js
 
+cd "${ROOT}/robominer-web/static/js/common/tests"
+node --test filter_restore.test.js
+
+cd "${ROOT}/robominer-web/static/js/shop/tests"
+node --test page.test.js
+
+cd "${ROOT}/robominer-web/static/js/robot/tests"
+node --test page.test.js
+
+cd "${ROOT}/robominer-web/static/js/edit_code/tests"
+node --test page.test.js
+
 cd "${ROOT}/robominer-web/static/js/tests"
 node --test page_scripts.test.js

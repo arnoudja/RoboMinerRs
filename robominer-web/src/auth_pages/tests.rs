@@ -38,7 +38,7 @@ fn get_logoff_page_does_not_expire_session_cookies() {
         "GET /logoff must not emit Set-Cookie clears"
     );
 
-    let body = String::from_utf8(response.body).expect("body should be utf-8");
+    let body = response.body_utf8();
     assert_contains_all(
         &body,
         &[
@@ -94,7 +94,7 @@ async fn login_requires_database_configuration() {
     };
 
     let response = login_page(&request("/login"), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
     assert_html_contains(&body, "ROBOMINER_DATABASE_URL");
@@ -251,11 +251,10 @@ fn auth_redirect_sets_rust_auth_and_remember_cookies() {
             && header.contains('.')
             && header.contains("Max-Age=2592000")
     }));
-    assert!(
-        cookie_headers
-            .iter()
-            .any(|header| header.starts_with("robominer_username=User%20Name;"))
-    );
+    assert!(cookie_headers.iter().any(
+        |header| header.starts_with("robominer_username=User%20Name;")
+            && header.contains("HttpOnly")
+    ));
     assert!(
         cookie_headers
             .iter()

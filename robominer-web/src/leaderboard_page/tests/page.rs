@@ -16,7 +16,7 @@ async fn leaderboard_requires_database_configuration() {
     };
 
     let response = leaderboard_page(&request("/leaderboard"), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
     assert_html_contains(&body, "ROBOMINER_DATABASE_URL");

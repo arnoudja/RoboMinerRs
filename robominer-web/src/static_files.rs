@@ -2,9 +2,10 @@
 //! in-memory cache, and ETag / `If-None-Match` handling.
 
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Component, Path, PathBuf};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
+
+use tokio::sync::Mutex;
 
 use crate::http::{Request, Response};
 
@@ -46,7 +47,7 @@ pub(crate) async fn static_response(path: &str, static_root: &Path, request: &Re
                 ("ETag", entry.etag.clone()),
                 ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
             ],
-            body: Vec::new(),
+            body: Arc::from([] as [u8; 0]),
         };
     }
 
@@ -58,17 +59,12 @@ pub(crate) async fn static_response(path: &str, static_root: &Path, request: &Re
             ("ETag", entry.etag.clone()),
             ("Cache-Control", STATIC_CACHE_CONTROL.to_string()),
         ],
-        body: entry.body.to_vec(),
+        body: Arc::clone(&entry.body),
     }
 }
 
 async fn load_static_file_entry(file_path: PathBuf) -> Result<Option<StaticFileEntry>, ()> {
-    if let Some(entry) = static_file_cache()
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .get(&file_path)
-        .cloned()
-    {
+    if let Some(entry) = static_file_cache().lock().await.get(&file_path).cloned() {
         return Ok(Some(entry));
     }
 
@@ -80,7 +76,7 @@ async fn load_static_file_entry(file_path: PathBuf) -> Result<Option<StaticFileE
         Ok(entry) => {
             static_file_cache()
                 .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .await
                 .insert(cache_key, entry.clone());
             Ok(Some(entry))
         }
@@ -90,7 +86,7 @@ async fn load_static_file_entry(file_path: PathBuf) -> Result<Option<StaticFileE
 }
 
 fn read_static_file_entry(file_path: PathBuf) -> std::io::Result<StaticFileEntry> {
-    let body = fs::read(&file_path)?;
+    let body = std::fs::read(&file_path)?;
     let content_type = content_type(&file_path);
     let etag = static_etag(&body);
     Ok(StaticFileEntry {

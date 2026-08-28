@@ -16,7 +16,7 @@ async fn shop_requires_database_configuration() {
     };
 
     let response = shop_page(&authenticated_request("/shop"), &config).await;
-    let body = String::from_utf8(response.body).expect("message should be utf-8");
+    let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
     assert_html_contains(&body, "ROBOMINER_DATABASE_URL");

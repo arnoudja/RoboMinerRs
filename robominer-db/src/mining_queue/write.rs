@@ -8,8 +8,9 @@ use crate::assets::{
     refund_full_ore_costs,
 };
 use crate::{
-    CancelMiningQueueRejection, CancelMiningQueueRequest, CanceledMiningQueue, DbOutcome,
-    EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining, db_ok, db_reject,
+    CancelMiningQueueBatchResult, CancelMiningQueueRejection, CancelMiningQueueRequest,
+    CanceledMiningQueue, DbOutcome, EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining,
+    db_ok, db_reject,
 };
 
 pub async fn enqueue_mining(
@@ -81,7 +82,66 @@ pub async fn cancel_mining_queue(
     request: CancelMiningQueueRequest,
 ) -> Result<DbOutcome<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
+    let outcome = cancel_mining_queue_in_transaction(&mut transaction, request).await?;
+    match outcome {
+        DbOutcome::Success(value) => {
+            touch_user_last_login_time(&mut transaction, request.user_id).await?;
+            transaction.commit().await?;
+            db_ok(value)
+        }
+        DbOutcome::Rejected(rejection) => {
+            transaction.rollback().await?;
+            db_reject(rejection)
+        }
+    }
+}
 
+pub async fn cancel_mining_queue_batch(
+    pool: &MySqlPool,
+    user_id: i64,
+    mining_queue_ids: &[i64],
+    require_refund_fits: bool,
+) -> Result<CancelMiningQueueBatchResult, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+    let mut batch = CancelMiningQueueBatchResult::default();
+
+    for &mining_queue_id in mining_queue_ids {
+        match cancel_mining_queue_in_transaction(
+            &mut transaction,
+            CancelMiningQueueRequest {
+                user_id,
+                mining_queue_id,
+                require_refund_fits,
+            },
+        )
+        .await?
+        {
+            DbOutcome::Success(_) => batch.cleared += 1,
+            DbOutcome::Rejected(CancelMiningQueueRejection::RefundWouldClamp) => {
+                batch.skipped += 1;
+            }
+            DbOutcome::Rejected(rejection) => {
+                batch.failed += 1;
+                batch.last_rejection = Some(rejection);
+                *batch.rejection_counts.entry(rejection).or_default() += 1;
+            }
+        }
+    }
+
+    if batch.cleared > 0 {
+        touch_user_last_login_time(&mut transaction, user_id).await?;
+        transaction.commit().await?;
+    } else {
+        transaction.rollback().await?;
+    }
+
+    Ok(batch)
+}
+
+async fn cancel_mining_queue_in_transaction(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    request: CancelMiningQueueRequest,
+) -> Result<DbOutcome<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
     let Some((robot_id, owner_id, rally_result_id, mining_end_time_is_null, mining_area_id)) =
         sqlx::query_as::<_, (i64, i64, Option<i64>, bool, i64)>(
             "SELECT MiningQueue.robotId, Robot.userId, MiningQueue.rallyResultId, \
@@ -92,15 +152,13 @@ pub async fn cancel_mining_queue(
              FOR UPDATE",
         )
         .bind(request.mining_queue_id)
-        .fetch_optional(&mut *transaction)
+        .fetch_optional(&mut **transaction)
         .await?
     else {
-        transaction.rollback().await?;
         return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
 
     if owner_id != request.user_id {
-        transaction.rollback().await?;
         return db_reject(CancelMiningQueueRejection::WrongOwner);
     }
 
@@ -113,7 +171,7 @@ pub async fn cancel_mining_queue(
     )
     .bind(robot_id)
     .bind(request.mining_queue_id)
-    .fetch_one(&mut *transaction)
+    .fetch_one(&mut **transaction)
     .await?;
 
     if !mining_queue_item_cancelable(
@@ -121,36 +179,30 @@ pub async fn cancel_mining_queue(
         mining_end_time_is_null,
         earlier_unfinished_queue_count,
     ) {
-        transaction.rollback().await?;
         return db_reject(CancelMiningQueueRejection::NotCancelable);
     }
 
     let Some((ore_price_id,)) =
         sqlx::query_as::<_, (i64,)>("SELECT orePriceId FROM MiningArea WHERE id = ?")
             .bind(mining_area_id)
-            .fetch_optional(&mut *transaction)
+            .fetch_optional(&mut **transaction)
             .await?
     else {
-        transaction.rollback().await?;
         return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
-    let costs = list_ore_price_amounts(&mut transaction, ore_price_id).await?;
+    let costs = list_ore_price_amounts(transaction, ore_price_id).await?;
     if request.require_refund_fits
-        && !ore_refund_fits_without_clamp_tx(&mut transaction, request.user_id, &costs).await?
+        && !ore_refund_fits_without_clamp_tx(transaction, request.user_id, &costs).await?
     {
-        transaction.rollback().await?;
         return db_reject(CancelMiningQueueRejection::RefundWouldClamp);
     }
-    refund_full_ore_costs(&mut transaction, request.user_id, &costs).await?;
+    refund_full_ore_costs(transaction, request.user_id, &costs).await?;
 
     sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
         .bind(request.mining_queue_id)
-        .execute(&mut *transaction)
+        .execute(&mut **transaction)
         .await?;
 
-    touch_user_last_login_time(&mut transaction, request.user_id).await?;
-
-    transaction.commit().await?;
     db_ok(CanceledMiningQueue {
         mining_queue_id: request.mining_queue_id,
     })

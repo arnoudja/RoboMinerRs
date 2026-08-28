@@ -3,6 +3,7 @@ use sqlx::MySqlPool;
 use super::assets::{
     add_user_robot_part_asset, delete_zero_owned_robot_part_assets, remove_user_robot_part_asset,
     unassigned_robot_part_count, user_robot_part_total_owned, user_robot_part_usage_count,
+    user_robot_part_usage_counts_for_user,
 };
 use crate::assets::{
     can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_half_ore_costs,
@@ -171,9 +172,11 @@ async fn list_user_sellable_robot_part_counts(
     .fetch_all(&mut **transaction)
     .await?;
 
+    let usage_by_part = user_robot_part_usage_counts_for_user(transaction, user_id).await?;
+
     let mut sellable_parts = Vec::new();
     for (robot_part_id, total_owned) in rows {
-        let usage_count = user_robot_part_usage_count(transaction, user_id, robot_part_id).await?;
+        let usage_count = usage_by_part.get(&robot_part_id).copied().unwrap_or(0);
         let unassigned = unassigned_robot_part_count(total_owned, usage_count);
         if unassigned > 0 {
             sellable_parts.push((robot_part_id, unassigned));

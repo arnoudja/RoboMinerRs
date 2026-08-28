@@ -200,6 +200,21 @@ pub(crate) fn session_clear_cookie_header() -> String {
     )
 }
 
+pub(crate) fn username_set_cookie_header(username: &str) -> String {
+    format!(
+        "robominer_username={}; Path=/; HttpOnly; SameSite=Lax{}",
+        cookie_encode(username),
+        secure_cookie_suffix()
+    )
+}
+
+pub(crate) fn username_clear_cookie_header() -> String {
+    format!(
+        "robominer_username=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        secure_cookie_suffix()
+    )
+}
+
 pub(crate) fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
     format!(
         "{}; robominer_username={}",
