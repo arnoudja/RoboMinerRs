@@ -124,7 +124,7 @@ jobs:
       - name: Generate coverage
         run: resources/scripts/run-coverage-with-db.sh --lcov --output-path lcov.info
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v7
         with:
           files: lcov.info
           fail_ci_if_error: false
