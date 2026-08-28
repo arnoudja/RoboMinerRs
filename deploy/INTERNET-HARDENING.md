@@ -160,7 +160,8 @@ curl -fsS http://127.0.0.1:8080/health
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
 | Health / migrations | `curl -fsS http://127.0.0.1:8080/health` → `ok` + `migrations=ok` |
 | Signup off (default) | `/login?signup=1` shows no sign-up tab unless `allowsignup 1` |
-| Security headers | `curl -I /login` includes `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` |
+| Security headers | `curl -I /login` includes `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy` |
+| CSP | `Content-Security-Policy` includes `form-action 'self'` and `connect-src 'self'` (same-origin forms + mining-queue `fetch`) |
 | Engine private | No listening HTTP port for `robominer-engine` |
 | App rate limit | Rapid `/login` POSTs return `429` |
 | CSRF | Authenticated and login/signup POST forms include `csrfToken` |
@@ -173,7 +174,6 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Gap | Mitigation today |
 | --- | --- |
 | No HSTS in app | Proxy adds `Strict-Transport-Security` (app serves plain HTTP on loopback) |
-| No full CSP yet | Page CSS is external; progress bars use `<progress>` without inline styles. CSP `style-src` is `'self'` only (no `'unsafe-inline'`) |
 
 ### Already covered in-app
 
@@ -194,6 +194,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |
 | Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
+| Content-Security-Policy | `default-src`/`script-src`/`style-src` `'self'`; `img-src 'self' data:`; `object-src 'none'`; `base-uri`/`frame-ancestors`/`form-action`/`connect-src` `'self'`. No inline scripts; JSON islands use `type="application/json"`. Page CSS is external; progress bars use `<progress>` without inline styles (`style-src` has no `'unsafe-inline'`) |
 | Email validation | Local + domain with TLD on signup / account update |
 | Rally replay payload | New runs store versioned JSON (`{"v":2,…}`) in `RallyResult.resultData`; viewer loads via `application/json`. Legacy executable rows are refused (replay unavailable) |
 

@@ -8,7 +8,8 @@ use robominer_web::test_support::route;
 use serial_test::serial;
 use support::{
     apply_set_cookies, cookie_header, create_user_via_engine, ensure_session_configured,
-    login_with_credentials, post_request, response_body, server_config, unique_prefix,
+    login_with_credentials, post_request, post_request_without_csrf, response_body, server_config,
+    unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -83,6 +84,70 @@ async fn edit_code_create_post_inserts_program_source() {
         .bind(user_id)
         .execute(&pool)
         .await;
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn edit_code_create_post_without_csrf_is_rejected() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-edit-code-csrf");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+
+    let mut form = HashMap::new();
+    form.insert("requestType".to_string(), "update".to_string());
+    form.insert("programSourceId".to_string(), "-1".to_string());
+    form.insert("nextProgramSourceId".to_string(), "-1".to_string());
+    form.insert("sourceName".to_string(), format!("{prefix}-program"));
+    form.insert("sourceCode".to_string(), "move(1);".to_string());
+
+    let missing = route(
+        &post_request_without_csrf("/editCode", form.clone(), Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_eq!(missing.status, 403);
+    assert!(
+        response_body(&missing).contains("CSRF"),
+        "expected CSRF rejection message"
+    );
+
+    form.insert("csrfToken".to_string(), "not-a-valid-token".to_string());
+    let forged = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
+    assert_eq!(forged.status, 403);
+
+    let program_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM ProgramSource WHERE userId = ? AND sourceName = ?",
+    )
+    .bind(user_id)
+    .bind(format!("{prefix}-program"))
+    .fetch_one(&pool)
+    .await
+    .expect("failed to count program sources");
+    assert_eq!(program_count, 0, "forged CSRF must not create a program");
+
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)
         .execute(&pool)

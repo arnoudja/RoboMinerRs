@@ -100,6 +100,14 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         get_lower.contains("referrer-policy: strict-origin-when-cross-origin"),
         "expected Referrer-Policy, got:\n{get_response}"
     );
+    assert!(
+        get_lower.contains("content-security-policy:"),
+        "expected Content-Security-Policy, got:\n{get_response}"
+    );
+    assert!(
+        get_lower.contains("form-action 'self'") && get_lower.contains("connect-src 'self'"),
+        "expected CSP form-action and connect-src 'self', got:\n{get_response}"
+    );
 
     let oversized = MAX_REQUEST_BODY_BYTES + 1;
     let post_response = raw_http_exchange(

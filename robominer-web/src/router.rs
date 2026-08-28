@@ -387,13 +387,47 @@ mod tests {
             trust_proxy: false,
         };
 
-        let response = route(&request("/Shop"), &config).await;
+        let cases = [
+            ("/Shop", "/shop"),
+            ("/MiningQueue", "/miningQueue"),
+            ("/EditCode", "/editCode"),
+            ("/Account", "/account"),
+            ("/Robot", "/robot"),
+            ("/Achievements", "/achievements"),
+        ];
+        for (legacy, canonical) in cases {
+            let response = route(&request(legacy), &config).await;
+            assert_eq!(response.status, 302, "{legacy} should redirect");
+            assert!(
+                response
+                    .headers
+                    .iter()
+                    .any(|(name, value)| *name == "Location" && value == canonical),
+                "{legacy} should redirect to {canonical}, got {:?}",
+                response.headers
+            );
+        }
+
+        let mut with_query = request("/MiningQueue");
+        with_query
+            .query
+            .insert("fragment".to_string(), "queue".to_string());
+        with_query.query.insert("info".to_string(), "1".to_string());
+        let response = route(&with_query, &config).await;
         assert_eq!(response.status, 302);
+        let location = response
+            .headers
+            .iter()
+            .find(|(name, _)| *name == "Location")
+            .map(|(_, value)| value.as_str())
+            .expect("Location header");
         assert!(
-            response
-                .headers
-                .iter()
-                .any(|(name, value)| *name == "Location" && value == "/shop")
+            location.starts_with("/miningQueue?"),
+            "query redirect should keep canonical path: {location}"
+        );
+        assert!(
+            location.contains("fragment=queue") && location.contains("info=1"),
+            "query string should be preserved: {location}"
         );
     }
 
@@ -406,20 +440,30 @@ mod tests {
             trust_proxy: false,
         };
 
-        let mut request = request("/Login");
-        request.method = "POST".to_string();
-        request
-            .form
-            .insert("loginName".to_string(), "player".to_string());
-        request
-            .form
-            .insert("password".to_string(), "secret".to_string());
+        for (path, forbidden_location) in [("/Login", "/login"), ("/Shop", "/shop")] {
+            let mut request = request(path);
+            request.method = "POST".to_string();
+            request
+                .form
+                .insert("loginName".to_string(), "player".to_string());
+            request
+                .form
+                .insert("password".to_string(), "secret".to_string());
 
-        let response = route(&request, &config).await;
-        assert_ne!(
-            response.status, 302,
-            "POST /Login must not canonical-redirect and drop the form body"
-        );
+            let response = route(&request, &config).await;
+            let location = response
+                .headers
+                .iter()
+                .find(|(name, _)| *name == "Location")
+                .map(|(_, value)| value.as_str());
+            assert_ne!(
+                location,
+                Some(forbidden_location),
+                "POST {path} must not canonical-redirect to {forbidden_location} (got status {}, location {:?})",
+                response.status,
+                location
+            );
+        }
     }
 
     #[tokio::test(flavor = "current_thread")]

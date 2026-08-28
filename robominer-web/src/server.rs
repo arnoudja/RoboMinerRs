@@ -148,7 +148,9 @@ async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse
              img-src 'self' data:; \
              object-src 'none'; \
              base-uri 'self'; \
-             frame-ancestors 'self'",
+             frame-ancestors 'self'; \
+             form-action 'self'; \
+             connect-src 'self'",
         ),
     );
     response

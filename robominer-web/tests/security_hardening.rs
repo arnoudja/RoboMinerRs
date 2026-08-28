@@ -145,6 +145,31 @@ async fn authenticated_shop_post_returns_429_after_mutation_limit() {
         );
     }
 
+    // Mutation families are independent: shop exhaustion must not block edit-code.
+    let mut edit_form = HashMap::new();
+    edit_form.insert("requestType".to_string(), "update".to_string());
+    edit_form.insert("programSourceId".to_string(), "-1".to_string());
+    edit_form.insert("nextProgramSourceId".to_string(), "-1".to_string());
+    edit_form.insert("sourceName".to_string(), format!("{prefix}-program"));
+    edit_form.insert("sourceCode".to_string(), "move(1);".to_string());
+    let edit_response = route(
+        &post_request("/editCode", edit_form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_ne!(
+        edit_response.status, 429,
+        "edit-code family should still succeed after shop rate limit"
+    );
+    assert_eq!(
+        edit_response.status, 200,
+        "edit-code POST should render after shop family is exhausted"
+    );
+
+    let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)
         .execute(&pool)
