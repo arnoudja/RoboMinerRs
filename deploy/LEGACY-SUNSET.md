@@ -8,7 +8,7 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
-| Location | `robominer-web/src/router.rs` (`canonical_path_redirect`) |
+| Location | `robominer-web/src/router/` (`canonical_path_redirect`) |
 | Behavior | GET/HEAD `/Shop` → `/shop`, etc.; POST stays on legacy path for CSRF |
 | Sunset | Log redirect hits in production; remove redirects after zero use for 3+ months |
 | Risk | Old bookmarks and external links break if removed prematurely |
@@ -55,7 +55,7 @@ sunset criteria are met.
 | --- |
 | Location | `robominer-web/src/startup.rs`, `robominer-db/src/config.rs` |
 | Behavior | Legacy key/value file merged with environment variables |
-| Sunset | Document env-var-first config in README; deprecate file format in a major release |
+| Sunset | Prefer `EnvironmentFile` / env vars (see `deploy/systemd/robominer.env.example`); deprecate file format in a major release |
 | Risk | Medium for existing Pi/systemd installs — provide migration notes in `deploy/systemd/` |
 
 ## Recommended order

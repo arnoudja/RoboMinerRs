@@ -5,7 +5,8 @@ RoboMiner is an online programming game. Improve the program for your robot to m
 ## Prerequisites
 
 - Rust toolchain with Cargo.
-- MySQL or MariaDB.
+- **MySQL 8.4** (CI and supported target). MariaDB may work but is best-effort /
+  untested against the current schema and SQL dialect.
 
 The database scripts are kept under `resources/database/`:
 
@@ -202,7 +203,11 @@ ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
 ```
 
 Run the rally worker loop (`--persist` also credits finished mining runs into
-player wallets after each poll cycle; standalone: `mining claim-all --loop`):
+player wallets after each poll cycle). Adaptive sleep uses
+`min(next rally claim, next wallet claim)` so wallet credits are not delayed
+when mining finishes but no rally is due. For single-worker deploys,
+`rally rallies --persist` covers wallet claims without a separate
+`mining claim-all --loop`:
 
 ```sh
 ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner \
