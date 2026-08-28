@@ -1,4 +1,4 @@
-use super::format::escape_html;
+use super::format::{EscapedHtml, html_attr};
 use crate::static_assets::{AREA_FILTER_JS, script_src_tag};
 
 pub(crate) struct AreaFilterOption<'a> {
@@ -28,9 +28,9 @@ pub(crate) fn render_area_filter_select(
     for option in options {
         body.push_str(&format!(
             r#"<option value="{}"{}>{}</option>"#,
-            escape_html(&option.href),
+            html_attr(&option.href),
             if option.selected { " selected" } else { "" },
-            escape_html(option.label),
+            EscapedHtml::from(option.label),
         ));
     }
     body.push_str("</select></label>");

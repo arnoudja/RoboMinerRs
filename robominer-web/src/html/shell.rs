@@ -1,4 +1,4 @@
-use super::format::{EscapedHtml, escape_html};
+use super::format::EscapedHtml;
 
 pub(super) fn app_shell_header(
     current_form: &str,
@@ -87,7 +87,7 @@ fn nav_link(selected: bool, href: &str, label: &str) -> String {
 
     format!(
         r#"<li><a class="{class_name}" href="{href}"{aria_current}>{}</a></li>"#,
-        escape_html(label)
+        EscapedHtml::from(label)
     )
 }
 

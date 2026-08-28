@@ -1,4 +1,4 @@
-use super::format::escape_html;
+use super::format::{EscapedHtml, html_attr};
 
 /// One ore line in a page wallet strip.
 pub(crate) struct WalletOreLine<'a> {
@@ -31,7 +31,7 @@ pub(crate) fn render_wallet_strip_section(
     body.push_str(&format!(
         r#"<section class="{}" aria-label="{}">"#,
         section.section_class,
-        escape_html(section.aria_label)
+        html_attr(section.aria_label)
     ));
     body.push_str(&format!(r#"<div class="{}">"#, section.heading_class));
     body.push_str(section.heading_markup);
@@ -61,7 +61,7 @@ fn render_wallet_ore_list(
     if assets.is_empty() {
         body.push_str(&format!(
             r#"<p class="{CLASS_PREFIX}-empty">{}</p>"#,
-            escape_html(empty_message)
+            EscapedHtml::from(empty_message)
         ));
         return;
     }
@@ -75,7 +75,7 @@ fn render_wallet_ore_list(
         };
         let amounts = format!(
             r#"<span class="{CLASS_PREFIX}-ore">{}</span><span class="{CLASS_PREFIX}-amount">{}/{}</span>"#,
-            escape_html(asset.ore_name),
+            EscapedHtml::from(asset.ore_name),
             asset.amount,
             asset.max_allowed,
         );

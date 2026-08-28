@@ -1,4 +1,4 @@
-use super::format::escape_html;
+use super::format::EscapedHtml;
 use super::shell::{app_shell_header, page_footer};
 use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags, script_src_tag};
 
@@ -37,7 +37,7 @@ pub(crate) fn layout(
     </body>
 </html>"##,
         robominer_stylesheet_tags(styles),
-        escape_html(title),
+        EscapedHtml::from(title),
         app_shell_header(current_form, username, hud_markup),
         body,
         page_footer(),

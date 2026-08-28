@@ -1,4 +1,4 @@
-use super::format::escape_html;
+use super::format::EscapedHtml;
 
 /// Success/error banner used by shop, robot, edit-code, and achievements pages.
 pub(crate) fn render_status_banner(body: &mut String, class_prefix: &str, message: Option<&str>) {
@@ -12,6 +12,6 @@ pub(crate) fn render_status_banner(body: &mut String, class_prefix: &str, messag
     };
     body.push_str(&format!(
         r#"<p class="{banner_class}">{}</p>"#,
-        escape_html(message)
+        EscapedHtml::from(message)
     ));
 }

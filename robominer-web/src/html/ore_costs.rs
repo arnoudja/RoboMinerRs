@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::format::escape_html;
+use super::format::EscapedHtml;
 
 /// Shared entry-cost affordability check for atlas and mining queue.
 pub(crate) fn ore_costs_affordable(
@@ -34,13 +34,13 @@ pub(crate) fn render_ore_entry_costs(
                 format!(
                     r#"<span class="{affordable_class}">{} {} ✓</span>"#,
                     amount,
-                    escape_html(ore_name)
+                    EscapedHtml::from(*ore_name)
                 )
             } else {
                 let need = amount - have;
                 format!(
                     r#"<span class="{unaffordable_class}">{}</span>"#,
-                    escape_html(&format_ore_shortfall(need, ore_name))
+                    EscapedHtml::from(format_ore_shortfall(need, ore_name).as_str())
                 )
             }
         })

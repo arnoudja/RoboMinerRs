@@ -1,6 +1,6 @@
 use robominer_db::AppShellHudRecord;
 
-use crate::html::escape_html;
+use crate::html::EscapedHtml;
 use crate::{Request, ServerConfig, request_user_id};
 
 pub(crate) async fn hud_markup(request: &Request, config: &ServerConfig) -> Option<String> {
@@ -42,7 +42,7 @@ pub(crate) fn render_app_shell_hud(hud: &AppShellHudRecord) -> String {
             };
             wallet.push_str(&format!(
                 r#"<li class="app-shell-hud-wallet-item{full_class}"><span class="app-shell-hud-wallet-ore">{}</span><span class="app-shell-hud-wallet-amount">{}/{}</span></li>"#,
-                escape_html(&asset.ore_name),
+                EscapedHtml::from(asset.ore_name.as_str()),
                 asset.amount,
                 asset.max_allowed
             ));

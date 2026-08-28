@@ -1,8 +1,8 @@
-use super::format::escape_html;
+use super::format::html_attr;
 
 /// Insert a CSRF meta tag and hidden inputs into every POST form.
 pub(crate) fn inject_csrf_tokens(html: &str, token: &str) -> String {
-    let escaped = escape_html(token);
+    let escaped = html_attr(token);
     let field = format!(
         r#"<input type="hidden" name="{}" value="{escaped}"/>"#,
         crate::csrf::CSRF_FIELD_NAME

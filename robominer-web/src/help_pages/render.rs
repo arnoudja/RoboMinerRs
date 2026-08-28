@@ -1,6 +1,6 @@
 use super::content::{PROGRAM_TIPS_BODY, TUTORIAL_INTRO, TUTORIAL_STEPS};
 use super::{HELP_GUIDES, HelpGuide, guide_by_href};
-use crate::html::{escape_html, layout};
+use crate::html::{EscapedHtml, html_attr, layout};
 use crate::static_assets::PageStylesheet;
 
 pub(crate) fn render_help_index(username: &str, hud: Option<&str>, welcome_banner: &str) -> String {
@@ -119,8 +119,8 @@ fn render_help_article_toc(entries: &[(String, String)]) -> Option<String> {
     for (id, title) in entries {
         toc.push_str(&format!(
             "<li><a href=\"#{}\">{}</a></li>",
-            escape_html(id),
-            escape_html(title),
+            html_attr(id),
+            EscapedHtml::from(title.as_str()),
         ));
     }
     toc.push_str("</ul></nav>");
@@ -207,7 +207,7 @@ fn render_help_action_link(href: &str, label: &str) -> String {
     format!(
         r#"<p class="help-action-link-wrap"><a class="help-action-link" href="{}">{}</a></p>"#,
         href,
-        escape_html(label)
+        EscapedHtml::from(label)
     )
 }
 fn render_help_card(guide: &HelpGuide) -> String {
@@ -219,9 +219,9 @@ fn render_help_card(guide: &HelpGuide) -> String {
     format!(
         r#"<a class="help-card" href="{}"><span class="help-card-tag">{}</span><h2 class="help-card-title">{}</h2><p class="help-card-summary">{}</p></a>"#,
         href,
-        escape_html(guide.tag),
-        escape_html(guide.title),
-        escape_html(guide.summary),
+        EscapedHtml::from(guide.tag),
+        EscapedHtml::from(guide.title),
+        EscapedHtml::from(guide.summary),
     )
 }
 
@@ -244,8 +244,8 @@ fn render_help_sidebar(active_href: Option<&str>) -> String {
         sidebar.push_str(&format!(
             r#"<li class="{item_class}"><a href="{}">{}</a><span class="help-nav-tag">{}</span></li>"#,
             href,
-            escape_html(guide.title),
-            escape_html(guide.tag),
+            EscapedHtml::from(guide.title),
+            EscapedHtml::from(guide.tag),
         ));
     }
     sidebar.push_str("</ul></nav></aside>");
@@ -260,7 +260,7 @@ pub(crate) fn render_page_help_link(href: &str, label: &str) -> String {
     format!(
         r#"<a class="page-help-link" href="{}">{}</a>"#,
         href,
-        escape_html(label)
+        EscapedHtml::from(label)
     )
 }
 
