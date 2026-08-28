@@ -14,7 +14,7 @@
       return;
     }
 
-    var saved = store.readObject(storageKey) || {};
+    var saved = store.readJson(storageKey) || {};
     var i;
     for (i = 0; i < selectNames.length; i += 1) {
       var name = selectNames[i];
@@ -50,7 +50,7 @@
         payload[name] = node.value;
       }
     }
-    store.writeObject(storageKey, payload);
+    store.writeJson(storageKey, payload);
   }
 
   global.RoboMinerFilterRestore = {
