@@ -78,22 +78,6 @@ impl<'a> PageSession<'a> {
         Ok(Self { user_id, pool })
     }
 
-    /// Login + pool only (no CSRF). For read-only pages that still need a session.
-    #[allow(dead_code)]
-    pub(crate) fn require_read(
-        request: &Request,
-        config: &'a ServerConfig,
-        missing_db_message: &str,
-    ) -> Result<Self, Response> {
-        let Some(user_id) = request_user_id(request) else {
-            return Err(login_redirect(request));
-        };
-        let Some(pool) = config.database_pool.as_ref() else {
-            return Err(Response::service_unavailable(missing_db_message));
-        };
-        Ok(Self { user_id, pool })
-    }
-
     /// Render HTML with CSRF cookie refresh and HUD markup.
     pub(crate) async fn html_with_hud(
         &self,
@@ -122,6 +106,23 @@ impl<'a> PageSession<'a> {
             session_username(request),
             app_shell::hud_markup(request, config).await.as_deref(),
         ))
+    }
+}
+
+/// Run an authenticated page handler after [`PageSession::require`].
+pub(crate) async fn with_session_page<'a, F, Fut>(
+    request: &'a Request,
+    config: &'a ServerConfig,
+    missing_db_message: &str,
+    handler: F,
+) -> Response
+where
+    F: FnOnce(PageSession<'a>) -> Fut,
+    Fut: std::future::Future<Output = Response>,
+{
+    match PageSession::require(request, config, missing_db_message) {
+        Ok(session) => handler(session).await,
+        Err(response) => response,
     }
 }
 

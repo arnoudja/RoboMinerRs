@@ -10,28 +10,29 @@ pub(super) struct RobotPageState {
 }
 
 pub(super) async fn robot_page(request: &Request, config: &ServerConfig) -> Response {
-    let session = match crate::page_context::PageSession::require(
+    crate::page_context::with_session_page(
         request,
         config,
         "Robot page requires ROBOMINER_DATABASE_URL to be configured",
-    ) {
-        Ok(session) => session,
-        Err(response) => return response,
-    };
-    let robot_id = query_i64(request, "robotId");
+        |session| async move {
+            let robot_id = query_i64(request, "robotId");
 
-    let result = load_robot_page_state(session.pool, session.user_id, request, robot_id).await;
+            let result =
+                load_robot_page_state(session.pool, session.user_id, request, robot_id).await;
 
-    match result {
-        Ok(state) => {
-            session
-                .html_with_hud(request, config, |username, hud| {
-                    render::render_robot_page(username, hud, &state)
-                })
-                .await
-        }
-        Err(error) => crate::page_context::page_load_error("robot page", error),
-    }
+            match result {
+                Ok(state) => {
+                    session
+                        .html_with_hud(request, config, |username, hud| {
+                            render::render_robot_page(username, hud, &state)
+                        })
+                        .await
+                }
+                Err(error) => crate::page_context::page_load_error("robot page", error),
+            }
+        },
+    )
+    .await
 }
 
 async fn load_robot_page_state(

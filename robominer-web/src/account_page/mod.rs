@@ -31,39 +31,38 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
         record_auth_attempt(&ip, &account_key);
     }
 
-    let session = match crate::page_context::PageSession::require(
+    crate::page_context::with_session_page(
         request,
         config,
         "Account requires ROBOMINER_DATABASE_URL to be configured",
-    ) {
-        Ok(session) => session,
-        Err(response) => return response,
-    };
+        |session| async move {
+            let result = load_account_page_state(session.pool, session.user_id, request).await;
 
-    let result = load_account_page_state(session.pool, session.user_id, request).await;
-
-    match result {
-        Ok(state) => {
-            let reissue_session_version = state.reissue_session_version;
-            let username_for_cookie = state.current_username.clone();
-            let user_id = session.user_id;
-            let mut response = session
-                .html_with_hud(request, config, |_username, hud| {
-                    render::render_account_page(hud, &state)
-                })
-                .await;
-            if let Some(session_version) = reissue_session_version {
-                response = reissue_session_cookies(
-                    response,
-                    user_id,
-                    session_version,
-                    &username_for_cookie,
-                );
+            match result {
+                Ok(state) => {
+                    let reissue_session_version = state.reissue_session_version;
+                    let username_for_cookie = state.current_username.clone();
+                    let user_id = session.user_id;
+                    let mut response = session
+                        .html_with_hud(request, config, |_username, hud| {
+                            render::render_account_page(hud, &state)
+                        })
+                        .await;
+                    if let Some(session_version) = reissue_session_version {
+                        response = reissue_session_cookies(
+                            response,
+                            user_id,
+                            session_version,
+                            &username_for_cookie,
+                        );
+                    }
+                    response
+                }
+                Err(error) => crate::page_context::page_load_error("account", error),
             }
-            response
-        }
-        Err(error) => crate::page_context::page_load_error("account", error),
-    }
+        },
+    )
+    .await
 }
 
 fn reissue_session_cookies(

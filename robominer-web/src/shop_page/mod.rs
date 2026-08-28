@@ -19,43 +19,42 @@ pub(super) struct ShopPageState {
 }
 
 pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
-    let session = match crate::page_context::PageSession::require(
+    crate::page_context::with_session_page(
         request,
         config,
         "Shop requires ROBOMINER_DATABASE_URL to be configured",
-    ) {
-        Ok(session) => session,
-        Err(response) => return response,
-    };
+        |session| async move {
+            let buy_part_id = mutation_i64(request, "buyRobotPartId");
+            let sell_part_id = mutation_i64(request, "sellRobotPartId");
+            let selected_part_type_id = query_i64(request, "selectedRobotPartTypeId");
+            let selected_tier_id = query_i64(request, "selectedTierId");
+            let selected_part_id = query_i64(request, "selectedRobotPartId");
 
-    let buy_part_id = mutation_i64(request, "buyRobotPartId");
-    let sell_part_id = mutation_i64(request, "sellRobotPartId");
-    let selected_part_type_id = query_i64(request, "selectedRobotPartTypeId");
-    let selected_tier_id = query_i64(request, "selectedTierId");
-    let selected_part_id = query_i64(request, "selectedRobotPartId");
+            let result = load_shop_state(
+                session.pool,
+                session.user_id,
+                buy_part_id,
+                sell_part_id,
+                mutation_form_has(request, "sellAllUnassigned"),
+                selected_part_type_id,
+                selected_tier_id,
+                selected_part_id,
+            )
+            .await;
 
-    let result = load_shop_state(
-        session.pool,
-        session.user_id,
-        buy_part_id,
-        sell_part_id,
-        mutation_form_has(request, "sellAllUnassigned"),
-        selected_part_type_id,
-        selected_tier_id,
-        selected_part_id,
+            match result {
+                Ok(state) => {
+                    session
+                        .html_with_hud(request, config, |username, hud| {
+                            render::render_shop_page(username, hud, &state)
+                        })
+                        .await
+                }
+                Err(error) => crate::page_context::page_load_error("shop", error),
+            }
+        },
     )
-    .await;
-
-    match result {
-        Ok(state) => {
-            session
-                .html_with_hud(request, config, |username, hud| {
-                    render::render_shop_page(username, hud, &state)
-                })
-                .await
-        }
-        Err(error) => crate::page_context::page_load_error("shop", error),
-    }
+    .await
 }
 
 #[allow(clippy::too_many_arguments)]
