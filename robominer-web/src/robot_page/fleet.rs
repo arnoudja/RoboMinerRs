@@ -19,8 +19,10 @@ pub(super) fn render_robot_summary(body: &mut String, robot_count: usize, pendin
 }
 
 pub(super) fn render_robot_claim_banner(body: &mut String, state: &RobotPageState) {
-    body.push_str(&crate::html::render_claimed_ore_rewards_banner(
+    body.push_str(&crate::html::render_mining_claim_ui(
         "robot-claim-banner",
+        "robot",
+        state.pending_claim_count,
         &state.claimed_results,
         true,
     ));

@@ -18,6 +18,18 @@ pub(crate) fn render_app_shell_hud(hud: &AppShellHudRecord) -> String {
         hud.queue_used, hud.queue_capacity
     ));
 
+    if hud.claimable_mining_results_count > 0 {
+        let label = if hud.claimable_mining_results_count == 1 {
+            "mining result to claim"
+        } else {
+            "mining results to claim"
+        };
+        parts.push(format!(
+            r#"<a class="app-shell-hud-item app-shell-hud-mining-claims app-shell-hud-alert" href="miningQueue" title="Mining results ready to claim"><span class="app-shell-hud-value">{}</span><span class="app-shell-hud-label">{}</span></a>"#,
+            hud.claimable_mining_results_count, label
+        ));
+    }
+
     if hud.claimable_achievements_count > 0 {
         let label = if hud.claimable_achievements_count == 1 {
             "achievement to claim"
@@ -88,6 +100,7 @@ mod tests {
             queue_used: 2,
             queue_capacity: 8,
             claimable_achievements_count: 0,
+            claimable_mining_results_count: 0,
         });
 
         assert!(html.contains(r#"class="app-shell-hud""#));
@@ -103,6 +116,7 @@ mod tests {
             queue_used: 0,
             queue_capacity: 4,
             claimable_achievements_count: 0,
+            claimable_mining_results_count: 0,
         });
 
         assert!(html.contains("0/4"));
@@ -116,6 +130,7 @@ mod tests {
             queue_used: 1,
             queue_capacity: 4,
             claimable_achievements_count: 2,
+            claimable_mining_results_count: 0,
         });
 
         assert!(html.contains(r#"app-shell-hud-alert""#));
@@ -128,12 +143,30 @@ mod tests {
     }
 
     #[test]
+    fn hud_renders_claimable_mining_results_badge() {
+        let html = render_app_shell_hud(&AppShellHudRecord {
+            ore_assets: vec![],
+            queue_used: 1,
+            queue_capacity: 4,
+            claimable_achievements_count: 0,
+            claimable_mining_results_count: 3,
+        });
+
+        assert!(html.contains(r#"app-shell-hud-mining-claims"#));
+        assert!(html.contains(r#"href="miningQueue""#));
+        assert!(html.contains(
+            r#"3</span><span class="app-shell-hud-label">mining results to claim</span>"#
+        ));
+    }
+
+    #[test]
     fn hud_omits_achievements_badge_when_nothing_is_claimable() {
         let html = render_app_shell_hud(&AppShellHudRecord {
             ore_assets: vec![],
             queue_used: 1,
             queue_capacity: 4,
             claimable_achievements_count: 0,
+            claimable_mining_results_count: 0,
         });
 
         assert!(!html.contains("app-shell-hud-achievements"));

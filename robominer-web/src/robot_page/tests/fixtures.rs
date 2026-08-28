@@ -173,6 +173,8 @@ pub(super) fn sample_robot_state(message: Option<String>) -> RobotPageState {
             },
         ],
         message,
+        pending_claim_count: 0,
+
         claimed_results: robominer_db::ClaimedUserResults {
             claimed_queues: 0,
             ore_rewards: vec![],

@@ -115,6 +115,8 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: Some("Unable <queue>".to_string()),
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 2,
                 ore_rewards: vec![robominer_db::ClaimedOreRewardRecord {
@@ -261,6 +263,8 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 0,
                 ore_rewards: vec![],
@@ -329,6 +333,8 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 0,
                 ore_rewards: vec![],
@@ -413,6 +419,8 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 0,
                 ore_rewards: vec![],
@@ -454,6 +462,8 @@ fn mining_queue_shows_no_robots_empty_state() {
             selected_info_area_id: 0,
             selected_robot_area_ids: HashMap::new(),
             error_message: None,
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 0,
                 ore_rewards: vec![],
@@ -521,6 +531,8 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
         selected_info_area_id: 20,
         selected_robot_area_ids,
         error_message: Some("Queue full for this robot.".to_string()),
+        pending_claim_count: 0,
+
         claimed_results: robominer_db::ClaimedUserResults {
             claimed_queues: 0,
             ore_rewards: vec![],

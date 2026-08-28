@@ -109,8 +109,7 @@ async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
     // - Public: /health, /login|/signup|/logoff, /help*, /activity (read)
     // - Login required (+ CSRF on POST): shop, mining queue, robot, edit code,
     //   account, achievements, mining results, leaderboard (read), area overview
-    // - Claim-on-load (wallet side effect): call claim_user_results from pages
-    //   that show claim banners or depend on an up-to-date wallet.
+    // - Mining wallet claims: explicit POST with claimPendingResults=1 (never on GET)
     if !matches!(request.method.as_str(), "GET" | "HEAD" | "POST") {
         return Response::method_not_allowed();
     }

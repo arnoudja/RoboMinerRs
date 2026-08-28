@@ -30,6 +30,7 @@ pub(super) struct MiningQueuePageState {
     pub(super) selected_info_area_id: i64,
     pub(super) selected_robot_area_ids: HashMap<i64, i64>,
     pub(super) error_message: Option<String>,
+    pub(super) pending_claim_count: u64,
     pub(super) claimed_results: robominer_db::ClaimedUserResults,
 }
 
@@ -92,7 +93,8 @@ async fn load_mining_queue_page_state(
     request: &Request,
     selected_queue_item_ids: Vec<i64>,
 ) -> Result<MiningQueuePageState, crate::page_context::PageLoadError> {
-    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
+    let claim_state =
+        crate::page_context::resolve_mining_claim_state(pool, user_id, request).await?;
 
     let mut error_message = None;
     if is_post(request) {
@@ -196,7 +198,8 @@ async fn load_mining_queue_page_state(
         selected_info_area_id,
         selected_robot_area_ids,
         error_message,
-        claimed_results: claim_result,
+        pending_claim_count: claim_state.pending_count,
+        claimed_results: claim_state.claimed_results,
     })
 }
 

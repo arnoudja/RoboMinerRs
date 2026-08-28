@@ -18,8 +18,10 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
             depot_max_allowed: asset.depot_max_allowed,
         })
         .collect();
-    let claim_banner = crate::html::render_claimed_ore_rewards_banner(
+    let claim_banner = crate::html::render_mining_claim_ui(
         "mining-queue-claim-banner",
+        "miningQueue",
+        state.pending_claim_count,
         &state.claimed_results,
         true,
     );

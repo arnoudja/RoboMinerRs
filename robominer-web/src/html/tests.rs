@@ -1,6 +1,7 @@
+use super::banners::render_claimed_ore_rewards_banner;
 use super::{
     assert_contains_all, assert_html_not_contains, format_relative_time_millis, inject_csrf_tokens,
-    layout, render_claimed_ore_rewards_banner,
+    layout, render_mining_claim_ui,
 };
 use crate::app_shell::render_app_shell_hud;
 use crate::static_assets::PageStylesheet;
@@ -196,6 +197,30 @@ fn claimed_ore_rewards_banner_is_empty_when_nothing_was_claimed() {
 }
 
 #[test]
+fn pending_claim_banner_renders_post_form() {
+    let html = render_mining_claim_ui(
+        "mining-queue-claim-banner",
+        "miningQueue",
+        2,
+        &ClaimedUserResults {
+            claimed_queues: 0,
+            ore_rewards: vec![],
+        },
+        true,
+    );
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="claim-pending-form mining-queue-claim-banner""#,
+            r#"action="miningQueue" method="post""#,
+            "2 mining results ready to claim",
+            r#"name="claimPendingResults" value="1">Claim rewards</button>"#,
+        ],
+    );
+}
+
+#[test]
 fn app_shell_header_renders_hud_markup() {
     let hud = render_app_shell_hud(&AppShellHudRecord {
         ore_assets: vec![UserOreAssetStateRecord {
@@ -208,6 +233,7 @@ fn app_shell_header_renders_hud_markup() {
         queue_used: 1,
         queue_capacity: 4,
         claimable_achievements_count: 0,
+        claimable_mining_results_count: 0,
     });
     let html = layout(
         "RoboMiner - Shop",

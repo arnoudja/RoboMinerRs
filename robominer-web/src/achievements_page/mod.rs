@@ -61,8 +61,6 @@ async fn load_achievements_state(
     user_id: i64,
     achievement_id: Option<i64>,
 ) -> Result<AchievementsPageState, crate::page_context::PageLoadError> {
-    crate::page_context::claim_user_results(pool, user_id).await?;
-
     let claim_message = if let Some(achievement_id) = achievement_id {
         match robominer_db::claim_achievement_step(
             pool,

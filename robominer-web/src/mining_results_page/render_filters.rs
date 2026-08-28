@@ -18,8 +18,10 @@ pub(super) fn render_mining_results_claim_banner(
     body: &mut String,
     state: &MiningResultsPageState,
 ) {
-    body.push_str(&crate::html::render_claimed_ore_rewards_banner(
+    body.push_str(&crate::html::render_mining_claim_ui(
         "mining-results-claim-banner",
+        "miningResults",
+        state.pending_claim_count,
         &state.claimed_results,
         false,
     ));

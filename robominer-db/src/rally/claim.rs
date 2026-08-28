@@ -31,6 +31,27 @@ pub async fn claim_user_results(
     })
 }
 
+/// Read-only count of finished mining runs waiting to be claimed into the wallet.
+pub async fn count_claimable_mining_queues(
+    pool: &MySqlPool,
+    user_id: i64,
+) -> Result<u64, sqlx::Error> {
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime <= NOW() \
+           AND Robot.userId = ? \
+           AND MiningQueue.claimed = false",
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(count.max(0) as u64)
+}
+
 #[derive(Debug, Clone, Copy)]
 struct ClaimableMiningQueue {
     mining_queue_id: i64,

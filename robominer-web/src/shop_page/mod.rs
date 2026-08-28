@@ -19,14 +19,14 @@ pub(super) struct ShopPageState {
 }
 
 pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
-    let (session, _claimed) = match crate::page_context::require_session_and_claim(
+    let session = match crate::page_context::require_session(
         request,
         config,
         "Shop requires ROBOMINER_DATABASE_URL to be configured",
     )
     .await
     {
-        Ok(value) => value,
+        Ok(session) => session,
         Err(response) => return response,
     };
 

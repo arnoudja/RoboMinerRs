@@ -42,6 +42,8 @@ pub(super) fn sample_edit_code_state(
             linked_robot_count: 0,
         }],
         message,
+        pending_claim_count: 0,
+
         claimed_results: robominer_db::ClaimedUserResults {
             claimed_queues: 0,
             ore_rewards: vec![],

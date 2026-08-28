@@ -205,6 +205,8 @@ fn mining_results_shows_empty_state_and_claim_banner() {
             ore_results: Vec::new(),
             action_results: Vec::new(),
             area_ores: Vec::new(),
+            pending_claim_count: 0,
+
             claimed_results: robominer_db::ClaimedUserResults {
                 claimed_queues: 2,
                 ore_rewards: vec![

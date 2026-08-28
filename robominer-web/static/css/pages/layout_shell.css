@@ -583,5 +583,29 @@ p.success {
     text-shadow: 0 0 8px rgba(0, 255, 157, 0.35);
 }
 
+.claim-pending-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin: 0;
+}
 
+.claim-pending-copy {
+    margin: 0;
+}
+
+.claim-pending-button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    background: rgba(0, 255, 157, 0.12);
+    color: #00ff9d;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.claim-pending-button:hover {
+    background: rgba(0, 255, 157, 0.22);
+}
 

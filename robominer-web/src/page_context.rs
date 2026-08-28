@@ -80,6 +80,7 @@ impl<'a> PageSession<'a> {
     }
 
     /// Login + pool only (no CSRF). For read-only pages that still need a session.
+    #[allow(dead_code)]
     pub(crate) fn require_read(
         request: &Request,
         config: &'a ServerConfig,
@@ -125,6 +126,60 @@ impl<'a> PageSession<'a> {
     }
 }
 
+/// Wallet claim state for pages that show mining-result claim UI.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct PageClaimState {
+    pub pending_count: u64,
+    pub claimed_results: ClaimedUserResults,
+}
+
+impl Default for PageClaimState {
+    fn default() -> Self {
+        Self {
+            pending_count: 0,
+            claimed_results: ClaimedUserResults {
+                claimed_queues: 0,
+                ore_rewards: Vec::new(),
+            },
+        }
+    }
+}
+
+fn is_claim_pending_post(request: &Request) -> bool {
+    crate::request_helpers::is_post(request)
+        && request
+            .form
+            .contains_key(crate::html::CLAIM_PENDING_RESULTS_FIELD)
+}
+
+/// Resolve mining claim UI state without mutating on GET.
+///
+/// When the request is an explicit POST with [`crate::html::CLAIM_PENDING_RESULTS_FIELD`],
+/// pending rewards are claimed into the wallet and returned in `claimed_results`. Otherwise
+/// only a read-only pending count is loaded.
+pub(crate) async fn resolve_mining_claim_state(
+    pool: &MySqlPool,
+    user_id: i64,
+    request: &Request,
+) -> Result<PageClaimState, PageLoadError> {
+    if is_claim_pending_post(request) {
+        let claimed_results = claim_user_results(pool, user_id).await?;
+        return Ok(PageClaimState {
+            pending_count: 0,
+            claimed_results,
+        });
+    }
+
+    let pending_count = robominer_db::count_claimable_mining_queues(pool, user_id).await?;
+    Ok(PageClaimState {
+        pending_count,
+        claimed_results: ClaimedUserResults {
+            claimed_queues: 0,
+            ore_rewards: Vec::new(),
+        },
+    })
+}
+
 /// Claim pending mining rewards. Call from authenticated page loaders that show
 /// claim banners or depend on an up-to-date wallet.
 pub(crate) async fn claim_user_results(
@@ -134,17 +189,13 @@ pub(crate) async fn claim_user_results(
     Ok(robominer_db::claim_user_results(pool, user_id).await?)
 }
 
-/// Authenticate, then claim pending rewards for pages that show wallet/claim UI.
-pub(crate) async fn require_session_and_claim<'a>(
+/// Authenticate for pages that previously claimed on load. Claiming is now explicit via POST.
+pub(crate) async fn require_session<'a>(
     request: &Request,
     config: &'a ServerConfig,
     missing_db_message: &str,
-) -> Result<(PageSession<'a>, ClaimedUserResults), Response> {
-    let session = PageSession::require(request, config, missing_db_message)?;
-    let claimed = claim_user_results(session.pool, session.user_id)
-        .await
-        .map_err(|error| page_load_error("page", error))?;
-    Ok((session, claimed))
+) -> Result<PageSession<'a>, Response> {
+    PageSession::require(request, config, missing_db_message)
 }
 
 /// Clamp a positive page-size query into `[default_limit, max_limit]`.

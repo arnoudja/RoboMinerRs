@@ -6,6 +6,7 @@ pub(super) struct EditCodePageState {
     pub(super) selected_program_source: EditCodeProgramSource,
     pub(super) program_sources: Vec<robominer_db::ProgramSourceStateRecord>,
     pub(super) message: Option<String>,
+    pub(super) pending_claim_count: u64,
     pub(super) claimed_results: robominer_db::ClaimedUserResults,
     /// When true, the page script may restore the last client-stored program selection
     /// (GET without an explicit `nextProgramSourceId`). POST responses keep the server choice.
@@ -65,7 +66,8 @@ async fn load_edit_code_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<EditCodePageState, crate::page_context::PageLoadError> {
-    let claim_result = crate::page_context::claim_user_results(pool, user_id).await?;
+    let claim_state =
+        crate::page_context::resolve_mining_claim_state(pool, user_id, request).await?;
 
     let mut message = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
@@ -182,7 +184,8 @@ async fn load_edit_code_page_state(
         selected_program_source,
         program_sources,
         message,
-        claimed_results: claim_result,
+        pending_claim_count: claim_state.pending_count,
+        claimed_results: claim_state.claimed_results,
         prefer_stored_selection,
     })
 }

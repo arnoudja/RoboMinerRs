@@ -123,8 +123,10 @@ fn render_edit_code_summary(
 }
 
 fn render_edit_code_claim_banner(body: &mut String, state: &EditCodePageState) {
-    body.push_str(&crate::html::render_claimed_ore_rewards_banner(
+    body.push_str(&crate::html::render_mining_claim_ui(
         "edit-code-claim-banner",
+        "editCode",
+        state.pending_claim_count,
         &state.claimed_results,
         true,
     ));
