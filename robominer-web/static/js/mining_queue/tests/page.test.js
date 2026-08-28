@@ -371,6 +371,9 @@ function loadMiningQueuePage(contextOverrides) {
                 }
                 return doc.body.querySelector('#' + id);
             },
+            createElement(tagName) {
+                return createElement(tagName);
+            },
             addEventListener() {},
         },
         window: null,
@@ -656,6 +659,159 @@ describe('mining queue page partial updates', () => {
 
         const retry = timers.find((timer) => timer.delay === context.RoboMinerMiningQueuePage.CLAIM_REFRESH_BACKOFF_MS[0]);
         assert.ok(retry, 'expected claim-refresh backoff timer');
+    });
+
+    it('claim refresh keeps backoff when finishing runs leave but wallet is unchanged', async () => {
+        const { context, timers, fetches, doc } = loadMiningQueuePage();
+        doc.hud.innerHTML = '';
+        doc.hud.appendChild(createElement('span', { id: 'hud-amt', textContent: '1' }));
+        const oldWallet = doc.page.querySelector('.mining-queue-wallet');
+        oldWallet.innerHTML = '';
+        oldWallet.appendChild(createElement('span', { id: 'wallet-amt', textContent: '1' }));
+
+        function buildWallet() {
+            const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+            wallet.appendChild(createElement('span', { id: 'wallet-amt', textContent: '1' }));
+            return wallet;
+        }
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    const node = createElement('div', { id: id });
+                    const nestedHud = createElement('div', { class: 'app-shell-hud' });
+                    nestedHud.appendChild(createElement('span', {
+                        id: 'hud-amt',
+                        textContent: '1',
+                    }));
+                    node.appendChild(nestedHud);
+                    return node;
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    dynamic.appendChild(buildWallet());
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    // Finished runs already left the queue list; no finishing markers.
+                    return createElement('div', { id: id, class: 'mining-queue-robots' });
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+        context.fetch = function(url) {
+            fetches.push({ url: url });
+            return Promise.resolve({
+                ok: true,
+                text() {
+                    return Promise.resolve('<fragment>');
+                },
+            });
+        };
+
+        await context.RoboMinerMiningQueuePage.performRefresh({ forClaim: true });
+        assert.equal(fetches.length, 1);
+        assert.equal(
+            context.RoboMinerMiningQueuePage.hasFinishingRuns(doc.page),
+            false,
+            'finishing markers should be gone'
+        );
+        const retry = timers.find((timer) => timer.delay === context.RoboMinerMiningQueuePage.CLAIM_REFRESH_BACKOFF_MS[0]);
+        assert.ok(retry, 'expected claim-refresh backoff while wallet signature is unchanged');
+    });
+
+    it('claim refresh stops and shows credit banner when wallet signature changes', async () => {
+        const { context, timers, fetches, doc } = loadMiningQueuePage();
+        doc.hud.innerHTML = '';
+        doc.hud.appendChild(createElement('span', { id: 'hud-amt', textContent: '1' }));
+
+        function walletWithAmount(amount) {
+            const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+            const item = createElement('li', { class: 'page-wallet-item' });
+            item.appendChild(createElement('span', {
+                class: 'page-wallet-ore',
+                textContent: 'Iron',
+            }));
+            item.appendChild(createElement('span', {
+                class: 'page-wallet-amount',
+                textContent: `${amount}/100`,
+            }));
+            wallet.appendChild(item);
+            return wallet;
+        }
+
+        const oldWallet = doc.page.querySelector('.mining-queue-wallet');
+        oldWallet.parent.appendChild(walletWithAmount(1));
+        oldWallet.remove();
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    const node = createElement('div', { id: id });
+                    const nestedHud = createElement('div', { class: 'app-shell-hud' });
+                    nestedHud.appendChild(createElement('span', {
+                        id: 'hud-amt',
+                        textContent: '5',
+                    }));
+                    node.appendChild(nestedHud);
+                    return node;
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    dynamic.appendChild(walletWithAmount(5));
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return createElement('div', { id: id, class: 'mining-queue-robots' });
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+        context.fetch = function(url) {
+            fetches.push({ url: url });
+            return Promise.resolve({
+                ok: true,
+                text() {
+                    return Promise.resolve('<fragment>');
+                },
+            });
+        };
+
+        await context.RoboMinerMiningQueuePage.performRefresh({ forClaim: true });
+        assert.equal(fetches.length, 1);
+        const retry = timers.find((timer) => timer.delay === context.RoboMinerMiningQueuePage.CLAIM_REFRESH_BACKOFF_MS[0]);
+        assert.equal(retry, undefined, 'wallet change should stop claim backoff');
+        const banner = doc.page.querySelector('.mining-queue-credit-banner');
+        assert.ok(banner, 'expected credit feedback banner');
+        assert.match(banner.textContent, /Added to wallet: \+4 Iron/);
+        const dismiss = timers.find((timer) => timer.delay === context.RoboMinerMiningQueuePage.CREDIT_FEEDBACK_MS);
+        assert.ok(dismiss, 'expected credit banner dismiss timer');
     });
 
     it('formDataToUrlEncoded serializes fields for urlencoded POST bodies', () => {

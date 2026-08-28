@@ -39,6 +39,35 @@
 
 .mining-queue-wallet {
     border: 1px solid var(--mq-border);
+    margin: 0 0 16px;
+}
+
+.mining-queue-banner {
+    border-radius: 6px;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+}
+
+.mining-queue-banner-success {
+    background: rgba(0, 255, 157, 0.08);
+    border: 1px solid rgba(0, 255, 157, 0.45);
+    box-shadow: 0 0 18px rgba(0, 255, 157, 0.12);
+    color: #9dffd4;
+}
+
+.mining-queue-credit-banner {
+    animation: mining-queue-credit-fade-in 0.25s ease-out;
+}
+
+@keyframes mining-queue-credit-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .mining-queue-wallet-heading {

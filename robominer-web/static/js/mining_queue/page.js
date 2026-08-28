@@ -2,6 +2,7 @@
     var FRAGMENT_PARAM = 'queue';
     var REFRESH_DEBOUNCE_MS = 300;
     var CLAIM_REFRESH_BACKOFF_MS = [1000, 2000, 4000, 8000];
+    var CREDIT_FEEDBACK_MS = 5000;
 
     var pageRoot = document.querySelector('.mining-queue-page');
     var STORAGE_KEY = pageRoot
@@ -15,6 +16,9 @@
     var refreshPending = false;
     var claimRefreshAttempt = 0;
     var claimRefreshTimer = null;
+    var claimBaselineSignature = null;
+    var claimBaselineAmounts = null;
+    var creditFeedbackTimer = null;
     var inspectorSelect = document.getElementById('infoMiningAreaId');
 
     function readStoredAreaSelections() {
@@ -134,7 +138,8 @@
             if (!hudParent) {
                 return;
             }
-            hudTarget.outerHTML = incomingHud.outerHTML;
+            hudParent.insertBefore(incomingHud, hudTarget);
+            hudTarget.remove();
             return;
         }
         var trimmed = (hudSource.innerHTML || '').trim();
@@ -146,14 +151,120 @@
         }
     }
 
+    function collectVisibleText(node) {
+        if (!node) {
+            return '';
+        }
+        var children = node.children;
+        if (children && children.length > 0) {
+            var parts = [];
+            for (var index = 0; index < children.length; index += 1) {
+                var part = collectVisibleText(children[index]);
+                if (part) {
+                    parts.push(part);
+                }
+            }
+            return parts.join(' ').replace(/\s+/g, ' ').trim();
+        }
+        return String(node.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
     function walletSignature(root) {
+        var amounts = parseWalletAmounts(root);
+        var oreNames = Object.keys(amounts).sort();
+        var walletPart = oreNames.map(function(oreName) {
+            return oreName + '=' + amounts[oreName];
+        }).join(';');
         var fragmentRoot = root || pageRoot || document;
         var wallet = fragmentRoot.querySelector('.mining-queue-wallet');
+        if (!walletPart) {
+            walletPart = collectVisibleText(wallet);
+        }
         var hud = document.querySelector('.app-shell-hud');
-        return [
-            wallet ? wallet.innerHTML : '',
-            hud ? hud.innerHTML : ''
-        ].join('\n');
+        var hudPart = collectVisibleText(hud);
+        return walletPart + '\n' + hudPart;
+    }
+
+    function parseWalletAmounts(root) {
+        var fragmentRoot = root || pageRoot || document;
+        var wallet = fragmentRoot.querySelector('.mining-queue-wallet');
+        var amounts = {};
+        if (!wallet) {
+            return amounts;
+        }
+        var items = wallet.querySelectorAll('.page-wallet-item');
+        for (var index = 0; index < items.length; index += 1) {
+            var item = items[index];
+            var oreNode = item.querySelector('.page-wallet-ore');
+            var amountNode = item.querySelector('.page-wallet-amount');
+            if (!oreNode || !amountNode) {
+                continue;
+            }
+            var oreName = (oreNode.textContent || '').trim();
+            var amountText = (amountNode.textContent || '').trim();
+            var current = Number(amountText.split('/')[0]);
+            if (!oreName || !isFinite(current)) {
+                continue;
+            }
+            amounts[oreName] = current;
+        }
+        return amounts;
+    }
+
+    function walletCreditDeltas(before, after) {
+        var deltas = [];
+        if (!after) {
+            return deltas;
+        }
+        Object.keys(after).forEach(function(oreName) {
+            var previous = before && isFinite(before[oreName]) ? before[oreName] : 0;
+            var next = after[oreName];
+            if (next > previous) {
+                deltas.push({ oreName: oreName, amount: next - previous });
+            }
+        });
+        return deltas;
+    }
+
+    function clearCreditFeedbackTimer() {
+        if (creditFeedbackTimer) {
+            window.clearTimeout(creditFeedbackTimer);
+            creditFeedbackTimer = null;
+        }
+    }
+
+    function showWalletCreditFeedback(deltas) {
+        var root = pageRoot || document.querySelector('.mining-queue-page');
+        if (!root || !deltas || deltas.length === 0) {
+            return;
+        }
+        root.querySelectorAll('.mining-queue-credit-banner').forEach(function(node) {
+            node.remove();
+        });
+        var parts = deltas.map(function(delta) {
+            return '+' + delta.amount + ' ' + delta.oreName;
+        });
+        var banner = document.createElement('p');
+        banner.setAttribute(
+            'class',
+            'mining-queue-banner mining-queue-banner-success mining-queue-credit-banner'
+        );
+        banner.setAttribute('role', 'status');
+        banner.textContent = 'Added to wallet: ' + parts.join(', ');
+        var wallet = root.querySelector('.mining-queue-wallet');
+        var walletParent = wallet && (wallet.parentNode || wallet.parent);
+        if (wallet && walletParent) {
+            walletParent.insertBefore(banner, wallet);
+        } else if (typeof root.appendChild === 'function') {
+            root.appendChild(banner);
+        }
+        clearCreditFeedbackTimer();
+        creditFeedbackTimer = window.setTimeout(function() {
+            creditFeedbackTimer = null;
+            if (banner.parentNode) {
+                banner.remove();
+            }
+        }, CREDIT_FEEDBACK_MS);
     }
 
     function hasFinishingRuns(root) {
@@ -178,9 +289,22 @@
         }
     }
 
+    function resetClaimRefreshState() {
+        claimRefreshAttempt = 0;
+        claimBaselineSignature = null;
+        claimBaselineAmounts = null;
+        clearClaimRefreshTimer();
+    }
+
+    function captureClaimBaseline(root) {
+        var fragmentRoot = root || pageRoot || document.querySelector('.mining-queue-page');
+        claimBaselineSignature = walletSignature(fragmentRoot);
+        claimBaselineAmounts = parseWalletAmounts(fragmentRoot);
+    }
+
     function scheduleClaimRefreshRetry() {
         if (claimRefreshAttempt >= CLAIM_REFRESH_BACKOFF_MS.length) {
-            claimRefreshAttempt = 0;
+            resetClaimRefreshState();
             return;
         }
         var delay = CLAIM_REFRESH_BACKOFF_MS[claimRefreshAttempt];
@@ -211,7 +335,11 @@
 
         var walletSource = dynamicSource.querySelector('.mining-queue-wallet');
         var walletTarget = fragmentRoot.querySelector('.mining-queue-wallet');
-        if (walletSource && walletTarget) {
+        var walletParent = walletTarget && (walletTarget.parentNode || walletTarget.parent);
+        if (walletSource && walletTarget && walletParent) {
+            walletParent.insertBefore(walletSource, walletTarget);
+            walletTarget.remove();
+        } else if (walletSource && walletTarget) {
             walletTarget.outerHTML = walletSource.outerHTML;
         }
 
@@ -282,15 +410,30 @@
             return Promise.resolve();
         }
         refreshInFlight = true;
+        var root = pageRoot || document.querySelector('.mining-queue-page');
+        if (options.forClaim && claimBaselineSignature === null) {
+            captureClaimBaseline(root);
+        }
         return fetchFragment('GET', buildFragmentUrl()).then(function() {
             if (!options.forClaim) {
                 return;
             }
-            var root = pageRoot || document.querySelector('.mining-queue-page');
-            if (!hasFinishingRuns(root)) {
-                claimRefreshAttempt = 0;
+            root = pageRoot || document.querySelector('.mining-queue-page');
+            var nextSignature = walletSignature(root);
+            if (
+                claimBaselineSignature !== null
+                && nextSignature !== claimBaselineSignature
+            ) {
+                var deltas = walletCreditDeltas(
+                    claimBaselineAmounts,
+                    parseWalletAmounts(root)
+                );
+                showWalletCreditFeedback(deltas);
+                resetClaimRefreshState();
                 return;
             }
+            // Keep polling until the wallet/HUD updates or backoff is exhausted,
+            // even after finishing-run markers leave the fragment.
             scheduleClaimRefreshRetry();
         }).catch(function() {
             var query = window.RoboMinerUrlQuery.buildQueryString(collectQueueQueryParams());
@@ -307,8 +450,8 @@
     function refreshQueue(options) {
         options = options || {};
         if (options.forClaim) {
-            claimRefreshAttempt = 0;
-            clearClaimRefreshTimer();
+            resetClaimRefreshState();
+            captureClaimBaseline(pageRoot || document.querySelector('.mining-queue-page'));
         }
         if (refreshDebounceTimer) {
             window.clearTimeout(refreshDebounceTimer);
@@ -749,10 +892,14 @@
         FRAGMENT_PARAM: FRAGMENT_PARAM,
         REFRESH_DEBOUNCE_MS: REFRESH_DEBOUNCE_MS,
         CLAIM_REFRESH_BACKOFF_MS: CLAIM_REFRESH_BACKOFF_MS,
+        CREDIT_FEEDBACK_MS: CREDIT_FEEDBACK_MS,
         applyFragment: applyFragment,
         applyHudFragment: applyHudFragment,
         hasFinishingRuns: hasFinishingRuns,
         walletSignature: walletSignature,
+        parseWalletAmounts: parseWalletAmounts,
+        walletCreditDeltas: walletCreditDeltas,
+        showWalletCreditFeedback: showWalletCreditFeedback,
         buildFragmentUrl: buildFragmentUrl,
         formDataToUrlEncoded: formDataToUrlEncoded,
         init: init,
