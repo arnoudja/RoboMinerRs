@@ -5,9 +5,7 @@ use crate::robot_page::RobotPageState;
 use crate::static_assets::PageStylesheet;
 
 use super::config::render_robot_config_panel;
-use super::fleet::{
-    render_robot_claim_banner, render_robot_fleet_card, render_robot_message, render_robot_summary,
-};
+use super::fleet::{render_robot_fleet_card, render_robot_message, render_robot_summary};
 
 pub(super) fn render_robot_page(
     username: String,
@@ -36,7 +34,6 @@ pub(super) fn render_robot_page(
 
     let mut body = String::from(r#"<div class="robot-page">"#);
     render_robot_summary(&mut body, state.robots.len(), pending_count);
-    render_robot_claim_banner(&mut body, state);
     render_robot_message(&mut body, state);
 
     if state.robots.is_empty() {

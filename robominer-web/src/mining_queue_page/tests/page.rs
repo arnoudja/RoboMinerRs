@@ -115,16 +115,6 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: Some("Unable <queue>".to_string()),
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 2,
-                ore_rewards: vec![robominer_db::ClaimedOreRewardRecord {
-                    ore_id: 2,
-                    ore_name: "Ore & Two".to_string(),
-                    reward: 9,
-                }],
-            },
         },
     );
 
@@ -175,8 +165,6 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
             r#"data-seconds-left="61" data-refresh-on-complete="true" data-progress-total="121""#,
             r#"class="mining-queue-progress" value="49.6" max="100""#,
             r#"href="miningResults?rallyResultId=55">Area &amp; Two</a>"#,
-            r#"class="mining-queue-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
-            r#"class="claim-banner-reward-amount">+9</span>"#,
             "Ore &amp; Two",
             r#"data-seconds-left="180""#,
             ">1:01<",
@@ -263,12 +251,6 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
         },
     );
 
@@ -333,12 +315,6 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
         },
     );
 
@@ -419,12 +395,6 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
             selected_info_area_id: 20,
             selected_robot_area_ids,
             error_message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
         },
     );
 
@@ -462,12 +432,6 @@ fn mining_queue_shows_no_robots_empty_state() {
             selected_info_area_id: 0,
             selected_robot_area_ids: HashMap::new(),
             error_message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
         },
     );
 
@@ -531,12 +495,6 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
         selected_info_area_id: 20,
         selected_robot_area_ids,
         error_message: Some("Queue full for this robot.".to_string()),
-        pending_claim_count: 0,
-
-        claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
     };
     let hud = r#"<div class="app-shell-hud"><a class="app-shell-hud-item">2/6</a></div>"#;
     let html = render_mining_queue_fragment(hud, &state);

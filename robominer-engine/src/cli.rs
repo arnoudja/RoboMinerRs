@@ -58,6 +58,16 @@ pub(crate) enum MiningCommand {
         #[arg(long)]
         user_id: i64,
     },
+    ClaimAll {
+        #[arg(long)]
+        once: bool,
+
+        #[arg(long)]
+        loop_mode: bool,
+
+        #[arg(long, default_value_t = 5)]
+        sleep_seconds: u64,
+    },
     Enqueue {
         #[arg(long)]
         user_id: i64,

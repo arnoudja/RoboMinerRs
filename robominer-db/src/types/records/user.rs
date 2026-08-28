@@ -32,7 +32,6 @@ pub struct AppShellHudRecord {
     pub queue_used: i64,
     pub queue_capacity: i64,
     pub claimable_achievements_count: u64,
-    pub claimable_mining_results_count: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

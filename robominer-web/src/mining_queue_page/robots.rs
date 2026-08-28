@@ -18,13 +18,6 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
             depot_max_allowed: asset.depot_max_allowed,
         })
         .collect();
-    let claim_banner = crate::html::render_mining_claim_ui(
-        "mining-queue-claim-banner",
-        "miningQueue",
-        state.pending_claim_count,
-        &state.claimed_results,
-        true,
-    );
     crate::html::render_wallet_strip_section(
         body,
         &crate::html::WalletStripSection {
@@ -32,7 +25,7 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
             aria_label: "Wallet and queue limits",
             heading_class: "mining-queue-wallet-heading",
             heading_markup: r#"<h1 class="mining-queue-page-title">Mining queue</h1>"#,
-            middle_markup: &claim_banner,
+            middle_markup: "",
             assets: &assets,
             empty_message: "No ore in wallet yet.",
             wrap_amount_row: false,

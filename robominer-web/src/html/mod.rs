@@ -16,9 +16,7 @@ mod tests;
 
 pub(crate) use area_filter::{AreaFilterOption, render_area_filter_select};
 pub(crate) use auth_fields::{render_password_field, render_password_toggle_script};
-pub(crate) use banners::{
-    CLAIM_PENDING_RESULTS_FIELD, render_mining_claim_ui, render_status_banner,
-};
+pub(crate) use banners::render_status_banner;
 pub(crate) use csrf::inject_csrf_tokens;
 pub(crate) use format::{
     EscapedHtml, escape_html, format_period, format_relative_time_millis, format_utc_millis,

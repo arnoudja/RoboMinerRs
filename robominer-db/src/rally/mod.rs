@@ -6,7 +6,10 @@ mod score;
 
 pub(crate) const CLAIMED_MINING_QUEUE_RETENTION: i64 = 12;
 
-pub use claim::{claim_user_results, count_claimable_mining_queues};
+pub use claim::{
+    claim_user_results, count_claimable_mining_queues, list_user_ids_with_claimable_mining_queues,
+    next_wallet_claim_delay_seconds,
+};
 pub use cleanup::cleanup_old_claimed_mining_queue_items_for_robot;
 pub use pending::reconcile_pending_robot_changes_for_user;
 pub use persist::{

@@ -18,16 +18,6 @@ pub(super) fn render_robot_summary(body: &mut String, robot_count: usize, pendin
     body.push_str("</ul></section>");
 }
 
-pub(super) fn render_robot_claim_banner(body: &mut String, state: &RobotPageState) {
-    body.push_str(&crate::html::render_mining_claim_ui(
-        "robot-claim-banner",
-        "robot",
-        state.pending_claim_count,
-        &state.claimed_results,
-        true,
-    ));
-}
-
 pub(super) fn render_robot_message(body: &mut String, state: &RobotPageState) {
     crate::html::render_status_banner(body, "robot", state.message.as_deref());
 }

@@ -1,13 +1,10 @@
-use super::banners::render_claimed_ore_rewards_banner;
 use super::{
     assert_contains_all, assert_html_not_contains, format_relative_time_millis, inject_csrf_tokens,
-    layout, render_mining_claim_ui,
+    layout,
 };
 use crate::app_shell::render_app_shell_hud;
 use crate::static_assets::PageStylesheet;
-use robominer_db::{
-    AppShellHudRecord, ClaimedOreRewardRecord, ClaimedUserResults, UserOreAssetStateRecord,
-};
+use robominer_db::{AppShellHudRecord, UserOreAssetStateRecord};
 
 #[test]
 fn inject_csrf_tokens_adds_meta_and_post_form_fields() {
@@ -148,79 +145,6 @@ fn app_shell_footer_includes_help_link() {
 }
 
 #[test]
-fn claimed_ore_rewards_banner_lists_net_wallet_increases() {
-    let html = render_claimed_ore_rewards_banner(
-        "mining-queue-claim-banner",
-        &ClaimedUserResults {
-            claimed_queues: 2,
-            ore_rewards: vec![
-                ClaimedOreRewardRecord {
-                    ore_id: 3,
-                    ore_name: "Lithabine".to_string(),
-                    reward: 4,
-                },
-                ClaimedOreRewardRecord {
-                    ore_id: 1,
-                    ore_name: "Cerbonium".to_string(),
-                    reward: 9,
-                },
-            ],
-        },
-        true,
-    );
-
-    assert_contains_all(
-        &html,
-        &[
-            "Added to wallet:",
-            "Lithabine",
-            r#"class="claim-banner-reward-amount">+4</span>"#,
-            r#"class="claim-banner-reward-amount">+9</span>"#,
-            r#"href="miningResults">View results</a>"#,
-        ],
-    );
-    assert_html_not_contains(&html, "Claimed 2 mining result(s)");
-}
-
-#[test]
-fn claimed_ore_rewards_banner_is_empty_when_nothing_was_claimed() {
-    let html = render_claimed_ore_rewards_banner(
-        "mining-results-claim-banner",
-        &ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
-        false,
-    );
-
-    assert!(html.is_empty());
-}
-
-#[test]
-fn pending_claim_banner_renders_post_form() {
-    let html = render_mining_claim_ui(
-        "mining-queue-claim-banner",
-        "miningQueue",
-        2,
-        &ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
-        true,
-    );
-
-    assert_contains_all(
-        &html,
-        &[
-            r#"class="claim-pending-form mining-queue-claim-banner""#,
-            r#"action="miningQueue" method="post""#,
-            "2 mining results ready to claim",
-            r#"name="claimPendingResults" value="1">Claim rewards</button>"#,
-        ],
-    );
-}
-
-#[test]
 fn app_shell_header_renders_hud_markup() {
     let hud = render_app_shell_hud(&AppShellHudRecord {
         ore_assets: vec![UserOreAssetStateRecord {
@@ -233,7 +157,6 @@ fn app_shell_header_renders_hud_markup() {
         queue_used: 1,
         queue_capacity: 4,
         claimable_achievements_count: 0,
-        claimable_mining_results_count: 0,
     });
     let html = layout(
         "RoboMiner - Shop",

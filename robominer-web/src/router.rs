@@ -155,7 +155,7 @@ async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
     // - Public: /health, /login|/signup|/logoff, /help*, /activity (read)
     // - Login required (+ CSRF on POST): shop, mining queue, robot, edit code,
     //   account, achievements, mining results, leaderboard (read), area overview
-    // - Mining wallet claims: explicit POST with claimPendingResults=1 (never on GET)
+    // - Mining wallet claims: background worker via robominer-engine (rally rallies / mining claim-all)
     if !matches!(request.method.as_str(), "GET" | "HEAD" | "POST") {
         return Response::method_not_allowed();
     }

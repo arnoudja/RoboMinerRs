@@ -6,8 +6,8 @@ use crate::static_assets::PageStylesheet;
 
 use super::render_detail::render_mining_results_detail_section;
 use super::render_filters::{
-    render_mining_results_claim_banner, render_mining_results_filters,
-    render_mining_results_summary, render_mining_results_wallet_delta,
+    render_mining_results_filters, render_mining_results_summary,
+    render_mining_results_wallet_delta,
 };
 use super::render_log::render_mining_results_log_section;
 
@@ -52,7 +52,6 @@ pub(super) fn render_mining_results_page(
     let mut body = String::from(r#"<div class="mining-results-page">"#);
     render_mining_results_summary(&mut body);
     render_mining_results_wallet_delta(&mut body, &state.ore_results, !state.results.is_empty());
-    render_mining_results_claim_banner(&mut body, state);
 
     if state.results.is_empty() {
         body.push_str(

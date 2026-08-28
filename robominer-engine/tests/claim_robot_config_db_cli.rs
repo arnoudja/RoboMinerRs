@@ -82,6 +82,41 @@ async fn claim_results_includes_runs_whose_end_time_equals_now() {
 
 #[tokio::test]
 #[serial]
+async fn claim_all_processes_every_user_with_ready_results() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = TestClaimResultsFixture::create(&pool).await;
+
+    let output = run_engine(&[
+        "--database-url".to_string(),
+        database_url,
+        "mining".to_string(),
+        "claim-all".to_string(),
+        "--once".to_string(),
+    ]);
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(
+        output.status.success(),
+        "expected mining claim-all --once to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stdout.contains("Claimed 1 mining result(s)") && stdout.contains("Added to wallet:"),
+        "unexpected stdout:\n{stdout}"
+    );
+    assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
+
+    fixture.assert_claimed(&pool).await;
+    fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
 async fn list_robot_config_reconciles_stale_pending_changes_without_claim() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;

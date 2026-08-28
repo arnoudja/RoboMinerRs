@@ -14,19 +14,6 @@ pub(super) fn render_mining_results_summary(body: &mut String) {
     body.push_str("</div></section>");
 }
 
-pub(super) fn render_mining_results_claim_banner(
-    body: &mut String,
-    state: &MiningResultsPageState,
-) {
-    body.push_str(&crate::html::render_mining_claim_ui(
-        "mining-results-claim-banner",
-        "miningResults",
-        state.pending_claim_count,
-        &state.claimed_results,
-        false,
-    ));
-}
-
 pub(super) fn mining_result_unique_areas(
     results: &[robominer_db::MiningResultStateRecord],
 ) -> Vec<String> {

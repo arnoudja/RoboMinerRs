@@ -31,6 +31,46 @@ pub async fn claim_user_results(
     })
 }
 
+/// Distinct user ids with finished, unclaimed mining runs ready for the wallet.
+pub async fn list_user_ids_with_claimable_mining_queues(
+    pool: &MySqlPool,
+) -> Result<Vec<i64>, sqlx::Error> {
+    sqlx::query_scalar(
+        "SELECT DISTINCT Robot.userId \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime <= NOW() \
+           AND MiningQueue.claimed = false \
+         ORDER BY Robot.userId",
+    )
+    .fetch_all(pool)
+    .await
+}
+
+/// Seconds until the next unclaimed mining run finishes, capped at `max_sleep_seconds`.
+///
+/// When nothing is queued, returns `max_sleep_seconds`.
+pub async fn next_wallet_claim_delay_seconds(
+    pool: &MySqlPool,
+    max_sleep_seconds: u64,
+) -> Result<u64, sqlx::Error> {
+    let delay: Option<i64> = sqlx::query_scalar(
+        "SELECT TIMESTAMPDIFF(SECOND, NOW(), MIN(MiningQueue.miningEndTime)) \
+         FROM MiningQueue \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime > NOW() \
+           AND MiningQueue.claimed = false",
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(delay
+        .map(|seconds| seconds.max(1) as u64)
+        .unwrap_or(max_sleep_seconds)
+        .min(max_sleep_seconds))
+}
+
 /// Read-only count of finished mining runs waiting to be claimed into the wallet.
 pub async fn count_claimable_mining_queues(
     pool: &MySqlPool,

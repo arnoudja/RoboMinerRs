@@ -31,7 +31,6 @@ pub(super) fn render_edit_code_page(
         selected_name,
         state.selected_program_source.linked_robot_count,
     );
-    render_edit_code_claim_banner(&mut body, state);
     render_edit_code_message(&mut body, state);
 
     let mut program_sources = state.program_sources.clone();
@@ -120,16 +119,6 @@ fn render_edit_code_summary(
         linked_robot_count
     ));
     body.push_str("</ul></section>");
-}
-
-fn render_edit_code_claim_banner(body: &mut String, state: &EditCodePageState) {
-    body.push_str(&crate::html::render_mining_claim_ui(
-        "edit-code-claim-banner",
-        "editCode",
-        state.pending_claim_count,
-        &state.claimed_results,
-        true,
-    ));
 }
 
 fn render_edit_code_message(body: &mut String, state: &EditCodePageState) {

@@ -104,26 +104,3 @@ fn robot_shows_success_banner_after_apply() {
         r#"class="robot-banner robot-banner-success">Robot changes queued</p>"#,
     );
 }
-
-#[test]
-fn robot_shows_claim_banner_when_results_claimed() {
-    let mut state = sample_robot_state(None);
-    state.claimed_results = robominer_db::ClaimedUserResults {
-        claimed_queues: 2,
-        ore_rewards: vec![robominer_db::ClaimedOreRewardRecord {
-            ore_id: 2,
-            ore_name: "Iron".to_string(),
-            reward: 12,
-        }],
-    };
-
-    let html = render_robot_page("Player".to_string(), None, &state);
-
-    assert_contains_all(
-        &html,
-        &[
-            r#"class="robot-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
-            r#"class="claim-banner-reward-amount">+12</span>"#,
-        ],
-    );
-}

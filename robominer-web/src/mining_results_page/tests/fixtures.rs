@@ -84,11 +84,6 @@ pub(super) fn sample_mining_results_state() -> MiningResultsPageState {
                 amount: 1,
             },
         ],
-        claimed_results: robominer_db::ClaimedUserResults {
-            claimed_queues: 0,
-            ore_rewards: vec![],
-        },
-        pending_claim_count: 0,
         area_ores: vec![
             robominer_db::MiningResultAreaOreRecord {
                 mining_area_id: 1,

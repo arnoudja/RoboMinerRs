@@ -26,8 +26,6 @@ pub async fn load_app_shell_hud(
         .into_iter()
         .filter(|state| state.claimable)
         .count() as u64;
-    let claimable_mining_results_count =
-        crate::count_claimable_mining_queues(pool, user_id).await?;
 
     let queue_capacity = summary.robot_count * i64::from(summary.mining_queue_size);
 
@@ -36,6 +34,5 @@ pub async fn load_app_shell_hud(
         queue_used,
         queue_capacity,
         claimable_achievements_count,
-        claimable_mining_results_count,
     })
 }

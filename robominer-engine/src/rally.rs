@@ -318,6 +318,50 @@ async fn run_rallies_cycle(
         }
     }
 
+    if options.persist {
+        match crate::mining::claim_all_ready_results(pool).await {
+            Ok(summary) if summary.users_processed > 0 => {
+                tracing::info!(
+                    cycle,
+                    users = summary.users_processed,
+                    queues = summary.total_queues_claimed,
+                    "Completed wallet claim pass"
+                );
+                println!(
+                    "Wallet claim pass: users={} queues={}",
+                    summary.users_processed, summary.total_queues_claimed
+                );
+            }
+            Ok(_) => {}
+            Err(error) => {
+                tracing::error!(cycle, error = %error, "Wallet claim pass failed");
+                eprintln!("Wallet claim pass failed: {error:#}");
+            }
+        }
+    }
+
+    if options.persist {
+        match crate::mining::claim_all_ready_results(pool).await {
+            Ok(summary) if summary.users_processed > 0 => {
+                tracing::info!(
+                    cycle,
+                    users = summary.users_processed,
+                    queues = summary.total_queues_claimed,
+                    "Completed wallet claim pass"
+                );
+                println!(
+                    "Wallet claim pass: users={} queues={}",
+                    summary.users_processed, summary.total_queues_claimed
+                );
+            }
+            Ok(_) => {}
+            Err(error) => {
+                tracing::error!(cycle, error = %error, "Wallet claim pass failed");
+                eprintln!("Wallet claim pass failed: {error:#}");
+            }
+        }
+    }
+
     Ok(RunRalliesSummary {
         ran,
         skipped,

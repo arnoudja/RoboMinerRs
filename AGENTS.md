@@ -46,4 +46,6 @@ noted here.
 - The engine reads the DB from `--database-url`, `ROBOMINER_DATABASE_URL`, or a
   config file (in that order). Example:
   `ROBOMINER_DATABASE_URL=... cargo run -p robominer-engine -- leaderboard states --max-entries 10`.
-  The background worker loop is `robominer-engine ... rally rallies`.
+  The background worker loop is `robominer-engine ... rally rallies`. Each persist
+  cycle also claims finished mining runs into player wallets; standalone:
+  `robominer-engine ... mining claim-all --loop`.

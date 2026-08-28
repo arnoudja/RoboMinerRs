@@ -7,8 +7,6 @@ pub(super) struct RobotPageState {
     pub(super) robots: Vec<robominer_db::RobotConfigStateRecord>,
     pub(super) part_assets: Vec<robominer_db::RobotConfigPartAssetStateRecord>,
     pub(super) message: Option<String>,
-    pub(super) pending_claim_count: u64,
-    pub(super) claimed_results: robominer_db::ClaimedUserResults,
 }
 
 pub(super) async fn robot_page(request: &Request, config: &ServerConfig) -> Response {
@@ -42,9 +40,6 @@ async fn load_robot_page_state(
     request: &Request,
     requested_robot_id: Option<i64>,
 ) -> Result<RobotPageState, crate::page_context::PageLoadError> {
-    let claim_state =
-        crate::page_context::resolve_mining_claim_state(pool, user_id, request).await?;
-
     let mut message = None;
     if is_post(request)
         && let Some(robot_id) = mutation_i64(request, "robotId")
@@ -102,8 +97,6 @@ async fn load_robot_page_state(
         robots,
         part_assets: robominer_db::list_robot_config_part_asset_states(pool, user_id).await?,
         message,
-        pending_claim_count: claim_state.pending_count,
-        claimed_results: claim_state.claimed_results,
     })
 }
 

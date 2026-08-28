@@ -191,7 +191,7 @@ fn mining_results_renders_a_single_run_list_with_robot_names() {
 }
 
 #[test]
-fn mining_results_shows_empty_state_and_claim_banner() {
+fn mining_results_shows_empty_state() {
     let empty_html = render_mining_results_page(
         "Player".to_string(),
         None,
@@ -205,23 +205,6 @@ fn mining_results_shows_empty_state_and_claim_banner() {
             ore_results: Vec::new(),
             action_results: Vec::new(),
             area_ores: Vec::new(),
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 2,
-                ore_rewards: vec![
-                    robominer_db::ClaimedOreRewardRecord {
-                        ore_id: 2,
-                        ore_name: "Ore & Two".to_string(),
-                        reward: 9,
-                    },
-                    robominer_db::ClaimedOreRewardRecord {
-                        ore_id: 1,
-                        ore_name: "Cerbonium".to_string(),
-                        reward: 18,
-                    },
-                ],
-            },
             selected_mining_queue_id: None,
         },
     );
@@ -231,15 +214,7 @@ fn mining_results_shows_empty_state_and_claim_banner() {
         &[
             r#"class="mining-results-empty""#,
             r#"href="miningQueue">Check the mining queue</a>"#,
-            r#"class="mining-results-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
-            r#"class="claim-banner-reward-amount">+18</span>"#,
-            r#"class="claim-banner-reward-amount">+9</span>"#,
         ],
     );
-    for absent in [
-        "Claimed 2 mining result(s) into your wallet",
-        r#"class="mining-results-run-card""#,
-    ] {
-        assert_html_not_contains(&empty_html, absent);
-    }
+    assert_html_not_contains(&empty_html, r#"class="mining-results-run-card""#);
 }

@@ -98,28 +98,13 @@ fn edit_code_shows_success_banner_and_claim_feedback() {
             },
             program_sources: Vec::new(),
             message: Some("Program saved.".to_string()),
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 2,
-                ore_rewards: vec![robominer_db::ClaimedOreRewardRecord {
-                    ore_id: 1,
-                    ore_name: "Cerbonium".to_string(),
-                    reward: 5,
-                }],
-            },
             prefer_stored_selection: false,
         },
     );
 
     assert_contains_all(
         &html,
-        &[
-            r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#,
-            r#"class="edit-code-claim-banner"><span class="claim-banner-label">Added to wallet:</span>"#,
-            r#"class="claim-banner-reward-amount">+5</span>"#,
-            r#"href="miningResults">View results</a>"#,
-        ],
+        &[r#"class="edit-code-banner edit-code-banner-success">Program saved.</p>"#],
     );
 }
 
@@ -133,12 +118,6 @@ fn edit_code_default_program_is_rendered_when_no_source_is_selected() {
             selected_program_source: super::super::default_edit_code_program_source(),
             program_sources: Vec::new(),
             message: Some("Unable to save program: Save <warning>".to_string()),
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
             prefer_stored_selection: true,
         },
     );
@@ -184,12 +163,6 @@ fn edit_code_rendering_keeps_compiled_size_line_for_invalid_program() {
                 linked_robot_count: 0,
             }],
             message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
             prefer_stored_selection: true,
         },
     );
@@ -225,12 +198,6 @@ fn edit_code_shows_disabled_delete_when_program_is_linked() {
                 linked_robot_count: 2,
             }],
             message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
             prefer_stored_selection: true,
         },
     );
@@ -274,12 +241,6 @@ fn edit_code_omits_manual_update_linked_robots_controls() {
                 linked_robot_count: 2,
             }],
             message: None,
-            pending_claim_count: 0,
-
-            claimed_results: robominer_db::ClaimedUserResults {
-                claimed_queues: 0,
-                ore_rewards: vec![],
-            },
             prefer_stored_selection: true,
         },
     );

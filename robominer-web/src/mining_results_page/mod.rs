@@ -11,8 +11,6 @@ pub(super) struct MiningResultsPageState {
     pub(super) ore_results: Vec<robominer_db::MiningResultOreStateRecord>,
     pub(super) action_results: Vec<robominer_db::MiningResultActionStateRecord>,
     pub(super) area_ores: Vec<robominer_db::MiningResultAreaOreRecord>,
-    pub(super) pending_claim_count: u64,
-    pub(super) claimed_results: robominer_db::ClaimedUserResults,
     pub(super) selected_mining_queue_id: Option<i64>,
 }
 
@@ -58,7 +56,6 @@ pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig
     let result = load_mining_results_state(
         session.pool,
         session.user_id,
-        request,
         MINING_RESULTS_MAX_SHOWN,
         preferred_run_id,
     )
@@ -79,13 +76,9 @@ pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig
 async fn load_mining_results_state(
     pool: &robominer_db::MySqlPool,
     user_id: i64,
-    request: &Request,
     max_results: i64,
     preferred_run_id: Option<i64>,
 ) -> Result<MiningResultsPageState, crate::page_context::PageLoadError> {
-    let claim_state =
-        crate::page_context::resolve_mining_claim_state(pool, user_id, request).await?;
-
     let results =
         robominer_db::list_mining_result_states_for_user(pool, user_id, max_results).await?;
 
@@ -107,8 +100,6 @@ async fn load_mining_results_state(
         .await?,
         area_ores: robominer_db::list_mining_result_area_ores_for_user(pool, user_id, max_results)
             .await?,
-        pending_claim_count: claim_state.pending_count,
-        claimed_results: claim_state.claimed_results,
     })
 }
 

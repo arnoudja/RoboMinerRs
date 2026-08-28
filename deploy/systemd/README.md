@@ -184,6 +184,16 @@ The engine unit runs:
   rally rallies --loop --sleep-seconds 5 --persist
 ```
 
+After each rally poll cycle with `--persist`, the engine also runs a wallet claim
+pass that credits finished mining runs into player wallets (same as
+`mining claim-all --once`). You can run claims separately:
+
+```bash
+/opt/robominer/bin/robominer-engine \
+  --config /etc/robominer/robominer.conf \
+  mining claim-all --loop --sleep-seconds 5
+```
+
 Logs go to journald:
 
 ```bash
