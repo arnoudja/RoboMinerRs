@@ -1,12 +1,12 @@
 use sqlx::MySqlPool;
 
 use super::assets::{
-    add_user_robot_part_asset, delete_zero_owned_robot_part_assets, remove_user_robot_part_asset,
+    add_user_robot_part_asset, delete_zero_owned_robot_part_assets, remove_user_robot_part_assets,
     unassigned_robot_part_count, user_robot_part_total_owned, user_robot_part_usage_count,
     user_robot_part_usage_counts_for_user,
 };
 use crate::assets::{
-    can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_half_ore_costs,
+    can_pay_ore_costs, deduct_ore_costs, list_ore_price_amounts, refund_half_ore_costs_scaled,
     robot_part_ore_price_id,
 };
 use crate::users::{touch_user_last_login_time, user_exists};
@@ -103,19 +103,18 @@ pub async fn sell_all_unassigned_robot_parts(
     let mut sold_count = 0;
 
     for (robot_part_id, unassigned) in sellable_parts {
-        for _ in 0..unassigned {
-            match sell_one_unassigned_robot_part_in_transaction(
-                &mut transaction,
-                user_id,
-                robot_part_id,
-            )
-            .await?
-            {
-                DbOutcome::Success(()) => sold_count += 1,
-                DbOutcome::Rejected(rejection) => {
-                    transaction.rollback().await?;
-                    return db_reject(rejection);
-                }
+        match sell_unassigned_robot_parts_in_transaction(
+            &mut transaction,
+            user_id,
+            robot_part_id,
+            unassigned,
+        )
+        .await?
+        {
+            DbOutcome::Success(sold) => sold_count += sold,
+            DbOutcome::Rejected(rejection) => {
+                transaction.rollback().await?;
+                return db_reject(rejection);
             }
         }
     }
@@ -134,28 +133,46 @@ pub async fn sell_all_unassigned_robot_parts(
     db_ok(SellAllUnassignedRobotPartsResult { sold_count })
 }
 
-async fn sell_one_unassigned_robot_part_in_transaction(
+async fn sell_unassigned_robot_parts_in_transaction(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
     robot_part_id: i64,
-) -> Result<DbOutcome<(), RobotPartTransactionRejection>, sqlx::Error> {
+    count: i32,
+) -> Result<DbOutcome<i32, RobotPartTransactionRejection>, sqlx::Error> {
+    if count <= 0 {
+        return db_ok(0);
+    }
+
     let Some(ore_price_id) = robot_part_ore_price_id(transaction, robot_part_id).await? else {
         return db_reject(RobotPartTransactionRejection::UnknownRobotPart);
     };
 
     let total_owned = user_robot_part_total_owned(transaction, user_id, robot_part_id).await?;
     let usage_count = user_robot_part_usage_count(transaction, user_id, robot_part_id).await?;
+    let unassigned = unassigned_robot_part_count(total_owned, usage_count);
 
-    if i64::from(total_owned) - usage_count < 1 {
+    if unassigned < count {
         return db_reject(RobotPartTransactionRejection::NoUnassignedRobotPart);
     }
 
-    remove_user_robot_part_asset(transaction, user_id, robot_part_id).await?;
+    remove_user_robot_part_assets(transaction, user_id, robot_part_id, count).await?;
 
     let costs = list_ore_price_amounts(transaction, ore_price_id).await?;
-    refund_half_ore_costs(transaction, user_id, &costs).await?;
+    refund_half_ore_costs_scaled(transaction, user_id, &costs, count).await?;
 
-    db_ok(())
+    db_ok(count)
+}
+
+async fn sell_one_unassigned_robot_part_in_transaction(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    robot_part_id: i64,
+) -> Result<DbOutcome<(), RobotPartTransactionRejection>, sqlx::Error> {
+    match sell_unassigned_robot_parts_in_transaction(transaction, user_id, robot_part_id, 1).await?
+    {
+        DbOutcome::Success(_) => db_ok(()),
+        DbOutcome::Rejected(rejection) => db_reject(rejection),
+    }
 }
 
 async fn list_user_sellable_robot_part_counts(

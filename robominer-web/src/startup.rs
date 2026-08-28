@@ -43,6 +43,13 @@ pub fn connect_database(
     ))
     .map_err(|error| io::Error::other(format!("failed to connect to database: {error}")))?;
 
+    if let Ok(count) = block_on_database(robominer_db::count_legacy_password_hashes(&pool)) {
+        tracing::info!(
+            legacy_sha256_password_users = count,
+            "legacy_password_hash_inventory"
+        );
+    }
+
     Ok(Some(pool))
 }
 

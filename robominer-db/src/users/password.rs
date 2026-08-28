@@ -75,6 +75,7 @@ async fn verify_legacy_password_hash(
     password: &str,
     password_hash: &str,
 ) -> Result<bool, sqlx::Error> {
+    tracing::info!("legacy_sha256_password_login_attempt");
     let Some(rest) = password_hash.strip_prefix("sha256:") else {
         return Ok(false);
     };

@@ -4,12 +4,15 @@ mod support;
 use std::collections::HashMap;
 
 use robominer_web::test_support::{
-    MAX_MUTATIONS_PER_USER_ACTION, reset_mutation_rate_limiter_for_tests, route,
+    MAX_ATTEMPTS_PER_LOGIN, MAX_MUTATIONS_PER_USER_ACTION, lock_auth_rate_limiter_for_tests,
+    record_auth_attempt, reset_auth_rate_limiter_for_tests, reset_mutation_rate_limiter_for_tests,
+    route,
 };
 use serial_test::serial;
 use support::{
-    apply_set_cookies, cookie_header, create_user_via_engine, ensure_session_configured,
-    get_request, login_with_credentials, post_request, response_body, server_config, unique_prefix,
+    anonymous_login_csrf, apply_set_cookies, cookie_header, create_user_via_engine,
+    ensure_session_configured, get_request, login_with_credentials, post_request, response_body,
+    server_config, unique_prefix,
 };
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -244,6 +247,71 @@ async fn stale_session_version_is_rejected_against_database() {
                 && value.starts_with("robominer_session=; Max-Age=0;")),
         "stale session should clear the session cookie"
     );
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn login_post_returns_429_after_auth_rate_limit() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+    let _guard = lock_auth_rate_limiter_for_tests();
+    reset_auth_rate_limiter_for_tests();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-login-rate");
+    let username = format!("{prefix}-user");
+    let user_id = create_user_via_engine(
+        &username,
+        &format!("{prefix}@example.invalid"),
+        "test-password-1",
+    );
+    let config = server_config(pool.clone());
+
+    let (csrf_cookie, token) = anonymous_login_csrf(&config).await;
+    let mut form = HashMap::new();
+    form.insert("loginName".to_string(), username.clone());
+    form.insert("password".to_string(), "wrong-password".to_string());
+
+    for index in 0..=MAX_ATTEMPTS_PER_LOGIN {
+        form.insert("csrfToken".to_string(), token.clone());
+        let response = route(
+            &post_request("/login", form.clone(), Some(&csrf_cookie)),
+            &config,
+        )
+        .await;
+
+        if index < MAX_ATTEMPTS_PER_LOGIN {
+            assert_ne!(
+                response.status, 429,
+                "login attempt {index} should not be rate limited yet"
+            );
+            continue;
+        }
+
+        assert_eq!(
+            response.status, 429,
+            "login attempt {index} should be rate limited"
+        );
+        let body = response_body(&response);
+        assert!(
+            body.contains("Too many login attempts"),
+            "429 body should explain the limit:\n{body}"
+        );
+    }
 
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)

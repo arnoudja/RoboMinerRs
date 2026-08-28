@@ -152,16 +152,17 @@ pub(crate) async fn deduct_ore_costs(
     Ok(())
 }
 
-pub(crate) async fn refund_half_ore_costs(
+pub(crate) async fn refund_half_ore_costs_scaled(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
     costs: &[OrePriceCost],
+    count: i32,
 ) -> Result<(), sqlx::Error> {
     let half_costs: Vec<OrePriceCost> = costs
         .iter()
         .map(|cost| OrePriceCost {
             ore_id: cost.ore_id,
-            amount: cost.amount / 2,
+            amount: (cost.amount * count) / 2,
         })
         .collect();
     refund_ore_costs(transaction, user_id, &half_costs).await

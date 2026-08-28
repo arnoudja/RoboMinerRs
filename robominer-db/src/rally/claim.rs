@@ -292,19 +292,71 @@ async fn batch_upsert_user_ore_assets_from_rewards(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     rows: &[(i64, i64, i32)],
 ) -> Result<(), sqlx::Error> {
-    for &(robot_id, ore_id, reward) in rows {
-        upsert_user_ore_asset_from_reward(
-            transaction,
-            robot_id,
-            &ClaimableMiningOreResult {
-                mining_queue_id: 0,
-                ore_id,
-                amount: reward,
-                tax: 0,
-            },
-        )
-        .await?;
+    if rows.is_empty() {
+        return Ok(());
     }
+
+    let mut reward_by_robot_ore: HashMap<(i64, i64), i32> = HashMap::new();
+    for &(robot_id, ore_id, reward) in rows {
+        if reward > 0 {
+            *reward_by_robot_ore.entry((robot_id, ore_id)).or_default() += reward;
+        }
+    }
+    if reward_by_robot_ore.is_empty() {
+        return Ok(());
+    }
+
+    let robot_ids: Vec<i64> = reward_by_robot_ore
+        .keys()
+        .map(|(robot_id, _)| *robot_id)
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+    let placeholders = in_placeholders(robot_ids.len());
+    let query = format!("SELECT id, userId FROM Robot WHERE id IN ({placeholders})");
+    let mut query_builder = sqlx::query_as::<_, (i64, i64)>(&query);
+    for robot_id in &robot_ids {
+        query_builder = query_builder.bind(robot_id);
+    }
+    let robot_users: HashMap<i64, i64> = query_builder
+        .fetch_all(&mut **transaction)
+        .await?
+        .into_iter()
+        .collect();
+
+    let mut reward_by_user_ore: HashMap<(i64, i64), i32> = HashMap::new();
+    for ((robot_id, ore_id), reward) in reward_by_robot_ore {
+        let Some(user_id) = robot_users.get(&robot_id).copied() else {
+            return Err(sqlx::Error::RowNotFound);
+        };
+        *reward_by_user_ore.entry((user_id, ore_id)).or_default() += reward;
+    }
+
+    let upsert_rows: Vec<(i64, i64, i32)> = reward_by_user_ore
+        .into_iter()
+        .map(|((user_id, ore_id), reward)| (user_id, ore_id, reward))
+        .collect();
+
+    const CHUNK: usize = 64;
+    for chunk in upsert_rows.chunks(CHUNK) {
+        for (user_id, ore_id, reward) in chunk {
+            sqlx::query(
+                "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
+                 VALUES (?, ?, LEAST(?, ?), ?) \
+                 ON DUPLICATE KEY UPDATE \
+                 amount = LEAST(maxAllowed, amount + ?)",
+            )
+            .bind(user_id)
+            .bind(ore_id)
+            .bind(reward)
+            .bind(INITIAL_ORE_WALLET_MAX)
+            .bind(INITIAL_ORE_WALLET_MAX)
+            .bind(reward)
+            .execute(&mut **transaction)
+            .await?;
+        }
+    }
+
     Ok(())
 }
 
@@ -388,33 +440,6 @@ async fn list_claimable_mining_ore_results_batch(
             },
         )
         .collect())
-}
-
-async fn upsert_user_ore_asset_from_reward(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    robot_id: i64,
-    ore_result: &ClaimableMiningOreResult,
-) -> Result<(), sqlx::Error> {
-    let reward = ore_result.amount - ore_result.tax;
-
-    sqlx::query(
-        "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
-         SELECT Robot.userId, ?, LEAST(?, ?), ? \
-         FROM Robot \
-         WHERE Robot.id = ? \
-         ON DUPLICATE KEY UPDATE \
-         amount = LEAST(maxAllowed, amount + ?)",
-    )
-    .bind(ore_result.ore_id)
-    .bind(reward)
-    .bind(INITIAL_ORE_WALLET_MAX)
-    .bind(INITIAL_ORE_WALLET_MAX)
-    .bind(robot_id)
-    .bind(reward)
-    .execute(&mut **transaction)
-    .await?;
-
-    Ok(())
 }
 
 async fn update_mining_area_lifetime_results(
