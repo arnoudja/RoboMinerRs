@@ -31,7 +31,7 @@ robominer-test-support = { path = "robominer-test-support" }
 robominer-web = { path = "robominer-web" }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
-serial_test = "3.2.0"
+serial_test = "4.0.1"
 sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "mysql"] }
 tokio = { version = "1.53.1", features = ["macros", "rt", "rt-multi-thread"] }
