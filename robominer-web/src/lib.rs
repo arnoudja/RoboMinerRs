@@ -151,4 +151,18 @@ pub mod test_support {
     pub fn reset_mutation_rate_limiter_for_tests() {
         crate::rate_limit::reset_mutation_rate_limiter_for_tests();
     }
+
+    pub const MAX_ATTEMPTS_PER_LOGIN: usize = crate::rate_limit::MAX_ATTEMPTS_PER_LOGIN;
+
+    pub fn reset_auth_rate_limiter_for_tests() {
+        crate::rate_limit::reset_auth_rate_limiter_for_tests();
+    }
+
+    pub fn lock_auth_rate_limiter_for_tests() -> std::sync::MutexGuard<'static, ()> {
+        crate::rate_limit::lock_auth_rate_limiter_for_tests()
+    }
+
+    pub fn record_auth_attempt(ip: &str, login_name: &str) {
+        crate::rate_limit::record_auth_attempt(ip, login_name);
+    }
 }
