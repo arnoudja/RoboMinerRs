@@ -179,7 +179,33 @@
             }
         }
 
+        function syncCsrfToken(liveCard, incomingCard) {
+            var incomingCsrf = incomingCard.querySelector('input[name="csrfToken"]');
+            if (!incomingCsrf || !incomingCsrf.value) {
+                return;
+            }
+            var liveCsrf = liveCard.querySelector('input[name="csrfToken"]');
+            if (liveCsrf) {
+                liveCsrf.value = incomingCsrf.value;
+                liveCsrf.setAttribute('value', incomingCsrf.value);
+                return;
+            }
+            var robotInput = liveCard.querySelector('input[name="robotId"]');
+            var created = document.createElement('input');
+            created.type = 'hidden';
+            created.name = 'csrfToken';
+            created.value = incomingCsrf.value;
+            created.setAttribute('value', incomingCsrf.value);
+            var insertParent = robotInput && (robotInput.parentNode || robotInput.parent);
+            if (insertParent) {
+                insertParent.insertBefore(created, robotInput);
+            } else {
+                liveCard.appendChild(created);
+            }
+        }
+
         function patchRobotCardActions(liveCard, incomingCard) {
+            syncCsrfToken(liveCard, incomingCard);
             var liveSelect = liveCard.querySelector('select.mining-queue-area-select');
             var incomingSelect = incomingCard.querySelector('select.mining-queue-area-select');
             syncOptionBlockReasons(liveSelect, incomingSelect);

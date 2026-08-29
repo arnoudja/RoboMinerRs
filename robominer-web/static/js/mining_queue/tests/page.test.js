@@ -519,6 +519,13 @@ function buildRobotCard(options) {
         action: 'miningQueue',
         method: 'post',
     });
+    if (options.csrfToken) {
+        form.appendChild(createElement('input', {
+            type: 'hidden',
+            name: 'csrfToken',
+            value: String(options.csrfToken),
+        }));
+    }
     form.appendChild(createElement('input', {
         type: 'hidden',
         name: 'robotId',
@@ -741,6 +748,81 @@ describe('mining queue page partial updates', () => {
             '2'
         );
         assert.equal(afterSelect.value, '20');
+    });
+
+    it('applyFragment syncs rotated csrfToken onto preserved robot cards', () => {
+        const { context, doc } = loadMiningQueuePage();
+        doc.robots.innerHTML = '';
+        doc.robots.appendChild(buildRobotCard({
+            robotId: '1',
+            statusText: 'old-status',
+            areaValue: '20',
+            blockReason: '',
+            clearableCount: '0',
+            csrfToken: 'csrf-old',
+        }));
+        const liveSelect = doc.robots.querySelector('select.mining-queue-area-select');
+        const liveCsrf = doc.robots.querySelector('input[name="csrfToken"]');
+        assert.equal(liveCsrf.value, 'csrf-old');
+
+        const incomingRobots = createElement('div', {
+            id: 'mining-queue-robots-fragment',
+            class: 'mining-queue-robots',
+        });
+        incomingRobots.appendChild(buildRobotCard({
+            robotId: '1',
+            statusText: 'new-status',
+            areaValue: '20',
+            blockReason: '',
+            clearableCount: '1',
+            csrfToken: 'csrf-rotated',
+        }));
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    return createElement('div', { id: id });
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'wallet', textContent: 'w' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return incomingRobots;
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+
+        assert.equal(
+            doc.robots.querySelector('select.mining-queue-area-select'),
+            liveSelect,
+            'area select DOM node must stay preserved'
+        );
+        assert.equal(
+            doc.robots.querySelector('input[name="csrfToken"]').value,
+            'csrf-rotated',
+            'preserved cards must adopt the rotated CSRF token from the fragment'
+        );
+        assert.equal(liveCsrf.value, 'csrf-rotated');
     });
 
     it('applyFragment falls back to full robots replace when robot ids differ', () => {
