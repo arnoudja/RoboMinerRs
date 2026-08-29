@@ -89,9 +89,34 @@ function createElement(tagName, attrs) {
         if (name === 'id') {
             element.id = String(value);
         }
+        if (name === 'name') {
+            element.name = String(value);
+        }
         if (name === 'class') {
             element.classList = new FakeClassList(element, String(value));
         }
+    };
+    element.removeAttribute = function(name) {
+        delete element.attrs[name];
+        if (name === 'id') {
+            element.id = '';
+        }
+        if (name === 'name') {
+            element.name = '';
+        }
+        if (name === 'class') {
+            element.classList = new FakeClassList(element, '');
+        }
+    };
+    element.closest = function(selector) {
+        let node = element;
+        while (node) {
+            if (matchesSelector(node, selector)) {
+                return node;
+            }
+            node = node.parent;
+        }
+        return null;
     };
     element.appendChild = function(child) {
         if (child.parent) {
@@ -181,7 +206,31 @@ function descendants(root) {
     return nodes;
 }
 
-function matchesSelector(element, selector) {
+function matchesAttributeSelector(element, attrExpr) {
+    const match = /^([A-Za-z0-9_-]+)(?:(\^=|=)"([^"]*)")?$/.exec(attrExpr);
+    if (!match) {
+        return false;
+    }
+    const name = match[1];
+    const op = match[2] || null;
+    const expected = match[3];
+    const actual = element.getAttribute(name);
+    if (op === null) {
+        return actual !== null;
+    }
+    if (actual === null) {
+        return false;
+    }
+    if (op === '=') {
+        return actual === expected;
+    }
+    if (op === '^=') {
+        return actual.indexOf(expected) === 0;
+    }
+    return false;
+}
+
+function matchesSimpleSelector(element, selector) {
     let remaining = selector;
     const classes = [];
     remaining = remaining.replace(/\.([A-Za-z0-9_-]+)/g, function(_, className) {
@@ -193,6 +242,11 @@ function matchesSelector(element, selector) {
         id = value;
         return '';
     });
+    const attrs = [];
+    remaining = remaining.replace(/\[([^\]]+)\]/g, function(_, attrExpr) {
+        attrs.push(attrExpr);
+        return '';
+    });
     remaining = remaining.trim();
     if (remaining && element.tagName !== remaining.toUpperCase()) {
         return false;
@@ -202,6 +256,38 @@ function matchesSelector(element, selector) {
     }
     for (let classIndex = 0; classIndex < classes.length; classIndex += 1) {
         if (!element.classList.contains(classes[classIndex])) {
+            return false;
+        }
+    }
+    for (let attrIndex = 0; attrIndex < attrs.length; attrIndex += 1) {
+        if (!matchesAttributeSelector(element, attrs[attrIndex])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function matchesSelector(element, selector) {
+    const parts = selector.trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) {
+        return matchesSimpleSelector(element, selector.trim());
+    }
+    // Descendant: last part must match element; ancestors must match earlier parts in order.
+    if (!matchesSimpleSelector(element, parts[parts.length - 1])) {
+        return false;
+    }
+    let ancestor = element.parent;
+    for (let partIndex = parts.length - 2; partIndex >= 0; partIndex -= 1) {
+        let found = false;
+        while (ancestor) {
+            if (matchesSimpleSelector(ancestor, parts[partIndex])) {
+                found = true;
+                ancestor = ancestor.parent;
+                break;
+            }
+            ancestor = ancestor.parent;
+        }
+        if (!found) {
             return false;
         }
     }
@@ -219,8 +305,11 @@ function queryAll(root, selector) {
             }
         }
     }
-    if (matchesSelector(root, selector)) {
-        matches.unshift(root);
+    for (const single of selectors) {
+        if (matchesSelector(root, single)) {
+            matches.unshift(root);
+            break;
+        }
     }
     return matches;
 }
@@ -423,6 +512,94 @@ function loadMiningQueuePage(contextOverrides) {
     return { context, doc, timers, fetches };
 }
 
+function buildRobotCard(options) {
+    const form = createElement('form', {
+        class: 'mining-queue-card',
+        'data-robot-id': String(options.robotId),
+        action: 'miningQueue',
+        method: 'post',
+    });
+    form.appendChild(createElement('input', {
+        type: 'hidden',
+        name: 'robotId',
+        value: String(options.robotId),
+    }));
+
+    const status = createElement('div', { class: 'mining-queue-card-status' });
+    status.appendChild(createElement('span', {
+        id: 'status-' + options.robotId,
+        textContent: options.statusText,
+    }));
+    form.appendChild(status);
+
+    const actions = createElement('div', { class: 'mining-queue-actions' });
+    const select = createElement('select', {
+        id: 'miningArea' + options.robotId,
+        name: 'miningArea' + options.robotId,
+        class: 'tableitem mining-queue-area-select',
+    });
+    const optionAttrs = { value: String(options.areaValue) };
+    if (options.blockReason) {
+        optionAttrs['data-block-reason'] = options.blockReason;
+    }
+    const option = createElement('option', optionAttrs);
+    option.textContent = 'Area';
+    option.value = String(options.areaValue);
+    select.appendChild(option);
+    select.options = [option];
+    select.selectedIndex = 0;
+    select.value = String(options.areaValue);
+    actions.appendChild(select);
+
+    const buttons = createElement('div', { class: 'mining-queue-action-buttons' });
+    const addBtn = createElement('button', {
+        type: 'submit',
+        class: 'mining-queue-btn mining-queue-btn-primary',
+        name: 'submitType',
+        value: 'add',
+    });
+    addBtn.textContent = 'Add to queue';
+    if (options.blockReason) {
+        addBtn.disabled = true;
+        addBtn.setAttribute('title', options.blockReason);
+    }
+    buttons.appendChild(addBtn);
+
+    const fillBtn = createElement('button', {
+        type: 'submit',
+        class: 'mining-queue-btn',
+        name: 'submitType',
+        value: 'fill',
+    });
+    fillBtn.textContent = 'Fill queue';
+    if (options.blockReason) {
+        fillBtn.disabled = true;
+        fillBtn.setAttribute('title', options.blockReason);
+    }
+    buttons.appendChild(fillBtn);
+
+    const clearAttrs = {
+        type: 'button',
+        class: 'mining-queue-btn mining-queue-clear-btn',
+        'data-clearable-count': String(options.clearableCount),
+    };
+    const clearBtn = createElement('button', clearAttrs);
+    clearBtn.textContent = 'Clear queue';
+    clearBtn.disabled = Number(options.clearableCount) === 0;
+    if (clearBtn.disabled) {
+        clearBtn.setAttribute('title', 'No queued runs to clear');
+    }
+    buttons.appendChild(clearBtn);
+
+    const hint = createElement('p', { class: 'mining-queue-action-hint' });
+    hint.textContent = options.blockReason || '';
+    hint.hidden = !options.blockReason;
+    buttons.appendChild(hint);
+    actions.appendChild(buttons);
+    form.appendChild(actions);
+    return form;
+}
+
 describe('mining queue page partial updates', () => {
     it('buildFragmentUrl includes the queue fragment marker and area params', () => {
         const { context, doc } = loadMiningQueuePage();
@@ -491,6 +668,146 @@ describe('mining queue page partial updates', () => {
         assert.equal(doc.config.textContent, '{"ores":{"1":{"amount":3}}}');
         assert.match(doc.page.querySelector('.mining-queue-error').textContent, /new error/);
         assert.equal(doc.inspector.textContent, 'inspector stays');
+    });
+
+    it('applyFragment preserves live area select nodes when robot cards match', () => {
+        const { context, doc } = loadMiningQueuePage();
+        doc.robots.innerHTML = '';
+        doc.robots.appendChild(buildRobotCard({
+            robotId: '1',
+            statusText: 'old-status',
+            areaValue: '20',
+            blockReason: 'Queue full',
+            clearableCount: '0',
+        }));
+        const liveSelect = doc.robots.querySelector('select.mining-queue-area-select');
+        assert.ok(liveSelect);
+
+        const incomingRobots = createElement('div', {
+            id: 'mining-queue-robots-fragment',
+            class: 'mining-queue-robots',
+        });
+        incomingRobots.appendChild(buildRobotCard({
+            robotId: '1',
+            statusText: 'new-status',
+            areaValue: '20',
+            blockReason: '',
+            clearableCount: '2',
+        }));
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    return createElement('div', { id: id });
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'wallet', textContent: 'w' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return incomingRobots;
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+
+        const afterSelect = doc.robots.querySelector('select.mining-queue-area-select');
+        assert.equal(afterSelect, liveSelect, 'area select DOM node must be preserved');
+        assert.match(
+            doc.robots.querySelector('.mining-queue-card-status').innerHTML,
+            /new-status/
+        );
+        assert.equal(afterSelect.options[0].getAttribute('data-block-reason'), null);
+        assert.equal(
+            doc.robots.querySelector('.mining-queue-clear-btn').getAttribute('data-clearable-count'),
+            '2'
+        );
+        assert.equal(afterSelect.value, '20');
+    });
+
+    it('applyFragment falls back to full robots replace when robot ids differ', () => {
+        const { context, doc } = loadMiningQueuePage();
+        doc.robots.innerHTML = '';
+        doc.robots.appendChild(buildRobotCard({
+            robotId: '1',
+            statusText: 'old-status',
+            areaValue: '20',
+            blockReason: '',
+            clearableCount: '0',
+        }));
+        const liveSelect = doc.robots.querySelector('select.mining-queue-area-select');
+
+        const incomingRobots = createElement('div', {
+            id: 'mining-queue-robots-fragment',
+            class: 'mining-queue-robots',
+        });
+        incomingRobots.appendChild(buildRobotCard({
+            robotId: '2',
+            statusText: 'other-robot',
+            areaValue: '21',
+            blockReason: '',
+            clearableCount: '0',
+        }));
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    return createElement('div', { id: id });
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'wallet', textContent: 'w' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    return incomingRobots;
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+
+        const afterSelect = doc.robots.querySelector('select.mining-queue-area-select');
+        assert.notEqual(afterSelect, liveSelect, 'mismatched robots should replace the deck');
+        assert.match(doc.robots.innerHTML, /other-robot/);
+        assert.equal(
+            doc.robots.querySelector('.mining-queue-card').getAttribute('data-robot-id'),
+            '2'
+        );
     });
 
     it('applyFragment replaces nested app-shell-hud without double wrapping', () => {

@@ -81,13 +81,137 @@
             var robotsSource = doc.getElementById('mining-queue-robots-fragment');
             var robotsTarget = fragmentRoot.querySelector('.mining-queue-robots');
             if (robotsSource && robotsTarget) {
-                robotsTarget.innerHTML = robotsSource.innerHTML;
+                applyRobotsFragment(robotsSource, robotsTarget);
             }
 
             var configSource = doc.getElementById('mining-queue-clear-config');
             var configTarget = document.getElementById('mining-queue-clear-config');
             if (configSource && configTarget) {
                 configTarget.textContent = configSource.textContent;
+            }
+        }
+
+        function cardRobotId(card) {
+            var fromAttr = card.getAttribute('data-robot-id');
+            if (fromAttr) {
+                return fromAttr;
+            }
+            var robotInput = card.querySelector('input[name="robotId"]');
+            return robotInput && robotInput.value ? String(robotInput.value) : '';
+        }
+
+        function mapRobotCards(root) {
+            var cards = root.querySelectorAll('.mining-queue-card');
+            var map = {};
+            var ids = [];
+            for (var index = 0; index < cards.length; index += 1) {
+                var card = cards[index];
+                var robotId = cardRobotId(card);
+                if (!robotId) {
+                    return null;
+                }
+                if (Object.prototype.hasOwnProperty.call(map, robotId)) {
+                    return null;
+                }
+                map[robotId] = card;
+                ids.push(robotId);
+            }
+            ids.sort();
+            return { map: map, ids: ids };
+        }
+
+        function sameRobotIdSet(leftIds, rightIds) {
+            if (leftIds.length !== rightIds.length) {
+                return false;
+            }
+            for (var index = 0; index < leftIds.length; index += 1) {
+                if (leftIds[index] !== rightIds[index]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function syncOptionBlockReasons(liveSelect, incomingSelect) {
+            if (!liveSelect || !incomingSelect) {
+                return;
+            }
+            var incomingByValue = {};
+            var incomingOptions = incomingSelect.options || incomingSelect.querySelectorAll('option');
+            for (var incomingIndex = 0; incomingIndex < incomingOptions.length; incomingIndex += 1) {
+                var incomingOption = incomingOptions[incomingIndex];
+                incomingByValue[String(incomingOption.value)] = incomingOption;
+            }
+            var liveOptions = liveSelect.options || liveSelect.querySelectorAll('option');
+            for (var liveIndex = 0; liveIndex < liveOptions.length; liveIndex += 1) {
+                var liveOption = liveOptions[liveIndex];
+                var match = incomingByValue[String(liveOption.value)];
+                if (!match) {
+                    continue;
+                }
+                var blockReason = match.getAttribute('data-block-reason');
+                if (blockReason === null || blockReason === '') {
+                    liveOption.removeAttribute('data-block-reason');
+                } else {
+                    liveOption.setAttribute('data-block-reason', blockReason);
+                }
+            }
+        }
+
+        function syncClearButton(liveCard, incomingCard) {
+            var liveClear = liveCard.querySelector('.mining-queue-clear-btn');
+            var incomingClear = incomingCard.querySelector('.mining-queue-clear-btn');
+            if (!liveClear || !incomingClear) {
+                return;
+            }
+            var clearableCount = incomingClear.getAttribute('data-clearable-count');
+            if (clearableCount === null) {
+                liveClear.removeAttribute('data-clearable-count');
+            } else {
+                liveClear.setAttribute('data-clearable-count', clearableCount);
+            }
+            liveClear.disabled = !!incomingClear.disabled;
+            var title = incomingClear.getAttribute('title');
+            if (title === null || title === '') {
+                liveClear.removeAttribute('title');
+            } else {
+                liveClear.setAttribute('title', title);
+            }
+        }
+
+        function patchRobotCardActions(liveCard, incomingCard) {
+            var liveSelect = liveCard.querySelector('select.mining-queue-area-select');
+            var incomingSelect = incomingCard.querySelector('select.mining-queue-area-select');
+            syncOptionBlockReasons(liveSelect, incomingSelect);
+            syncClearButton(liveCard, incomingCard);
+            if (liveSelect) {
+                updateRobotEnqueueState(liveSelect);
+            }
+            if (ctx.updateClearButtonLabel) {
+                ctx.updateClearButtonLabel(liveCard);
+            }
+        }
+
+        function applyRobotsFragment(robotsSource, robotsTarget) {
+            var liveCards = mapRobotCards(robotsTarget);
+            var incomingCards = mapRobotCards(robotsSource);
+            if (!liveCards || !incomingCards || !sameRobotIdSet(liveCards.ids, incomingCards.ids)) {
+                robotsTarget.innerHTML = robotsSource.innerHTML;
+                return;
+            }
+
+            for (var index = 0; index < liveCards.ids.length; index += 1) {
+                var robotId = liveCards.ids[index];
+                var liveCard = liveCards.map[robotId];
+                var incomingCard = incomingCards.map[robotId];
+                var liveStatus = liveCard.querySelector('.mining-queue-card-status');
+                var incomingStatus = incomingCard.querySelector('.mining-queue-card-status');
+                if (!liveStatus || !incomingStatus) {
+                    robotsTarget.innerHTML = robotsSource.innerHTML;
+                    return;
+                }
+                liveStatus.innerHTML = incomingStatus.innerHTML;
+                patchRobotCardActions(liveCard, incomingCard);
             }
         }
 

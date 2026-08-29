@@ -65,11 +65,12 @@ pub(super) fn render_robot_card(
         .unwrap_or_default();
 
     body.push_str(&format!(
-        r#"<form action="miningQueue" method="post" class="mining-queue-card"><input type="hidden" name="robotId" value="{}"/>"#,
-        robot.robot_id
+        r#"<form action="miningQueue" method="post" class="mining-queue-card" data-robot-id="{}"><input type="hidden" name="robotId" value="{}"/>"#,
+        robot.robot_id, robot.robot_id
     ));
     render_mining_queue_selection_state_inputs(body, state, Some(robot.robot_id));
 
+    body.push_str(r#"<div class="mining-queue-card-status">"#);
     body.push_str(r#"<div class="mining-queue-card-header">"#);
     body.push_str(&format!(
         r#"<h2 class="mining-queue-robot-name"><a href="robot?robotId={}">{}</a></h2>"#,
@@ -115,6 +116,7 @@ pub(super) fn render_robot_card(
         }
         body.push_str("</ul></div>");
     }
+    body.push_str("</div>");
 
     body.push_str(r#"<div class="mining-queue-actions">"#);
     body.push_str(&format!(
