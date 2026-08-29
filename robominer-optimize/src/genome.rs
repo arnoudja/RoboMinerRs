@@ -292,8 +292,8 @@ mod tests {
     fn rand_adapter_handles_empty_range() {
         let mut rng = rand::rng();
         let mut adapter = RandAdapter(&mut rng);
-        assert_eq!(adapter.random_range(5, 5), 5);
-        assert_eq!(adapter.random_range(3, 1), 3);
+        assert_eq!(adapter.gen_range(5, 5), 5);
+        assert_eq!(adapter.gen_range(3, 1), 3);
         let _ = adapter.gen_f64();
     }
 }
