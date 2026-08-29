@@ -19,7 +19,13 @@ pub async fn persist_rally_outcome(
     outcome: &RallyOutcome,
     result_data: &str,
 ) -> Result<DbOutcome<i64, PersistRallyRejection>, DomainError> {
-    let record = completed_rally_record(loadout, outcome, result_data)?;
+    // Large v2 animation (CPU debug on long rallies) can exceed MariaDB
+    // max_allowed_packet; shrink rather than fail persist and block wallet claims.
+    let fitted = robominer_sim::fit_result_data_for_persist(
+        result_data,
+        robominer_sim::MAX_PERSISTED_RESULT_DATA_BYTES,
+    );
+    let record = completed_rally_record(loadout, outcome, &fitted)?;
 
     robominer_db::persist_completed_rally(pool, &record)
         .await

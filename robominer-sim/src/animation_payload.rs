@@ -207,3 +207,234 @@ pub struct AnimationOreType {
     pub id: i64,
     pub max: i32,
 }
+
+/// Soft cap for `RallyResult.resultData` so INSERT stays under typical
+/// `max_allowed_packet` (16 MiB) with SQL framing headroom.
+pub const MAX_PERSISTED_RESULT_DATA_BYTES: usize = 12 * 1024 * 1024;
+
+/// Shrink animation JSON until it fits `max_bytes`, preferring motion replay over
+/// CPU-debug fidelity. Oversized payloads otherwise fail persist and leave mining
+/// runs unclaimable.
+pub fn fit_result_data_for_persist(result_data: &str, max_bytes: usize) -> String {
+    if result_data.len() <= max_bytes {
+        return result_data.to_string();
+    }
+
+    let Ok(mut payload) = AnimationPayload::parse(result_data) else {
+        return minimal_persist_stub(0, 0).to_embedded_json_capped(max_bytes);
+    };
+
+    strip_cpu_locals(&mut payload);
+    let stripped_locals = payload.to_embedded_json();
+    if stripped_locals.len() <= max_bytes {
+        return stripped_locals;
+    }
+
+    strip_cpu_steps(&mut payload);
+    let stripped_cpu = payload.to_embedded_json();
+    if stripped_cpu.len() <= max_bytes {
+        return stripped_cpu;
+    }
+
+    clear_motion_detail(&mut payload);
+    let cleared = payload.to_embedded_json();
+    if cleared.len() <= max_bytes {
+        return cleared;
+    }
+
+    minimal_persist_stub(payload.ground.size_x, payload.ground.size_y)
+        .to_embedded_json_capped(max_bytes)
+}
+
+impl AnimationPayload {
+    fn to_embedded_json_capped(&self, max_bytes: usize) -> String {
+        let json = self.to_embedded_json();
+        if json.len() <= max_bytes {
+            json
+        } else {
+            // Last-resort ASCII stub that stays under any positive budget.
+            let stub = "{}";
+            if stub.len() <= max_bytes {
+                stub.to_string()
+            } else {
+                String::new()
+            }
+        }
+    }
+}
+
+fn strip_cpu_locals(payload: &mut AnimationPayload) {
+    for robot in &mut payload.robots.robot {
+        for location in &mut robot.locations {
+            if let Some(cpu) = location.cpu.as_mut() {
+                for step in cpu {
+                    step.vs = None;
+                }
+            }
+        }
+    }
+}
+
+fn strip_cpu_steps(payload: &mut AnimationPayload) {
+    for robot in &mut payload.robots.robot {
+        for location in &mut robot.locations {
+            if let Some(cpu) = location.cpu.take()
+                && location.source_line.is_none()
+            {
+                location.source_line = cpu.first().map(|step| step.l);
+            }
+        }
+    }
+}
+
+fn clear_motion_detail(payload: &mut AnimationPayload) {
+    for robot in &mut payload.robots.robot {
+        robot.locations.clear();
+    }
+    payload.ground.positions.clear();
+}
+
+fn minimal_persist_stub(size_x: usize, size_y: usize) -> AnimationPayload {
+    AnimationPayload {
+        v: ANIMATION_PAYLOAD_VERSION,
+        robots: AnimationRobots { robot: Vec::new() },
+        ground: AnimationGround {
+            size_x,
+            size_y,
+            positions: Vec::new(),
+        },
+        ore_types: BTreeMap::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_payload_with_cpu(locations: usize, cpu_steps: usize) -> String {
+        let mut cpu = Vec::with_capacity(cpu_steps);
+        for index in 0..cpu_steps {
+            let mut vs = BTreeMap::new();
+            vs.insert(
+                format!("var{index}"),
+                AnimationCpuStepResult {
+                    k: AnimationCpuStepResultKind::Int,
+                    v: index as f64,
+                },
+            );
+            cpu.push(AnimationCpuStep {
+                l: (index as u16) + 1,
+                c: Some(1),
+                e: Some(4),
+                r: Some(AnimationCpuStepResult {
+                    k: AnimationCpuStepResultKind::Int,
+                    v: 1.0,
+                }),
+                vs: Some(vs),
+            });
+        }
+
+        let location_count = locations;
+        let location_rows: Vec<AnimationLocation> = (0..location_count)
+            .map(|turn| AnimationLocation {
+                x: Some(turn as f64),
+                y: Some(0.0),
+                o: Some(90),
+                cpu: Some(cpu.clone()),
+                ..AnimationLocation::default()
+            })
+            .collect();
+
+        AnimationPayload {
+            v: ANIMATION_PAYLOAD_VERSION,
+            robots: AnimationRobots {
+                robot: vec![AnimationRobot {
+                    robotnr: 0,
+                    x: 0.0,
+                    y: 0.0,
+                    o: 0,
+                    ore_a: 0,
+                    ore_b: 0,
+                    ore_c: 0,
+                    size: 1.0,
+                    maxore: 100,
+                    maxturns: location_count as i32,
+                    cpuspeed: 72,
+                    depot_max_a: None,
+                    depot_max_b: None,
+                    depot_max_c: None,
+                    depot_a: None,
+                    depot_b: None,
+                    depot_c: None,
+                    home_x: None,
+                    home_y: None,
+                    home_size: None,
+                    locations: location_rows,
+                }],
+            },
+            ground: AnimationGround {
+                size_x: 10,
+                size_y: 10,
+                positions: Vec::new(),
+            },
+            ore_types: BTreeMap::new(),
+        }
+        .to_embedded_json()
+    }
+
+    #[test]
+    fn fit_result_data_keeps_payload_under_budget_by_stripping_cpu() {
+        let original = sample_payload_with_cpu(40, 20);
+        assert!(
+            original.len() > 8_000,
+            "fixture should be oversized for a tight budget, got {}",
+            original.len()
+        );
+
+        let fitted = fit_result_data_for_persist(&original, 8_000);
+        assert!(
+            fitted.len() <= 8_000,
+            "fitted payload must fit budget, got {}",
+            fitted.len()
+        );
+
+        let payload = AnimationPayload::parse(&fitted).expect("fitted JSON must parse");
+        assert_eq!(payload.robots.robot.len(), 1);
+        assert!(
+            !payload.robots.robot[0]
+                .locations
+                .iter()
+                .any(|location| location.cpu.as_ref().is_some_and(|cpu| !cpu.is_empty())),
+            "CPU debug arrays must be stripped when over budget"
+        );
+        assert!(
+            !payload.robots.robot[0].locations.is_empty(),
+            "motion locations should remain after CPU strip"
+        );
+    }
+
+    #[test]
+    fn fit_result_data_leaves_small_payload_unchanged() {
+        let original = sample_payload_with_cpu(2, 1);
+        let fitted = fit_result_data_for_persist(&original, MAX_PERSISTED_RESULT_DATA_BYTES);
+        assert_eq!(fitted, original);
+    }
+
+    #[test]
+    fn fit_result_data_falls_back_to_empty_motion_when_still_too_large() {
+        let original = sample_payload_with_cpu(80, 30);
+        // Budget below any motion-preserving shrink of this fixture.
+        let fitted = fit_result_data_for_persist(&original, 400);
+        assert!(fitted.len() <= 400, "got {}", fitted.len());
+        let payload = AnimationPayload::parse(&fitted).expect("fitted JSON must parse");
+        assert!(
+            payload
+                .robots
+                .robot
+                .iter()
+                .all(|robot| robot.locations.is_empty())
+                || payload.robots.robot.is_empty(),
+            "motion detail must be dropped when still over budget"
+        );
+    }
+}

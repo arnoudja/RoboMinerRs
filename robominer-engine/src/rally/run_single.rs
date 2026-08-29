@@ -69,6 +69,14 @@ pub(crate) async fn run_rally(
             .context("result data file read task failed")??,
             None => run.result_data,
         };
+        if result_data.len() > robominer_sim::MAX_PERSISTED_RESULT_DATA_BYTES {
+            tracing::warn!(
+                mining_area_id,
+                original_bytes = result_data.len(),
+                budget_bytes = robominer_sim::MAX_PERSISTED_RESULT_DATA_BYTES,
+                "Rally animation exceeds persist budget; shrinking before INSERT"
+            );
+        }
         let persist_outcome =
             robominer_domain::persist_rally_outcome(pool, &loadout, outcome, &result_data)
                 .await

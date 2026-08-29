@@ -20,7 +20,8 @@ pub use animation::{
 pub use animation_payload::{
     AnimationCpuStep, AnimationCpuStepResult, AnimationCpuStepResultKind, AnimationGround,
     AnimationGroundChange, AnimationGroundPosition, AnimationLocation, AnimationOreType,
-    AnimationPayload, AnimationRobot, AnimationRobots,
+    AnimationPayload, AnimationRobot, AnimationRobots, MAX_PERSISTED_RESULT_DATA_BYTES,
+    fit_result_data_for_persist,
 };
 pub use ground::{Ground, GroundUnit, ScanResult, ScanSnapshot, ore_heap_estimated_total};
 pub use position::Position;
