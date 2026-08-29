@@ -77,8 +77,12 @@ pub(super) async fn login_page(request: &Request, config: &ServerConfig) -> Resp
 
     match result {
         Ok(response) => response,
-        Err(error) => Response::service_unavailable(format!("Unable to process login: {error}")),
+        Err(error) => login_database_error_response(error),
     }
+}
+
+pub(super) fn login_database_error_response(error: crate::page_context::PageLoadError) -> Response {
+    crate::page_context::page_load_error("login", error)
 }
 
 mod process;

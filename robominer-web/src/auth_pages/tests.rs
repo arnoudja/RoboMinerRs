@@ -101,6 +101,20 @@ async fn login_requires_database_configuration() {
 }
 
 #[test]
+fn login_database_failure_does_not_leak_sql_details() {
+    let error = crate::page_context::PageLoadError::from(sqlx::Error::Protocol(
+        "SELECT * FROM secret_table WHERE leaked".into(),
+    ));
+    let response = super::login_database_error_response(error);
+    let body = response.body_utf8();
+
+    assert_eq!(response.status, 503);
+    assert_html_contains(&body, "Unable to load login");
+    assert_html_not_contains(&body, "secret_table");
+    assert_html_not_contains(&body, "Unable to process login");
+}
+
+#[test]
 fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
     let html = render_login_page(&LoginPageState {
         login_name: "user@example.com".to_string(),
