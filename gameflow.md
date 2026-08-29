@@ -39,7 +39,7 @@ Signup auto-claims achievement **1 / step 1**:
    still holds **2** per rally.
 
 4. **Achievement 2 step 2** — mine **20** Cerbonium lifetime → wallet cap **20**.
-   This is the wallet size needed to hold the 5 Cerbonium for Enhanced Memory.
+   The starting cap of **5** already covers Enhanced Memory.
 
 5. **Shop: Enhanced Memory Module (402)** — **5** Cerbonium, memory **8**. Equip
    it and apply, then change the program to `move(1); while (mine());` (compiled

@@ -194,6 +194,7 @@ async fn tutorial_step_four_teaches_enhanced_memory_as_first_upgrade() {
         ],
     );
     assert_html_not_contains(&body, "Enhanced Ore Container");
+    assert_html_not_contains(&body, "wallet cannot yet hold");
 }
 
 #[tokio::test(flavor = "current_thread")]
