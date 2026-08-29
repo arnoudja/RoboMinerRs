@@ -1,5 +1,5 @@
 use crate::catalog::PartCatalog;
-use rand::Rng;
+use rand::RngExt;
 use robominer_program::{
     ExecutableProgram, RngLike, compatibility_fixture_source, compile_executable_source,
     crossover_programs, mutate_program, seed_program_sources, unparse_program,
@@ -12,7 +12,7 @@ pub struct Genome {
 }
 
 impl Genome {
-    pub fn random(catalog: &PartCatalog, rng: &mut impl Rng) -> Self {
+    pub fn random(catalog: &PartCatalog, rng: &mut impl RngExt) -> Self {
         let part_ids = random_part_ids(catalog, rng);
         let program = random_program(rng);
         Self { part_ids, program }
@@ -22,7 +22,7 @@ impl Genome {
     pub fn with_program(
         catalog: &PartCatalog,
         program: ExecutableProgram,
-        rng: &mut impl Rng,
+        rng: &mut impl RngExt,
     ) -> Self {
         Self {
             part_ids: random_part_ids(catalog, rng),
@@ -38,11 +38,11 @@ impl Genome {
         unparse_program(&self.program)
     }
 
-    pub fn crossover(&self, other: &Self, rng: &mut impl Rng) -> (Self, Self) {
+    pub fn crossover(&self, other: &Self, rng: &mut impl RngExt) -> (Self, Self) {
         let mut left_parts = self.part_ids;
         let mut right_parts = other.part_ids;
         for slot in 0..7 {
-            if rng.gen_bool(0.5) {
+            if rng.random_bool(0.5) {
                 std::mem::swap(&mut left_parts[slot], &mut right_parts[slot]);
             }
         }
@@ -65,11 +65,11 @@ impl Genome {
     }
 
     /// Crossover part slots only; both children keep `self.program`.
-    pub fn crossover_parts(&self, other: &Self, rng: &mut impl Rng) -> (Self, Self) {
+    pub fn crossover_parts(&self, other: &Self, rng: &mut impl RngExt) -> (Self, Self) {
         let mut left_parts = self.part_ids;
         let mut right_parts = other.part_ids;
         for slot in 0..7 {
-            if rng.gen_bool(0.5) {
+            if rng.random_bool(0.5) {
                 std::mem::swap(&mut left_parts[slot], &mut right_parts[slot]);
             }
         }
@@ -85,14 +85,14 @@ impl Genome {
         )
     }
 
-    pub fn mutate(&self, catalog: &PartCatalog, rng: &mut impl Rng) -> Self {
+    pub fn mutate(&self, catalog: &PartCatalog, rng: &mut impl RngExt) -> Self {
         let mut part_ids = self.part_ids;
-        let slot = rng.gen_range(0..7);
+        let slot = rng.random_range(0..7);
         let type_id = (slot as i64) + 1;
         if let Some(parts) = catalog.parts_for_type(type_id)
             && !parts.is_empty()
         {
-            part_ids[slot] = parts[rng.gen_range(0..parts.len())].id;
+            part_ids[slot] = parts[rng.random_range(0..parts.len())].id;
         }
 
         let mut adapter = RandAdapter(rng);
@@ -101,14 +101,14 @@ impl Genome {
     }
 
     /// Mutate one part slot; keep the program unchanged.
-    pub fn mutate_parts(&self, catalog: &PartCatalog, rng: &mut impl Rng) -> Self {
+    pub fn mutate_parts(&self, catalog: &PartCatalog, rng: &mut impl RngExt) -> Self {
         let mut part_ids = self.part_ids;
-        let slot = rng.gen_range(0..7);
+        let slot = rng.random_range(0..7);
         let type_id = (slot as i64) + 1;
         if let Some(parts) = catalog.parts_for_type(type_id)
             && !parts.is_empty()
         {
-            part_ids[slot] = parts[rng.gen_range(0..parts.len())].id;
+            part_ids[slot] = parts[rng.random_range(0..parts.len())].id;
         }
         Self {
             part_ids,
@@ -117,7 +117,7 @@ impl Genome {
     }
 
     /// Mutate the program only; keep part ids unchanged.
-    pub fn mutate_program_only(&self, rng: &mut impl Rng) -> Self {
+    pub fn mutate_program_only(&self, rng: &mut impl RngExt) -> Self {
         let mut adapter = RandAdapter(rng);
         let program = mutate_program(&self.program, &mut adapter);
         Self {
@@ -127,7 +127,7 @@ impl Genome {
     }
 
     /// Crossover programs only; both children keep `self.part_ids`.
-    pub fn crossover_programs_only(&self, other: &Self, rng: &mut impl Rng) -> (Self, Self) {
+    pub fn crossover_programs_only(&self, other: &Self, rng: &mut impl RngExt) -> (Self, Self) {
         let mut adapter = RandAdapter(rng);
         let (left_program, right_program) =
             crossover_programs(&self.program, &other.program, &mut adapter)
@@ -145,41 +145,41 @@ impl Genome {
     }
 }
 
-fn random_part_ids(catalog: &PartCatalog, rng: &mut impl Rng) -> [i64; 7] {
+fn random_part_ids(catalog: &PartCatalog, rng: &mut impl RngExt) -> [i64; 7] {
     let mut ids = [0; 7];
     for (slot, id) in ids.iter_mut().enumerate() {
         let type_id = (slot as i64) + 1;
         let parts = catalog
             .parts_for_type(type_id)
             .expect("catalog complete for types 1-7");
-        *id = parts[rng.gen_range(0..parts.len())].id;
+        *id = parts[rng.random_range(0..parts.len())].id;
     }
     ids
 }
 
-fn random_program(rng: &mut impl Rng) -> ExecutableProgram {
+fn random_program(rng: &mut impl RngExt) -> ExecutableProgram {
     let mut sources = seed_program_sources();
     sources.push(compatibility_fixture_source("default_program"));
     sources.push(compatibility_fixture_source("seed_ai_1"));
     sources.push(compatibility_fixture_source("seed_ai_2"));
     sources.push(compatibility_fixture_source("scan_then_mine"));
-    let source = sources[rng.gen_range(0..sources.len())];
+    let source = sources[rng.random_range(0..sources.len())];
     compile_executable_source(source).expect("seed program compiles")
 }
 
 struct RandAdapter<'a, R>(&'a mut R);
 
-impl<R: Rng> RngLike for RandAdapter<'_, R> {
+impl<R: RngExt> RngLike for RandAdapter<'_, R> {
     fn gen_range(&mut self, low: usize, high: usize) -> usize {
         if high <= low {
             low
         } else {
-            self.0.gen_range(low..high)
+            self.0.random_range(low..high)
         }
     }
 
     fn gen_f64(&mut self) -> f64 {
-        self.0.r#gen()
+        self.0.random()
     }
 }
 
@@ -247,7 +247,7 @@ mod tests {
             );
             assert!(!available.iter().any(|part| part.id >= 9000));
         }
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let genome = Genome::random(&catalog, &mut rng);
         for &part_id in &genome.part_ids {
             let part = catalog.get(part_id).expect("part in catalog");
@@ -264,7 +264,7 @@ mod tests {
         let right = Genome::with_parts([11, 21, 31, 41, 51, 61, 71], right_program);
         assert_eq!(left.source_code(), "mine();");
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let (c_a, c_b) = left.crossover(&right, &mut rng);
         assert_eq!(c_a.part_ids.len(), 7);
         assert_eq!(c_b.part_ids.len(), 7);
@@ -290,10 +290,10 @@ mod tests {
 
     #[test]
     fn rand_adapter_handles_empty_range() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut adapter = RandAdapter(&mut rng);
-        assert_eq!(adapter.gen_range(5, 5), 5);
-        assert_eq!(adapter.gen_range(3, 1), 3);
+        assert_eq!(adapter.random_range(5, 5), 5);
+        assert_eq!(adapter.random_range(3, 1), 3);
         let _ = adapter.gen_f64();
     }
 }
