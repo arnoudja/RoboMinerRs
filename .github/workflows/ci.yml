@@ -47,6 +47,9 @@ jobs:
         run: cargo install cargo-audit --locked
 
       - name: Audit dependencies
+        # rsa 0.9 (pulled by sqlx-mysql for caching_sha2_password) still has
+        # RUSTSEC-2023-0071 with no patched crate. Revisit when sqlx or rsa
+        # ships a fix; do not drop this ignore until `cargo audit` is clean.
         run: cargo audit --ignore RUSTSEC-2023-0071
 
       - uses: ./.github/actions/mysql-test-setup
