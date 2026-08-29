@@ -171,6 +171,33 @@ async fn help_text_routes_render_reader_shell_with_sidebar() {
 }
 
 #[tokio::test(flavor = "current_thread")]
+async fn tutorial_step_four_teaches_enhanced_memory_as_first_upgrade() {
+    let step_four = help_text_page(
+        &request("/helpTutorial?step=4"),
+        &config(),
+        "helpTutorial",
+        Some(4),
+    )
+    .await;
+    let body = step_four.body_utf8();
+
+    assert_eq!(step_four.status, 200);
+    assert_contains_all(
+        &body,
+        &[
+            "Step 4 of 5",
+            "Enhanced Memory Module",
+            "5 Cerbonium",
+            "Apply changes",
+            r#"href="shop""#,
+            r#"href="robot""#,
+        ],
+    );
+    assert_html_not_contains(&body, "Enhanced Ore Container");
+    assert_html_not_contains(&body, "wallet cannot yet hold");
+}
+
+#[tokio::test(flavor = "current_thread")]
 async fn tutorial_step_navigation_links_previous_and_next() {
     let step_three = help_text_page(
         &request("/helpTutorial?step=3"),
@@ -211,6 +238,9 @@ async fn tutorial_final_step_links_to_programming_tips() {
             "Step 5 of 5",
             "Save program",
             "Apply changes",
+            "Enhanced Memory",
+            "Not enough memory",
+            "move(1); while (mine());",
             r#"href="helpTutorial?step=4""#,
             r#"href="helpProgramTips""#,
             r#"href="editCode""#,

@@ -5,8 +5,8 @@ time on the `/achievements` page. Claiming applies rewards (queue size, robots,
 mining areas, wallet caps, achievement points) and can unlock successor
 achievements.
 
-Seed data lives in `resources/database/gameData.sql` (achievement section from line
-~882). Runtime logic is in `robominer-db/src/achievements/`, exposed through
+Seed data lives in `resources/database/gameData.sql` (the `-- Achievements` section).
+Runtime logic is in `robominer-db/src/achievements/`, exposed through
 `robominer-domain` and `robominer-web`.
 
 ## Database model
@@ -32,7 +32,8 @@ Seed data lives in `resources/database/gameData.sql` (achievement section from l
 | `oreId` + `maxOreReward` | Raises `UserOreAsset.maxAllowed` for that ore (never lowers it). |
 | `oreId` + `maxDepotReward` | Raises `UserOreAsset.depotMaxAllowed` for that ore (never lowers it). |
 
-Every seeded step awards **10 achievement points**.
+Most seeded steps award **10** achievement points. Later mastery capstones award
+**25**. The second- and third-robot tracks award **50**.
 
 ### Wallet cap vs robot container vs depot
 
@@ -138,10 +139,10 @@ appear until unlocked.
 
 ## Current seed catalog
 
-The achievement section in `gameData.sql` currently defines **four** tracks.
-Many mining areas exist in seed data (Lithabine-1, Neudralion-1, …) but are **not**
-unlocked by achievements yet — only the areas listed in the tables below are
-achievement-gated today.
+The achievement section in `gameData.sql` currently defines **14** tracks. Every
+mining area in seed data is unlocked by at least one achievement step. Full
+per-step score, total, and depot gates live in that SQL; the tables below are
+the index plus the early-game Cerbonium and robot tracks.
 
 Ore IDs: 1 Cerbonium, 2 Oxaria, 3 Lithabine, 4 Neudralion, 5 Complatix, 6 Prantum,
 7 Raxia, 8 Dipolir, 9 Asradon, 10 Baratiem, 11 Etaxy.
@@ -149,9 +150,19 @@ Ore IDs: 1 Cerbonium, 2 Oxaria, 3 Lithabine, 4 Neudralion, 5 Complatix, 6 Prantu
 | ID | Title | Steps | Unlocked after |
 | --- | --- | ---: | --- |
 | 1 | Your first robot | 1 | Signup (automatic) |
-| 2 | Cerbonium Mastery | 10 | Achievement 1 step 1 |
-| 3 | Oxaria Mastery | 1 | Achievement 2 step 7 |
-| 99 | New robot | 1 | Achievement 2 step 10 |
+| 2 | Cerbonium Mastery | 12 | Achievement 1 step 1 |
+| 3 | Oxaria Mastery | 12 | Achievement 2 step 7 |
+| 4 | Lithabine Mastery | 12 | Achievement 3 step 6 |
+| 5 | Neudralion Mastery | 12 | Achievement 4 step 4 |
+| 6 | Second robot | 1 | Achievement 5 step 5 |
+| 7 | Complatix Mastery | 12 | Achievement 5 step 5 |
+| 8 | Prantum Mastery | 12 | Achievement 7 step 5 |
+| 9 | Raxia Mastery | 12 | Achievement 8 step 5 |
+| 10 | Dipolir Mastery | 12 | Achievement 9 step 5 |
+| 11 | One more robot | 1 | Achievement 10 step 1 |
+| 12 | Asradon Mastery | 12 | Achievement 10 step 5 |
+| 13 | Baratiem Mastery | 12 | Achievement 12 step 5 |
+| 14 | Etaxy Mastery | 12 | Achievement 13 step 5 |
 
 ### Achievement 1 — Your first robot
 
@@ -161,37 +172,58 @@ Ore IDs: 1 Cerbonium, 2 Oxaria, 3 Lithabine, 4 Neudralion, 5 Complatix, 6 Prantu
 
 ### Achievement 2 — Cerbonium Mastery
 
-Early tutorial track for Cerbonium areas, queue size, and Cerbonium wallet caps.
+Early track for Cerbonium areas, queue size, wallet caps, and depot capacity.
 
 | Step | Requirements | Rewards |
 | ---: | --- | --- |
-| 1 | Mine **1** Cerbonium (lifetime gross) | +1 queue |
+| 1 | Mine **1** Cerbonium | +1 queue |
 | 2 | Mine **20** Cerbonium | Cerbonium wallet cap → **20** |
-| 3 | Score ≥ **70** in Cerbonium-mini (`1001`) | Unlock **Cerbonium-Starter** (`1002`) |
-| 4 | Mine **50** Cerbonium | Cerbonium wallet cap → **50** |
+| 3 | Mine **25** Cerbonium; score ≥ **300** in Cerbonium-mini (`1001`) | Unlock **Cerbonium-Starter** (`1002`) |
+| 4 | Mine **50** Cerbonium | Cerbonium wallet cap → **50**, depot cap → **5** |
 | 5 | Mine **75** Cerbonium | +1 queue |
-| 6 | Score ≥ **120** in Cerbonium-Starter (`1002`) | Unlock **Cerbonium-Advanced** (`1003`) |
-| 7 | Mine **100** Cerbonium | Cerbonium wallet cap → **100** |
-| 8 | Mine **500** Cerbonium; scores ≥ **150** in `1001`, `1002`, and `1003` | Cerbonium wallet cap → **500** |
-| 9 | Mine **1 000** Cerbonium | Cerbonium wallet cap → **1 000** |
-| 10 | Mine **5 000** Cerbonium; scores ≥ **200** in `1001`, `1002`, and `1003` | Cerbonium wallet cap → **5 000** |
+| 6 | Mine **100** Cerbonium; scores ≥ **500** in `1001` and ≥ **300** in `1002` | Unlock **Cerbonium-Advanced** (`1003`) |
+| 7 | Mine **120** Cerbonium | Wallet cap → **100**, depot cap → **10**; unlocks Oxaria Mastery |
+| 8 | Mine **200** Cerbonium; scores ≥ **700** / **500** / **450** in `1001` / `1002` / `1003` | Wallet cap → **500**, depot cap → **50** |
+| 9 | Mine **500** Cerbonium | +1 queue |
+| 10 | Mine **2 500** Cerbonium | Wallet cap → **1 000**, depot cap → **100** |
+| 11 | Mine **5 000** Cerbonium; scores ≥ **800** in `1001`, `1002`, and `1003` | Wallet cap → **5 000**, depot cap → **500** |
+| 12 | Mine **10 000** Cerbonium; depot **100** Cerbonium; scores ≥ **900** in `1001`, `1002`, and `1003` | +25 points, wallet cap → **9 999**, depot cap → **1 000** |
 
-### Achievement 3 — Oxaria Mastery
+### Achievement 6 — Second robot
 
-| Step | Requirements | Rewards |
-| ---: | --- | --- |
-| 1 | None (unlocked after Cerbonium Mastery step 7) | Unlock **Oxaria-Light** (`1101`) |
-
-Further Oxaria area steps (`1102`, `1103`) exist in seed data but have no
-achievement unlock rows yet.
-
-### Achievement 99 — New robot
+Unlocked after Neudralion Mastery step 5.
 
 | Step | Requirements | Rewards |
 | ---: | --- | --- |
-| 1 | Mine **1 000** Lithabine (ore 3, lifetime gross) | Second robot (`robotReward = 2`) |
+| 1 | Mine **4 000** / **3 500** / **3 000** / **2 000** of ores 1–4; depot **100** of each; scores ≥ **900** in `1003`, `1103`, `1203` and ≥ **800** in `1302` | +50 points, second robot (`robotReward = 2`) |
 
-Unlocked after Cerbonium Mastery step 10.
+### Achievement 11 — One more robot
+
+Unlocked after Dipolir Mastery step 1.
+
+| Step | Requirements | Rewards |
+| ---: | --- | --- |
+| 1 | Mine **30 000** / **25 000** / **15 000** / **6 000** of ores 5–8; depot **2 000** / **1 500** / **1 000** / **500**; scores ≥ **900** in `1402`, `1502`, `1602` and ≥ **800** in `1701` | +50 points, third robot (`robotReward = 3`) |
+
+### Later mastery tracks
+
+Each remaining track follows the same pattern: step 1 unlocks the first area of
+that ore, a middle step unlocks the larger area, and later steps raise wallet
+caps, depot caps, queue size, and score gates. See `gameData.sql` for the
+numeric requirements.
+
+| ID | First area unlock | Later area unlocks |
+| ---: | --- | --- |
+| 3 Oxaria | Step 1 → Oxaria-Light (`1101`) | Step 4 → Advanced (`1102`); step 10 → Expert (`1103`) |
+| 4 Lithabine | Step 1 → Lithabine-Small (`1201`) | Step 4 → Medium (`1202`); step 8 → Large (`1203`) |
+| 5 Neudralion | Step 1 → Neudralion-Small (`1301`) | Step 4 → Large (`1302`) |
+| 7 Complatix | Step 1 → Complatix-Small (`1401`) | Step 4 → Large (`1402`) |
+| 8 Prantum | Step 1 → Prantum-Small (`1501`) | Step 4 → Large (`1502`) |
+| 9 Raxia | Step 1 → Raxia-Small (`1601`) | Step 4 → Large (`1602`) |
+| 10 Dipolir | Step 1 → Dipolir-Small (`1701`) | Step 4 → Large (`1702`) |
+| 12 Asradon | Step 1 → Asradon-Small (`1801`) | Step 4 → Large (`1802`) |
+| 13 Baratiem | Step 1 → Baratiem-Small (`1901`) | Step 4 → Large (`1902`) |
+| 14 Etaxy | Step 1 → Etaxy-Small (`2001`) | Step 4 → Large (`2002`) |
 
 ## Unlock graph
 
@@ -201,9 +233,25 @@ Unlocked after Cerbonium Mastery step 10.
         ▼
 [2 Cerbonium Mastery]
         │
-        ├──step 7──► [3 Oxaria Mastery]
-        │
-        └──step 10─► [99 New robot]
+        └──step 7──► [3 Oxaria Mastery]
+                          │
+                          └──step 6──► [4 Lithabine Mastery]
+                                            │
+                                            └──step 4──► [5 Neudralion Mastery]
+                                                              │
+                                                              ├──step 5──► [6 Second robot]
+                                                              └──step 5──► [7 Complatix Mastery]
+                                                                                │
+                                                                                └──step 5──► [8 Prantum Mastery]
+                                                                                                  │
+                                                                                                  └──step 5──► [9 Raxia Mastery]
+                                                                                                                    │
+                                                                                                                    └──step 5──► [10 Dipolir Mastery]
+                                                                                                                                      │
+                                                                                                                                      ├──step 1──► [11 One more robot]
+                                                                                                                                      └──step 5──► [12 Asradon Mastery]
+                                                                                                                                                        └──step 5──► [13 Baratiem Mastery]
+                                                                                                                                                                          └──step 5──► [14 Etaxy Mastery]
 ```
 
 ## Code and UI

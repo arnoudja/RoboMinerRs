@@ -4,7 +4,36 @@ use sqlx::MySqlPool;
 
 use crate::{ClaimedOreRewardRecord, ClaimedUserResults, INITIAL_ORE_WALLET_MAX, in_placeholders};
 
+/// InnoDB deadlock SQLSTATE (`ER_LOCK_DEADLOCK` / MySQL 1213). Restart the claim
+/// transaction; one concurrent worker still wins the row locks.
+const MYSQL_DEADLOCK_SQLSTATE: &str = "40001";
+const MAX_CLAIM_DEADLOCK_ATTEMPTS: u32 = 8;
+
 pub async fn claim_user_results(
+    pool: &MySqlPool,
+    user_id: i64,
+) -> Result<ClaimedUserResults, sqlx::Error> {
+    let mut attempt = 0;
+    loop {
+        match claim_user_results_once(pool, user_id).await {
+            Ok(result) => return Ok(result),
+            Err(error)
+                if is_mysql_deadlock(&error) && attempt + 1 < MAX_CLAIM_DEADLOCK_ATTEMPTS =>
+            {
+                attempt += 1;
+                tracing::debug!(
+                    attempt,
+                    user_id,
+                    "retrying mining wallet claim after deadlock"
+                );
+                tokio::task::yield_now().await;
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
+
+async fn claim_user_results_once(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<ClaimedUserResults, sqlx::Error> {
@@ -29,6 +58,19 @@ pub async fn claim_user_results(
         claimed_queues,
         ore_rewards,
     })
+}
+
+fn is_mysql_deadlock(error: &sqlx::Error) -> bool {
+    is_mysql_deadlock_sqlstate(
+        error
+            .as_database_error()
+            .and_then(|database_error| database_error.code())
+            .as_deref(),
+    )
+}
+
+fn is_mysql_deadlock_sqlstate(code: Option<&str>) -> bool {
+    code == Some(MYSQL_DEADLOCK_SQLSTATE)
 }
 
 /// Distinct user ids with finished, unclaimed mining runs ready for the wallet.
@@ -593,4 +635,18 @@ async fn batch_update_mining_area_lifetime_results(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_mysql_deadlock, is_mysql_deadlock_sqlstate};
+
+    #[test]
+    fn mysql_deadlock_sqlstate_matches_innodb_restart_code() {
+        assert!(is_mysql_deadlock_sqlstate(Some("40001")));
+        assert!(!is_mysql_deadlock_sqlstate(Some("HY000")));
+        assert!(!is_mysql_deadlock_sqlstate(None));
+        assert!(!is_mysql_deadlock(&sqlx::Error::RowNotFound));
+        assert!(!is_mysql_deadlock(&sqlx::Error::PoolClosed));
+    }
 }
