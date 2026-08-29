@@ -1,6 +1,6 @@
 use crate::fitness::{FitnessContext, evaluate_genome, rally_seeds_for_generation};
 use crate::genome::Genome;
-use rand::Rng;
+use rand::RngExt;
 use robominer_program::ExecutableProgram;
 use std::io::{self, Write};
 
@@ -25,7 +25,7 @@ pub fn run_ga(
     initial_programs: &[ExecutableProgram],
     fix_program: bool,
     fixed_parts: Option<[i64; 7]>,
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> Vec<RankedIndividual> {
     if fix_program && let Some(part_ids) = fixed_parts {
         let Some(program) = initial_programs.first() else {
@@ -89,7 +89,7 @@ pub fn run_ga(
         while next.len() < population_size {
             let parent_a = tournament_select(&ranked, config.tournament_size, rng);
             let parent_b = tournament_select(&ranked, config.tournament_size, rng);
-            let (mut child_a, mut child_b) = if rng.r#gen::<f64>() < config.crossover_rate {
+            let (mut child_a, mut child_b) = if rng.random::<f64>() < config.crossover_rate {
                 crossover_children(
                     &parent_a.genome,
                     &parent_b.genome,
@@ -100,10 +100,10 @@ pub fn run_ga(
             } else {
                 (parent_a.genome.clone(), parent_b.genome.clone())
             };
-            if rng.r#gen::<f64>() < config.mutation_rate {
+            if rng.random::<f64>() < config.mutation_rate {
                 child_a = mutate_child(child_a, fitness_ctx.catalog, fix_program, fixed_parts, rng);
             }
-            if rng.r#gen::<f64>() < config.mutation_rate {
+            if rng.random::<f64>() < config.mutation_rate {
                 child_b = mutate_child(child_b, fitness_ctx.catalog, fix_program, fixed_parts, rng);
             }
             next.push(child_a);
@@ -155,7 +155,7 @@ fn build_initial_population(
     initial_programs: &[ExecutableProgram],
     fix_program: bool,
     fixed_parts: Option<[i64; 7]>,
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> Vec<Genome> {
     if fix_program {
         let Some(program) = initial_programs.first() else {
@@ -189,7 +189,7 @@ fn crossover_children(
     parent_b: &Genome,
     fix_program: bool,
     fixed_parts: Option<[i64; 7]>,
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> (Genome, Genome) {
     if fix_program {
         parent_a.crossover_parts(parent_b, rng)
@@ -205,7 +205,7 @@ fn mutate_child(
     catalog: &crate::catalog::PartCatalog,
     fix_program: bool,
     fixed_parts: Option<[i64; 7]>,
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> Genome {
     if fix_program {
         child.mutate_parts(catalog, rng)
@@ -220,7 +220,7 @@ pub fn initial_population(
     catalog: &crate::catalog::PartCatalog,
     population_size: usize,
     initial_programs: &[ExecutableProgram],
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> Vec<Genome> {
     let mut population = Vec::with_capacity(population_size);
     for program in initial_programs.iter().take(population_size) {
@@ -235,12 +235,12 @@ pub fn initial_population(
 fn tournament_select<'a>(
     ranked: &'a [RankedIndividual],
     tournament_size: usize,
-    rng: &mut impl Rng,
+    rng: &mut impl RngExt,
 ) -> &'a RankedIndividual {
     let size = tournament_size.max(1).min(ranked.len());
-    let mut best = &ranked[rng.gen_range(0..ranked.len())];
+    let mut best = &ranked[rng.random_range(0..ranked.len())];
     for _ in 1..size {
-        let candidate = &ranked[rng.gen_range(0..ranked.len())];
+        let candidate = &ranked[rng.random_range(0..ranked.len())];
         if candidate.fitness.fitness > best.fitness.fitness {
             best = candidate;
         }
@@ -308,7 +308,7 @@ mod tests {
             .collect();
         let catalog = PartCatalog::from_parts(parts, 9);
         let seeded = compile_executable_source("mine(); dump();").expect("compile");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let population = initial_population(&catalog, 4, &[seeded.clone()], &mut rng);
         assert_eq!(population.len(), 4);
         assert_eq!(population[0].program.actions(), seeded.actions());
@@ -326,7 +326,7 @@ mod tests {
             .collect();
         let catalog = PartCatalog::from_parts(parts, 9);
         let program = compile_executable_source("mine();").expect("compile");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let left = Genome::with_program(&catalog, program.clone(), &mut rng);
         let right = Genome::with_program(&catalog, program.clone(), &mut rng);
         let (child_a, child_b) = left.crossover_parts(&right, &mut rng);
@@ -378,7 +378,7 @@ mod tests {
             crossover_rate: 1.0,
             tournament_size: 2,
         };
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let ranked = run_ga(
             &config,
             &fitness_ctx,
@@ -431,7 +431,7 @@ mod tests {
             crossover_rate: 1.0,
             tournament_size: 2,
         };
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let ranked = run_ga(
             &config,
             &fitness_ctx,
@@ -492,7 +492,7 @@ mod tests {
             crossover_rate: 0.5,
             tournament_size: 2,
         };
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let ranked = run_ga(&config, &fitness_ctx, &[program], false, None, &mut rng);
         assert!(!ranked.is_empty());
         assert!(ranked[0].fitness.fitness.is_finite());
