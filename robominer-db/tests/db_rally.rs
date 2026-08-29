@@ -500,13 +500,25 @@ async fn next_wallet_claim_delay_seconds_uses_soonest_unclaimed_end_time() {
     let robot_id = insert_robot(&pool, user_id, &format!("{prefix}-robot"), "mine();", 1).await;
     let mining_area_id = insert_mining_area(&pool, &prefix, ore_price_id, ai_robot_id, 20).await;
 
-    let empty_delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 45)
-        .await
-        .expect("empty claim delay");
-    assert_eq!(
-        empty_delay, 45,
-        "with no unclaimed future runs, delay should fall back to max"
-    );
+    // Shared local DBs may already have finished unclaimed runs from play/other tests.
+    // Those shorten delay to 1s, so only assert the empty/future paths when the DB is clear.
+    let preexisting_ready: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM MiningQueue \
+         WHERE miningEndTime IS NOT NULL AND miningEndTime <= NOW() AND claimed = false",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("preexisting ready count");
+
+    if preexisting_ready == 0 {
+        let empty_delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 45)
+            .await
+            .expect("empty claim delay");
+        assert_eq!(
+            empty_delay, 45,
+            "with no unclaimed future runs, delay should fall back to max"
+        );
+    }
 
     let queue_id = insert_row_id(
         &pool,
@@ -519,18 +531,20 @@ async fn next_wallet_claim_delay_seconds_uses_soonest_unclaimed_end_time() {
     )
     .await;
 
-    let delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 60)
-        .await
-        .expect("claim delay with future queue");
-    assert!(
-        (25..=35).contains(&delay),
-        "expected ~30s until finish, got {delay}"
-    );
+    if preexisting_ready == 0 {
+        let delay = robominer_db::next_wallet_claim_delay_seconds(&pool, 60)
+            .await
+            .expect("claim delay with future queue");
+        assert!(
+            (25..=35).contains(&delay),
+            "expected ~30s until finish, got {delay}"
+        );
 
-    let capped = robominer_db::next_wallet_claim_delay_seconds(&pool, 10)
-        .await
-        .expect("capped claim delay");
-    assert_eq!(capped, 10, "delay must respect max_sleep_seconds");
+        let capped = robominer_db::next_wallet_claim_delay_seconds(&pool, 10)
+            .await
+            .expect("capped claim delay");
+        assert_eq!(capped, 10, "delay must respect max_sleep_seconds");
+    }
 
     sqlx::query(
         "UPDATE MiningQueue SET miningEndTime = TIMESTAMPADD(SECOND, -5, NOW()) WHERE id = ?",
@@ -562,6 +576,14 @@ async fn next_wallet_claim_delay_seconds_uses_soonest_unclaimed_end_time() {
         .await;
     let _ = sqlx::query("DELETE FROM User WHERE id = ?")
         .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM AIRobot WHERE id = ?")
+        .bind(ai_robot_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM OrePrice WHERE id = ?")
+        .bind(ore_price_id)
         .execute(&pool)
         .await;
 }

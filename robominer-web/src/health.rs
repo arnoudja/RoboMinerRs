@@ -60,7 +60,6 @@ fn plain(status: u16, reason: &'static str, body: &str) -> Response {
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
-    use std::sync::Arc;
 
     use super::health_response;
     use crate::ServerConfig;

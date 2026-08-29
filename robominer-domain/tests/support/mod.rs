@@ -1,3 +1,3 @@
 mod rally;
 
-pub use rally::{RallyScenario, RallyScenarioId, scenario};
+pub use rally::{RallyScenario, RallyScenarioId};

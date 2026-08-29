@@ -5,8 +5,7 @@ use std::collections::HashMap;
 
 use robominer_web::test_support::{
     MAX_ATTEMPTS_PER_LOGIN, MAX_MUTATIONS_PER_USER_ACTION, lock_auth_rate_limiter_for_tests,
-    record_auth_attempt, reset_auth_rate_limiter_for_tests, reset_mutation_rate_limiter_for_tests,
-    route,
+    reset_auth_rate_limiter_for_tests, reset_mutation_rate_limiter_for_tests, route,
 };
 use serial_test::serial;
 use support::{
