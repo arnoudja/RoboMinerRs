@@ -1272,15 +1272,15 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
 insert into MiningArea (id,   areaName,         orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
                 values (1902, 'Baratiem-Large', 19002,      160,   160,   4500,     21600,      25,      10,           160,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
-                         values (1901,         5,     25,     15),
-                                (1901,         5,     15,     15),
-                                (1901,         8,     25,     15),
-                                (1901,        10,     3,      4),
-                                (1901,        10,     3,      4),
-                                (1901,        10,     3,      4),
-                                (1901,        10,     3,      4),
-                                (1901,        10,     3,      4),
-                                (1901,        10,     3,      4);
+                         values (1902,         5,     25,     15),
+                                (1902,         5,     15,     15),
+                                (1902,         8,     25,     15),
+                                (1902,        10,     3,      4),
+                                (1902,        10,     3,      4),
+                                (1902,        10,     3,      4),
+                                (1902,        10,     3,      4),
+                                (1902,        10,     3,      4),
+                                (1902,        10,     3,      4);
 
 -- Etaxy
 insert into OrePrice (id, description) values (20001, 'Mining Area Etaxy-Small price') ON DUPLICATE KEY UPDATE description = VALUES(description);
