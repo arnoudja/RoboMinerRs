@@ -1,6 +1,6 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_row_id, unique_prefix};
+use crate::{insert_ore, insert_row_id, unique_prefix};
 
 pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
     let existing_default_parts: i64 = sqlx::query_scalar(
@@ -13,12 +13,7 @@ pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
         return;
     }
 
-    let ore_id = insert_row_id(
-        pool,
-        sqlx::query("INSERT INTO Ore (oreName) VALUES (?)")
-            .bind(format!("{}-ore", unique_prefix("rust-default"))),
-    )
-    .await;
+    let ore_id = insert_ore(pool, &format!("{}-ore", unique_prefix("rust-default"))).await;
     let ore_price_id = insert_row_id(
         pool,
         sqlx::query("INSERT INTO OrePrice (description) VALUES ('rust-default-price')"),

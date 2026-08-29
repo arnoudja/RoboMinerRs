@@ -50,11 +50,25 @@ pub async fn list_user_ids_with_claimable_mining_queues(
 
 /// Seconds until the next unclaimed mining run finishes, capped at `max_sleep_seconds`.
 ///
-/// When nothing is queued, returns `max_sleep_seconds`.
+/// When finished unclaimed runs are already ready, returns `1` so poll loops retry promptly
+/// without a busy-spin. When nothing is queued, returns `max_sleep_seconds`.
 pub async fn next_wallet_claim_delay_seconds(
     pool: &MySqlPool,
     max_sleep_seconds: u64,
 ) -> Result<u64, sqlx::Error> {
+    let ready_now: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) \
+         FROM MiningQueue \
+         WHERE MiningQueue.miningEndTime IS NOT NULL \
+           AND MiningQueue.miningEndTime <= NOW() \
+           AND MiningQueue.claimed = false",
+    )
+    .fetch_one(pool)
+    .await?;
+    if ready_now > 0 {
+        return Ok(1.min(max_sleep_seconds));
+    }
+
     let delay: Option<i64> = sqlx::query_scalar(
         "SELECT TIMESTAMPDIFF(SECOND, NOW(), MIN(MiningQueue.miningEndTime)) \
          FROM MiningQueue \
@@ -206,6 +220,7 @@ async fn claim_mining_queues_batch(
     let mut rewards = Vec::new();
     let mut lifetime_rows = Vec::new();
     let mut wallet_rows = Vec::new();
+    let mut area_updates: Vec<(ClaimableMiningQueue, Vec<ClaimableMiningOreResult>)> = Vec::new();
 
     for queue in claimable_queues {
         let queue_ore_results = ore_results_by_queue
@@ -226,9 +241,10 @@ async fn claim_mining_queues_batch(
             }
         }
 
-        update_mining_area_lifetime_results(transaction, queue, &queue_ore_results).await?;
+        area_updates.push((*queue, queue_ore_results));
     }
 
+    batch_update_mining_area_lifetime_results(transaction, &area_updates).await?;
     batch_upsert_robot_lifetime_results(transaction, &lifetime_rows).await?;
     batch_upsert_user_ore_assets_from_rewards(transaction, &wallet_rows).await?;
 
@@ -339,22 +355,56 @@ async fn batch_upsert_user_ore_assets_from_rewards(
 
     const CHUNK: usize = 64;
     for chunk in upsert_rows.chunks(CHUNK) {
-        for (user_id, ore_id, reward) in chunk {
-            sqlx::query(
-                "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
-                 VALUES (?, ?, LEAST(?, ?), ?) \
-                 ON DUPLICATE KEY UPDATE \
-                 amount = LEAST(maxAllowed, amount + ?)",
-            )
-            .bind(user_id)
-            .bind(ore_id)
-            .bind(reward)
-            .bind(INITIAL_ORE_WALLET_MAX)
-            .bind(INITIAL_ORE_WALLET_MAX)
-            .bind(reward)
-            .execute(&mut **transaction)
-            .await?;
+        if chunk.is_empty() {
+            continue;
         }
+
+        // Existing wallets need the raw reward on UPDATE; new rows need LEAST(reward, INITIAL).
+        // Use VALUES(amount) (MySQL + MariaDB) rather than INSERT ... AS new_row (MySQL-only;
+        // MariaDB MDEV-29919). Pre-check existence so multi-VALUES can bind raw reward
+        // for duplicates and the initial cap only for true inserts.
+        let pair_placeholders = chunk
+            .iter()
+            .map(|_| "(?, ?)")
+            .collect::<Vec<_>>()
+            .join(", ");
+        let existing_query = format!(
+            "SELECT userId, oreId FROM UserOreAsset WHERE (userId, oreId) IN ({pair_placeholders})"
+        );
+        let mut existing_builder = sqlx::query_as::<_, (i64, i64)>(&existing_query);
+        for (user_id, ore_id, _) in chunk {
+            existing_builder = existing_builder.bind(user_id).bind(ore_id);
+        }
+        let existing: std::collections::HashSet<(i64, i64)> = existing_builder
+            .fetch_all(&mut **transaction)
+            .await?
+            .into_iter()
+            .collect();
+
+        let value_placeholders = chunk
+            .iter()
+            .map(|_| "(?, ?, ?, ?)")
+            .collect::<Vec<_>>()
+            .join(", ");
+        let query = format!(
+            "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES {value_placeholders} \
+             ON DUPLICATE KEY UPDATE \
+             amount = LEAST(maxAllowed, amount + VALUES(amount))"
+        );
+        let mut query_builder = sqlx::query(&query);
+        for (user_id, ore_id, reward) in chunk {
+            let amount_value = if existing.contains(&(*user_id, *ore_id)) {
+                *reward
+            } else {
+                (*reward).min(INITIAL_ORE_WALLET_MAX)
+            };
+            query_builder = query_builder
+                .bind(user_id)
+                .bind(ore_id)
+                .bind(amount_value)
+                .bind(INITIAL_ORE_WALLET_MAX);
+        }
+        query_builder.execute(&mut **transaction).await?;
     }
 
     Ok(())
@@ -442,56 +492,104 @@ async fn list_claimable_mining_ore_results_batch(
         .collect())
 }
 
-async fn update_mining_area_lifetime_results(
+async fn batch_update_mining_area_lifetime_results(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    queue: &ClaimableMiningQueue,
-    ore_results: &[ClaimableMiningOreResult],
+    area_updates: &[(ClaimableMiningQueue, Vec<ClaimableMiningOreResult>)],
 ) -> Result<(), sqlx::Error> {
-    let ore_ids = sqlx::query_scalar::<_, i64>(
-        "SELECT DISTINCT oreId \
-         FROM MiningAreaOreSupply \
-         WHERE miningAreaId = ? \
-         ORDER BY oreId",
-    )
-    .bind(queue.mining_area_id)
-    .fetch_all(&mut **transaction)
-    .await?;
+    if area_updates.is_empty() {
+        return Ok(());
+    }
 
-    sqlx::query(
-        "UPDATE MiningAreaLifetimeResult \
-         SET totalRuns = totalRuns + 1 \
-         WHERE miningAreaId = ?",
-    )
-    .bind(queue.mining_area_id)
-    .execute(&mut **transaction)
-    .await?;
+    let mut runs_by_area: HashMap<i64, u32> = HashMap::new();
+    let mut amount_by_area_ore: HashMap<(i64, i64), i32> = HashMap::new();
+    let mut area_ids: Vec<i64> = Vec::new();
 
-    for ore_id in ore_ids {
-        let amount = ore_results
-            .iter()
-            .find(|ore_result| ore_result.ore_id == ore_id)
-            .map(|ore_result| ore_result.amount)
-            .unwrap_or(0);
+    for (queue, ore_results) in area_updates {
+        *runs_by_area.entry(queue.mining_area_id).or_default() += 1;
+        if !area_ids.contains(&queue.mining_area_id) {
+            area_ids.push(queue.mining_area_id);
+        }
+        for ore_result in ore_results {
+            *amount_by_area_ore
+                .entry((queue.mining_area_id, ore_result.ore_id))
+                .or_default() += ore_result.amount;
+        }
+    }
 
-        sqlx::query(
-            "INSERT INTO MiningAreaLifetimeResult \
-             (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
-             VALUES (?, ?, ?, ?, \
-                     COALESCE((SELECT totalRuns \
-                               FROM MiningAreaLifetimeResult AS existing \
-                               WHERE existing.miningAreaId = ? \
-                               LIMIT 1), 1)) \
-             ON DUPLICATE KEY UPDATE \
-             totalAmount = totalAmount + VALUES(totalAmount), \
-             totalContainerSize = totalContainerSize + VALUES(totalContainerSize)",
+    let mut supply_ores_by_area: HashMap<i64, Vec<i64>> = HashMap::new();
+    for area_id in &area_ids {
+        let ore_ids = sqlx::query_scalar::<_, i64>(
+            "SELECT DISTINCT oreId \
+             FROM MiningAreaOreSupply \
+             WHERE miningAreaId = ? \
+             ORDER BY oreId",
         )
-        .bind(queue.mining_area_id)
-        .bind(ore_id)
-        .bind(amount)
-        .bind(queue.robot_max_ore)
-        .bind(queue.mining_area_id)
+        .bind(area_id)
+        .fetch_all(&mut **transaction)
+        .await?;
+        supply_ores_by_area.insert(*area_id, ore_ids);
+    }
+
+    let mut container_by_area_ore: HashMap<(i64, i64), i32> = HashMap::new();
+    for (queue, _) in area_updates {
+        let Some(supply_ores) = supply_ores_by_area.get(&queue.mining_area_id) else {
+            continue;
+        };
+        for ore_id in supply_ores {
+            *container_by_area_ore
+                .entry((queue.mining_area_id, *ore_id))
+                .or_default() += queue.robot_max_ore;
+        }
+    }
+
+    for (area_id, run_count) in &runs_by_area {
+        sqlx::query(
+            "UPDATE MiningAreaLifetimeResult \
+             SET totalRuns = totalRuns + ? \
+             WHERE miningAreaId = ?",
+        )
+        .bind(run_count)
+        .bind(area_id)
         .execute(&mut **transaction)
         .await?;
+    }
+
+    for area_id in &area_ids {
+        let run_count = runs_by_area.get(area_id).copied().unwrap_or(0);
+        let supply_ores = supply_ores_by_area
+            .get(area_id)
+            .cloned()
+            .unwrap_or_default();
+        for ore_id in supply_ores {
+            let amount = amount_by_area_ore
+                .get(&(*area_id, ore_id))
+                .copied()
+                .unwrap_or(0);
+            let container = container_by_area_ore
+                .get(&(*area_id, ore_id))
+                .copied()
+                .unwrap_or(0);
+            sqlx::query(
+                "INSERT INTO MiningAreaLifetimeResult \
+                 (miningAreaId, oreId, totalAmount, totalContainerSize, totalRuns) \
+                 VALUES (?, ?, ?, ?, \
+                         COALESCE((SELECT totalRuns \
+                                   FROM MiningAreaLifetimeResult AS existing \
+                                   WHERE existing.miningAreaId = ? \
+                                   LIMIT 1), ?)) \
+                 ON DUPLICATE KEY UPDATE \
+                 totalAmount = totalAmount + VALUES(totalAmount), \
+                 totalContainerSize = totalContainerSize + VALUES(totalContainerSize)",
+            )
+            .bind(area_id)
+            .bind(ore_id)
+            .bind(amount)
+            .bind(container)
+            .bind(area_id)
+            .bind(run_count)
+            .execute(&mut **transaction)
+            .await?;
+        }
     }
 
     Ok(())

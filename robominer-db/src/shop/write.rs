@@ -103,7 +103,7 @@ pub async fn sell_all_unassigned_robot_parts(
     let mut sold_count = 0;
 
     for (robot_part_id, unassigned) in sellable_parts {
-        match sell_unassigned_robot_parts_in_transaction(
+        match sell_unassigned_robot_parts_counted(
             &mut transaction,
             user_id,
             robot_part_id,
@@ -133,7 +133,7 @@ pub async fn sell_all_unassigned_robot_parts(
     db_ok(SellAllUnassignedRobotPartsResult { sold_count })
 }
 
-async fn sell_unassigned_robot_parts_in_transaction(
+async fn sell_unassigned_robot_parts_counted(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
     robot_part_id: i64,
@@ -147,6 +147,26 @@ async fn sell_unassigned_robot_parts_in_transaction(
         return db_reject(RobotPartTransactionRejection::UnknownRobotPart);
     };
 
+    // Caller already validated unassigned stock under the same transaction
+    // (assets locked with FOR UPDATE in list_user_sellable_robot_part_counts).
+    remove_user_robot_part_assets(transaction, user_id, robot_part_id, count).await?;
+
+    let costs = list_ore_price_amounts(transaction, ore_price_id).await?;
+    refund_half_ore_costs_scaled(transaction, user_id, &costs, count).await?;
+
+    db_ok(count)
+}
+
+async fn sell_unassigned_robot_parts_in_transaction(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    user_id: i64,
+    robot_part_id: i64,
+    count: i32,
+) -> Result<DbOutcome<i32, RobotPartTransactionRejection>, sqlx::Error> {
+    if count <= 0 {
+        return db_ok(0);
+    }
+
     let total_owned = user_robot_part_total_owned(transaction, user_id, robot_part_id).await?;
     let usage_count = user_robot_part_usage_count(transaction, user_id, robot_part_id).await?;
     let unassigned = unassigned_robot_part_count(total_owned, usage_count);
@@ -155,12 +175,7 @@ async fn sell_unassigned_robot_parts_in_transaction(
         return db_reject(RobotPartTransactionRejection::NoUnassignedRobotPart);
     }
 
-    remove_user_robot_part_assets(transaction, user_id, robot_part_id, count).await?;
-
-    let costs = list_ore_price_amounts(transaction, ore_price_id).await?;
-    refund_half_ore_costs_scaled(transaction, user_id, &costs, count).await?;
-
-    db_ok(count)
+    sell_unassigned_robot_parts_counted(transaction, user_id, robot_part_id, count).await
 }
 
 async fn sell_one_unassigned_robot_part_in_transaction(

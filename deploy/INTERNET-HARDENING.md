@@ -101,6 +101,11 @@ limited in-app: **30 requests per 60 seconds per user**, keyed by action family
 the limit returns HTTP `429` with a generic retry message. Proxy rate limits
 remain defense in depth; tune both layers for your player base.
 
+**Multi-instance note:** in-process limiters (`robominer-web` `rate_limit.rs`)
+are per process. Each replica has its own counters, so effective capacity scales
+roughly with replica count. Keep reverse-proxy rate limiting as the shared
+control plane for multi-instance deploys (HSTS remains proxy-owned as well).
+
 `deploy/reverse-proxy/nginx.conf` also includes a `limit_req` zone on
 `POST /login` (5 requests/minute per IP, burst 3). Tune for your player base.
 

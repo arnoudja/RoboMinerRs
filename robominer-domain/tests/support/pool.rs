@@ -36,15 +36,6 @@ impl PoolScenarioId {
     }
 }
 
-pub fn scenario(name: &str) -> PoolScenario {
-    PoolScenarioId::ALL
-        .iter()
-        .copied()
-        .find(|id| id.as_str() == name)
-        .unwrap_or_else(|| panic!("unknown pool golden scenario: {name}"))
-        .build()
-}
-
 fn single_miner_pool_seed0() -> PoolScenario {
     let pool_id = 2001;
     let mining_area_id = 12001;

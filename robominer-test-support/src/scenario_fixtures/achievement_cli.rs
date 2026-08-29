@@ -1,6 +1,6 @@
 use robominer_db::MySqlPool;
 
-use crate::{insert_row_id, unique_prefix};
+use crate::{insert_ore, insert_row_id, unique_prefix};
 
 pub struct AchievementCliFixture {
     pub user_id: i64,
@@ -34,11 +34,7 @@ impl AchievementCliFixture {
                 .bind("test-password"),
         )
         .await;
-        let ore_id = insert_row_id(
-            pool,
-            sqlx::query("INSERT INTO Ore (oreName) VALUES (?)").bind(format!("{prefix}-ore")),
-        )
-        .await;
+        let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;
         let achievement_id = insert_row_id(
             pool,
             sqlx::query("INSERT INTO Achievement (title, description) VALUES (?, ?)")

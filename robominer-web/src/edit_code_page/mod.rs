@@ -22,27 +22,26 @@ pub(super) struct EditCodeProgramSource {
 }
 
 pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> Response {
-    let session = match crate::page_context::PageSession::require(
+    crate::page_context::with_session_page(
         request,
         config,
         "Edit code requires ROBOMINER_DATABASE_URL to be configured",
-    ) {
-        Ok(session) => session,
-        Err(response) => return response,
-    };
+        |session| async move {
+            let result = load_edit_code_page_state(session.pool, session.user_id, request).await;
 
-    let result = load_edit_code_page_state(session.pool, session.user_id, request).await;
-
-    match result {
-        Ok(state) => {
-            session
-                .html_with_hud(request, config, |username, hud| {
-                    render::render_edit_code_page(username, hud, &state)
-                })
-                .await
-        }
-        Err(error) => crate::page_context::page_load_error("edit code", error),
-    }
+            match result {
+                Ok(state) => {
+                    session
+                        .html_with_hud(request, config, |username, hud| {
+                            render::render_edit_code_page(username, hud, &state)
+                        })
+                        .await
+                }
+                Err(error) => crate::page_context::page_load_error("edit code", error),
+            }
+        },
+    )
+    .await
 }
 
 /// Map a `create_program_source` / `update_program_source` domain failure into a

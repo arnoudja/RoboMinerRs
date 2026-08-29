@@ -87,15 +87,6 @@ impl RallyScenarioId {
     }
 }
 
-pub fn scenario(name: &str) -> RallyScenario {
-    RallyScenarioId::ALL
-        .iter()
-        .copied()
-        .find(|id| id.as_str() == name)
-        .unwrap_or_else(|| panic!("unknown rally golden scenario: {name}"))
-        .build()
-}
-
 fn single_miner_seed0() -> RallyScenario {
     let mut area = golden_mining_area_record(1001);
     area.max_moves = 3;
