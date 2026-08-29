@@ -4,8 +4,10 @@
             </p>
             <p class="helptext">
                 The program loops until the battery is empty or the mining session ends.
-                A common first fix is repeated mining: replace <code>mine();</code> with <code>while (mine());</code>
-                so the robot clears ore from the current tile instead of skipping leftovers.
+                After the Enhanced Memory Module from step 4 is applied, replace
+                <code>mine();</code> with <code>while (mine());</code> so the program is
+                <code>move(1); while (mine());</code>.
+                That compiled size is 5. Starter memory 4 rejects it with <strong>Not enough memory</strong>.
             </p>
             <p class="helptext">
                 Click <strong>Save program</strong> after editing.
