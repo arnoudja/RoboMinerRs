@@ -78,6 +78,15 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         None,
     );
     body.push_str(r#"<button type="submit" class="auth-submit">Save changes</button>"#);
+    body.push_str("</form>");
+    body.push_str(r#"<h2 class="account-section-title">Sessions</h2>"#);
+    body.push_str(
+        r#"<p class="account-section-hint">Invalidate signed-in sessions on other browsers and devices. You stay signed in here.</p>"#,
+    );
+    body.push_str(r#"<form class="account-form" action="account" method="post">"#);
+    body.push_str(
+        r#"<button type="submit" class="auth-submit" name="logoutAllDevices" value="1">Log out all devices</button>"#,
+    );
     body.push_str("</form></div></div></div>");
     render_password_toggle_script(&mut body);
 

@@ -15,12 +15,22 @@ pub(super) struct LoginPageState {
     pub(super) return_to: Option<String>,
 }
 
-pub(super) fn logoff_page(request: &Request) -> Response {
+pub(super) async fn logoff_page(request: &Request, config: &ServerConfig) -> Response {
     if is_post(request) {
         if let Some(user_id) = request_user_id(request)
             && let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id)
         {
             return response;
+        }
+        if let Some(user_id) = request_user_id(request)
+            && let Some(pool) = config.database_pool.as_ref()
+            && let Err(error) = robominer_db::bump_user_session_version(pool, user_id).await
+        {
+            tracing::error!(%error, user_id, "failed to bump session version on logoff");
+            return crate::page_context::page_load_error(
+                "logoff",
+                crate::page_context::PageLoadError::from(error),
+            );
         }
         return logoff_response_clearing_cookies();
     }

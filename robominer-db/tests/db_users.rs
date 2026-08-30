@@ -350,6 +350,44 @@ async fn update_user_account_bumps_session_version_only_when_password_changes() 
     cleanup_created_user(&pool, user_id).await;
 }
 
+#[tokio::test]
+#[serial]
+async fn bump_user_session_version_increments_and_returns_new_value() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-db-bump-session");
+    let username = format!("{prefix}-user");
+    let email = format!("{prefix}@example.invalid");
+    let user_id = insert_user_with_credentials(&pool, &username, &email, "test-password-1").await;
+
+    let bumped = robominer_db::bump_user_session_version(&pool, user_id)
+        .await
+        .expect("bump should not fail at sql layer")
+        .expect("user should exist");
+    assert_eq!(bumped, 1);
+
+    let stored: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("load session version");
+    assert_eq!(stored, 1);
+
+    assert!(
+        robominer_db::bump_user_session_version(&pool, user_id + 999_999)
+            .await
+            .expect("missing user should not be sql error")
+            .is_none()
+    );
+
+    cleanup_created_user(&pool, user_id).await;
+}
+
 async fn cleanup_created_user(pool: &robominer_db::MySqlPool, user_id: i64) {
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
         .bind(user_id)

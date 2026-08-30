@@ -81,8 +81,14 @@ async fn post_logoff_through_route_clears_session_and_blocks_protected_pages() {
         .await
         .expect("session version");
     assert_eq!(
-        session_version, 0,
-        "logoff should not bump sessionVersion; only cookies are cleared"
+        session_version, 1,
+        "logoff should bump sessionVersion so stolen cookies are invalid"
+    );
+
+    let stale_queue = route(&get_request("/miningQueue", Some(&session_cookie)), &config).await;
+    assert_eq!(
+        stale_queue.status, 302,
+        "pre-logoff session cookie must be rejected after sessionVersion bump"
     );
 
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")

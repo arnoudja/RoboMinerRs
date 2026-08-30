@@ -50,7 +50,7 @@ pub(super) async fn dispatch(request: &Request, config: &ServerConfig) -> Respon
             leaderboard_page::leaderboard_page(request, config).await
         }
         "/login" | "/Login" => auth_pages::login_page(request, config).await,
-        "/logoff" | "/Logoff" => auth_pages::logoff_page(request),
+        "/logoff" | "/Logoff" => auth_pages::logoff_page(request, config).await,
         "/miningQueue" | "/MiningQueue" => {
             mining_queue_page::mining_queue_page(request, config).await
         }

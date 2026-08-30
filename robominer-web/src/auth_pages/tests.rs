@@ -22,9 +22,15 @@ fn request(path: &str) -> Request {
     }
 }
 
-#[test]
-fn get_logoff_page_does_not_expire_session_cookies() {
-    let response = logoff_page(&request("/logoff"));
+#[tokio::test(flavor = "current_thread")]
+async fn get_logoff_page_does_not_expire_session_cookies() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: false,
+        trust_proxy: false,
+    };
+    let response = logoff_page(&request("/logoff"), &config).await;
     let cookie_headers: Vec<_> = response
         .headers
         .iter()
@@ -48,11 +54,17 @@ fn get_logoff_page_does_not_expire_session_cookies() {
     );
 }
 
-#[test]
-fn post_logoff_without_session_expires_legacy_cookies() {
+#[tokio::test(flavor = "current_thread")]
+async fn post_logoff_without_session_expires_legacy_cookies() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: false,
+        trust_proxy: false,
+    };
     let mut request = request("/logoff");
     request.method = "POST".to_string();
-    let response = logoff_page(&request);
+    let response = logoff_page(&request, &config).await;
     let cookie_headers: Vec<_> = response
         .headers
         .iter()
@@ -269,11 +281,9 @@ fn auth_redirect_sets_rust_auth_and_remember_cookies() {
         |header| header.starts_with("robominer_username=User%20Name;")
             && header.contains("HttpOnly")
     ));
-    assert!(
-        cookie_headers
-            .iter()
-            .any(|header| header.starts_with("remember=user@example.com; Max-Age=2678400;"))
-    );
+    assert!(cookie_headers.iter().any(|header| header.starts_with(
+        "remember=user@example.com; Max-Age=2678400; Path=/; HttpOnly; SameSite=Lax"
+    )));
 }
 
 #[test]

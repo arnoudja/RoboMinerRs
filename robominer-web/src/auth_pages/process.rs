@@ -214,12 +214,12 @@ pub(super) fn remember_cookie(login_name: &str, remember: bool) -> Option<String
     let secure = session::secure_cookie_suffix();
     if remember {
         Some(format!(
-            "remember={}; Max-Age=2678400; Path=/; SameSite=Lax{secure}",
+            "remember={}; Max-Age=2678400; Path=/; HttpOnly; SameSite=Lax{secure}",
             cookie_encode(login_name)
         ))
     } else {
         Some(format!(
-            "remember=; Max-Age=0; Path=/; SameSite=Lax{secure}"
+            "remember=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{secure}"
         ))
     }
 }

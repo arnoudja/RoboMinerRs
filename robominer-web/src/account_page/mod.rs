@@ -86,6 +86,10 @@ fn is_account_update_post(request: &Request) -> bool {
     is_post(request) && request.form.contains_key("username")
 }
 
+fn is_logout_all_devices_post(request: &Request) -> bool {
+    is_post(request) && request.form.contains_key("logoutAllDevices")
+}
+
 fn account_rate_limit_key(user_id: i64) -> String {
     format!("user:{user_id}")
 }
@@ -113,7 +117,17 @@ async fn load_account_page_state(
     let mut error_message = None;
     let mut reissue_session_version = None;
 
-    if is_post(request) && request.form.contains_key("username") {
+    if is_logout_all_devices_post(request) {
+        match robominer_db::bump_user_session_version(pool, user_id).await? {
+            Some(session_version) => {
+                message = Some("Signed out of all other devices".to_string());
+                reissue_session_version = Some(session_version);
+            }
+            None => {
+                error_message = Some("Unknown user".to_string());
+            }
+        }
+    } else if is_post(request) && request.form.contains_key("username") {
         let submitted_username = request.form.get("username").cloned().unwrap_or_default();
         let submitted_email = request.form.get("email").cloned().unwrap_or_default();
         let current_password = request

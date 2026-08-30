@@ -118,6 +118,8 @@ fn account_rendering_preserves_form_contract_and_escapes_fields() {
             r#"<p class="auth-banner-success">Updated &lt;ok&gt;</p>"#,
             r#"<p class="auth-banner-error">Error &lt;bad&gt;</p>"#,
             r#"<button type="submit" class="auth-submit">Save changes</button>"#,
+            r#"name="logoutAllDevices" value="1""#,
+            r#"Log out all devices"#,
             r#"class="auth-password-toggle""#,
             r#"src="js/common/password_toggle.js?v="#,
             // Account reuses auth form chrome; both sheets must load.
