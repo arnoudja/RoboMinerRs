@@ -9,7 +9,7 @@ pub struct WebSettings {
     pub session_secret: Option<String>,
     pub session_ttl_secs: Option<String>,
     pub session_ttl_hours: Option<String>,
-    /// `None` means auto: Secure when non-loopback bind or `trust_proxy`.
+    /// `None` means unset → Secure cookies stay off (set `securecookies 1` for HTTPS).
     pub secure_cookies: Option<bool>,
     pub allow_signup: bool,
     pub trust_proxy: bool,
@@ -52,9 +52,22 @@ pub fn web_settings(config: &HashMap<String, String>, default_static_root: &Path
             env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET")
                 .ok()
                 .as_deref(),
-            robominer_db::config_value(config, "allowinsecuredevsecret"),
+            first_config_value(
+                config,
+                &[
+                    "allowinsecuredevsecret",
+                    "allow-insecure-dev-secret",
+                    "insecure-dev-secret",
+                    "insecuredevsecret",
+                ],
+            ),
         ),
     }
+}
+
+fn first_config_value<'a>(config: &'a HashMap<String, String>, keys: &[&str]) -> Option<&'a str> {
+    keys.iter()
+        .find_map(|key| robominer_db::config_value(config, key))
 }
 
 pub(crate) fn parse_bool_setting(env_value: Option<&str>, config_value: Option<&str>) -> bool {
@@ -187,6 +200,26 @@ mod tests {
         }
         if env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").is_err() {
             assert!(!settings.allow_insecure_dev_secret);
+        }
+    }
+
+    #[test]
+    fn web_settings_accepts_insecure_dev_secret_aliases() {
+        for key in [
+            "allowinsecuredevsecret",
+            "allow-insecure-dev-secret",
+            "insecure-dev-secret",
+            "insecuredevsecret",
+        ] {
+            let mut config = HashMap::new();
+            config.insert(key.to_string(), "1".to_string());
+            let settings = web_settings(&config, Path::new("/default/static"));
+            if env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").is_err() {
+                assert!(
+                    settings.allow_insecure_dev_secret,
+                    "config key {key} should enable insecure dev secret"
+                );
+            }
         }
     }
 }

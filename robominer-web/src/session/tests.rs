@@ -62,12 +62,11 @@ fn validate_trust_proxy_bind_requires_loopback() {
 }
 
 #[test]
-fn resolve_secure_cookies_auto_enables_only_for_public_bind() {
+fn resolve_secure_cookies_defaults_off_unless_explicit() {
     assert!(!super::resolve_secure_cookies(None, "127.0.0.1", false));
-    // trust_proxy alone must not force Secure: local HTTP + trustproxy is common
-    // in copied production configs and would break login CSRF cookies.
     assert!(!super::resolve_secure_cookies(None, "127.0.0.1", true));
-    assert!(super::resolve_secure_cookies(None, "0.0.0.0", false));
+    // LAN HTTP binds must not force Secure — browsers would drop CSRF cookies.
+    assert!(!super::resolve_secure_cookies(None, "0.0.0.0", false));
     assert!(!super::resolve_secure_cookies(Some(false), "0.0.0.0", true));
     assert!(super::resolve_secure_cookies(
         Some(true),

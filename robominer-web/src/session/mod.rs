@@ -75,16 +75,15 @@ pub fn validate_trust_proxy_bind(host: &str, trust_proxy: bool) -> Result<(), &'
     Ok(())
 }
 
-/// Resolve the Secure cookie flag: explicit setting wins; otherwise enable only
-/// when binding publicly. Loopback + `trust_proxy` (TLS at the reverse proxy)
-/// still needs an explicit `securecookies 1` so plain-HTTP local access keeps
-/// working when developers copy production `trustproxy` settings.
+/// Resolve the Secure cookie flag. Explicit `securecookies` / env wins; when
+/// unset, default **off** so LAN HTTP binds (`0.0.0.0`) and loopback keep
+/// working. Production HTTPS must set `securecookies 1` explicitly.
 pub fn resolve_secure_cookies(
     configured: Option<bool>,
-    bind_host: &str,
+    _bind_host: &str,
     _trust_proxy: bool,
 ) -> bool {
-    configured.unwrap_or_else(|| !is_local_bind_host(bind_host))
+    configured.unwrap_or(false)
 }
 
 pub fn configure_session_secret(secret: &str) -> Result<(), String> {
