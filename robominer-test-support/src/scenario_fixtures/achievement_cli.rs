@@ -93,6 +93,7 @@ impl AchievementCliFixture {
             database_url.to_string(),
             "achievement".to_string(),
             "claim-step".to_string(),
+            "--i-understand".to_string(),
             "--user-id".to_string(),
             self.user_id.to_string(),
             "--achievement-id".to_string(),

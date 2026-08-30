@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, ensure};
 
-use super::ensure_positive_user_id;
+use super::{ensure_destructive_confirmed, ensure_positive_user_id};
 use crate::achievement::{achievement_page_states, achievement_states, claim_achievement_step};
 use crate::cli::AchievementCommand;
 use crate::database::connect_database;
@@ -16,8 +16,10 @@ pub(crate) async fn dispatch_achievement(
         AchievementCommand::ClaimStep {
             user_id,
             achievement_id,
+            i_understand,
         } => {
             ensure_positive_user_id(user_id)?;
+            ensure_destructive_confirmed(i_understand, "achievement claim-step")?;
             ensure!(
                 achievement_id > 0,
                 "--achievement-id must be greater than zero"

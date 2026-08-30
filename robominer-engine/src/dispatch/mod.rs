@@ -28,3 +28,11 @@ fn ensure_positive_user_id(user_id: i64) -> Result<()> {
     ensure!(user_id > 0, "--user-id must be greater than zero");
     Ok(())
 }
+
+fn ensure_destructive_confirmed(i_understand: bool, action: &str) -> Result<()> {
+    ensure!(
+        i_understand,
+        "{action} mutates another player's account/economy; pass --i-understand to confirm"
+    );
+    Ok(())
+}

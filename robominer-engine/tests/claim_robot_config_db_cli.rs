@@ -21,6 +21,7 @@ async fn claim_results_updates_assets_totals_and_pending_changes() {
         database_url,
         "mining".to_string(),
         "claim-results".to_string(),
+        "--i-understand".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);
@@ -61,6 +62,7 @@ async fn claim_results_includes_runs_whose_end_time_equals_now() {
         database_url,
         "mining".to_string(),
         "claim-results".to_string(),
+        "--i-understand".to_string(),
         "--user-id".to_string(),
         fixture.user_id.to_string(),
     ]);

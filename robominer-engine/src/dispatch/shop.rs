@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, ensure};
 
-use super::ensure_positive_user_id;
+use super::{ensure_destructive_confirmed, ensure_positive_user_id};
 use crate::cli::ShopCommand;
 use crate::database::connect_database;
 use crate::shop::{buy_robot_part, sell_robot_part, shop_catalog_states, shop_robot_part_states};
@@ -16,8 +16,10 @@ pub(crate) async fn dispatch_shop(
         ShopCommand::Buy {
             user_id,
             robot_part_id,
+            i_understand,
         } => {
             ensure_positive_user_id(user_id)?;
+            ensure_destructive_confirmed(i_understand, "shop buy")?;
             ensure!(
                 robot_part_id > 0,
                 "--robot-part-id must be greater than zero"
@@ -35,8 +37,10 @@ pub(crate) async fn dispatch_shop(
         ShopCommand::Sell {
             user_id,
             robot_part_id,
+            i_understand,
         } => {
             ensure_positive_user_id(user_id)?;
+            ensure_destructive_confirmed(i_understand, "shop sell")?;
             ensure!(
                 robot_part_id > 0,
                 "--robot-part-id must be greater than zero"

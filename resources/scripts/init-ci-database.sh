@@ -84,6 +84,8 @@ require_command sed
 wait_for_mysql
 
 echo "Ensuring database user ${MYSQL_USER}@localhost exists..."
+# CI/local convenience: GRANT ALL so migrate + app share one user.
+# Production should use least privilege (see deploy/INTERNET-HARDENING.md §6).
 mysql_root <<EOF
 CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
 CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';

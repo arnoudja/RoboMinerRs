@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, ensure};
 
-use super::ensure_positive_user_id;
+use super::{ensure_destructive_confirmed, ensure_positive_user_id};
 use crate::cli::UserCommand;
 use crate::database::connect_database;
 use crate::user::{
@@ -44,12 +44,14 @@ pub(crate) async fn dispatch_user(
             username,
             email,
             password,
+            i_understand,
         } => {
             ensure_positive_user_id(user_id)?;
             ensure!(!username.is_empty(), "--username must not be empty");
             ensure!(!email.is_empty(), "--email must not be empty");
             if let Some(password) = &password {
                 ensure!(!password.is_empty(), "--password must not be empty");
+                ensure_destructive_confirmed(i_understand, "user update-account --password")?;
             }
             let pool = connect_database(database_url, config).await?;
             update_user_account(

@@ -57,6 +57,10 @@ pub(crate) enum MiningCommand {
     ClaimResults {
         #[arg(long)]
         user_id: i64,
+
+        /// Confirm intentional wallet claim for a specific user.
+        #[arg(long)]
+        i_understand: bool,
     },
     ClaimAll {
         #[arg(long)]
@@ -142,6 +146,10 @@ pub(crate) enum ShopCommand {
 
         #[arg(long)]
         robot_part_id: i64,
+
+        /// Confirm intentional shop mutation for a specific user.
+        #[arg(long)]
+        i_understand: bool,
     },
     Sell {
         #[arg(long)]
@@ -149,6 +157,10 @@ pub(crate) enum ShopCommand {
 
         #[arg(long)]
         robot_part_id: i64,
+
+        /// Confirm intentional shop mutation for a specific user.
+        #[arg(long)]
+        i_understand: bool,
     },
     RobotPartStates {
         #[arg(long)]
@@ -310,6 +322,10 @@ pub(crate) enum UserCommand {
 
         #[arg(long)]
         password: Option<String>,
+
+        /// Required when `--password` is set (resets credentials / invalidates sessions).
+        #[arg(long)]
+        i_understand: bool,
     },
     VerifyLogin {
         #[arg(long)]
@@ -335,6 +351,10 @@ pub(crate) enum AchievementCommand {
 
         #[arg(long)]
         achievement_id: i64,
+
+        /// Confirm intentional achievement claim for a specific user.
+        #[arg(long)]
+        i_understand: bool,
     },
     States {
         #[arg(long)]

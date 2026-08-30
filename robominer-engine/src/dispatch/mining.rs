@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, ensure};
 
-use super::ensure_positive_user_id;
+use super::{ensure_destructive_confirmed, ensure_positive_user_id};
 use crate::cli::MiningCommand;
 use crate::database::connect_database;
 use crate::mining::{
@@ -17,8 +17,12 @@ pub(crate) async fn dispatch_mining(
     command: MiningCommand,
 ) -> Result<()> {
     match command {
-        MiningCommand::ClaimResults { user_id } => {
+        MiningCommand::ClaimResults {
+            user_id,
+            i_understand,
+        } => {
             ensure_positive_user_id(user_id)?;
+            ensure_destructive_confirmed(i_understand, "mining claim-results")?;
             let pool = connect_database(database_url, config).await?;
             claim_results(&pool, user_id).await
         }
