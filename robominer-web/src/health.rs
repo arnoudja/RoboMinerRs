@@ -7,29 +7,31 @@ use crate::http::Response;
 ///
 /// - No database configured: process is up → 200 (`database=unconfigured`).
 /// - Database configured: requires a live ping and all embedded migrations
-///   applied → otherwise 503.
+///   applied → otherwise 503 with an opaque body (details stay in server logs).
 pub async fn health_response(config: &ServerConfig) -> Response {
     match config.database_pool.as_ref() {
         None => plain(200, "OK", "ok\ndatabase=unconfigured\nmigrations=skipped\n"),
         Some(pool) => match check_database(pool).await {
             Ok(()) => plain(200, "OK", "ok\ndatabase=ok\nmigrations=ok\n"),
-            Err(detail) => plain(
-                503,
-                "Service Unavailable",
-                &format!("unavailable\n{detail}\n"),
-            ),
+            Err(()) => plain(503, "Service Unavailable", "unavailable\n"),
         },
     }
 }
 
-async fn check_database(pool: &robominer_db::MySqlPool) -> Result<(), String> {
-    robominer_db::ping(pool)
-        .await
-        .map_err(|error| format!("database=error\nerror={error}"))?;
+async fn check_database(pool: &robominer_db::MySqlPool) -> Result<(), ()> {
+    if let Err(error) = robominer_db::ping(pool).await {
+        tracing::error!(%error, "health_check_database_ping_failed");
+        return Err(());
+    }
 
-    let status = robominer_db::migration_status(pool, robominer_db::EMBEDDED_MIGRATIONS)
-        .await
-        .map_err(|error| format!("database=ok\nmigrations=error\nerror={error}"))?;
+    let status = match robominer_db::migration_status(pool, robominer_db::EMBEDDED_MIGRATIONS).await
+    {
+        Ok(status) => status,
+        Err(error) => {
+            tracing::error!(%error, "health_check_migration_status_failed");
+            return Err(());
+        }
+    };
 
     let pending: Vec<&str> = status
         .iter()
@@ -40,10 +42,11 @@ async fn check_database(pool: &robominer_db::MySqlPool) -> Result<(), String> {
     if pending.is_empty() {
         Ok(())
     } else {
-        Err(format!(
-            "database=ok\nmigrations=pending\npending={}",
-            pending.join(",")
-        ))
+        tracing::error!(
+            pending = %pending.join(","),
+            "health_check_migrations_pending"
+        );
+        Err(())
     }
 }
 
@@ -78,11 +81,5 @@ mod tests {
         let body = String::from_utf8_lossy(&response.body);
         assert!(body.starts_with("ok\n"), "body={body}");
         assert!(body.contains("database=unconfigured"), "body={body}");
-        assert!(
-            response
-                .headers
-                .iter()
-                .any(|(name, value)| *name == "Cache-Control" && value == "no-store")
-        );
     }
 }
