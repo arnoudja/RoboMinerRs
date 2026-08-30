@@ -38,13 +38,14 @@ trustproxy 1
 | Key | Purpose |
 | --- | --- |
 | `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
-| `sessionsecret` | Signs session cookies; required if not on localhost |
-| `securecookies 1` | `Secure` flag on cookies (use with HTTPS) |
+| `sessionsecret` | Signs session cookies; required (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
+| `securecookies 1` | `Secure` flag on cookies (use with HTTPS). When unset, auto-enabled for non-loopback bind or `trustproxy 1` |
 | `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
-| `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs |
+| `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs. Refused at startup unless `host` is loopback |
 
 Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
-`ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`.
+`ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`,
+`ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1`.
 
 Create accounts while signup is disabled:
 
@@ -136,9 +137,15 @@ sudo fail2ban-client status robominer-login
 ## 6. MySQL
 
 - Bind MySQL to `127.0.0.1` or a private VPC address only
-- Dedicated `robominer` DB user with privileges for the `RoboMiner` schema
-  (including `CREATE`/`ALTER` for schema migrations)
+- Dedicated `robominer` DB user with **least privilege** for the `RoboMiner`
+  schema in production:
+  - App/runtime: `SELECT, INSERT, UPDATE, DELETE` on `RoboMiner.*`
+  - Migrate role (or one-off migrate runs): also `CREATE, ALTER, INDEX, DROP`
+    as needed for embedded migrations
+  - Avoid `GRANT ALL` / `%` host wildcards outside local CI
 - Strong password; store only in `/etc/robominer/robominer.conf` (`chmod 0640`)
+- For non-localhost MySQL, require TLS in the URL (`?ssl-mode=REQUIRED` or
+  equivalent). The app warns when a remote host URL omits TLS.
 - Apply pending schema migrations after install or deploy (the systemd install
   script does not migrate unless you pass `--migrate`):
 
@@ -154,7 +161,13 @@ Confirm readiness after start:
 ```bash
 curl -fsS http://127.0.0.1:8080/health
 # expect: ok / database=ok / migrations=ok
+# failed readiness returns opaque `unavailable` (details in server logs only)
 ```
+
+Destructive engine CLI mutations that target a specific user (`user
+update-account --password`, `mining claim-results`, `shop buy`/`sell`,
+`achievement claim-step`) require `--i-understand`. The background
+`mining claim-all` / `rally rallies` worker paths do not.
 
 ## 7. Verification
 
@@ -192,8 +205,10 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
 | App mutation rate limit | 30 POSTs per 60s per user and action family → 429 |
 | Account password rate limit | `/account` POSTs limited by IP and `user:{id}` before Argon2 verify |
-| Session invalidation on password change | `User.sessionVersion` bumped; cookie version checked on each request |
-| Client IP | Peer address by default; `trustproxy 1` enables proxy headers |
+| Session invalidation on password change / logoff / logout-all-devices | `User.sessionVersion` bumped; cookie version checked on each request |
+| Opaque `/health` failures | 503 body is `unavailable` only; SQL/migration detail stays in logs |
+| Program source size cap | 16 KiB UTF-8 bytes on create/update |
+| Client IP | Peer address by default; `trustproxy 1` enables proxy headers (loopback bind required) |
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |

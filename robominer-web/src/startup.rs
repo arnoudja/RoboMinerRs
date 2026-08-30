@@ -43,13 +43,6 @@ pub fn connect_database(
     ))
     .map_err(|error| io::Error::other(format!("failed to connect to database: {error}")))?;
 
-    if let Ok(count) = block_on_database(robominer_db::count_legacy_password_hashes(&pool)) {
-        tracing::info!(
-            legacy_sha256_password_users = count,
-            "legacy_password_hash_inventory"
-        );
-    }
-
     Ok(Some(pool))
 }
 
@@ -63,9 +56,14 @@ pub fn prepare_server_config(
     database_pool: Option<robominer_db::MySqlPool>,
 ) -> io::Result<(String, u16, ServerConfig)> {
     let settings = web_settings(legacy_config, &default_web_root());
-    let session_secret =
-        crate::resolve_session_secret(settings.session_secret.as_deref(), &settings.host)
-            .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+    crate::validate_trust_proxy_bind(&settings.host, settings.trust_proxy)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+    let session_secret = crate::resolve_session_secret(
+        settings.session_secret.as_deref(),
+        &settings.host,
+        settings.allow_insecure_dev_secret,
+    )
+    .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     let session_ttl_secs = crate::resolve_session_ttl_secs(
         settings.session_ttl_secs.as_deref(),
         settings.session_ttl_hours.as_deref(),
@@ -75,7 +73,12 @@ pub fn prepare_server_config(
     .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     crate::configure_session_secret(&session_secret)
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
-    crate::configure_secure_cookies(settings.secure_cookies);
+    let secure_cookies = crate::resolve_secure_cookies(
+        settings.secure_cookies,
+        &settings.host,
+        settings.trust_proxy,
+    );
+    crate::configure_secure_cookies(secure_cookies);
     crate::configure_session_ttl_secs(session_ttl_secs);
 
     let port = settings
@@ -162,9 +165,13 @@ mod tests {
         // Clear signup/proxy overrides so defaults are deterministic.
         let previous_signup = env::var("ROBOMINER_ALLOW_SIGNUP").ok();
         let previous_proxy = env::var("ROBOMINER_TRUST_PROXY").ok();
+        let previous_secret = env::var("ROBOMINER_SESSION_SECRET").ok();
+        let previous_insecure = env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").ok();
         unsafe {
             env::remove_var("ROBOMINER_ALLOW_SIGNUP");
             env::remove_var("ROBOMINER_TRUST_PROXY");
+            env::remove_var("ROBOMINER_SESSION_SECRET");
+            env::set_var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET", "1");
         }
 
         let (host, port, config) =
@@ -184,6 +191,22 @@ mod tests {
             },
             None => unsafe {
                 env::remove_var("ROBOMINER_TRUST_PROXY");
+            },
+        }
+        match previous_secret {
+            Some(value) => unsafe {
+                env::set_var("ROBOMINER_SESSION_SECRET", value);
+            },
+            None => unsafe {
+                env::remove_var("ROBOMINER_SESSION_SECRET");
+            },
+        }
+        match previous_insecure {
+            Some(value) => unsafe {
+                env::set_var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET", value);
+            },
+            None => unsafe {
+                env::remove_var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET");
             },
         }
 

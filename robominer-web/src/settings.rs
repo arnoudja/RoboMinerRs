@@ -9,9 +9,11 @@ pub struct WebSettings {
     pub session_secret: Option<String>,
     pub session_ttl_secs: Option<String>,
     pub session_ttl_hours: Option<String>,
-    pub secure_cookies: bool,
+    /// `None` means auto: Secure when non-loopback bind or `trust_proxy`.
+    pub secure_cookies: Option<bool>,
     pub allow_signup: bool,
     pub trust_proxy: bool,
+    pub allow_insecure_dev_secret: bool,
 }
 
 pub fn web_settings(config: &HashMap<String, String>, default_static_root: &Path) -> WebSettings {
@@ -34,7 +36,7 @@ pub fn web_settings(config: &HashMap<String, String>, default_static_root: &Path
             .or_else(|| robominer_db::config_value(config, "sessionsecret").map(str::to_owned)),
         session_ttl_secs: env::var("ROBOMINER_SESSION_TTL_SECS").ok(),
         session_ttl_hours: env::var("ROBOMINER_SESSION_TTL_HOURS").ok(),
-        secure_cookies: parse_bool_setting(
+        secure_cookies: parse_optional_bool_setting(
             env::var("ROBOMINER_SECURE_COOKIES").ok().as_deref(),
             robominer_db::config_value(config, "securecookies"),
         ),
@@ -46,18 +48,31 @@ pub fn web_settings(config: &HashMap<String, String>, default_static_root: &Path
             env::var("ROBOMINER_TRUST_PROXY").ok().as_deref(),
             robominer_db::config_value(config, "trustproxy"),
         ),
+        allow_insecure_dev_secret: parse_bool_setting(
+            env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET")
+                .ok()
+                .as_deref(),
+            robominer_db::config_value(config, "allowinsecuredevsecret"),
+        ),
     }
 }
 
 pub(crate) fn parse_bool_setting(env_value: Option<&str>, config_value: Option<&str>) -> bool {
+    parse_optional_bool_setting(env_value, config_value).unwrap_or(false)
+}
+
+pub(crate) fn parse_optional_bool_setting(
+    env_value: Option<&str>,
+    config_value: Option<&str>,
+) -> Option<bool> {
     if let Some(value) = env_value {
-        return matches!(
+        return Some(matches!(
             value.trim(),
             "1" | "true" | "TRUE" | "yes" | "YES" | "on" | "ON"
-        );
+        ));
     }
 
-    config_value.is_some_and(|value| {
+    config_value.map(|value| {
         matches!(
             value.trim(),
             "1" | "true" | "TRUE" | "yes" | "YES" | "on" | "ON"
@@ -72,6 +87,11 @@ mod tests {
     #[test]
     fn parse_bool_setting_defaults_to_false_when_unset() {
         assert!(!parse_bool_setting(None, None));
+    }
+
+    #[test]
+    fn parse_optional_bool_setting_is_none_when_unset() {
+        assert_eq!(parse_optional_bool_setting(None, None), None);
     }
 
     #[test]
@@ -134,7 +154,7 @@ mod tests {
             assert_eq!(settings.session_secret.as_deref(), Some("secret"));
         }
         if env::var("ROBOMINER_SECURE_COOKIES").is_err() {
-            assert!(settings.secure_cookies);
+            assert_eq!(settings.secure_cookies, Some(true));
         }
         if env::var("ROBOMINER_ALLOW_SIGNUP").is_err() {
             assert!(settings.allow_signup);
@@ -157,13 +177,16 @@ mod tests {
             assert_eq!(settings.static_root, PathBuf::from("/default/static"));
         }
         if env::var("ROBOMINER_SECURE_COOKIES").is_err() {
-            assert!(!settings.secure_cookies);
+            assert_eq!(settings.secure_cookies, None);
         }
         if env::var("ROBOMINER_ALLOW_SIGNUP").is_err() {
             assert!(!settings.allow_signup);
         }
         if env::var("ROBOMINER_TRUST_PROXY").is_err() {
             assert!(!settings.trust_proxy);
+        }
+        if env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").is_err() {
+            assert!(!settings.allow_insecure_dev_secret);
         }
     }
 }

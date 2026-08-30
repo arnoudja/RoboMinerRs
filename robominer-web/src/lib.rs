@@ -60,8 +60,9 @@ pub fn resolve_session_ttl_secs(
 pub fn resolve_session_secret(
     configured: Option<&str>,
     bind_host: &str,
+    allow_insecure_dev_secret: bool,
 ) -> Result<String, &'static str> {
-    session::resolve_session_secret(configured, bind_host)
+    session::resolve_session_secret(configured, bind_host, allow_insecure_dev_secret)
 }
 pub use http::{Request, Response};
 pub(crate) use request_helpers::{
@@ -69,6 +70,7 @@ pub(crate) use request_helpers::{
     request_user_id, session_username,
 };
 pub use router::route;
+pub use session::{resolve_secure_cookies, validate_trust_proxy_bind};
 
 static DATABASE_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
@@ -122,6 +124,8 @@ mod block_on_database_tests {
 }
 
 /// Integration-test helpers for routing against a real database pool.
+/// Available in debug builds and `cargo test` only — not in release binaries.
+#[cfg(any(test, debug_assertions))]
 #[doc(hidden)]
 pub mod test_support {
     use std::collections::HashMap;

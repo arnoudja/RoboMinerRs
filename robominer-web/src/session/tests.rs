@@ -37,15 +37,41 @@ fn local_bind_hosts_are_detected() {
 }
 
 #[test]
-fn resolve_session_secret_allows_dev_default_on_localhost() {
-    let secret = resolve_session_secret(None, "127.0.0.1").expect("secret should resolve");
+fn resolve_session_secret_allows_dev_default_on_localhost_when_opted_in() {
+    let secret = resolve_session_secret(None, "127.0.0.1", true).expect("secret should resolve");
     assert_eq!(secret, super::DEFAULT_DEV_SESSION_SECRET);
 }
 
 #[test]
+fn resolve_session_secret_requires_opt_in_for_localhost_default() {
+    let error = resolve_session_secret(None, "127.0.0.1", false).unwrap_err();
+    assert!(error.contains("ROBOMINER_ALLOW_INSECURE_DEV_SECRET"));
+}
+
+#[test]
 fn resolve_session_secret_requires_secret_for_public_bind() {
-    let error = resolve_session_secret(None, "0.0.0.0").unwrap_err();
+    let error = resolve_session_secret(None, "0.0.0.0", true).unwrap_err();
     assert!(error.contains("ROBOMINER_SESSION_SECRET"));
+}
+
+#[test]
+fn validate_trust_proxy_bind_requires_loopback() {
+    assert!(super::validate_trust_proxy_bind("127.0.0.1", true).is_ok());
+    assert!(super::validate_trust_proxy_bind("0.0.0.0", true).is_err());
+    assert!(super::validate_trust_proxy_bind("0.0.0.0", false).is_ok());
+}
+
+#[test]
+fn resolve_secure_cookies_auto_enables_for_public_or_proxy() {
+    assert!(!super::resolve_secure_cookies(None, "127.0.0.1", false));
+    assert!(super::resolve_secure_cookies(None, "127.0.0.1", true));
+    assert!(super::resolve_secure_cookies(None, "0.0.0.0", false));
+    assert!(!super::resolve_secure_cookies(Some(false), "0.0.0.0", true));
+    assert!(super::resolve_secure_cookies(
+        Some(true),
+        "127.0.0.1",
+        false
+    ));
 }
 
 #[test]

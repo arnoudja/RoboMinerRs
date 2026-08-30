@@ -73,11 +73,61 @@ pub async fn connect_with_max_connections(
     database_url: &str,
     max_connections: u32,
 ) -> Result<MySqlPool, sqlx::Error> {
+    warn_if_remote_mysql_without_tls(database_url);
     MySqlPoolOptions::new()
         .max_connections(max_connections)
         .acquire_timeout(std::time::Duration::from_secs(30))
         .connect(database_url)
         .await
+}
+
+fn warn_if_remote_mysql_without_tls(database_url: &str) {
+    let Some(host) = mysql_url_host(database_url) else {
+        return;
+    };
+    if matches!(host.as_str(), "127.0.0.1" | "localhost" | "::1") {
+        return;
+    }
+    let query = database_url
+        .split_once('?')
+        .map(|(_, query)| query)
+        .unwrap_or("");
+    let has_ssl = query.split('&').any(|pair| {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        let key = key.to_ascii_lowercase();
+        let value = value.to_ascii_lowercase();
+        matches!(
+            (key.as_str(), value.as_str()),
+            ("ssl-mode", "required" | "verify_ca" | "verify_identity")
+                | ("sslmode", "require" | "verify-ca" | "verify-full")
+        )
+    });
+    if !has_ssl {
+        tracing::warn!(
+            host = %host,
+            "MySQL host is not loopback and URL does not request TLS (ssl-mode=REQUIRED); \
+             prefer private network + TLS for remote databases"
+        );
+    }
+}
+
+fn mysql_url_host(database_url: &str) -> Option<String> {
+    let rest = database_url.strip_prefix("mysql://")?;
+    let authority = rest.split_once('/').map(|(a, _)| a).unwrap_or(rest);
+    let host_port = authority
+        .rsplit_once('@')
+        .map(|(_, h)| h)
+        .unwrap_or(authority);
+    if let Some(host) = host_port.strip_prefix('[') {
+        return host.split_once(']').map(|(h, _)| h.to_string());
+    }
+    Some(
+        host_port
+            .rsplit_once(':')
+            .map(|(h, _)| h)
+            .unwrap_or(host_port)
+            .to_string(),
+    )
 }
 
 /// Shared stderr `EnvFilter` tracing init for binaries (web + engine).

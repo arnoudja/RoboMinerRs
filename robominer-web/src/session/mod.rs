@@ -35,6 +35,7 @@ pub fn is_local_bind_host(host: &str) -> bool {
 pub fn resolve_session_secret(
     configured: Option<&str>,
     bind_host: &str,
+    allow_insecure_dev_secret: bool,
 ) -> Result<String, &'static str> {
     if let Some(secret) = configured
         .map(str::trim)
@@ -43,16 +44,45 @@ pub fn resolve_session_secret(
         return Ok(secret.to_string());
     }
 
-    if is_local_bind_host(bind_host) {
+    if is_local_bind_host(bind_host) && allow_insecure_dev_secret {
         tracing::warn!(
-            "ROBOMINER_SESSION_SECRET is not set; using an insecure development default"
+            "ROBOMINER_SESSION_SECRET is not set; using an insecure development default \
+             (ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1)"
         );
         return Ok(DEFAULT_DEV_SESSION_SECRET.to_string());
+    }
+
+    if is_local_bind_host(bind_host) {
+        return Err(
+            "ROBOMINER_SESSION_SECRET (or sessionsecret in config) is required, \
+             or set ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1 for local development only",
+        );
     }
 
     Err(
         "ROBOMINER_SESSION_SECRET (or sessionsecret in config) is required when binding to a non-localhost address",
     )
+}
+
+/// Refuse `trust_proxy` unless the process binds loopback (proxy must own public traffic).
+pub fn validate_trust_proxy_bind(host: &str, trust_proxy: bool) -> Result<(), &'static str> {
+    if trust_proxy && !is_local_bind_host(host) {
+        return Err(
+            "trustproxy / ROBOMINER_TRUST_PROXY requires binding to 127.0.0.1, localhost, or ::1 \
+             so client forwarding headers cannot be spoofed",
+        );
+    }
+    Ok(())
+}
+
+/// Resolve the Secure cookie flag: explicit setting wins; otherwise enable when
+/// binding publicly or trusting a reverse proxy (HTTPS edge).
+pub fn resolve_secure_cookies(
+    configured: Option<bool>,
+    bind_host: &str,
+    trust_proxy: bool,
+) -> bool {
+    configured.unwrap_or_else(|| !is_local_bind_host(bind_host) || trust_proxy)
 }
 
 pub fn configure_session_secret(secret: &str) -> Result<(), String> {
