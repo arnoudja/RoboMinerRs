@@ -272,6 +272,7 @@ fn sanitize_log_token(value: &str) -> String {
         .collect()
 }
 
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn reset_auth_rate_limiter_for_tests() {
     let mut limiter = auth_rate_limiter()
         .lock()
@@ -281,6 +282,7 @@ pub(crate) fn reset_auth_rate_limiter_for_tests() {
     limiter.last_sweep = None;
 }
 
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn reset_mutation_rate_limiter_for_tests() {
     let mut limiter = mutation_rate_limiter()
         .lock()
@@ -290,6 +292,7 @@ pub(crate) fn reset_mutation_rate_limiter_for_tests() {
 }
 
 /// Serializes tests that mutate the process-wide auth rate limiter.
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn lock_auth_rate_limiter_for_tests() -> std::sync::MutexGuard<'static, ()> {
     static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
     LOCK.get_or_init(|| Mutex::new(()))

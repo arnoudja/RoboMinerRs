@@ -16,6 +16,7 @@ pub fn csrf_token_for_session(user_id: i64, nonce: u64) -> String {
 }
 
 /// Derive the authenticated CSRF token from a Cookie header value.
+#[cfg(any(test, debug_assertions))]
 pub fn csrf_token_from_cookie(cookies: &str) -> Option<String> {
     session::session_from_cookie_header(cookies)
         .map(|session| csrf_token_for_session(session.user_id, session.nonce))

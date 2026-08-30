@@ -175,6 +175,7 @@ pub(crate) fn session_from_request(request: &Request) -> Option<SessionClaims> {
         .and_then(|value| verify_session_token(&value))
 }
 
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn session_from_cookie_header(cookies: &str) -> Option<SessionClaims> {
     cookie_value(cookies, SESSION_COOKIE_NAME).and_then(|value| verify_session_token(&value))
 }
@@ -245,6 +246,7 @@ pub(crate) fn username_clear_cookie_header() -> String {
     )
 }
 
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
     format!(
         "{}; robominer_username={}",
