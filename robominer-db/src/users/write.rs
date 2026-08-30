@@ -1,11 +1,8 @@
 use sqlx::MySqlPool;
 
-use super::password::{
-    maybe_upgrade_password_hash, valid_email, valid_password, valid_username, verify_password_hash,
-    write_password_hash,
-};
+use super::password::{valid_email, valid_password, valid_username, verify_password_hash};
 use crate::achievements::claim_achievement_step_in_transaction;
-use crate::password::hash_password_async;
+use crate::password::{burn_password_verify_time, hash_password_async};
 use crate::{
     ClaimAchievementStepRequest, CreateUserRejection, CreateUserRequest, CreatedUser, DbOutcome,
     UpdateUserAccountRejection, UpdateUserAccountRequest, UpdatedUserAccount, VerifiedLogin,
@@ -188,6 +185,33 @@ pub async fn update_user_account(
     })
 }
 
+/// Bump `sessionVersion` so existing HMAC session cookies become invalid.
+pub async fn bump_user_session_version(
+    pool: &MySqlPool,
+    user_id: i64,
+) -> Result<Option<i32>, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+
+    let updated = sqlx::query("UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?")
+        .bind(user_id)
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+
+    if updated == 0 {
+        transaction.rollback().await?;
+        return Ok(None);
+    }
+
+    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&mut *transaction)
+        .await?;
+
+    transaction.commit().await?;
+    Ok(Some(session_version))
+}
+
 pub(crate) async fn touch_user_last_login_time(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
@@ -212,19 +236,15 @@ pub async fn verify_login(
     .fetch_optional(pool)
     .await?
     else {
+        burn_password_verify_time(request.password).await?;
         return db_reject(VerifyLoginRejection::UnknownUser);
     };
 
-    if !verify_password_hash(pool, &request.password, &password_hash).await? {
+    if !verify_password_hash(&request.password, &password_hash).await? {
         return db_reject(VerifyLoginRejection::InvalidPassword);
     }
 
-    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
-
     let mut transaction = pool.begin().await?;
-    if let Some(upgraded_hash) = upgraded_hash {
-        write_password_hash(&mut transaction, user_id, &upgraded_hash).await?;
-    }
     touch_user_last_login_time(&mut transaction, user_id).await?;
     transaction.commit().await?;
 
@@ -245,19 +265,12 @@ pub async fn verify_user_password(
     .fetch_optional(pool)
     .await?
     else {
+        burn_password_verify_time(request.password).await?;
         return db_reject(VerifyLoginRejection::UnknownUser);
     };
 
-    if !verify_password_hash(pool, &request.password, &password_hash).await? {
+    if !verify_password_hash(&request.password, &password_hash).await? {
         return db_reject(VerifyLoginRejection::InvalidPassword);
-    }
-
-    let upgraded_hash = maybe_upgrade_password_hash(&request.password, &password_hash).await?;
-
-    if let Some(upgraded_hash) = upgraded_hash {
-        let mut transaction = pool.begin().await?;
-        write_password_hash(&mut transaction, request.user_id, &upgraded_hash).await?;
-        transaction.commit().await?;
     }
 
     db_ok(VerifiedLogin {

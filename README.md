@@ -296,9 +296,13 @@ users with `robominer-engine user create`.
 Logged-in users are identified by a signed `robominer_session` cookie minted at
 login. The legacy plain `robominer_user_id` cookie is no longer accepted.
 
-New users receive Argon2id password hashes. Existing `sha256:` hashes remain
-valid until the user logs in successfully, at which point the hash is upgraded
-automatically.
+New users receive Argon2id password hashes. Legacy `sha256:` password hashes are
+no longer accepted.
+
+Logged-off sessions are invalidated server-side: `POST /logoff` bumps
+`User.sessionVersion` so stolen cookies stop working. The account page also
+offers **Log out all devices** (bumps the version and reissues the current
+cookie).
 
 Install the engine and web host for production with:
 

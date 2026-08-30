@@ -1,6 +1,4 @@
-use sqlx::MySqlPool;
-
-use crate::password::{hash_password_async, is_legacy_password_hash, verify_argon2_password_async};
+use crate::password::verify_argon2_password_async;
 
 pub(super) fn valid_username(username: &str) -> bool {
     (3..=255).contains(&username.len())
@@ -59,62 +57,10 @@ pub(super) fn valid_password(password: &str) -> bool {
 }
 
 pub(super) async fn verify_password_hash(
-    pool: &MySqlPool,
     password: &str,
     password_hash: &str,
 ) -> Result<bool, sqlx::Error> {
-    if is_legacy_password_hash(password_hash) {
-        return verify_legacy_password_hash(pool, password, password_hash).await;
-    }
-
     Ok(verify_argon2_password_async(password.to_owned(), password_hash.to_owned()).await?)
-}
-
-async fn verify_legacy_password_hash(
-    pool: &MySqlPool,
-    password: &str,
-    password_hash: &str,
-) -> Result<bool, sqlx::Error> {
-    tracing::info!("legacy_sha256_password_login_attempt");
-    let Some(rest) = password_hash.strip_prefix("sha256:") else {
-        return Ok(false);
-    };
-    let Some((salt, expected_digest)) = rest.split_once(':') else {
-        return Ok(false);
-    };
-
-    let digest: String = sqlx::query_scalar("SELECT SHA2(CONCAT(?, ?), 256)")
-        .bind(salt)
-        .bind(password)
-        .fetch_one(pool)
-        .await?;
-
-    Ok(digest.eq_ignore_ascii_case(expected_digest))
-}
-
-pub(super) async fn maybe_upgrade_password_hash(
-    password: &str,
-    password_hash: &str,
-) -> Result<Option<String>, sqlx::Error> {
-    if !is_legacy_password_hash(password_hash) {
-        return Ok(None);
-    }
-
-    Ok(Some(hash_password_async(password.to_owned()).await?))
-}
-
-pub(super) async fn write_password_hash(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    user_id: i64,
-    password_hash: &str,
-) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE User SET password = ? WHERE id = ?")
-        .bind(password_hash)
-        .bind(user_id)
-        .execute(&mut **transaction)
-        .await?;
-
-    Ok(())
 }
 
 #[cfg(test)]

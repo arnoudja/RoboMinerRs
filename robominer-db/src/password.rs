@@ -22,6 +22,10 @@ impl From<PasswordHashError> for sqlx::Error {
     }
 }
 
+/// Fixed Argon2id hash used when a login name does not match a user, so verify
+/// work stays comparable to a real password check (timing equalization).
+pub const DUMMY_PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$HV5X3tkBiN9pcJ82ydkrmzjgWhBu9SC71+iWw+pzxNA";
+
 pub fn hash_password(password: &str) -> Result<String, PasswordHashError> {
     let salt = SaltString::generate(&mut OsRng);
     Argon2::default()
@@ -57,8 +61,11 @@ pub async fn verify_argon2_password_async(
         .map_err(|_| PasswordHashError)
 }
 
-pub fn is_legacy_password_hash(password_hash: &str) -> bool {
-    password_hash.starts_with("sha256:")
+/// Run a dummy Argon2 verify so unknown-user failures take similar time to
+/// real password checks.
+pub async fn burn_password_verify_time(password: String) -> Result<(), PasswordHashError> {
+    let _ = verify_argon2_password_async(password, DUMMY_PASSWORD_HASH.to_string()).await?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -93,7 +100,11 @@ mod tests {
     }
 
     #[test]
-    fn legacy_hashes_are_detected() {
-        assert!(is_legacy_password_hash("sha256:abc123:deadbeef"));
+    fn dummy_password_hash_parses_and_rejects_unrelated_password() {
+        assert!(!verify_argon2_password("unrelated", DUMMY_PASSWORD_HASH));
+        assert!(verify_argon2_password(
+            "robominer-timing-dummy",
+            DUMMY_PASSWORD_HASH
+        ));
     }
 }

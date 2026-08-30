@@ -39,19 +39,6 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     );
     let user_id: i64 = stdout.trim().parse().expect("new user id should parse");
 
-    sqlx::query(
-        "UPDATE User SET password = ( \
-            SELECT CONCAT('sha256:', salt, ':', SHA2(CONCAT(salt, ?), 256)) \
-            FROM (SELECT REPLACE(UUID(), '-', '') AS salt) generated_salt \
-         ) \
-         WHERE id = ?",
-    )
-    .bind(password)
-    .bind(user_id)
-    .execute(&pool)
-    .await
-    .expect("failed to seed legacy password hash");
-
     sqlx::query("UPDATE User SET lastLoginTime = TIMESTAMPADD(DAY, -1, NOW()) WHERE id = ?")
         .bind(user_id)
         .execute(&pool)
@@ -85,14 +72,14 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     .expect("failed to check login time");
     assert_eq!(updated_recently, 1);
 
-    let upgraded_hash: String = sqlx::query_scalar("SELECT password FROM User WHERE id = ?")
+    let password_hash: String = sqlx::query_scalar("SELECT password FROM User WHERE id = ?")
         .bind(user_id)
         .fetch_one(&pool)
         .await
-        .expect("failed to load upgraded password hash");
+        .expect("failed to load password hash");
     assert!(
-        upgraded_hash.starts_with("$argon2"),
-        "expected legacy password hash to upgrade on login, got: {upgraded_hash}"
+        password_hash.starts_with("$argon2"),
+        "expected Argon2 password hash, got: {password_hash}"
     );
 
     let email_login = run_engine(&[

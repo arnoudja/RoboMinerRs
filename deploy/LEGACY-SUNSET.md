@@ -44,10 +44,8 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
-| Location | Login path in `robominer-engine` / `robominer-db` |
-| Behavior | Upgraded to Argon2id on successful login |
-| Sunset | Monitor remaining `sha256:` rows; none expected for active accounts |
-| Risk | Low — upgrade is transparent on login |
+| Status | **Removed** — Argon2id only |
+| Notes | All accounts were migrated; login no longer accepts or upgrades `sha256:` rows |
 
 ## `/etc/robominer/robominer.conf`
 
@@ -60,8 +58,7 @@ sunset criteria are met.
 
 ## Recommended order
 
-1. Monitor and document (`sha256:` counts, PascalCase redirect hits)
-2. Tighten open-redirect and session rules (already in progress)
-3. Remove PascalCase redirects when analytics show zero use
-4. Bump minimum session version after TTL window
-5. Leave ore-ordering and conf-file paths until a deliberate migration release
+1. Tighten open-redirect and session rules (already in progress)
+2. Remove PascalCase redirects when analytics show zero use
+3. Bump minimum session version after TTL window
+4. Leave ore-ordering and conf-file paths until a deliberate migration release
