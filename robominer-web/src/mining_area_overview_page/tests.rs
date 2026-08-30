@@ -124,6 +124,7 @@ fn mining_area_overview_rendering_escapes_fields_and_defaults_missing_averages()
             r#"class="mining-area-atlas-page""#,
             r#"class="mining-area-atlas-controls""#,
             r#"id="miningAreaAtlasSort""#,
+            r#"<option value="level">Area level</option>"#,
             r#"id="miningAreaAtlasAffordableOnly""#,
             r#"class="mining-area-atlas-title">Mining area atlas</h1>"#,
             r#"href="miningQueue">Back to queue</a>"#,

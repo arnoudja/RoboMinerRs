@@ -24,6 +24,11 @@
         if (sortBy === 'name') {
             return left.getAttribute('data-area-name').localeCompare(right.getAttribute('data-area-name'));
         }
+        if (sortBy === 'level') {
+            var leftLevel = Number(left.getAttribute('data-area-id')) || 0;
+            var rightLevel = Number(right.getAttribute('data-area-id')) || 0;
+            return rightLevel - leftLevel;
+        }
         if (sortBy === 'ore' && oreId) {
             var leftYield = Number(left.getAttribute('data-ore-yield-' + oreId)) || 0;
             var rightYield = Number(right.getAttribute('data-ore-yield-' + oreId)) || 0;
