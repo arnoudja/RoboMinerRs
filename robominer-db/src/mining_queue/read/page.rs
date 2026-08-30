@@ -42,7 +42,7 @@ pub async fn list_mining_queue_page_areas(
          FROM MiningArea \
          INNER JOIN UserMiningArea ON UserMiningArea.miningAreaId = MiningArea.id \
          WHERE UserMiningArea.userId = ? \
-         ORDER BY MiningArea.id",
+         ORDER BY MiningArea.id DESC",
     )
     .bind(user_id)
     .fetch_all(pool)
