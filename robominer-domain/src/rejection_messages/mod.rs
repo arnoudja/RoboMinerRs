@@ -104,6 +104,7 @@ mod tests {
             robominer_db::ProgramSourceWriteRejection::SourceInUse,
             robominer_db::ProgramSourceWriteRejection::EmptySourceName,
             robominer_db::ProgramSourceWriteRejection::EmptySourceCode,
+            robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong,
         ] {
             assert!(!program_source_write_rejection_player_message(rejection).is_empty());
             assert!(!program_source_write_rejection_cli_message(rejection).is_empty());

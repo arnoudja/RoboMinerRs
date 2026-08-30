@@ -15,6 +15,9 @@ pub fn program_source_write_rejection_player_message(
         robominer_db::ProgramSourceWriteRejection::EmptySourceCode => {
             "Program source may not be empty."
         }
+        robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong => {
+            "Program source is too long."
+        }
     }
 }
 
@@ -29,6 +32,7 @@ pub fn program_source_write_rejection_cli_message(
         }
         robominer_db::ProgramSourceWriteRejection::EmptySourceName => "empty source name",
         robominer_db::ProgramSourceWriteRejection::EmptySourceCode => "empty source code",
+        robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong => "source code too long",
     }
 }
 

@@ -1,12 +1,13 @@
 //! Process-local LRU cache for compiled robot programs.
 //!
 //! Rally/pool fills often recompile the same AI and player sources within one
-//! process; caching by source text avoids repeated parse work without changing
-//! simulation behavior.
+//! process; caching by source digest avoids storing full source text as keys
+//! while preserving compile behavior.
 
 #[cfg(test)]
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
+use std::hash::{Hash, Hasher};
 #[cfg(not(test))]
 use std::sync::{LazyLock, Mutex};
 
@@ -17,8 +18,8 @@ const CAPACITY: usize = 256;
 type CacheValue = Result<(usize, ExecutableProgram), CompileError>;
 
 struct CompileCache {
-    map: HashMap<String, CacheValue>,
-    order: VecDeque<String>,
+    map: HashMap<u64, CacheValue>,
+    order: VecDeque<u64>,
     hits: u64,
     misses: u64,
 }
@@ -38,30 +39,31 @@ impl CompileCache {
         source: &str,
         compile: impl FnOnce() -> CacheValue,
     ) -> CacheValue {
-        if let Some(value) = self.map.get(source).cloned() {
-            self.touch(source);
+        let key = source_cache_key(source);
+        if let Some(value) = self.map.get(&key).cloned() {
+            self.touch(key);
             self.hits += 1;
             return value;
         }
 
         self.misses += 1;
         let value = compile();
-        self.insert(source.to_owned(), value.clone());
+        self.insert(key, value.clone());
         value
     }
 
-    fn touch(&mut self, source: &str) {
-        if let Some(index) = self.order.iter().position(|entry| entry == source)
+    fn touch(&mut self, key: u64) {
+        if let Some(index) = self.order.iter().position(|entry| *entry == key)
             && let Some(key) = self.order.remove(index)
         {
             self.order.push_back(key);
         }
     }
 
-    fn insert(&mut self, source: String, value: CacheValue) {
-        if self.map.contains_key(&source) {
-            self.map.insert(source.clone(), value);
-            self.touch(&source);
+    fn insert(&mut self, key: u64, value: CacheValue) {
+        if let std::collections::hash_map::Entry::Occupied(mut entry) = self.map.entry(key) {
+            let _ = entry.insert(value);
+            self.touch(key);
             return;
         }
 
@@ -73,8 +75,8 @@ impl CompileCache {
             }
         }
 
-        self.order.push_back(source.clone());
-        self.map.insert(source, value);
+        self.order.push_back(key);
+        self.map.insert(key, value);
     }
 
     fn clear(&mut self) {
@@ -83,6 +85,12 @@ impl CompileCache {
         self.hits = 0;
         self.misses = 0;
     }
+}
+
+fn source_cache_key(source: &str) -> u64 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    source.hash(&mut hasher);
+    hasher.finish()
 }
 
 #[cfg(not(test))]
@@ -226,8 +234,8 @@ mod tests {
     fn insert_overwrites_existing_without_growing() {
         let mut cache = CompileCache::new();
         let value = Err(CompileError::new("boom"));
-        cache.insert("a".to_owned(), value.clone());
-        cache.insert("a".to_owned(), value);
+        cache.insert(1, value.clone());
+        cache.insert(1, value);
         assert_eq!(cache.map.len(), 1);
         assert_eq!(cache.order.len(), 1);
     }

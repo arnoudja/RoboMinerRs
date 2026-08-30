@@ -184,6 +184,9 @@ pub(crate) async fn program_source_robot_count(
         .await
 }
 
+/// Maximum accepted robot program source length (UTF-8 bytes).
+pub const MAX_PROGRAM_SOURCE_CODE_BYTES: usize = 16_384;
+
 pub(crate) fn validate_program_source_write(
     source_name: &str,
     source_code: &str,
@@ -194,12 +197,15 @@ pub(crate) fn validate_program_source_write(
     if source_code.is_empty() {
         return Some(ProgramSourceWriteRejection::EmptySourceCode);
     }
+    if source_code.len() > MAX_PROGRAM_SOURCE_CODE_BYTES {
+        return Some(ProgramSourceWriteRejection::SourceCodeTooLong);
+    }
     None
 }
 
 #[cfg(test)]
 mod tests {
-    use super::validate_program_source_write;
+    use super::{MAX_PROGRAM_SOURCE_CODE_BYTES, validate_program_source_write};
     use crate::ProgramSourceWriteRejection;
 
     #[test]
@@ -213,5 +219,16 @@ mod tests {
             Some(ProgramSourceWriteRejection::EmptySourceCode)
         );
         assert_eq!(validate_program_source_write("main", "mine();"), None);
+    }
+
+    #[test]
+    fn validate_program_source_write_rejects_oversized_source() {
+        let oversized = "a".repeat(MAX_PROGRAM_SOURCE_CODE_BYTES + 1);
+        assert_eq!(
+            validate_program_source_write("main", &oversized),
+            Some(ProgramSourceWriteRejection::SourceCodeTooLong)
+        );
+        let at_limit = "a".repeat(MAX_PROGRAM_SOURCE_CODE_BYTES);
+        assert_eq!(validate_program_source_write("main", &at_limit), None);
     }
 }

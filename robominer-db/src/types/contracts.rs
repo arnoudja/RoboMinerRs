@@ -153,6 +153,7 @@ pub enum ProgramSourceWriteRejection {
     SourceInUse,
     EmptySourceName,
     EmptySourceCode,
+    SourceCodeTooLong,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
