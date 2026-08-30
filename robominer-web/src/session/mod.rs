@@ -75,14 +75,16 @@ pub fn validate_trust_proxy_bind(host: &str, trust_proxy: bool) -> Result<(), &'
     Ok(())
 }
 
-/// Resolve the Secure cookie flag: explicit setting wins; otherwise enable when
-/// binding publicly or trusting a reverse proxy (HTTPS edge).
+/// Resolve the Secure cookie flag: explicit setting wins; otherwise enable only
+/// when binding publicly. Loopback + `trust_proxy` (TLS at the reverse proxy)
+/// still needs an explicit `securecookies 1` so plain-HTTP local access keeps
+/// working when developers copy production `trustproxy` settings.
 pub fn resolve_secure_cookies(
     configured: Option<bool>,
     bind_host: &str,
-    trust_proxy: bool,
+    _trust_proxy: bool,
 ) -> bool {
-    configured.unwrap_or_else(|| !is_local_bind_host(bind_host) || trust_proxy)
+    configured.unwrap_or_else(|| !is_local_bind_host(bind_host))
 }
 
 pub fn configure_session_secret(secret: &str) -> Result<(), String> {

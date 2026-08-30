@@ -39,7 +39,7 @@ trustproxy 1
 | --- | --- |
 | `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
 | `sessionsecret` | Signs session cookies; required (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
-| `securecookies 1` | `Secure` flag on cookies (use with HTTPS). When unset, auto-enabled for non-loopback bind or `trustproxy 1` |
+| `securecookies 1` | `Secure` flag on cookies (use with HTTPS). When unset, auto-enabled only for non-loopback bind; loopback + `trustproxy` still needs this set explicitly |
 | `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
 | `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs. Refused at startup unless `host` is loopback |
 
