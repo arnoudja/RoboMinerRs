@@ -250,6 +250,30 @@ domain, sim, or program.**
 
 See also [User-facing rejection messages](#user-facing-rejection-messages) below and the layer table in [ACHIEVEMENTS.md](ACHIEVEMENTS.md).
 
+## Error handling
+
+Use the narrowest error type for each boundary:
+
+| Situation | Return type | Notes |
+| --- | --- | --- |
+| HTML page GET loader (read model) | `robominer_web::PageLoadError` | SQL failures only; do not surface `DomainError` from page loaders |
+| Loadout assembly / simulation orchestration | `robominer_domain::DomainError` | Includes opaque `DatabaseError` for unexpected SQL failures |
+| Typed DB mutation (web/engine) | `DbOutcome<T, R>` | Success value or typed rejection enum from `robominer-db` |
+| Player/CLI copy for rejections | `robominer_domain::rejection_messages` | Map rejections with `Audience::Player` or `Audience::Cli` helpers |
+| Engine CLI convenience | `anyhow::Result` + `finish_db_outcome` | String diagnostics for operators |
+
+```mermaid
+flowchart TD
+  pageGet[Page GET loader] --> pageLoadError[PageLoadError]
+  domainSim[Domain loadout/sim] --> domainError[DomainError]
+  dbMutation[DB mutation] --> dbOutcome[DbOutcome T R]
+  dbOutcome --> rejectionCopy[rejection_messages Audience]
+  engineCli[Engine CLI] --> anyhowErr[anyhow Result]
+  dbOutcome --> anyhowErr
+```
+
+Architecture overview: [docs/architecture.md](docs/architecture.md). Module ownership in large crates: [docs/crate-map.md](docs/crate-map.md).
+
 ## User-facing rejection messages
 
 Player-visible web copy and engine CLI diagnostics both come from
