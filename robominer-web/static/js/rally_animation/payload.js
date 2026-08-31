@@ -7,7 +7,9 @@
  */
 function validateRallyResultPayload(payload)
 {
-    if (!payload || (payload.v !== 1 && payload.v !== 2))
+    if (!payload || typeof payload.v !== 'number'
+        || !Array.isArray(ANIMATION_PAYLOAD_SUPPORTED_VERSIONS)
+        || !ANIMATION_PAYLOAD_SUPPORTED_VERSIONS.includes(payload.v))
     {
         return 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
     }

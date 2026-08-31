@@ -437,4 +437,14 @@ mod tests {
             "motion detail must be dropped when still over budget"
         );
     }
+
+    #[test]
+    fn golden_payload_v2_deserializes() {
+        let json = include_str!("../../resources/rally_animation/golden_payload_v2.json");
+        let payload = AnimationPayload::parse(json).expect("golden payload should parse");
+        assert_eq!(payload.v, ANIMATION_PAYLOAD_VERSION);
+        assert_eq!(payload.robots.robot.len(), 1);
+        assert_eq!(payload.ground.size_x, 4);
+        assert_eq!(payload.ground.size_y, 4);
+    }
 }

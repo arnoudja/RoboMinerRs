@@ -6,6 +6,7 @@ const vm = require('vm');
 
 const ANIMATION_DIR = path.join(__dirname, '..');
 const SCRIPT_FILES = [
+    'generated/contract.js',
     'payload.js',
     'draw_ground.js',
     'draw_robots.js',

@@ -253,6 +253,7 @@ fn rally_view_rendering_escapes_slots_and_javascript_ore_names() {
     }
     // Viewer modules are linked as static assets (not inlined).
     for path in [
+        "js/rally_animation/generated/contract.js",
         "js/rally_animation/payload.js",
         "js/rally_animation/draw_ground.js",
         "js/rally_animation/draw_robots.js",

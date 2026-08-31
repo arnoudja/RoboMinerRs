@@ -2,6 +2,7 @@
 
 use crate::static_assets::{script_src_tag, script_src_tags};
 
+const CONTRACT_JS: &str = include_str!("../static/js/rally_animation/generated/contract.js");
 const PAYLOAD_JS: &str = include_str!("../static/js/rally_animation/payload.js");
 const DRAW_GROUND_JS: &str = include_str!("../static/js/rally_animation/draw_ground.js");
 const DRAW_ROBOTS_JS: &str = include_str!("../static/js/rally_animation/draw_robots.js");
@@ -18,6 +19,7 @@ const BOOTSTRAP_JS: &str = include_str!("../static/js/rally_animation/bootstrap.
 /// Ordered `<script src>` tags for the rally animation viewer (without bootstrap).
 pub fn rally_animation_script_tags() -> String {
     script_src_tags(&[
+        ("js/rally_animation/generated/contract.js", CONTRACT_JS),
         ("js/rally_animation/payload.js", PAYLOAD_JS),
         ("js/rally_animation/draw_ground.js", DRAW_GROUND_JS),
         ("js/rally_animation/draw_robots.js", DRAW_ROBOTS_JS),
@@ -45,6 +47,7 @@ mod tests {
     fn rally_animation_script_tags_link_all_modules() {
         let tags = rally_animation_script_tags();
         for path in [
+            "js/rally_animation/generated/contract.js",
             "js/rally_animation/payload.js",
             "js/rally_animation/draw_ground.js",
             "js/rally_animation/draw_robots.js",
