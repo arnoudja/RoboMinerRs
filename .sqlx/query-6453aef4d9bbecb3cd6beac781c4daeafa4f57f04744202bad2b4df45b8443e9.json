@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM MiningQueue WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6453aef4d9bbecb3cd6beac781c4daeafa4f57f04744202bad2b4df45b8443e9"
+}

@@ -26,6 +26,8 @@ jobs:
 
     env:
       ROBOMINER_DATABASE_URL: mysql://robominer:password@127.0.0.1:3306/RoboMiner
+      # Compile-checked queries use committed `.sqlx/` metadata (see CONTRIBUTING.md).
+      SQLX_OFFLINE: "true"
 
     steps:
       - uses: actions/checkout@v7
@@ -65,6 +67,9 @@ jobs:
 
   fast-tests:
     runs-on: ubuntu-latest
+
+    env:
+      SQLX_OFFLINE: "true"
 
     steps:
       - uses: actions/checkout@v7
@@ -106,6 +111,7 @@ jobs:
     env:
       ROBOMINER_DATABASE_URL: mysql://robominer:password@127.0.0.1:3306/RoboMiner
       ROBOMINER_COVERAGE_FAIL_UNDER_LINES: "93"
+      SQLX_OFFLINE: "true"
 
     steps:
       - uses: actions/checkout@v7
