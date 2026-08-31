@@ -1,5 +1,17 @@
 SET storage_engine=InnoDB;
 
+-- Structural index (major sections; see also docs/gameData.md):
+--   Ores                          ids 1–11
+--   Robot part types              ids 1–7
+--   Shop ore prices               ids 101–1102 (per-ore tiers; also used by parts)
+--   Robot parts by type           containers 101–1100, mining units 201–2100,
+--                                 batteries 301–3100, memory 401–4100, CPUs 501–5100,
+--                                 engines 601–6100, scanners 701–7100
+--   AI opponent robots            ids 1002–2002
+--   Mining areas (+ area prices)  area ids 1001–2002; area OrePrice ids 10001–20002
+--   Achievements + steps          achievement ids 1–14
+--   Derived updates               tier levels, max ore, depot, area access, points
+
 -- Cleaning unreferenced tables always completely filled with the data in this file.
 delete from OrePriceAmount;
 delete from MiningAreaOreSupply;

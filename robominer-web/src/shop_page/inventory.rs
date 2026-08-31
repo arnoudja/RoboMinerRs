@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use super::ShopPageState;
 use super::catalog::render_shop_sell_action;
+use super::{CatalogPartView, PartStateView};
 use crate::html::EscapedHtml;
 
 pub(super) fn render_shop_inventory(
     body: &mut String,
     state: &ShopPageState,
-    part_state_map: &HashMap<i64, &robominer_db::ShopRobotPartStateRecord>,
+    part_state_map: &HashMap<i64, &PartStateView>,
 ) {
     body.push_str(r#"<section class="shop-inventory" aria-labelledby="shop-inventory-title">"#);
     body.push_str(r#"<div class="shop-inventory-header">"#);
@@ -16,10 +17,7 @@ pub(super) fn render_shop_inventory(
     body.push_str("</div>");
     body.push_str(r#"<div class="shop-inventory-table-wrap"><table class="shop-inventory-table"><thead><tr><th>Item name</th><th>Quality</th><th>Amount</th><th>Unassigned</th><th></th></tr></thead><tbody>"#);
 
-    let mut owned_rows: Vec<(
-        &robominer_db::ShopRobotPartCatalogRecord,
-        &robominer_db::ShopRobotPartStateRecord,
-    )> = state
+    let mut owned_rows: Vec<(&CatalogPartView, &PartStateView)> = state
         .parts
         .iter()
         .filter_map(|part| {
@@ -58,7 +56,7 @@ pub(super) fn render_shop_inventory(
     body.push_str("</section>");
 }
 
-pub(super) fn shop_total_unassigned(part_states: &[robominer_db::ShopRobotPartStateRecord]) -> i32 {
+pub(super) fn shop_total_unassigned(part_states: &[PartStateView]) -> i32 {
     part_states.iter().map(|state| state.unassigned).sum()
 }
 

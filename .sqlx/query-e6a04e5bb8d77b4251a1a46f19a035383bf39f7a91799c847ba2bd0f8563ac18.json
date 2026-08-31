@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "\nINSERT INTO MiningQueue (miningAreaId, robotId)\nVALUES (?, ?)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e6a04e5bb8d77b4251a1a46f19a035383bf39f7a91799c847ba2bd0f8563ac18"
+}

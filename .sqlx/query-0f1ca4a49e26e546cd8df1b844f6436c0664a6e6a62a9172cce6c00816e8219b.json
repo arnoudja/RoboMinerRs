@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT miningQueueSize AS \"size!: i64\" FROM User WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "size!: i64",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "max_size": 11
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0f1ca4a49e26e546cd8df1b844f6436c0664a6e6a62a9172cce6c00816e8219b"
+}

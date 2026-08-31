@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT orePriceId AS \"ore_price_id!: i64\" FROM MiningArea WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "ore_price_id!: i64",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "max_size": 11
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "65d5ff570a3a98356f9716eec8fe4eca6439d6014c61e9e7d19aec17ff647a38"
+}

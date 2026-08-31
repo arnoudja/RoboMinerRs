@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "\nSELECT TIMESTAMPDIFF(SECOND, NOW(), MIN(MiningQueue.miningEndTime)) AS \"seconds: i64\"\nFROM MiningQueue\nWHERE MiningQueue.miningEndTime IS NOT NULL\n  AND MiningQueue.miningEndTime > NOW()\n  AND MiningQueue.claimed = false\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "seconds: i64",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "BINARY",
+          "max_size": 21
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "a80bcb6bfa1e1d1d4581d86c3439b9ee63f4f6fd0d07db05eaabb96074d53feb"
+}

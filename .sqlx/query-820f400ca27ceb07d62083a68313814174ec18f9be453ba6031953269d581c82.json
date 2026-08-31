@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "\nSELECT COUNT(*) AS \"count!: i64\"\nFROM MiningQueue\nINNER JOIN Robot ON Robot.id = MiningQueue.robotId\nWHERE MiningQueue.miningEndTime IS NOT NULL\n  AND MiningQueue.miningEndTime <= NOW()\n  AND Robot.userId = ?\n  AND MiningQueue.claimed = false\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!: i64",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | BINARY",
+          "max_size": 21
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "820f400ca27ceb07d62083a68313814174ec18f9be453ba6031953269d581c82"
+}

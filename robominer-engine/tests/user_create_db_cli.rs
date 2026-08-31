@@ -80,15 +80,23 @@ async fn create_user_inserts_initial_user_state() {
         .expect("failed to count created robots");
     assert_eq!(robot_count, 1);
 
-    let default_part_assets: i64 = sqlx::query_scalar(
+    let id_list = robominer_db::DEFAULT_PART_IDS
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let default_part_assets: i64 = sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM UserRobotPartAsset \
-         WHERE userId = ? AND robotPartId IN (101, 201, 301, 401, 501, 601)",
-    )
+         WHERE userId = ? AND robotPartId IN ({id_list})"
+    ))
     .bind(user_id)
     .fetch_one(&pool)
     .await
     .expect("failed to count default part assets");
-    assert_eq!(default_part_assets, 6);
+    assert_eq!(
+        default_part_assets,
+        robominer_db::DEFAULT_PART_IDS.len() as i64
+    );
 
     let first_area_unlocked: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM UserMiningArea WHERE userId = ? AND miningAreaId = 1001",

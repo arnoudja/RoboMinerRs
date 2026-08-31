@@ -1,6 +1,7 @@
-use std::collections::HashMap;
 use std::env;
 use std::path::{Path, PathBuf};
+
+use robominer_db::LegacyAppConfig;
 
 pub struct WebSettings {
     pub host: String,
@@ -16,58 +17,47 @@ pub struct WebSettings {
     pub allow_insecure_dev_secret: bool,
 }
 
-pub fn web_settings(config: &HashMap<String, String>, default_static_root: &Path) -> WebSettings {
+pub fn web_settings(config: &LegacyAppConfig, default_static_root: &Path) -> WebSettings {
     WebSettings {
         host: env::var("HOST")
             .ok()
-            .or_else(|| robominer_db::config_value(config, "host").map(str::to_owned))
+            .or_else(|| config.host.clone())
             .unwrap_or_else(|| "127.0.0.1".to_string()),
         port: env::var("PORT")
             .ok()
-            .or_else(|| robominer_db::config_value(config, "port").map(str::to_owned))
+            .or_else(|| config.port.clone())
             .unwrap_or_else(|| "8080".to_string()),
         static_root: env::var("ROBOMINER_WEB_ROOT")
             .map(PathBuf::from)
             .ok()
-            .or_else(|| robominer_db::config_value(config, "webroot").map(PathBuf::from))
+            .or_else(|| config.web_root.as_ref().map(PathBuf::from))
             .unwrap_or_else(|| default_static_root.to_path_buf()),
         session_secret: env::var("ROBOMINER_SESSION_SECRET")
             .ok()
-            .or_else(|| robominer_db::config_value(config, "sessionsecret").map(str::to_owned)),
+            .or_else(|| config.session_secret.clone()),
+        // TTL env vars only here; file keys are applied in `prepare_server_config`
+        // so env hours still beat config secs (see `resolve_session_ttl_secs`).
         session_ttl_secs: env::var("ROBOMINER_SESSION_TTL_SECS").ok(),
         session_ttl_hours: env::var("ROBOMINER_SESSION_TTL_HOURS").ok(),
         secure_cookies: parse_optional_bool_setting(
             env::var("ROBOMINER_SECURE_COOKIES").ok().as_deref(),
-            robominer_db::config_value(config, "securecookies"),
+            config.secure_cookies.as_deref(),
         ),
         allow_signup: parse_bool_setting(
             env::var("ROBOMINER_ALLOW_SIGNUP").ok().as_deref(),
-            robominer_db::config_value(config, "allowsignup"),
+            config.allow_signup.as_deref(),
         ),
         trust_proxy: parse_bool_setting(
             env::var("ROBOMINER_TRUST_PROXY").ok().as_deref(),
-            robominer_db::config_value(config, "trustproxy"),
+            config.trust_proxy.as_deref(),
         ),
         allow_insecure_dev_secret: parse_bool_setting(
             env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET")
                 .ok()
                 .as_deref(),
-            first_config_value(
-                config,
-                &[
-                    "allowinsecuredevsecret",
-                    "allow-insecure-dev-secret",
-                    "insecure-dev-secret",
-                    "insecuredevsecret",
-                ],
-            ),
+            config.allow_insecure_dev_secret.as_deref(),
         ),
     }
-}
-
-fn first_config_value<'a>(config: &'a HashMap<String, String>, keys: &[&str]) -> Option<&'a str> {
-    keys.iter()
-        .find_map(|key| robominer_db::config_value(config, key))
 }
 
 pub(crate) fn parse_bool_setting(env_value: Option<&str>, config_value: Option<&str>) -> bool {
@@ -143,14 +133,16 @@ mod tests {
 
     #[test]
     fn web_settings_reads_config_when_matching_env_vars_are_unset() {
-        let mut config = HashMap::new();
-        config.insert("host".to_string(), "10.0.0.2".to_string());
-        config.insert("port".to_string(), "9090".to_string());
-        config.insert("webroot".to_string(), "/opt/static".to_string());
-        config.insert("sessionsecret".to_string(), "secret".to_string());
-        config.insert("securecookies".to_string(), "1".to_string());
-        config.insert("allowsignup".to_string(), "1".to_string());
-        config.insert("trustproxy".to_string(), "true".to_string());
+        let config = LegacyAppConfig {
+            host: Some("10.0.0.2".to_string()),
+            port: Some("9090".to_string()),
+            web_root: Some("/opt/static".to_string()),
+            session_secret: Some("secret".to_string()),
+            secure_cookies: Some("1".to_string()),
+            allow_signup: Some("1".to_string()),
+            trust_proxy: Some("true".to_string()),
+            ..LegacyAppConfig::default()
+        };
 
         let settings = web_settings(&config, Path::new("/default/static"));
 
@@ -179,7 +171,7 @@ mod tests {
 
     #[test]
     fn web_settings_defaults_when_config_and_env_are_empty() {
-        let settings = web_settings(&HashMap::new(), Path::new("/default/static"));
+        let settings = web_settings(&LegacyAppConfig::default(), Path::new("/default/static"));
         if env::var("HOST").is_err() {
             assert_eq!(settings.host, "127.0.0.1");
         }
@@ -204,22 +196,14 @@ mod tests {
     }
 
     #[test]
-    fn web_settings_accepts_insecure_dev_secret_aliases() {
-        for key in [
-            "allowinsecuredevsecret",
-            "allow-insecure-dev-secret",
-            "insecure-dev-secret",
-            "insecuredevsecret",
-        ] {
-            let mut config = HashMap::new();
-            config.insert(key.to_string(), "1".to_string());
-            let settings = web_settings(&config, Path::new("/default/static"));
-            if env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").is_err() {
-                assert!(
-                    settings.allow_insecure_dev_secret,
-                    "config key {key} should enable insecure dev secret"
-                );
-            }
+    fn web_settings_accepts_insecure_dev_secret_from_typed_config() {
+        let config = LegacyAppConfig {
+            allow_insecure_dev_secret: Some("1".to_string()),
+            ..LegacyAppConfig::default()
+        };
+        let settings = web_settings(&config, Path::new("/default/static"));
+        if env::var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET").is_err() {
+            assert!(settings.allow_insecure_dev_secret);
         }
     }
 }

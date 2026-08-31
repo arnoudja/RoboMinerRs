@@ -89,6 +89,20 @@ simulation or claim change, set the update env var and re-run the matching test 
 
 Do not commit updated fixtures unless the behavior change is deliberate. CI never sets these vars.
 
+### Compile-checked SQL (`query!`)
+
+Claim and mining-queue enqueue/cancel hot paths use `sqlx::query!` / `query_scalar!` with offline
+metadata under [`.sqlx/`](.sqlx/). After editing those SQL strings or the tables they touch:
+
+```sh
+export DATABASE_URL=mysql://robominer:password@127.0.0.1:3306/RoboMiner
+cargo sqlx prepare --workspace -- --package robominer-db --lib
+```
+
+Commit the regenerated `.sqlx/` JSON. CI and local builds without a live DB should set
+`SQLX_OFFLINE=true` (CI already does). Dynamic `IN (...)` lists and `FOR UPDATE` locks stay on
+runtime `sqlx::query`. See [docs/SQLX-0.9-UPGRADE.md](docs/SQLX-0.9-UPGRADE.md).
+
 ### Fast tests (no database)
 
 For library unit tests and simulation goldens that do not need MySQL:
@@ -173,6 +187,10 @@ variant includes.
 | Robot stats | layout + `RobotStats` |
 
 ## Splitting a web page module
+
+**Naming:** use singular `*_page` for one primary route (`shop_page`, `mining_queue_page`).
+Use plural `*_pages` for a family of related routes in one folder (`auth_pages`, `rally_pages`,
+`help_pages`). Prefer renaming only when already touching that module.
 
 Use `resources/scripts/split-web-page.py` when a `robominer-web/src/<page>.rs` file grows past
 handler + render + inline tests. The script moves code into `<page>/mod.rs`, `render.rs`, and

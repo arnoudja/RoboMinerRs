@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use crate::html::{
     EscapedHtml, format_ore_shortfall, html_attr, optional_title_attr, selected_attr,
 };
-use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
+use crate::mining_queue_page::{
+    MiningQueueAreaCostView, MiningQueueAreaView, MiningQueueDisplayItem, MiningQueuePageState,
+    MiningQueueRobotView,
+};
 
 use super::inspector::render_mining_queue_selection_state_inputs;
 use super::mining_queue_status_description;
@@ -40,11 +43,11 @@ pub(super) fn render_wallet_strip(body: &mut String, state: &MiningQueuePageStat
 pub(super) fn render_robot_card(
     body: &mut String,
     state: &MiningQueuePageState,
-    robot: &robominer_db::MiningQueuePageRobotRecord,
+    robot: &MiningQueueRobotView,
     queue_items: &[&MiningQueueDisplayItem],
-    cost_map: &HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaCostRecord>>,
+    cost_map: &HashMap<i64, Vec<&MiningQueueAreaCostView>>,
     ore_amount_map: &HashMap<i64, i32>,
-    area_map: &HashMap<i64, &robominer_db::MiningQueuePageAreaRecord>,
+    area_map: &HashMap<i64, &MiningQueueAreaView>,
 ) {
     let queue_limit = i64::from(state.asset_summary.mining_queue_size);
     let selected_area_id = state
@@ -263,8 +266,8 @@ pub(super) fn active_run_result_link(
 
 pub(super) fn active_run_progress_total(
     item: &MiningQueueDisplayItem,
-    robot: &robominer_db::MiningQueuePageRobotRecord,
-    area_map: &HashMap<i64, &robominer_db::MiningQueuePageAreaRecord>,
+    robot: &MiningQueueRobotView,
+    area_map: &HashMap<i64, &MiningQueueAreaView>,
 ) -> Option<i64> {
     match item.status {
         robominer_db::MiningQueueStatus::Mining => area_map
@@ -291,7 +294,7 @@ pub(super) fn enqueue_block_reason(
     state: &MiningQueuePageState,
     queue_len: usize,
     selected_area_id: i64,
-    cost_map: &HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaCostRecord>>,
+    cost_map: &HashMap<i64, Vec<&MiningQueueAreaCostView>>,
     ore_amount_map: &HashMap<i64, i32>,
 ) -> Option<String> {
     if queue_len as i64 >= i64::from(state.asset_summary.mining_queue_size) {

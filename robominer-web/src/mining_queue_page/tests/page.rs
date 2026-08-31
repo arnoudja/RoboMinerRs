@@ -5,7 +5,11 @@ use crate::ServerConfig;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 
 use super::super::render::{render_mining_queue_fragment, render_mining_queue_page};
-use super::super::{MiningQueueDisplayItem, MiningQueuePageState, mining_queue_page};
+use super::super::{
+    MiningQueueAreaCostView, MiningQueueAreaSupplyView, MiningQueueAreaView,
+    MiningQueueAssetSummaryView, MiningQueueDisplayItem, MiningQueueOreAssetView,
+    MiningQueuePageState, MiningQueueRobotView, MiningQueueScoreView, mining_queue_page,
+};
 use super::fixtures::authenticated_request;
 
 #[tokio::test(flavor = "current_thread")]
@@ -32,26 +36,23 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
         "Player".to_string(),
         None,
         &MiningQueuePageState {
-            asset_summary: robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 5,
+            asset_summary: MiningQueueAssetSummaryView {
                 mining_queue_size: 3,
-                robot_count: 1,
             },
-            ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+            ore_assets: vec![MiningQueueOreAssetView {
                 ore_id: 2,
                 ore_name: "Ore & Two".to_string(),
                 amount: 40,
                 max_allowed: 100,
                 depot_max_allowed: 250,
             }],
-            robots: vec![robominer_db::MiningQueuePageRobotRecord {
+            robots: vec![MiningQueueRobotView {
                 robot_id: 1,
                 robot_name: "Bot <One>".to_string(),
                 recharge_time: 300,
             }],
             areas: vec![
-                robominer_db::MiningQueuePageAreaRecord {
+                MiningQueueAreaView {
                     mining_area_id: 20,
                     area_name: "Area & Two".to_string(),
                     tax_rate: 12,
@@ -62,7 +63,7 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     size_y: 11,
                     score_ore_target: 30,
                 },
-                robominer_db::MiningQueuePageAreaRecord {
+                MiningQueueAreaView {
                     mining_area_id: 21,
                     area_name: "Area Three".to_string(),
                     tax_rate: 5,
@@ -74,20 +75,20 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
                     score_ore_target: 15,
                 },
             ],
-            costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
+            costs: vec![MiningQueueAreaCostView {
                 mining_area_id: 20,
                 ore_id: 2,
                 ore_name: "Ore & Two".to_string(),
                 amount: 30,
             }],
-            supplies: vec![robominer_db::MiningQueuePageAreaSupplyRecord {
+            supplies: vec![MiningQueueAreaSupplyView {
                 mining_area_id: 20,
                 ore_id: 2,
                 ore_name: "Ore <Two>".to_string(),
                 supply: 8,
                 radius: 3,
             }],
-            scores: vec![robominer_db::RobotMiningAreaScoreRecord {
+            scores: vec![MiningQueueScoreView {
                 robot_id: 1,
                 mining_area_id: 20,
                 score: 45.67,
@@ -200,19 +201,16 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
         "Player".to_string(),
         None,
         &MiningQueuePageState {
-            asset_summary: robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 0,
+            asset_summary: MiningQueueAssetSummaryView {
                 mining_queue_size: 3,
-                robot_count: 1,
             },
             ore_assets: vec![],
-            robots: vec![robominer_db::MiningQueuePageRobotRecord {
+            robots: vec![MiningQueueRobotView {
                 robot_id: 1,
                 robot_name: "Bot".to_string(),
                 recharge_time: 60,
             }],
-            areas: vec![robominer_db::MiningQueuePageAreaRecord {
+            areas: vec![MiningQueueAreaView {
                 mining_area_id: 20,
                 area_name: "Area".to_string(),
                 tax_rate: 0,
@@ -225,21 +223,21 @@ fn mining_queue_estimated_ore_sums_heaps_of_same_ore_type() {
             }],
             costs: vec![],
             supplies: vec![
-                robominer_db::MiningQueuePageAreaSupplyRecord {
+                MiningQueueAreaSupplyView {
                     mining_area_id: 20,
                     ore_id: 2,
                     ore_name: "Iron".to_string(),
                     supply: 8,
                     radius: 3,
                 },
-                robominer_db::MiningQueuePageAreaSupplyRecord {
+                MiningQueueAreaSupplyView {
                     mining_area_id: 20,
                     ore_id: 3,
                     ore_name: "Copper".to_string(),
                     supply: 10,
                     radius: 2,
                 },
-                robominer_db::MiningQueuePageAreaSupplyRecord {
+                MiningQueueAreaSupplyView {
                     mining_area_id: 20,
                     ore_id: 2,
                     ore_name: "Iron".to_string(),
@@ -275,25 +273,22 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
         "Player".to_string(),
         None,
         &MiningQueuePageState {
-            asset_summary: robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 0,
+            asset_summary: MiningQueueAssetSummaryView {
                 mining_queue_size: 3,
-                robot_count: 1,
             },
-            ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+            ore_assets: vec![MiningQueueOreAssetView {
                 ore_id: 2,
                 ore_name: "Iron".to_string(),
                 amount: 10,
                 max_allowed: 100,
                 depot_max_allowed: 0,
             }],
-            robots: vec![robominer_db::MiningQueuePageRobotRecord {
+            robots: vec![MiningQueueRobotView {
                 robot_id: 1,
                 robot_name: "Bot".to_string(),
                 recharge_time: 60,
             }],
-            areas: vec![robominer_db::MiningQueuePageAreaRecord {
+            areas: vec![MiningQueueAreaView {
                 mining_area_id: 20,
                 area_name: "Area".to_string(),
                 tax_rate: 0,
@@ -304,7 +299,7 @@ fn mining_queue_shows_disabled_enqueue_with_reason() {
                 size_y: 5,
                 score_ore_target: 30,
             }],
-            costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
+            costs: vec![MiningQueueAreaCostView {
                 mining_area_id: 20,
                 ore_id: 2,
                 ore_name: "Iron".to_string(),
@@ -342,26 +337,23 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
         "Player".to_string(),
         None,
         &MiningQueuePageState {
-            asset_summary: robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 0,
+            asset_summary: MiningQueueAssetSummaryView {
                 mining_queue_size: 3,
-                robot_count: 1,
             },
-            ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+            ore_assets: vec![MiningQueueOreAssetView {
                 ore_id: 2,
                 ore_name: "Iron".to_string(),
                 amount: 40,
                 max_allowed: 100,
                 depot_max_allowed: 0,
             }],
-            robots: vec![robominer_db::MiningQueuePageRobotRecord {
+            robots: vec![MiningQueueRobotView {
                 robot_id: 1,
                 robot_name: "Bot".to_string(),
                 recharge_time: 60,
             }],
             areas: vec![
-                robominer_db::MiningQueuePageAreaRecord {
+                MiningQueueAreaView {
                     mining_area_id: 20,
                     area_name: "Expensive".to_string(),
                     tax_rate: 0,
@@ -372,7 +364,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     size_y: 5,
                     score_ore_target: 30,
                 },
-                robominer_db::MiningQueuePageAreaRecord {
+                MiningQueueAreaView {
                     mining_area_id: 21,
                     area_name: "Affordable".to_string(),
                     tax_rate: 0,
@@ -384,7 +376,7 @@ fn mining_queue_area_options_include_per_area_enqueue_block_reasons() {
                     score_ore_target: 30,
                 },
             ],
-            costs: vec![robominer_db::MiningQueuePageAreaCostRecord {
+            costs: vec![MiningQueueAreaCostView {
                 mining_area_id: 20,
                 ore_id: 2,
                 ore_name: "Iron".to_string(),
@@ -417,11 +409,8 @@ fn mining_queue_shows_no_robots_empty_state() {
         "Player".to_string(),
         None,
         &MiningQueuePageState {
-            asset_summary: robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 0,
+            asset_summary: MiningQueueAssetSummaryView {
                 mining_queue_size: 3,
-                robot_count: 0,
             },
             ore_assets: vec![],
             robots: vec![],
@@ -452,25 +441,22 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
     let mut selected_robot_area_ids = HashMap::new();
     selected_robot_area_ids.insert(1, 20);
     let state = MiningQueuePageState {
-        asset_summary: robominer_db::UserAssetSummaryRecord {
-            username: "Player".to_string(),
-            achievement_points: 0,
+        asset_summary: MiningQueueAssetSummaryView {
             mining_queue_size: 3,
-            robot_count: 1,
         },
-        ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+        ore_assets: vec![MiningQueueOreAssetView {
             ore_id: 2,
             ore_name: "Iron".to_string(),
             amount: 40,
             max_allowed: 100,
             depot_max_allowed: 250,
         }],
-        robots: vec![robominer_db::MiningQueuePageRobotRecord {
+        robots: vec![MiningQueueRobotView {
             robot_id: 1,
             robot_name: "Bot".to_string(),
             recharge_time: 300,
         }],
-        areas: vec![robominer_db::MiningQueuePageAreaRecord {
+        areas: vec![MiningQueueAreaView {
             mining_area_id: 20,
             area_name: "Area".to_string(),
             tax_rate: 0,

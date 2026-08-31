@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "\nSELECT DISTINCT Robot.userId AS \"user_id!: i64\"\nFROM MiningQueue\nINNER JOIN Robot ON Robot.id = MiningQueue.robotId\nWHERE MiningQueue.miningEndTime IS NOT NULL\n  AND MiningQueue.miningEndTime <= NOW()\n  AND MiningQueue.claimed = false\nORDER BY Robot.userId\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id!: i64",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | MULTIPLE_KEY | NO_DEFAULT_VALUE",
+          "max_size": 11
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7dd9b03098b4a228f4d2fe1d4a5bb786544c608dc5dc4ca3c821326a4aba8c96"
+}

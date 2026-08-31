@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "\nSELECT miningAreaId AS \"mining_area_id!: i64\"\nFROM UserMiningArea\nWHERE userId = ? AND miningAreaId = ?\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mining_area_id!: i64",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL | PRIMARY_KEY | NO_DEFAULT_VALUE",
+          "max_size": 11
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c091e030014220a7ba14375b926ecfc991f9eff54fb96b7b24c55c5717327d56"
+}

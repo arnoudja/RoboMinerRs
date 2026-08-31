@@ -1,4 +1,5 @@
 use crate::Request;
+use crate::routes::AppRoute;
 use crate::{
     Response, ServerConfig, account_page, achievements_page, auth_pages, edit_code_page,
     help_pages, leaderboard_page, login_redirect, mining_area_overview_page, mining_queue_page,
@@ -16,53 +17,55 @@ pub(super) async fn dispatch(request: &Request, config: &ServerConfig) -> Respon
         return Response::method_not_allowed();
     }
 
-    match request.path.as_str() {
-        "/" => {
-            if request_user_id(request).is_some() {
-                Response::redirect("miningQueue")
-            } else {
-                login_redirect(request)
-            }
-        }
-        "/achievements" | "/Achievements" => {
-            achievements_page::achievements_page(request, config).await
-        }
-        "/account" | "/Account" => account_page::account_page(request, config).await,
-        "/activity" | "/Activity" => rally_pages::activity_page(request, config).await,
-        "/editCode" | "/EditCode" => edit_code_page::edit_code_page(request, config).await,
-        "/help" | "/Help" => {
+    if request.path == "/" {
+        return if request_user_id(request).is_some() {
+            Response::redirect(AppRoute::MiningQueue.href())
+        } else {
+            login_redirect(request)
+        };
+    }
+
+    match AppRoute::from_path(&request.path) {
+        Some(AppRoute::Achievements) => achievements_page::achievements_page(request, config).await,
+        Some(AppRoute::Account) => account_page::account_page(request, config).await,
+        Some(AppRoute::Activity) => rally_pages::activity_page(request, config).await,
+        Some(AppRoute::EditCode) => edit_code_page::edit_code_page(request, config).await,
+        Some(AppRoute::Help) => {
             help_pages::help_page(request, config, request.query.contains_key("welcome")).await
         }
-        "/helpTutorial" | "/help_tutorial.html" => {
-            help_pages::help_text_page(request, config, "helpTutorial", query_i64(request, "step"))
+        Some(AppRoute::HelpTutorial) => {
+            help_pages::help_text_page(
+                request,
+                config,
+                AppRoute::HelpTutorial.href(),
+                query_i64(request, "step"),
+            )
+            .await
+        }
+        Some(AppRoute::HelpProgramTips) => {
+            help_pages::help_text_page(request, config, AppRoute::HelpProgramTips.href(), None)
                 .await
         }
-        "/helpProgramTips" | "/help_programtips.html" => {
-            help_pages::help_text_page(request, config, "helpProgramTips", None).await
+        Some(AppRoute::HelpRobotProgram) => {
+            help_pages::help_text_page(request, config, AppRoute::HelpRobotProgram.href(), None)
+                .await
         }
-        "/helpRobotProgram" | "/help_robotprogram.html" => {
-            help_pages::help_text_page(request, config, "helpRobotProgram", None).await
+        Some(AppRoute::HelpMechanics) => {
+            help_pages::help_text_page(request, config, AppRoute::HelpMechanics.href(), None).await
         }
-        "/helpMechanics" | "/help_mechanics.html" => {
-            help_pages::help_text_page(request, config, "helpMechanics", None).await
-        }
-        "/leaderboard" | "/Leaderboard" => {
-            leaderboard_page::leaderboard_page(request, config).await
-        }
-        "/login" | "/Login" => auth_pages::login_page(request, config).await,
-        "/logoff" | "/Logoff" => auth_pages::logoff_page(request, config).await,
-        "/miningQueue" | "/MiningQueue" => {
-            mining_queue_page::mining_queue_page(request, config).await
-        }
-        "/miningResults" | "/MiningResults" => {
+        Some(AppRoute::Leaderboard) => leaderboard_page::leaderboard_page(request, config).await,
+        Some(AppRoute::Login) => auth_pages::login_page(request, config).await,
+        Some(AppRoute::Logoff) => auth_pages::logoff_page(request, config).await,
+        Some(AppRoute::MiningQueue) => mining_queue_page::mining_queue_page(request, config).await,
+        Some(AppRoute::MiningResults) => {
             mining_results_page::mining_results_page(request, config).await
         }
-        "/miningAreaOverview" | "/MiningAreaOverview" => {
+        Some(AppRoute::MiningAreaOverview) => {
             mining_area_overview_page::mining_area_overview_page(request, config).await
         }
-        "/robot" | "/Robot" => robot_page::robot_page(request, config).await,
-        "/robotStats" | "/RobotStats" => robot_stats_page::robot_stats_page(request, config).await,
-        "/shop" | "/Shop" => shop_page::shop_page(request, config).await,
-        _ => static_files::static_response(&request.path, &config.static_root, request).await,
+        Some(AppRoute::Robot) => robot_page::robot_page(request, config).await,
+        Some(AppRoute::RobotStats) => robot_stats_page::robot_stats_page(request, config).await,
+        Some(AppRoute::Shop) => shop_page::shop_page(request, config).await,
+        None => static_files::static_response(&request.path, &config.static_root, request).await,
     }
 }

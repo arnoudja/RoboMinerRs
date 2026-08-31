@@ -1,3 +1,6 @@
+// Offline genetic optimizer — not on the production web/engine path.
+// Unwrap/expect are allowed here so experimental GA loops stay terse; do not
+// copy this lint posture into gameplay crates.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
 //! Offline genetic optimizer over robot parts/programs against area loadouts.

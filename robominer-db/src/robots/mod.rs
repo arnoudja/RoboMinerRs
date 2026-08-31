@@ -1,3 +1,8 @@
+//! Robot CRUD, workshop config, and parameter derivation.
+//!
+//! Primary entry points: [`update_robot_config`], [`list_robot_config_states`],
+//! [`robot_parameters_for_parts`].
+
 use crate::RobotPartRecord;
 
 #[derive(Debug, Clone)]

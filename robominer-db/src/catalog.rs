@@ -11,6 +11,10 @@ pub mod part_type_id {
     pub const ORE_SCANNER: i64 = 7;
 }
 
+/// Default starter `RobotPart.id` values from `resources/database/gameData.sql`
+/// (one part per type, in `part_type_id` order).
+pub const DEFAULT_PART_IDS: [i64; 7] = [101, 201, 301, 401, 501, 601, 701];
+
 use sqlx::MySqlPool;
 
 use crate::mappers::{robot_part_record, shop_robot_part_catalog_record};

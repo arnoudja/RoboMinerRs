@@ -134,17 +134,17 @@ fn generated_robot_name_truncates_long_usernames() {
 
 #[test]
 fn robot_part_baseline_prefers_pending_part_ids() {
-    let robot = sample_robot_state([101, 201, 301, 401, 501, 601, 701]);
+    let robot = sample_robot_state(crate::DEFAULT_PART_IDS);
     assert_eq!(
         robot_part_baseline(&robot, None),
         [
-            Some(101),
-            Some(201),
-            Some(301),
-            Some(401),
-            Some(501),
-            Some(601),
-            Some(701),
+            Some(crate::DEFAULT_PART_IDS[0]),
+            Some(crate::DEFAULT_PART_IDS[1]),
+            Some(crate::DEFAULT_PART_IDS[2]),
+            Some(crate::DEFAULT_PART_IDS[3]),
+            Some(crate::DEFAULT_PART_IDS[4]),
+            Some(crate::DEFAULT_PART_IDS[5]),
+            Some(crate::DEFAULT_PART_IDS[6]),
         ]
     );
 

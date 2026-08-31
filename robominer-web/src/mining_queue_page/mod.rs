@@ -13,23 +13,84 @@ mod view_model;
 mod tests;
 
 use actions::{cancel_queued_items, format_cancel_batch_message};
-use view_model::load_mining_queue_display_items;
+use view_model::{
+    area_cost_view, area_supply_view, area_view, asset_summary_view,
+    load_mining_queue_display_items, ore_asset_view, robot_view, score_view,
+};
 
 pub(super) const FRAGMENT_QUEUE: &str = "queue";
 
 #[derive(Debug)]
 pub(super) struct MiningQueuePageState {
-    pub(super) asset_summary: robominer_db::UserAssetSummaryRecord,
-    pub(super) ore_assets: Vec<robominer_db::UserOreAssetStateRecord>,
-    pub(super) robots: Vec<robominer_db::MiningQueuePageRobotRecord>,
-    pub(super) areas: Vec<robominer_db::MiningQueuePageAreaRecord>,
-    pub(super) costs: Vec<robominer_db::MiningQueuePageAreaCostRecord>,
-    pub(super) supplies: Vec<robominer_db::MiningQueuePageAreaSupplyRecord>,
-    pub(super) scores: Vec<robominer_db::RobotMiningAreaScoreRecord>,
+    pub(super) asset_summary: MiningQueueAssetSummaryView,
+    pub(super) ore_assets: Vec<MiningQueueOreAssetView>,
+    pub(super) robots: Vec<MiningQueueRobotView>,
+    pub(super) areas: Vec<MiningQueueAreaView>,
+    pub(super) costs: Vec<MiningQueueAreaCostView>,
+    pub(super) supplies: Vec<MiningQueueAreaSupplyView>,
+    pub(super) scores: Vec<MiningQueueScoreView>,
     pub(super) items: Vec<MiningQueueDisplayItem>,
     pub(super) selected_info_area_id: i64,
     pub(super) selected_robot_area_ids: HashMap<i64, i64>,
     pub(super) error_message: Option<String>,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAssetSummaryView {
+    pub(super) mining_queue_size: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueOreAssetView {
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+    pub(super) max_allowed: i32,
+    pub(super) depot_max_allowed: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueRobotView {
+    pub(super) robot_id: i64,
+    pub(super) robot_name: String,
+    pub(super) recharge_time: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaView {
+    pub(super) mining_area_id: i64,
+    pub(super) area_name: String,
+    pub(super) tax_rate: i32,
+    pub(super) depot_tax_rate: i32,
+    pub(super) mining_time: i32,
+    pub(super) max_moves: i32,
+    pub(super) size_x: i32,
+    pub(super) size_y: i32,
+    pub(super) score_ore_target: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaCostView {
+    pub(super) mining_area_id: i64,
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaSupplyView {
+    pub(super) mining_area_id: i64,
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) supply: i32,
+    pub(super) radius: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueScoreView {
+    pub(super) robot_id: i64,
+    pub(super) mining_area_id: i64,
+    pub(super) score: f64,
 }
 
 #[derive(Debug)]
@@ -167,9 +228,18 @@ async fn load_mining_queue_page_state(
         }
     }
 
-    let asset_summary = robominer_db::load_user_asset_summary(pool, user_id).await?;
-    let robots = robominer_db::list_mining_queue_page_robots(pool, user_id).await?;
-    let areas = robominer_db::list_mining_queue_page_areas(pool, user_id).await?;
+    let asset_summary =
+        asset_summary_view(robominer_db::load_user_asset_summary(pool, user_id).await?);
+    let robots = robominer_db::list_mining_queue_page_robots(pool, user_id)
+        .await?
+        .into_iter()
+        .map(robot_view)
+        .collect::<Vec<_>>();
+    let areas = robominer_db::list_mining_queue_page_areas(pool, user_id)
+        .await?
+        .into_iter()
+        .map(area_view)
+        .collect::<Vec<_>>();
     let items = load_mining_queue_display_items(pool, user_id).await?;
     let fallback_area_id = areas.first().map(|area| area.mining_area_id).unwrap_or(0);
     let selected_info_area_id = query_i64(request, "infoMiningAreaId").unwrap_or(fallback_area_id);
@@ -182,12 +252,28 @@ async fn load_mining_queue_page_state(
 
     Ok(MiningQueuePageState {
         asset_summary,
-        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id).await?,
+        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id)
+            .await?
+            .into_iter()
+            .map(ore_asset_view)
+            .collect(),
         robots,
         areas,
-        costs: robominer_db::list_mining_queue_page_area_costs(pool, user_id).await?,
-        supplies: robominer_db::list_mining_queue_page_area_supplies(pool, user_id).await?,
-        scores: robominer_db::list_robot_mining_area_scores_for_user(pool, user_id).await?,
+        costs: robominer_db::list_mining_queue_page_area_costs(pool, user_id)
+            .await?
+            .into_iter()
+            .map(area_cost_view)
+            .collect(),
+        supplies: robominer_db::list_mining_queue_page_area_supplies(pool, user_id)
+            .await?
+            .into_iter()
+            .map(area_supply_view)
+            .collect(),
+        scores: robominer_db::list_robot_mining_area_scores_for_user(pool, user_id)
+            .await?
+            .into_iter()
+            .map(score_view)
+            .collect(),
         items,
         selected_info_area_id,
         selected_robot_area_ids,

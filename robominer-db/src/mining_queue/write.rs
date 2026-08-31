@@ -24,11 +24,12 @@ pub async fn enqueue_mining(
         return db_reject(EnqueueMiningRejection::UnknownRobot);
     }
 
-    let Some((ore_price_id,)) =
-        sqlx::query_as::<_, (i64,)>("SELECT orePriceId FROM MiningArea WHERE id = ?")
-            .bind(request.mining_area_id)
-            .fetch_optional(&mut *transaction)
-            .await?
+    let Some(ore_price_id) = sqlx::query_scalar!(
+        r#"SELECT orePriceId AS "ore_price_id!: i64" FROM MiningArea WHERE id = ?"#,
+        request.mining_area_id
+    )
+    .fetch_optional(&mut *transaction)
+    .await?
     else {
         transaction.rollback().await?;
         return db_reject(EnqueueMiningRejection::UnknownMiningArea);
@@ -182,11 +183,12 @@ async fn cancel_mining_queue_in_transaction(
         return db_reject(CancelMiningQueueRejection::NotCancelable);
     }
 
-    let Some((ore_price_id,)) =
-        sqlx::query_as::<_, (i64,)>("SELECT orePriceId FROM MiningArea WHERE id = ?")
-            .bind(mining_area_id)
-            .fetch_optional(&mut **transaction)
-            .await?
+    let Some(ore_price_id) = sqlx::query_scalar!(
+        r#"SELECT orePriceId AS "ore_price_id!: i64" FROM MiningArea WHERE id = ?"#,
+        mining_area_id
+    )
+    .fetch_optional(&mut **transaction)
+    .await?
     else {
         return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
@@ -198,10 +200,12 @@ async fn cancel_mining_queue_in_transaction(
     }
     refund_full_ore_costs(transaction, request.user_id, &costs).await?;
 
-    sqlx::query("DELETE FROM MiningQueue WHERE id = ?")
-        .bind(request.mining_queue_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        r#"DELETE FROM MiningQueue WHERE id = ?"#,
+        request.mining_queue_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     db_ok(CanceledMiningQueue {
         mining_queue_id: request.mining_queue_id,
@@ -213,6 +217,8 @@ async fn lock_robot_for_enqueue(
     robot_id: i64,
     user_id: i64,
 ) -> Result<bool, sqlx::Error> {
+    // FOR UPDATE is kept on a runtime query; ownership check shape is covered by
+    // nearby compile-checked SELECTs and enqueue integration tests.
     let exists: Option<i64> =
         sqlx::query_scalar("SELECT id FROM Robot WHERE id = ? AND userId = ? FOR UPDATE")
             .bind(robot_id)
@@ -228,11 +234,15 @@ async fn user_has_mining_area(
     user_id: i64,
     mining_area_id: i64,
 ) -> Result<bool, sqlx::Error> {
-    let exists: Option<i64> = sqlx::query_scalar(
-        "SELECT miningAreaId FROM UserMiningArea WHERE userId = ? AND miningAreaId = ?",
+    let exists = sqlx::query_scalar!(
+        r#"
+SELECT miningAreaId AS "mining_area_id!: i64"
+FROM UserMiningArea
+WHERE userId = ? AND miningAreaId = ?
+        "#,
+        user_id,
+        mining_area_id
     )
-    .bind(user_id)
-    .bind(mining_area_id)
     .fetch_optional(&mut **transaction)
     .await?;
 
@@ -243,23 +253,27 @@ async fn user_mining_queue_size(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar("SELECT miningQueueSize FROM User WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&mut **transaction)
-        .await
+    sqlx::query_scalar!(
+        r#"SELECT miningQueueSize AS "size!: i64" FROM User WHERE id = ?"#,
+        user_id
+    )
+    .fetch_one(&mut **transaction)
+    .await
 }
 
 pub(crate) async fn robot_waiting_queue_count(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_id: i64,
 ) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar(
-        "SELECT COUNT(*) \
-         FROM MiningQueue \
-         WHERE robotId = ? \
-           AND (miningEndTime IS NULL OR miningEndTime > NOW())",
+    sqlx::query_scalar!(
+        r#"
+SELECT COUNT(*) AS "count!: i64"
+FROM MiningQueue
+WHERE robotId = ?
+  AND (miningEndTime IS NULL OR miningEndTime > NOW())
+        "#,
+        robot_id
     )
-    .bind(robot_id)
     .fetch_one(&mut **transaction)
     .await
 }
@@ -269,12 +283,14 @@ async fn insert_mining_queue(
     robot_id: i64,
     mining_area_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "INSERT INTO MiningQueue (miningAreaId, robotId) \
-         VALUES (?, ?)",
+    sqlx::query!(
+        r#"
+INSERT INTO MiningQueue (miningAreaId, robotId)
+VALUES (?, ?)
+        "#,
+        mining_area_id,
+        robot_id
     )
-    .bind(mining_area_id)
-    .bind(robot_id)
     .execute(&mut **transaction)
     .await?;
 

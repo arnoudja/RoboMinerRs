@@ -14,12 +14,22 @@ use crate::request_helpers::{login_redirect, request_user_id, session_username};
 ///
 /// Page read models should use this instead of [`robominer_domain::DomainError`], which is
 /// reserved for loadout/simulation and other domain rule failures.
+///
+/// The underlying SQL error is intentionally opaque so callers cannot pattern-match on
+/// `sqlx::Error` or read it as a public field; [`Display`] still surfaces the message for
+/// operator logs.
 #[derive(Debug)]
-pub(crate) struct PageLoadError(sqlx::Error);
+pub(crate) struct PageLoadError(PageLoadErrorKind);
+
+#[derive(Debug)]
+enum PageLoadErrorKind {
+    Sql(sqlx::Error),
+    Message(String),
+}
 
 impl From<sqlx::Error> for PageLoadError {
     fn from(error: sqlx::Error) -> Self {
-        Self(error)
+        Self(PageLoadErrorKind::Sql(error))
     }
 }
 
@@ -34,7 +44,7 @@ impl PageLoadError {
     ) -> Result<Self, robominer_domain::DomainError> {
         match error {
             robominer_domain::DomainError::Database(error) => {
-                Ok(Self(sqlx::Error::Protocol(error.to_string())))
+                Ok(Self(PageLoadErrorKind::Message(error.to_string())))
             }
             other => Err(other),
         }
@@ -43,7 +53,10 @@ impl PageLoadError {
 
 impl fmt::Display for PageLoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        match &self.0 {
+            PageLoadErrorKind::Sql(error) => error.fmt(f),
+            PageLoadErrorKind::Message(message) => f.write_str(message),
+        }
     }
 }
 

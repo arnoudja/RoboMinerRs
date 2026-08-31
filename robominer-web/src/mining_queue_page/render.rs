@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::help_pages;
 use crate::html::{EscapedHtml, html_attr, layout, selected_attr};
-use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
+use crate::mining_queue_page::{
+    MiningQueueAreaCostView, MiningQueueAreaSupplyView, MiningQueueAreaView,
+    MiningQueueDisplayItem, MiningQueuePageState,
+};
 use crate::static_assets::PageStylesheet;
 
 use super::inspector::render_mining_area_details;
@@ -10,11 +13,11 @@ use super::robots::{render_robot_card, render_wallet_strip};
 
 struct MiningQueueRenderContext<'a> {
     item_map: HashMap<i64, Vec<&'a MiningQueueDisplayItem>>,
-    cost_map: HashMap<i64, Vec<&'a robominer_db::MiningQueuePageAreaCostRecord>>,
-    supply_map: HashMap<i64, Vec<&'a robominer_db::MiningQueuePageAreaSupplyRecord>>,
+    cost_map: HashMap<i64, Vec<&'a MiningQueueAreaCostView>>,
+    supply_map: HashMap<i64, Vec<&'a MiningQueueAreaSupplyView>>,
     score_map: HashMap<(i64, i64), f64>,
     ore_amount_map: HashMap<i64, i32>,
-    area_map: HashMap<i64, &'a robominer_db::MiningQueuePageAreaRecord>,
+    area_map: HashMap<i64, &'a MiningQueueAreaView>,
 }
 
 impl<'a> MiningQueueRenderContext<'a> {
@@ -23,13 +26,11 @@ impl<'a> MiningQueueRenderContext<'a> {
         for item in &state.items {
             item_map.entry(item.robot_id).or_default().push(item);
         }
-        let mut cost_map: HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaCostRecord>> =
-            HashMap::new();
+        let mut cost_map: HashMap<i64, Vec<&MiningQueueAreaCostView>> = HashMap::new();
         for cost in &state.costs {
             cost_map.entry(cost.mining_area_id).or_default().push(cost);
         }
-        let mut supply_map: HashMap<i64, Vec<&robominer_db::MiningQueuePageAreaSupplyRecord>> =
-            HashMap::new();
+        let mut supply_map: HashMap<i64, Vec<&MiningQueueAreaSupplyView>> = HashMap::new();
         for supply in &state.supplies {
             supply_map
                 .entry(supply.mining_area_id)
@@ -46,7 +47,7 @@ impl<'a> MiningQueueRenderContext<'a> {
             .map(|asset| (asset.ore_id, asset.amount))
             .collect();
 
-        let mut area_map: HashMap<i64, &robominer_db::MiningQueuePageAreaRecord> = HashMap::new();
+        let mut area_map: HashMap<i64, &MiningQueueAreaView> = HashMap::new();
         for area in &state.areas {
             area_map.insert(area.mining_area_id, area);
         }
