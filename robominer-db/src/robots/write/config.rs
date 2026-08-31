@@ -11,6 +11,7 @@ use super::pending::{
     delete_pending_robot_config, insert_pending_robot_config, update_pending_robot_config,
     update_robot_config_immediately, update_robot_header,
 };
+use crate::catalog::DEFAULT_PART_IDS;
 use crate::mining_queue::robot_waiting_queue_count;
 use crate::shop::add_user_robot_part_asset;
 use crate::users::touch_user_last_login_time;
@@ -138,8 +139,6 @@ pub(crate) async fn add_default_robot_for_user(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<(), sqlx::Error> {
-    const DEFAULT_PART_IDS: [i64; 7] = [101, 201, 301, 401, 501, 601, 701];
-
     let username: String = sqlx::query_scalar("SELECT username FROM User WHERE id = ?")
         .bind(user_id)
         .fetch_one(&mut **transaction)

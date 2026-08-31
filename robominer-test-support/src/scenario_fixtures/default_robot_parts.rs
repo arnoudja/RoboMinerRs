@@ -1,15 +1,24 @@
-use robominer_db::MySqlPool;
+use robominer_db::{DEFAULT_PART_IDS, MySqlPool};
 
 use crate::{insert_ore, insert_row_id, unique_prefix};
 
+fn default_part_id_list_sql() -> String {
+    DEFAULT_PART_IDS
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
-    let existing_default_parts: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM RobotPart WHERE id IN (101, 201, 301, 401, 501, 601, 701)",
-    )
+    let existing_default_parts: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM RobotPart WHERE id IN ({})",
+        default_part_id_list_sql()
+    ))
     .fetch_one(pool)
     .await
     .expect("failed to count default robot parts");
-    if existing_default_parts >= 7 {
+    if existing_default_parts >= DEFAULT_PART_IDS.len() as i64 {
         return;
     }
 
@@ -29,15 +38,16 @@ pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
             .expect("failed to ensure default part type");
     }
 
-    for (robot_part_id, type_id, scan_time, scan_distance) in [
-        (101, 1, 0, 0),
-        (201, 2, 0, 0),
-        (301, 3, 0, 0),
-        (401, 4, 0, 0),
-        (501, 5, 0, 0),
-        (601, 6, 0, 0),
-        (701, 7, 6, 5),
-    ] {
+    let part_specs = [
+        (DEFAULT_PART_IDS[0], 1, 0, 0),
+        (DEFAULT_PART_IDS[1], 2, 0, 0),
+        (DEFAULT_PART_IDS[2], 3, 0, 0),
+        (DEFAULT_PART_IDS[3], 4, 0, 0),
+        (DEFAULT_PART_IDS[4], 5, 0, 0),
+        (DEFAULT_PART_IDS[5], 6, 0, 0),
+        (DEFAULT_PART_IDS[6], 7, 6, 5),
+    ];
+    for (robot_part_id, type_id, scan_time, scan_distance) in part_specs {
         sqlx::query(
             "INSERT IGNORE INTO RobotPart \
              (id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \

@@ -3,6 +3,7 @@ use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use crate::http::{Request, Response};
+use crate::routes::AppRoute;
 
 const AUTH_WINDOW: Duration = Duration::from_secs(60);
 pub(crate) const MAX_ATTEMPTS_PER_IP: usize = 10;
@@ -151,13 +152,13 @@ impl MutationRateLimiter {
 
 /// Action family for authenticated mutation rate limiting (keyed with user id).
 pub(crate) fn mutation_action_family(path: &str) -> &'static str {
-    match path {
-        "/shop" | "/Shop" => "shop",
-        "/miningQueue" | "/MiningQueue" => "mining_queue",
-        "/editCode" | "/EditCode" => "edit_code",
-        "/achievements" | "/Achievements" => "achievements",
-        "/robot" | "/Robot" => "robot",
-        "/account" | "/Account" => "account",
+    match AppRoute::from_path(path) {
+        Some(AppRoute::Shop) => "shop",
+        Some(AppRoute::MiningQueue) => "mining_queue",
+        Some(AppRoute::EditCode) => "edit_code",
+        Some(AppRoute::Achievements) => "achievements",
+        Some(AppRoute::Robot) => "robot",
+        Some(AppRoute::Account) => "account",
         _ => "other",
     }
 }

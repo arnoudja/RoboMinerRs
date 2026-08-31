@@ -30,6 +30,7 @@ mod request_helpers;
 mod robot_page;
 mod robot_stats_page;
 mod router;
+mod routes;
 mod server;
 mod session;
 mod settings;

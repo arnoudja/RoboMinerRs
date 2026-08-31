@@ -1,5 +1,6 @@
 use crate::Request;
 use crate::Response;
+use crate::routes::AppRoute;
 
 /// Redirect legacy PascalCase paths (`/Shop`, `/MiningQueue`, …) to canonical camelCase.
 ///
@@ -45,6 +46,17 @@ fn log_legacy_path_redirect(request: &Request, canonical: &str) {
 }
 
 pub(super) fn canonicalize_path(path: &str) -> Option<String> {
+    // Prefer the typed route table for known PascalCase aliases so redirect
+    // targets stay aligned with dispatch. Extra aliases (legacy `.html` paths)
+    // are left alone here — those still resolve via dispatch matching.
+    if let Some(canonical) = AppRoute::canonicalize(path) {
+        let route = AppRoute::from_path(path)?;
+        if path == route.pascal_path() {
+            return Some(canonical.to_string());
+        }
+        return None;
+    }
+
     let rest = path.strip_prefix('/')?;
     let mut chars = rest.chars();
     let first = chars.next()?;
