@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use super::ShopPageState;
+use super::view_model::empty_part_state;
+use super::{PartCostView, PartStateView, ShopPageState};
 use crate::help_pages;
 use crate::html::{EscapedHtml, html_attr, layout, selected_attr};
 use crate::static_assets::PageStylesheet;
@@ -16,12 +17,12 @@ pub(super) fn render_shop_page(
     hud: Option<&str>,
     state: &ShopPageState,
 ) -> String {
-    let part_state_map: HashMap<i64, &robominer_db::ShopRobotPartStateRecord> = state
+    let part_state_map: HashMap<i64, &PartStateView> = state
         .part_states
         .iter()
         .map(|state| (state.robot_part_id, state))
         .collect();
-    let mut cost_map: HashMap<i64, Vec<&robominer_db::ShopRobotPartCostRecord>> = HashMap::new();
+    let mut cost_map: HashMap<i64, Vec<&PartCostView>> = HashMap::new();
     for cost in &state.costs {
         cost_map.entry(cost.robot_part_id).or_default().push(cost);
     }
@@ -65,14 +66,7 @@ pub(super) fn render_shop_page(
         let part_state = if let Some(part_state) = part_state_map.get(&part.robot_part_id) {
             *part_state
         } else {
-            empty_state = robominer_db::ShopRobotPartStateRecord {
-                robot_part_id: part.robot_part_id,
-                total_owned: 0,
-                assigned: 0,
-                unassigned: 0,
-                can_buy: false,
-                can_sell: false,
-            };
+            empty_state = empty_part_state(part.robot_part_id);
             &empty_state
         };
         render_shop_part_compact_card(
@@ -103,14 +97,7 @@ pub(super) fn render_shop_page(
         let part_state = if let Some(part_state) = part_state_map.get(&part.robot_part_id) {
             *part_state
         } else {
-            empty_state = robominer_db::ShopRobotPartStateRecord {
-                robot_part_id: part.robot_part_id,
-                total_owned: 0,
-                assigned: 0,
-                unassigned: 0,
-                can_buy: false,
-                can_sell: false,
-            };
+            empty_state = empty_part_state(part.robot_part_id);
             &empty_state
         };
         render_shop_part_detail_panel(

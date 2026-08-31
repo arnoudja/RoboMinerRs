@@ -2,6 +2,9 @@ use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_con
 
 use super::super::default_shop_tier_id;
 use super::super::render::render_shop_page;
+use super::super::{
+    CatalogPartView, OreAssetView, OreView, PartCostView, PartStateView, PartTypeView,
+};
 use super::fixtures::sample_shop_state;
 
 #[test]
@@ -63,11 +66,11 @@ fn shop_rendering_filters_selection_state_and_escapes_fields() {
 #[test]
 fn default_shop_tier_id_selects_highest_quality_ore() {
     let ores = vec![
-        robominer_db::OreRecord {
+        OreView {
             id: 1,
             ore_name: "Cerbonium".to_string(),
         },
-        robominer_db::OreRecord {
+        OreView {
             id: 3,
             ore_name: "Lithabine".to_string(),
         },
@@ -80,7 +83,7 @@ fn default_shop_tier_id_selects_highest_quality_ore() {
 #[test]
 fn shop_quality_filter_lists_only_mineable_ores() {
     let mut state = sample_shop_state(None);
-    state.ores = vec![robominer_db::OreRecord {
+    state.ores = vec![OreView {
         id: 1,
         ore_name: "Cerbonium".to_string(),
     }];
@@ -99,19 +102,19 @@ fn shop_quality_filter_lists_only_mineable_ores() {
 fn shop_part_costs_are_sorted_by_ore_id_descending() {
     let mut state = sample_shop_state(None);
     state.costs = vec![
-        robominer_db::ShopRobotPartCostRecord {
+        PartCostView {
             robot_part_id: 100,
             ore_id: 1,
             ore_name: "Cerbonium".to_string(),
             amount: 10,
         },
-        robominer_db::ShopRobotPartCostRecord {
+        PartCostView {
             robot_part_id: 100,
             ore_id: 3,
             ore_name: "Lithabine".to_string(),
             amount: 20,
         },
-        robominer_db::ShopRobotPartCostRecord {
+        PartCostView {
             robot_part_id: 100,
             ore_id: 2,
             ore_name: "Iron".to_string(),
@@ -119,21 +122,21 @@ fn shop_part_costs_are_sorted_by_ore_id_descending() {
         },
     ];
     state.ore_assets = vec![
-        robominer_db::UserOreAssetStateRecord {
+        OreAssetView {
             ore_id: 1,
             ore_name: "Cerbonium".to_string(),
             amount: 100,
             max_allowed: 100,
             depot_max_allowed: 0,
         },
-        robominer_db::UserOreAssetStateRecord {
+        OreAssetView {
             ore_id: 2,
             ore_name: "Iron".to_string(),
             amount: 100,
             max_allowed: 100,
             depot_max_allowed: 0,
         },
-        robominer_db::UserOreAssetStateRecord {
+        OreAssetView {
             ore_id: 3,
             ore_name: "Lithabine".to_string(),
             amount: 100,
@@ -168,11 +171,11 @@ fn shop_engine_catalog_cards_show_forward_power() {
     let mut state = sample_shop_state(None);
     state.selected_part_type_id = super::super::ENGINE_PART_TYPE_ID;
     state.selected_tier_id = 1;
-    state.part_types.push(robominer_db::RobotPartTypeRecord {
+    state.part_types.push(PartTypeView {
         id: super::super::ENGINE_PART_TYPE_ID,
         type_name: "Engine".to_string(),
     });
-    state.parts = vec![robominer_db::ShopRobotPartCatalogRecord {
+    state.parts = vec![CatalogPartView {
         robot_part_id: 601,
         type_id: super::super::ENGINE_PART_TYPE_ID,
         tier_id: 1,
@@ -193,16 +196,15 @@ fn shop_engine_catalog_cards_show_forward_power() {
         volume: 4,
         power_usage: 6,
     }];
-    state.costs = vec![robominer_db::ShopRobotPartCostRecord {
+    state.costs = vec![PartCostView {
         robot_part_id: 601,
         ore_id: 1,
         ore_name: "Cerbonium".to_string(),
         amount: 10,
     }];
-    state.part_states = vec![robominer_db::ShopRobotPartStateRecord {
+    state.part_states = vec![PartStateView {
         robot_part_id: 601,
         total_owned: 0,
-        assigned: 0,
         unassigned: 0,
         can_buy: true,
         can_sell: false,
@@ -225,11 +227,11 @@ fn shop_memory_module_catalog_cards_show_memory_size() {
     let mut state = sample_shop_state(None);
     state.selected_part_type_id = super::super::MEMORY_MODULE_PART_TYPE_ID;
     state.selected_tier_id = 1;
-    state.part_types.push(robominer_db::RobotPartTypeRecord {
+    state.part_types.push(PartTypeView {
         id: super::super::MEMORY_MODULE_PART_TYPE_ID,
         type_name: "Memory module".to_string(),
     });
-    state.parts = vec![robominer_db::ShopRobotPartCatalogRecord {
+    state.parts = vec![CatalogPartView {
         robot_part_id: 401,
         type_id: super::super::MEMORY_MODULE_PART_TYPE_ID,
         tier_id: 1,
@@ -250,16 +252,15 @@ fn shop_memory_module_catalog_cards_show_memory_size() {
         volume: 1,
         power_usage: 1,
     }];
-    state.costs = vec![robominer_db::ShopRobotPartCostRecord {
+    state.costs = vec![PartCostView {
         robot_part_id: 401,
         ore_id: 1,
         ore_name: "Cerbonium".to_string(),
         amount: 10,
     }];
-    state.part_states = vec![robominer_db::ShopRobotPartStateRecord {
+    state.part_states = vec![PartStateView {
         robot_part_id: 401,
         total_owned: 0,
-        assigned: 0,
         unassigned: 0,
         can_buy: true,
         can_sell: false,
@@ -282,11 +283,11 @@ fn shop_scanner_catalog_cards_show_scan_distance() {
     let mut state = sample_shop_state(None);
     state.selected_part_type_id = super::super::ORE_SCANNER_PART_TYPE_ID;
     state.selected_tier_id = 1;
-    state.part_types.push(robominer_db::RobotPartTypeRecord {
+    state.part_types.push(PartTypeView {
         id: super::super::ORE_SCANNER_PART_TYPE_ID,
         type_name: "Ore scanner".to_string(),
     });
-    state.parts = vec![robominer_db::ShopRobotPartCatalogRecord {
+    state.parts = vec![CatalogPartView {
         robot_part_id: 701,
         type_id: super::super::ORE_SCANNER_PART_TYPE_ID,
         tier_id: 1,
@@ -307,16 +308,15 @@ fn shop_scanner_catalog_cards_show_scan_distance() {
         volume: 2,
         power_usage: 1,
     }];
-    state.costs = vec![robominer_db::ShopRobotPartCostRecord {
+    state.costs = vec![PartCostView {
         robot_part_id: 701,
         ore_id: 1,
         ore_name: "Cerbonium".to_string(),
         amount: 10,
     }];
-    state.part_states = vec![robominer_db::ShopRobotPartStateRecord {
+    state.part_states = vec![PartStateView {
         robot_part_id: 701,
         total_owned: 0,
-        assigned: 0,
         unassigned: 0,
         can_buy: true,
         can_sell: false,

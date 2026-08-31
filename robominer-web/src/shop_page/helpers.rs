@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use super::ShopPageState;
+use super::{PartCostView, ShopPageState};
 use crate::html::{format_ore_shortfall, optional_title_attr};
 
-pub(super) fn shop_total_cost(costs: &[&robominer_db::ShopRobotPartCostRecord]) -> i32 {
+pub(super) fn shop_total_cost(costs: &[&PartCostView]) -> i32 {
     costs.iter().map(|cost| cost.amount).sum()
 }
 
 pub(super) fn shop_cost_summary(
-    costs: &[&robominer_db::ShopRobotPartCostRecord],
+    costs: &[&PartCostView],
     ore_amount_map: &HashMap<i64, i32>,
 ) -> String {
     if costs.is_empty() {

@@ -2,22 +2,97 @@ use crate::{Request, Response, ServerConfig, mutation_form_has, mutation_i64, qu
 
 use robominer_db::part_type_id;
 
+mod catalog;
+mod helpers;
+mod inventory;
+mod render;
+mod scripts;
+mod view_model;
+
+#[cfg(test)]
+mod tests;
+
+use view_model::{
+    catalog_part_view, ore_asset_view, ore_view, part_cost_view, part_state_view, part_type_view,
+};
+
 pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = part_type_id::ORE_SCANNER;
 pub(super) const MEMORY_MODULE_PART_TYPE_ID: i64 = part_type_id::MEMORY_MODULE;
 pub(super) const ENGINE_PART_TYPE_ID: i64 = part_type_id::ENGINE;
 
 #[derive(Debug)]
 pub(super) struct ShopPageState {
-    pub(super) ores: Vec<robominer_db::OreRecord>,
-    pub(super) part_types: Vec<robominer_db::RobotPartTypeRecord>,
-    pub(super) parts: Vec<robominer_db::ShopRobotPartCatalogRecord>,
-    pub(super) costs: Vec<robominer_db::ShopRobotPartCostRecord>,
-    pub(super) part_states: Vec<robominer_db::ShopRobotPartStateRecord>,
-    pub(super) ore_assets: Vec<robominer_db::UserOreAssetStateRecord>,
+    pub(super) ores: Vec<OreView>,
+    pub(super) part_types: Vec<PartTypeView>,
+    pub(super) parts: Vec<CatalogPartView>,
+    pub(super) costs: Vec<PartCostView>,
+    pub(super) part_states: Vec<PartStateView>,
+    pub(super) ore_assets: Vec<OreAssetView>,
     pub(super) selected_part_type_id: i64,
     pub(super) selected_tier_id: i64,
     pub(super) selected_part_id: i64,
     pub(super) message: Option<String>,
+}
+
+#[derive(Debug)]
+pub(super) struct OreView {
+    pub(super) id: i64,
+    pub(super) ore_name: String,
+}
+
+#[derive(Debug)]
+pub(super) struct PartTypeView {
+    pub(super) id: i64,
+    pub(super) type_name: String,
+}
+
+#[derive(Debug)]
+pub(super) struct CatalogPartView {
+    pub(super) robot_part_id: i64,
+    pub(super) type_id: i64,
+    pub(super) tier_id: i64,
+    pub(super) tier_name: String,
+    pub(super) part_name: String,
+    pub(super) ore_capacity: i32,
+    pub(super) mining_capacity: i32,
+    pub(super) battery_capacity: i32,
+    pub(super) memory_capacity: i32,
+    pub(super) cpu_capacity: i32,
+    pub(super) forward_capacity: i32,
+    pub(super) backward_capacity: i32,
+    pub(super) rotate_capacity: i32,
+    pub(super) recharge_time: i32,
+    pub(super) scan_time: i32,
+    pub(super) scan_distance: i32,
+    pub(super) weight: i32,
+    pub(super) volume: i32,
+    pub(super) power_usage: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct PartCostView {
+    pub(super) robot_part_id: i64,
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct PartStateView {
+    pub(super) robot_part_id: i64,
+    pub(super) total_owned: i32,
+    pub(super) unassigned: i32,
+    pub(super) can_buy: bool,
+    pub(super) can_sell: bool,
+}
+
+#[derive(Debug)]
+pub(super) struct OreAssetView {
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+    pub(super) max_allowed: i32,
+    pub(super) depot_max_allowed: i32,
 }
 
 pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
@@ -136,17 +211,21 @@ async fn load_shop_state(
         );
     }
 
-    let ores: Vec<robominer_db::OreRecord> =
-        robominer_db::list_mining_area_overview_ores_for_user(pool, user_id)
-            .await?
-            .into_iter()
-            .map(|ore| robominer_db::OreRecord {
-                id: ore.ore_id,
-                ore_name: ore.ore_name,
-            })
-            .collect();
-    let part_types = robominer_db::list_robot_part_types(pool).await?;
-    let parts = robominer_db::list_shop_robot_part_catalog(pool).await?;
+    let ores: Vec<OreView> = robominer_db::list_mining_area_overview_ores_for_user(pool, user_id)
+        .await?
+        .into_iter()
+        .map(|ore| ore_view(ore.ore_id, ore.ore_name))
+        .collect();
+    let part_types = robominer_db::list_robot_part_types(pool)
+        .await?
+        .into_iter()
+        .map(part_type_view)
+        .collect::<Vec<_>>();
+    let parts = robominer_db::list_shop_robot_part_catalog(pool)
+        .await?
+        .into_iter()
+        .map(catalog_part_view)
+        .collect::<Vec<_>>();
     let selected_part_type_id = selected_part_type_id
         .or_else(|| part_types.first().map(|part_type| part_type.id))
         .unwrap_or(0);
@@ -165,9 +244,21 @@ async fn load_shop_state(
         ores,
         part_types,
         parts,
-        costs: robominer_db::list_shop_robot_part_costs(pool).await?,
-        part_states: robominer_db::list_shop_robot_part_states(pool, user_id).await?,
-        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id).await?,
+        costs: robominer_db::list_shop_robot_part_costs(pool)
+            .await?
+            .into_iter()
+            .map(part_cost_view)
+            .collect(),
+        part_states: robominer_db::list_shop_robot_part_states(pool, user_id)
+            .await?
+            .into_iter()
+            .map(part_state_view)
+            .collect(),
+        ore_assets: robominer_db::list_user_ore_asset_states(pool, user_id)
+            .await?
+            .into_iter()
+            .map(ore_asset_view)
+            .collect(),
         selected_part_type_id,
         selected_tier_id,
         selected_part_id,
@@ -175,13 +266,13 @@ async fn load_shop_state(
     })
 }
 
-fn default_shop_tier_id(ores: &[robominer_db::OreRecord]) -> Option<i64> {
+fn default_shop_tier_id(ores: &[OreView]) -> Option<i64> {
     ores.iter().map(|ore| ore.id).max()
 }
 
 fn resolve_selected_part_id(
     selected_part_id: Option<i64>,
-    parts: &[robominer_db::ShopRobotPartCatalogRecord],
+    parts: &[CatalogPartView],
     selected_part_type_id: i64,
     selected_tier_id: i64,
 ) -> i64 {
@@ -200,12 +291,3 @@ fn resolve_selected_part_id(
         .or_else(|| parts.first().map(|part| part.robot_part_id))
         .unwrap_or(0)
 }
-
-mod catalog;
-mod helpers;
-mod inventory;
-mod render;
-mod scripts;
-
-#[cfg(test)]
-mod tests;

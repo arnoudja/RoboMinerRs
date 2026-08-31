@@ -1,20 +1,20 @@
 use crate::html::{assert_contains_all, assert_html_contains};
 
 use super::super::render::render_shop_page;
+use super::super::{CatalogPartView, OreAssetView, PartStateView};
 use super::fixtures::sample_shop_state;
 
 #[test]
 fn shop_shows_disabled_buy_and_sell_with_reasons() {
     let mut state = sample_shop_state(None);
-    state.part_states = vec![robominer_db::ShopRobotPartStateRecord {
+    state.part_states = vec![PartStateView {
         robot_part_id: 100,
         total_owned: 2,
-        assigned: 2,
         unassigned: 0,
         can_buy: false,
         can_sell: false,
     }];
-    state.ore_assets = vec![robominer_db::UserOreAssetStateRecord {
+    state.ore_assets = vec![OreAssetView {
         ore_id: 2,
         ore_name: "Iron".to_string(),
         amount: 10,
@@ -41,7 +41,7 @@ fn shop_shows_disabled_buy_and_sell_with_reasons() {
 fn shop_inventory_sorts_sellable_parts_first() {
     let mut state = sample_shop_state(None);
     state.parts = vec![
-        robominer_db::ShopRobotPartCatalogRecord {
+        CatalogPartView {
             robot_part_id: 100,
             type_id: 10,
             tier_id: 2,
@@ -62,7 +62,7 @@ fn shop_inventory_sorts_sellable_parts_first() {
             volume: 12,
             power_usage: 13,
         },
-        robominer_db::ShopRobotPartCatalogRecord {
+        CatalogPartView {
             robot_part_id: 101,
             type_id: 10,
             tier_id: 2,
@@ -85,18 +85,16 @@ fn shop_inventory_sorts_sellable_parts_first() {
         },
     ];
     state.part_states = vec![
-        robominer_db::ShopRobotPartStateRecord {
+        PartStateView {
             robot_part_id: 100,
             total_owned: 1,
-            assigned: 1,
             unassigned: 0,
             can_buy: false,
             can_sell: false,
         },
-        robominer_db::ShopRobotPartStateRecord {
+        PartStateView {
             robot_part_id: 101,
             total_owned: 2,
-            assigned: 0,
             unassigned: 2,
             can_buy: false,
             can_sell: true,
@@ -127,10 +125,9 @@ fn shop_inventory_sorts_sellable_parts_first() {
 #[test]
 fn shop_sell_all_unassigned_is_disabled_without_stock() {
     let mut state = sample_shop_state(None);
-    state.part_states = vec![robominer_db::ShopRobotPartStateRecord {
+    state.part_states = vec![PartStateView {
         robot_part_id: 100,
         total_owned: 2,
-        assigned: 2,
         unassigned: 0,
         can_buy: false,
         can_sell: false,

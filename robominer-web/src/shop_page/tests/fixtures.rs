@@ -5,7 +5,10 @@ use std::collections::HashMap;
 use crate::Request;
 use crate::session::format_authenticated_cookie;
 
-use super::super::ShopPageState;
+use super::super::{
+    CatalogPartView, OreAssetView, OreView, PartCostView, PartStateView, PartTypeView,
+    ShopPageState,
+};
 
 pub(super) fn authenticated_request(path: &str) -> Request {
     Request {
@@ -28,20 +31,20 @@ pub(super) fn sample_shop_state(message: Option<String>) -> ShopPageState {
         selected_tier_id: 2,
         selected_part_id: 100,
         ores: vec![
-            robominer_db::OreRecord {
+            OreView {
                 id: 1,
                 ore_name: "Ore <One>".to_string(),
             },
-            robominer_db::OreRecord {
+            OreView {
                 id: 2,
                 ore_name: "Ore & Two".to_string(),
             },
         ],
-        part_types: vec![robominer_db::RobotPartTypeRecord {
+        part_types: vec![PartTypeView {
             id: 10,
             type_name: "Type <A>".to_string(),
         }],
-        parts: vec![robominer_db::ShopRobotPartCatalogRecord {
+        parts: vec![CatalogPartView {
             robot_part_id: 100,
             type_id: 10,
             tier_id: 2,
@@ -62,21 +65,20 @@ pub(super) fn sample_shop_state(message: Option<String>) -> ShopPageState {
             volume: 12,
             power_usage: 13,
         }],
-        costs: vec![robominer_db::ShopRobotPartCostRecord {
+        costs: vec![PartCostView {
             robot_part_id: 100,
             ore_id: 2,
             ore_name: "Ore & Two".to_string(),
             amount: 30,
         }],
-        part_states: vec![robominer_db::ShopRobotPartStateRecord {
+        part_states: vec![PartStateView {
             robot_part_id: 100,
             total_owned: 2,
-            assigned: 1,
             unassigned: 1,
             can_buy: true,
             can_sell: true,
         }],
-        ore_assets: vec![robominer_db::UserOreAssetStateRecord {
+        ore_assets: vec![OreAssetView {
             ore_id: 2,
             ore_name: "Ore & Two".to_string(),
             amount: 40,

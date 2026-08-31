@@ -5,15 +5,18 @@ use super::helpers::{
     ShopButtonStyle, add_shop_stat_entry, push_shop_highlight, shop_button, shop_cost_summary,
     shop_total_cost,
 };
-use super::{ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID};
+use super::{
+    CatalogPartView, ENGINE_PART_TYPE_ID, MEMORY_MODULE_PART_TYPE_ID, ORE_SCANNER_PART_TYPE_ID,
+    PartCostView, PartStateView,
+};
 use crate::html::{EscapedHtml, format_ore_shortfall, format_period};
 use crate::mining_area_atlas::{MiningAreaAtlasLinkTarget, render_mining_area_atlas_ore_link};
 
 pub(super) fn render_shop_part_compact_card(
     body: &mut String,
-    part: &robominer_db::ShopRobotPartCatalogRecord,
-    state: &robominer_db::ShopRobotPartStateRecord,
-    costs: &[&robominer_db::ShopRobotPartCostRecord],
+    part: &CatalogPartView,
+    state: &PartStateView,
+    costs: &[&PartCostView],
     ore_amount_map: &HashMap<i64, i32>,
     part_number: i32,
     page_state: &ShopPageState,
@@ -77,9 +80,9 @@ pub(super) fn render_shop_part_compact_card(
 
 pub(super) fn render_shop_part_detail_panel(
     body: &mut String,
-    part: &robominer_db::ShopRobotPartCatalogRecord,
-    state: &robominer_db::ShopRobotPartStateRecord,
-    costs: &[&robominer_db::ShopRobotPartCostRecord],
+    part: &CatalogPartView,
+    state: &PartStateView,
+    costs: &[&PartCostView],
     ore_amount_map: &HashMap<i64, i32>,
     page_state: &ShopPageState,
 ) {
@@ -168,9 +171,9 @@ pub(super) fn render_shop_part_detail_panel(
 }
 
 pub(super) fn render_shop_buy_action(
-    part: &robominer_db::ShopRobotPartCatalogRecord,
-    state: &robominer_db::ShopRobotPartStateRecord,
-    costs: &[&robominer_db::ShopRobotPartCostRecord],
+    part: &CatalogPartView,
+    state: &PartStateView,
+    costs: &[&PartCostView],
     ore_amount_map: &HashMap<i64, i32>,
     page_state: &ShopPageState,
 ) -> String {
@@ -205,8 +208,8 @@ pub(super) fn render_shop_buy_action(
 }
 
 pub(super) fn render_shop_sell_action(
-    part: &robominer_db::ShopRobotPartCatalogRecord,
-    state: &robominer_db::ShopRobotPartStateRecord,
+    part: &CatalogPartView,
+    state: &PartStateView,
     page_state: &ShopPageState,
 ) -> String {
     let block_reason = shop_sell_block_reason(state);
@@ -229,8 +232,8 @@ pub(super) fn render_shop_sell_action(
 }
 
 pub(super) fn shop_buy_block_reason(
-    state: &robominer_db::ShopRobotPartStateRecord,
-    costs: &[&robominer_db::ShopRobotPartCostRecord],
+    state: &PartStateView,
+    costs: &[&PartCostView],
     ore_amount_map: &HashMap<i64, i32>,
 ) -> Option<String> {
     if state.can_buy {
@@ -250,9 +253,7 @@ pub(super) fn shop_buy_block_reason(
     }
 }
 
-pub(super) fn shop_sell_block_reason(
-    state: &robominer_db::ShopRobotPartStateRecord,
-) -> Option<String> {
+pub(super) fn shop_sell_block_reason(state: &PartStateView) -> Option<String> {
     if state.can_sell {
         return None;
     }

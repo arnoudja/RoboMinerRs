@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use crate::html::{EscapedHtml, format_period};
-use crate::mining_queue_page::MiningQueuePageState;
+use crate::mining_queue_page::{
+    MiningQueueAreaCostView, MiningQueueAreaSupplyView, MiningQueueAreaView, MiningQueuePageState,
+    MiningQueueRobotView,
+};
 
 pub(super) fn render_mining_queue_selection_state_inputs(
     body: &mut String,
@@ -28,10 +31,10 @@ pub(super) fn render_mining_queue_selection_state_inputs(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn render_mining_area_details(
     body: &mut String,
-    area: &robominer_db::MiningQueuePageAreaRecord,
-    costs: &[&robominer_db::MiningQueuePageAreaCostRecord],
-    supplies: &[&robominer_db::MiningQueuePageAreaSupplyRecord],
-    robots: &[robominer_db::MiningQueuePageRobotRecord],
+    area: &MiningQueueAreaView,
+    costs: &[&MiningQueueAreaCostView],
+    supplies: &[&MiningQueueAreaSupplyView],
+    robots: &[MiningQueueRobotView],
     score_map: &HashMap<(i64, i64), f64>,
     ore_amount_map: &HashMap<i64, i32>,
     active: bool,
