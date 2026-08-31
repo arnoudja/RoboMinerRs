@@ -17,8 +17,11 @@ noted here.
 
 ### MySQL (must be started manually each session)
 
-- MySQL 8.0 is installed but there is no systemd/auto-start in the VM. Start it
-  with `sudo service mysql start` at the beginning of a session (check with
+- This Cloud VM installs a **host** MySQL **8.0** package; CI and the supported
+  target use **MySQL 8.4** (see README / CONTRIBUTING). Prefer dialect features
+  that work on 8.4; treat the host 8.0 as a local convenience.
+- There is no systemd/auto-start in the VM. Start MySQL with
+  `sudo service mysql start` at the beginning of a session (check with
   `sudo mysqladmin ping`).
 - Credentials configured in this environment: root over TCP is `root`/`root`
   (host `127.0.0.1`/`%`), and the app user is `robominer`/`password`. The
