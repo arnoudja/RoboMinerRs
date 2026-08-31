@@ -27,7 +27,6 @@ flowchart TB
   dom --> db
   dom --> sim
   sim --> prog
-  db --> sim
 ```
 
 | Crate | Role |
@@ -65,5 +64,6 @@ Fresh environments load `resources/database/createDatabase.sql` plus incremental
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — tests, crate boundaries, error handling
 - [docs/crate-map.md](crate-map.md) — module map for large crates
+- [docs/gameData.md](gameData.md) — seed data structural map (`gameData.sql`)
 - [docs/animation-payload.md](animation-payload.md) — rally replay JSON contract
 - [AGENTS.md](../AGENTS.md) — cloud/dev environment notes

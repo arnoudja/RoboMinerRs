@@ -1,3 +1,8 @@
+//! Mining result history list and detail reads.
+//!
+//! Primary entry points: [`list_mining_result_states_for_user`],
+//! [`list_mining_result_ore_states_for_user`].
+
 mod detail;
 mod states;
 

@@ -1,3 +1,8 @@
+//! Legacy key=value config and CLI database URL resolution.
+//!
+//! Primary entry points: [`connect_from_cli`], [`resolve_database_url`],
+//! [`load_legacy_config`].
+
 use std::collections::HashMap;
 use std::env;
 use std::fmt;

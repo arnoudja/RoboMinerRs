@@ -1,3 +1,8 @@
+//! Schema migration loader and runner (embedded + on-disk).
+//!
+//! Primary entry points: [`run_embedded_migrations`], [`migration_status`],
+//! [`run_migrations_from_dir`].
+
 mod errors;
 mod loader;
 mod runner;

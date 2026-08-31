@@ -1,3 +1,8 @@
+//! Rally lease, persist, wallet claim, and related cleanup.
+//!
+//! Primary entry points: [`claim_user_results`], [`persist_completed_rally`],
+//! [`claim_next_mining_rally_queue_for_area`].
+
 mod claim;
 mod cleanup;
 mod pending;

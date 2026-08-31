@@ -1,3 +1,8 @@
+//! Pool rally loadouts and completed-pool persist helpers.
+//!
+//! Primary entry points: [`get_pool`], [`list_pool_items`],
+//! [`persist_completed_pool_rally`].
+
 use sqlx::MySqlPool;
 
 use crate::mappers::{
