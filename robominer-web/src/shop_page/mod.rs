@@ -1,8 +1,10 @@
 use crate::{Request, Response, ServerConfig, mutation_form_has, mutation_i64, query_i64};
 
-pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = 7;
-pub(super) const MEMORY_MODULE_PART_TYPE_ID: i64 = 4;
-pub(super) const ENGINE_PART_TYPE_ID: i64 = 6;
+use robominer_db::part_type_id;
+
+pub(super) const ORE_SCANNER_PART_TYPE_ID: i64 = part_type_id::ORE_SCANNER;
+pub(super) const MEMORY_MODULE_PART_TYPE_ID: i64 = part_type_id::MEMORY_MODULE;
+pub(super) const ENGINE_PART_TYPE_ID: i64 = part_type_id::ENGINE;
 
 #[derive(Debug)]
 pub(super) struct ShopPageState {

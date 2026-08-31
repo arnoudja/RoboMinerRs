@@ -5,6 +5,52 @@ use crate::{
     RobotConfigPartAssetStateRecord, RobotConfigStateRecord, RobotLifetimeOreStatRecord,
     RobotMiningAreaScoreRecord, RobotMiningAreaStatRecord, RobotRecord, RobotStatsHeaderRecord,
 };
+
+#[derive(sqlx::FromRow)]
+struct RobotConfigPartAssetRow {
+    #[sqlx(rename = "typeId")]
+    type_id: i64,
+    #[sqlx(rename = "id")]
+    robot_part_id: i64,
+    #[sqlx(rename = "partName")]
+    part_name: String,
+    #[sqlx(rename = "oreCapacity")]
+    ore_capacity: i32,
+    #[sqlx(rename = "miningCapacity")]
+    mining_capacity: i32,
+    #[sqlx(rename = "batteryCapacity")]
+    battery_capacity: i32,
+    #[sqlx(rename = "memoryCapacity")]
+    memory_capacity: i32,
+    #[sqlx(rename = "cpuCapacity")]
+    cpu_capacity: i32,
+    #[sqlx(rename = "forwardCapacity")]
+    forward_capacity: i32,
+    #[sqlx(rename = "scanDistance")]
+    scan_distance: i32,
+    #[sqlx(rename = "totalOwned")]
+    total_owned: i32,
+    assigned: i64,
+}
+
+impl From<RobotConfigPartAssetRow> for RobotConfigPartAssetStateRecord {
+    fn from(row: RobotConfigPartAssetRow) -> Self {
+        Self {
+            type_id: row.type_id,
+            robot_part_id: row.robot_part_id,
+            part_name: row.part_name,
+            ore_capacity: row.ore_capacity,
+            mining_capacity: row.mining_capacity,
+            battery_capacity: row.battery_capacity,
+            memory_capacity: row.memory_capacity,
+            cpu_capacity: row.cpu_capacity,
+            forward_capacity: row.forward_capacity,
+            scan_distance: row.scan_distance,
+            unassigned: row.total_owned.saturating_sub(row.assigned as i32),
+        }
+    }
+}
+
 pub async fn list_robot_config_states(
     pool: &MySqlPool,
     user_id: i64,
@@ -74,23 +120,7 @@ pub async fn list_robot_config_part_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<RobotConfigPartAssetStateRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<
-        _,
-        (
-            i64,
-            i64,
-            String,
-            i32,
-            i32,
-            i32,
-            i32,
-            i32,
-            i32,
-            i32,
-            i32,
-            i64,
-        ),
-    >(
+    let rows = sqlx::query_as::<_, RobotConfigPartAssetRow>(
         "SELECT RobotPart.typeId, \
                 RobotPart.id, \
                 RobotPart.partName, \
@@ -132,36 +162,7 @@ pub async fn list_robot_config_part_asset_states(
 
     Ok(rows
         .into_iter()
-        .map(
-            |(
-                type_id,
-                robot_part_id,
-                part_name,
-                ore_capacity,
-                mining_capacity,
-                battery_capacity,
-                memory_capacity,
-                cpu_capacity,
-                forward_capacity,
-                scan_distance,
-                total_owned,
-                assigned,
-            )| {
-                RobotConfigPartAssetStateRecord {
-                    type_id,
-                    robot_part_id,
-                    part_name,
-                    ore_capacity,
-                    mining_capacity,
-                    battery_capacity,
-                    memory_capacity,
-                    cpu_capacity,
-                    forward_capacity,
-                    scan_distance,
-                    unassigned: total_owned.saturating_sub(assigned as i32),
-                }
-            },
-        )
+        .map(RobotConfigPartAssetStateRecord::from)
         .collect())
 }
 

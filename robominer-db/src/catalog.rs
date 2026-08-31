@@ -1,3 +1,16 @@
+//! Catalog reads and well-known seed identifiers shared by web and engine.
+
+/// `RobotPartType.id` values from `resources/database/gameData.sql`.
+pub mod part_type_id {
+    pub const ORE_CONTAINER: i64 = 1;
+    pub const MINING_UNIT: i64 = 2;
+    pub const BATTERY: i64 = 3;
+    pub const MEMORY_MODULE: i64 = 4;
+    pub const CPU: i64 = 5;
+    pub const ENGINE: i64 = 6;
+    pub const ORE_SCANNER: i64 = 7;
+}
+
 use sqlx::MySqlPool;
 
 use crate::mappers::{robot_part_record, shop_robot_part_catalog_record};

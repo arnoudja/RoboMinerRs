@@ -20,7 +20,7 @@ pub(crate) use banners::render_status_banner;
 pub(crate) use csrf::inject_csrf_tokens;
 pub(crate) use format::{
     EscapedHtml, format_period, format_relative_time_millis, format_utc_millis, html_attr,
-    selected_attr,
+    optional_title_attr, selected_attr,
 };
 pub(crate) use json::embed_json_script;
 pub(crate) use layout::layout;

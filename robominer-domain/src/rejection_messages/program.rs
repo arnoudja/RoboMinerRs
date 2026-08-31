@@ -1,39 +1,57 @@
+use super::Audience;
+
+pub fn program_source_write_rejection_message(
+    rejection: robominer_db::ProgramSourceWriteRejection,
+    audience: Audience,
+) -> &'static str {
+    match (rejection, audience) {
+        (robominer_db::ProgramSourceWriteRejection::UnknownUser, Audience::Player) => {
+            "Unknown user."
+        }
+        (robominer_db::ProgramSourceWriteRejection::UnknownUser, Audience::Cli) => "unknown user",
+        (robominer_db::ProgramSourceWriteRejection::UnknownProgramSource, Audience::Player) => {
+            "Unknown program source."
+        }
+        (robominer_db::ProgramSourceWriteRejection::UnknownProgramSource, Audience::Cli) => {
+            "unknown program source"
+        }
+        (robominer_db::ProgramSourceWriteRejection::SourceInUse, Audience::Player) => {
+            "Unable to delete program source because it is used by a robot."
+        }
+        (robominer_db::ProgramSourceWriteRejection::SourceInUse, Audience::Cli) => {
+            "program source is still linked to a robot"
+        }
+        (robominer_db::ProgramSourceWriteRejection::EmptySourceName, Audience::Player) => {
+            "Program name may not be empty."
+        }
+        (robominer_db::ProgramSourceWriteRejection::EmptySourceName, Audience::Cli) => {
+            "empty source name"
+        }
+        (robominer_db::ProgramSourceWriteRejection::EmptySourceCode, Audience::Player) => {
+            "Program source may not be empty."
+        }
+        (robominer_db::ProgramSourceWriteRejection::EmptySourceCode, Audience::Cli) => {
+            "empty source code"
+        }
+        (robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong, Audience::Player) => {
+            "Program source is too long."
+        }
+        (robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong, Audience::Cli) => {
+            "source code too long"
+        }
+    }
+}
+
 pub fn program_source_write_rejection_player_message(
     rejection: robominer_db::ProgramSourceWriteRejection,
 ) -> &'static str {
-    match rejection {
-        robominer_db::ProgramSourceWriteRejection::UnknownUser => "Unknown user.",
-        robominer_db::ProgramSourceWriteRejection::UnknownProgramSource => {
-            "Unknown program source."
-        }
-        robominer_db::ProgramSourceWriteRejection::SourceInUse => {
-            "Unable to delete program source because it is used by a robot."
-        }
-        robominer_db::ProgramSourceWriteRejection::EmptySourceName => {
-            "Program name may not be empty."
-        }
-        robominer_db::ProgramSourceWriteRejection::EmptySourceCode => {
-            "Program source may not be empty."
-        }
-        robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong => {
-            "Program source is too long."
-        }
-    }
+    program_source_write_rejection_message(rejection, Audience::Player)
 }
 
 pub fn program_source_write_rejection_cli_message(
     rejection: robominer_db::ProgramSourceWriteRejection,
 ) -> &'static str {
-    match rejection {
-        robominer_db::ProgramSourceWriteRejection::UnknownUser => "unknown user",
-        robominer_db::ProgramSourceWriteRejection::UnknownProgramSource => "unknown program source",
-        robominer_db::ProgramSourceWriteRejection::SourceInUse => {
-            "program source is still linked to a robot"
-        }
-        robominer_db::ProgramSourceWriteRejection::EmptySourceName => "empty source name",
-        robominer_db::ProgramSourceWriteRejection::EmptySourceCode => "empty source code",
-        robominer_db::ProgramSourceWriteRejection::SourceCodeTooLong => "source code too long",
-    }
+    program_source_write_rejection_message(rejection, Audience::Cli)
 }
 
 pub fn program_source_apply_warning_message(
@@ -70,48 +88,72 @@ pub fn format_program_source_apply_player_message(
     parts.join(" ")
 }
 
+pub fn update_robot_config_rejection_message(
+    rejection: robominer_db::UpdateRobotConfigRejection,
+    audience: Audience,
+) -> &'static str {
+    match (rejection, audience) {
+        (robominer_db::UpdateRobotConfigRejection::UnknownRobot, Audience::Player) => {
+            "Unknown robot"
+        }
+        (robominer_db::UpdateRobotConfigRejection::UnknownRobot, Audience::Cli) => "unknown robot",
+        (robominer_db::UpdateRobotConfigRejection::ChangeAlreadyPending, Audience::Player) => {
+            "Changes are already pending for this robot."
+        }
+        (robominer_db::UpdateRobotConfigRejection::ChangeAlreadyPending, Audience::Cli) => {
+            "robot already has pending changes"
+        }
+        (robominer_db::UpdateRobotConfigRejection::InvalidRobotName, Audience::Player) => {
+            "Invalid robot name."
+        }
+        (robominer_db::UpdateRobotConfigRejection::InvalidRobotName, Audience::Cli) => {
+            "invalid robot name"
+        }
+        (robominer_db::UpdateRobotConfigRejection::UnknownProgramSource, Audience::Player) => {
+            "Unknown program source."
+        }
+        (robominer_db::UpdateRobotConfigRejection::UnknownProgramSource, Audience::Cli) => {
+            "unknown program source"
+        }
+        (robominer_db::UpdateRobotConfigRejection::UnknownRobotPart, Audience::Player) => {
+            "Unknown robot part."
+        }
+        (robominer_db::UpdateRobotConfigRejection::UnknownRobotPart, Audience::Cli) => {
+            "unknown robot part"
+        }
+        (robominer_db::UpdateRobotConfigRejection::ProgramTooLarge, Audience::Player) => {
+            "Not enough memory available."
+        }
+        (robominer_db::UpdateRobotConfigRejection::ProgramTooLarge, Audience::Cli) => {
+            "program source does not fit in memory"
+        }
+        (robominer_db::UpdateRobotConfigRejection::NoUnassignedRobotPart, Audience::Player) => {
+            "No unassigned robot part is available."
+        }
+        (robominer_db::UpdateRobotConfigRejection::NoUnassignedRobotPart, Audience::Cli) => {
+            "no unassigned robot part is available"
+        }
+        (
+            robominer_db::UpdateRobotConfigRejection::InvalidRobotPartConfiguration,
+            Audience::Player,
+        ) => "Invalid robot part configuration.",
+        (
+            robominer_db::UpdateRobotConfigRejection::InvalidRobotPartConfiguration,
+            Audience::Cli,
+        ) => "invalid robot part configuration",
+    }
+}
+
 pub fn update_robot_config_rejection_player_message(
     rejection: robominer_db::UpdateRobotConfigRejection,
 ) -> &'static str {
-    match rejection {
-        robominer_db::UpdateRobotConfigRejection::UnknownRobot => "Unknown robot",
-        robominer_db::UpdateRobotConfigRejection::ChangeAlreadyPending => {
-            "Changes are already pending for this robot."
-        }
-        robominer_db::UpdateRobotConfigRejection::InvalidRobotName => "Invalid robot name.",
-        robominer_db::UpdateRobotConfigRejection::UnknownProgramSource => "Unknown program source.",
-        robominer_db::UpdateRobotConfigRejection::UnknownRobotPart => "Unknown robot part.",
-        robominer_db::UpdateRobotConfigRejection::ProgramTooLarge => "Not enough memory available.",
-        robominer_db::UpdateRobotConfigRejection::NoUnassignedRobotPart => {
-            "No unassigned robot part is available."
-        }
-        robominer_db::UpdateRobotConfigRejection::InvalidRobotPartConfiguration => {
-            "Invalid robot part configuration."
-        }
-    }
+    update_robot_config_rejection_message(rejection, Audience::Player)
 }
 
 pub fn update_robot_config_rejection_cli_message(
     rejection: robominer_db::UpdateRobotConfigRejection,
 ) -> &'static str {
-    match rejection {
-        robominer_db::UpdateRobotConfigRejection::UnknownRobot => "unknown robot",
-        robominer_db::UpdateRobotConfigRejection::ChangeAlreadyPending => {
-            "robot already has pending changes"
-        }
-        robominer_db::UpdateRobotConfigRejection::InvalidRobotName => "invalid robot name",
-        robominer_db::UpdateRobotConfigRejection::UnknownProgramSource => "unknown program source",
-        robominer_db::UpdateRobotConfigRejection::UnknownRobotPart => "unknown robot part",
-        robominer_db::UpdateRobotConfigRejection::ProgramTooLarge => {
-            "program source does not fit in memory"
-        }
-        robominer_db::UpdateRobotConfigRejection::NoUnassignedRobotPart => {
-            "no unassigned robot part is available"
-        }
-        robominer_db::UpdateRobotConfigRejection::InvalidRobotPartConfiguration => {
-            "invalid robot part configuration"
-        }
-    }
+    update_robot_config_rejection_message(rejection, Audience::Cli)
 }
 
 pub fn robot_part_transaction_rejection_message(

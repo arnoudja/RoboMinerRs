@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::html::{EscapedHtml, format_ore_shortfall, html_attr, selected_attr};
+use crate::html::{
+    EscapedHtml, format_ore_shortfall, html_attr, optional_title_attr, selected_attr,
+};
 use crate::mining_queue_page::{MiningQueueDisplayItem, MiningQueuePageState};
 
 use super::inspector::render_mining_queue_selection_state_inputs;
@@ -59,10 +61,7 @@ pub(super) fn render_robot_card(
     );
     let can_enqueue = selected_enqueue_block_reason.is_none();
     let disabled_attr = if can_enqueue { "" } else { " disabled" };
-    let title_attr = selected_enqueue_block_reason
-        .as_ref()
-        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
-        .unwrap_or_default();
+    let title_attr = optional_title_attr(selected_enqueue_block_reason.as_deref());
 
     body.push_str(&format!(
         r#"<form action="miningQueue" method="post" class="mining-queue-card" data-robot-id="{}"><input type="hidden" name="robotId" value="{}"/>"#,

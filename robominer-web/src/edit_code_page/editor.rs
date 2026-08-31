@@ -1,5 +1,5 @@
 use crate::edit_code_page::EditCodeProgramSource;
-use crate::html::{EscapedHtml, html_attr};
+use crate::html::{EscapedHtml, optional_title_attr};
 
 use super::edit_code_save_block_reason;
 
@@ -134,9 +134,7 @@ pub(super) fn render_edit_code_save_action(
 }
 
 pub(super) fn edit_code_save_button(block_reason: Option<&str>, disabled_attr: &str) -> String {
-    let title_attr = block_reason
-        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
-        .unwrap_or_default();
+    let title_attr = optional_title_attr(block_reason);
     if block_reason.is_some() || !disabled_attr.is_empty() {
         format!(
             r#"<button type="submit" class="edit-code-btn edit-code-btn-primary" disabled{title_attr}{disabled_attr}>Save program</button>"#

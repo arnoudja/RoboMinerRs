@@ -7,9 +7,12 @@
 //! `CONTRIBUTING.md` (“Crate boundary: robominer-db vs robominer-domain”).
 
 mod achievements;
+mod audience;
 mod mining;
 mod program;
 mod user;
+
+pub use audience::Audience;
 
 pub use achievements::*;
 pub use mining::*;

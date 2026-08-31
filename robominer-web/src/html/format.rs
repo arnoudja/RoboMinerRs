@@ -48,6 +48,13 @@ pub(crate) fn html_attr(value: &str) -> EscapedHtml {
     EscapedHtml::from_untrusted(value)
 }
 
+/// Render ` title="…"` for disabled controls when a reason is present.
+pub(crate) fn optional_title_attr(reason: Option<&str>) -> String {
+    reason
+        .map(|text| format!(r#" title="{}""#, html_attr(text)))
+        .unwrap_or_default()
+}
+
 pub(crate) fn format_utc_millis(millis: i64) -> String {
     let seconds = millis.div_euclid(1000);
     let days = seconds.div_euclid(86_400);

@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use crate::html::{EscapedHtml, format_period, html_attr, selected_attr};
+use crate::html::{EscapedHtml, format_period, optional_title_attr, selected_attr};
 
 use super::config_parts::{PartCapacityLabel, RobotPartSelect, render_robot_part_select};
 use super::config_stats::{
@@ -298,9 +298,7 @@ pub(super) fn render_robot_apply_action(
 }
 
 pub(super) fn robot_apply_button(block_reason: Option<&str>, disabled_attr: &str) -> String {
-    let title_attr = block_reason
-        .map(|reason| format!(r#" title="{}""#, html_attr(reason)))
-        .unwrap_or_default();
+    let title_attr = optional_title_attr(block_reason);
     if block_reason.is_some() || !disabled_attr.is_empty() {
         format!(
             r#"<button type="submit" class="robot-btn robot-btn-primary" disabled{title_attr}{disabled_attr}>Apply changes</button>"#
