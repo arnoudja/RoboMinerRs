@@ -11,6 +11,30 @@ use crate::resolve_max_connections;
 pub const SHARED_CONFIG_PATH: &str = "/etc/robominer/robominer.conf";
 pub const LEGACY_ENGINE_CONFIG_PATH: &str = "/etc/robominer/robominer-engine.conf";
 
+/// Known keys in the legacy key=value config file (case-insensitive on disk).
+mod keys {
+    pub const DB_SERVER: &str = "dbserver";
+    pub const DB_USER: &str = "dbuser";
+    pub const DB_PASSWORD: &str = "dbpassword";
+    pub const DB_DATABASE: &str = "dbdatabase";
+    pub const DB_MAX_CONNECTIONS: &str = "dbmaxconnections";
+    pub const HOST: &str = "host";
+    pub const PORT: &str = "port";
+    pub const WEB_ROOT: &str = "webroot";
+    pub const SESSION_SECRET: &str = "sessionsecret";
+    pub const SESSION_TTL_SECS: &str = "sessionttlsecs";
+    pub const SESSION_TTL_HOURS: &str = "sessionttlhours";
+    pub const SECURE_COOKIES: &str = "securecookies";
+    pub const ALLOW_SIGNUP: &str = "allowsignup";
+    pub const TRUST_PROXY: &str = "trustproxy";
+    pub const ALLOW_INSECURE_DEV_SECRET_ALIASES: &[&str] = &[
+        "allowinsecuredevsecret",
+        "allow-insecure-dev-secret",
+        "insecure-dev-secret",
+        "insecuredevsecret",
+    ];
+}
+
 #[derive(Debug)]
 pub enum ConfigError {
     Io(std::io::Error),
@@ -72,6 +96,86 @@ impl std::error::Error for ConnectError {
     }
 }
 
+/// Typed view of a legacy RoboMiner key=value config file.
+///
+/// File parsing still goes through a key/value map (legacy format), but call sites
+/// read named fields instead of magic strings.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct LegacyAppConfig {
+    pub db_server: Option<String>,
+    pub db_user: Option<String>,
+    pub db_password: Option<String>,
+    pub db_database: Option<String>,
+    pub db_max_connections: Option<String>,
+    pub host: Option<String>,
+    pub port: Option<String>,
+    pub web_root: Option<String>,
+    pub session_secret: Option<String>,
+    pub session_ttl_secs: Option<String>,
+    pub session_ttl_hours: Option<String>,
+    pub secure_cookies: Option<String>,
+    pub allow_signup: Option<String>,
+    pub trust_proxy: Option<String>,
+    pub allow_insecure_dev_secret: Option<String>,
+}
+
+impl LegacyAppConfig {
+    pub fn from_map(map: &HashMap<String, String>) -> Self {
+        Self {
+            db_server: map_get(map, keys::DB_SERVER),
+            db_user: map_get(map, keys::DB_USER),
+            db_password: map_get(map, keys::DB_PASSWORD),
+            db_database: map_get(map, keys::DB_DATABASE),
+            db_max_connections: map_get(map, keys::DB_MAX_CONNECTIONS),
+            host: map_get(map, keys::HOST),
+            port: map_get(map, keys::PORT),
+            web_root: map_get(map, keys::WEB_ROOT),
+            session_secret: map_get(map, keys::SESSION_SECRET),
+            session_ttl_secs: map_get(map, keys::SESSION_TTL_SECS),
+            session_ttl_hours: map_get(map, keys::SESSION_TTL_HOURS),
+            secure_cookies: map_get(map, keys::SECURE_COOKIES),
+            allow_signup: map_get(map, keys::ALLOW_SIGNUP),
+            trust_proxy: map_get(map, keys::TRUST_PROXY),
+            allow_insecure_dev_secret: keys::ALLOW_INSECURE_DEV_SECRET_ALIASES
+                .iter()
+                .find_map(|key| map_get(map, key)),
+        }
+    }
+
+    pub fn parse(contents: &str) -> Self {
+        Self::from_map(&parse_legacy_config_map(contents))
+    }
+
+    pub fn database_url(&self) -> Result<String, ConfigError> {
+        let server = required_field(&self.db_server, keys::DB_SERVER)?;
+        let user = required_field(&self.db_user, keys::DB_USER)?;
+        let password = required_field(&self.db_password, keys::DB_PASSWORD)?;
+        let database = required_field(&self.db_database, keys::DB_DATABASE)?;
+
+        Ok(format!(
+            "mysql://{}:{}@{}/{}",
+            percent_encode_userinfo(user),
+            percent_encode_userinfo(password),
+            server,
+            database
+        ))
+    }
+}
+
+fn map_get(map: &HashMap<String, String>, key: &str) -> Option<String> {
+    map.get(&key.to_ascii_lowercase())
+        .filter(|value| !value.is_empty())
+        .cloned()
+}
+
+fn required_field<'a>(value: &'a Option<String>, key: &str) -> Result<&'a str, ConfigError> {
+    match value {
+        Some(value) if !value.is_empty() => Ok(value.as_str()),
+        Some(_) => Err(ConfigError::EmptyKey(key.to_ascii_lowercase())),
+        None => Err(ConfigError::MissingKey(key.to_ascii_lowercase())),
+    }
+}
+
 /// Connect to MySQL using CLI/env/config resolution shared by binaries.
 pub async fn connect_from_cli(
     database_url: Option<String>,
@@ -82,7 +186,7 @@ pub async fn connect_from_cli(
         .map_err(ConnectError::Config)?;
 
     let config_value = match load_legacy_config(config, executable_stem) {
-        Ok((_, config_map)) => config_value(&config_map, "dbmaxconnections").map(str::to_owned),
+        Ok((_, app_config)) => app_config.db_max_connections.clone(),
         Err(ConfigError::MissingConfigFile) => None,
         Err(error) => return Err(ConnectError::Config(error)),
     };
@@ -97,12 +201,18 @@ pub async fn connect_from_cli(
         .map_err(ConnectError::Sqlx)
 }
 
-pub fn read_legacy_config(config_path: &Path) -> Result<HashMap<String, String>, ConfigError> {
+pub fn read_legacy_config(config_path: &Path) -> Result<LegacyAppConfig, ConfigError> {
     let contents = fs::read_to_string(config_path)?;
-    Ok(parse_legacy_config(&contents))
+    Ok(LegacyAppConfig::parse(&contents))
 }
 
+/// Parse a legacy key=value config file into a normalized lowercase-key map.
+/// Prefer [`LegacyAppConfig::parse`] / [`read_legacy_config`] at call sites.
 pub fn parse_legacy_config(contents: &str) -> HashMap<String, String> {
+    parse_legacy_config_map(contents)
+}
+
+fn parse_legacy_config_map(contents: &str) -> HashMap<String, String> {
     let mut result = HashMap::new();
 
     for line in contents.lines() {
@@ -123,19 +233,8 @@ pub fn parse_legacy_config(contents: &str) -> HashMap<String, String> {
     result
 }
 
-pub fn database_url_from_config(config: &HashMap<String, String>) -> Result<String, ConfigError> {
-    let server = required_config_value(config, "dbserver")?;
-    let user = required_config_value(config, "dbuser")?;
-    let password = required_config_value(config, "dbpassword")?;
-    let database = required_config_value(config, "dbdatabase")?;
-
-    Ok(format!(
-        "mysql://{}:{}@{}/{}",
-        percent_encode_userinfo(&user),
-        percent_encode_userinfo(&password),
-        server,
-        database
-    ))
+pub fn database_url_from_config(config: &LegacyAppConfig) -> Result<String, ConfigError> {
+    config.database_url()
 }
 
 /// Encode userinfo components so passwords with `@`, `:`, `/`, etc. stay valid in URLs.
@@ -183,13 +282,13 @@ pub fn resolve_database_url(
         other => other,
     })?;
 
-    database_url_from_config(&config)
+    config.database_url()
 }
 
 pub fn load_legacy_config(
     cli_config: Option<PathBuf>,
     executable_stem: &str,
-) -> Result<(PathBuf, HashMap<String, String>), ConfigError> {
+) -> Result<(PathBuf, LegacyAppConfig), ConfigError> {
     let config_path = match cli_config {
         Some(config_path) => config_path,
         None => locate_config_file(executable_stem)?,
@@ -205,20 +304,9 @@ pub fn load_legacy_config(
     Ok((config_path, config))
 }
 
+/// Look up a raw key in a legacy map. Prefer [`LegacyAppConfig`] fields at new call sites.
 pub fn config_value<'a>(config: &'a HashMap<String, String>, key: &str) -> Option<&'a str> {
     config.get(&key.to_ascii_lowercase()).map(String::as_str)
-}
-
-fn required_config_value(
-    config: &HashMap<String, String>,
-    key: &str,
-) -> Result<String, ConfigError> {
-    let normalized_key = key.to_ascii_lowercase();
-    match config.get(&normalized_key) {
-        Some(value) if !value.is_empty() => Ok(value.clone()),
-        Some(_) => Err(ConfigError::EmptyKey(normalized_key)),
-        None => Err(ConfigError::MissingKey(normalized_key)),
-    }
 }
 
 fn locate_config_file(executable_stem: &str) -> Result<PathBuf, ConfigError> {
@@ -252,7 +340,7 @@ mod tests {
 
     #[test]
     fn parse_legacy_config_normalizes_keys_and_ignores_comments() {
-        let config = parse_legacy_config(
+        let config = LegacyAppConfig::parse(
             "# database\n\
              dbserver localhost\n\
              DBUSER robominer\n\
@@ -260,17 +348,17 @@ mod tests {
              dbdatabase RoboMiner\n",
         );
 
-        assert_eq!(config.get("dbserver"), Some(&"localhost".to_string()));
-        assert_eq!(config.get("dbuser"), Some(&"robominer".to_string()));
+        assert_eq!(config.db_server.as_deref(), Some("localhost"));
+        assert_eq!(config.db_user.as_deref(), Some("robominer"));
         assert_eq!(
-            database_url_from_config(&config).expect("database url"),
+            config.database_url().expect("database url"),
             "mysql://robominer:secret@localhost/RoboMiner"
         );
     }
 
     #[test]
     fn database_url_from_config_percent_encodes_password_specials() {
-        let config = parse_legacy_config(
+        let config = LegacyAppConfig::parse(
             "dbserver localhost\n\
              dbuser robominer\n\
              dbpassword p@ss:w/ord\n\
@@ -278,7 +366,7 @@ mod tests {
         );
 
         assert_eq!(
-            database_url_from_config(&config).expect("database url"),
+            config.database_url().expect("database url"),
             "mysql://robominer:p%40ss%3Aw%2Ford@localhost/RoboMiner"
         );
     }
@@ -307,16 +395,32 @@ mod tests {
             "dbserver db.example\n\
              dbuser user\n\
              dbpassword pass\n\
-             dbdatabase RoboMiner\n",
+             dbdatabase RoboMiner\n\
+             host 10.0.0.2\n\
+             allowsignup 1\n",
         )
         .expect("write config");
 
         let config = read_legacy_config(&config_path).expect("read config");
         assert_eq!(
-            database_url_from_config(&config).expect("database url"),
+            config.database_url().expect("database url"),
             "mysql://user:pass@db.example/RoboMiner"
         );
+        assert_eq!(config.host.as_deref(), Some("10.0.0.2"));
+        assert_eq!(config.allow_signup.as_deref(), Some("1"));
 
         let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn legacy_app_config_reads_insecure_dev_secret_aliases() {
+        for key in keys::ALLOW_INSECURE_DEV_SECRET_ALIASES {
+            let config = LegacyAppConfig::parse(&format!("{key} 1\n"));
+            assert_eq!(
+                config.allow_insecure_dev_secret.as_deref(),
+                Some("1"),
+                "alias {key}"
+            );
+        }
     }
 }

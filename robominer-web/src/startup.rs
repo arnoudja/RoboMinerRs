@@ -1,18 +1,17 @@
-use std::collections::HashMap;
 use std::env;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use robominer_db::LegacyAppConfig;
+
 use crate::{ServerConfig, block_on_database, web_settings};
 
 /// Resolve legacy config for the web process. Missing files are non-fatal.
-pub fn load_legacy_config(
-    config: Option<PathBuf>,
-) -> io::Result<(PathBuf, HashMap<String, String>)> {
+pub fn load_legacy_config(config: Option<PathBuf>) -> io::Result<(PathBuf, LegacyAppConfig)> {
     match robominer_db::load_legacy_config(config, "robominer-web") {
         Ok((config_path, config)) => Ok((config_path, config)),
         Err(robominer_db::ConfigError::MissingConfigFile) => {
-            Ok((PathBuf::from("<none>"), HashMap::new()))
+            Ok((PathBuf::from("<none>"), LegacyAppConfig::default()))
         }
         Err(error) => Err(io::Error::other(format!("failed to load config: {error}"))),
     }
@@ -22,7 +21,7 @@ pub fn load_legacy_config(
 pub fn connect_database(
     database_url: Option<String>,
     config: Option<PathBuf>,
-    legacy_config: &HashMap<String, String>,
+    legacy_config: &LegacyAppConfig,
 ) -> io::Result<Option<robominer_db::MySqlPool>> {
     let database_url =
         match robominer_db::resolve_database_url(database_url, config, "robominer-web") {
@@ -33,7 +32,7 @@ pub fn connect_database(
 
     let max_connections = robominer_db::resolve_max_connections(
         env::var("ROBOMINER_DB_MAX_CONNECTIONS").ok().as_deref(),
-        robominer_db::config_value(legacy_config, "dbmaxconnections"),
+        legacy_config.db_max_connections.as_deref(),
     )
     .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
 
@@ -52,7 +51,7 @@ pub fn default_web_root() -> PathBuf {
 
 /// Apply session settings and build the Axum `ServerConfig` (without binding a listener).
 pub fn prepare_server_config(
-    legacy_config: &HashMap<String, String>,
+    legacy_config: &LegacyAppConfig,
     database_pool: Option<robominer_db::MySqlPool>,
 ) -> io::Result<(String, u16, ServerConfig)> {
     let settings = web_settings(legacy_config, &default_web_root());
@@ -67,8 +66,8 @@ pub fn prepare_server_config(
     let session_ttl_secs = crate::resolve_session_ttl_secs(
         settings.session_ttl_secs.as_deref(),
         settings.session_ttl_hours.as_deref(),
-        robominer_db::config_value(legacy_config, "sessionttlsecs"),
-        robominer_db::config_value(legacy_config, "sessionttlhours"),
+        legacy_config.session_ttl_secs.as_deref(),
+        legacy_config.session_ttl_hours.as_deref(),
     )
     .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     crate::configure_session_secret(&session_secret)
@@ -118,7 +117,7 @@ mod tests {
         let (path, config) =
             load_legacy_config(Some(missing)).expect("missing config is non-fatal");
         assert_eq!(path, PathBuf::from("<none>"));
-        assert!(config.is_empty());
+        assert_eq!(config, LegacyAppConfig::default());
     }
 
     #[test]
@@ -130,8 +129,8 @@ mod tests {
             load_legacy_config(Some(path.clone())).expect("temp config should load");
         let _ = std::fs::remove_file(&path);
         assert_eq!(loaded_path, path);
-        assert_eq!(config.get("host").map(String::as_str), Some("127.0.0.1"));
-        assert_eq!(config.get("port").map(String::as_str), Some("18080"));
+        assert_eq!(config.host.as_deref(), Some("127.0.0.1"));
+        assert_eq!(config.port.as_deref(), Some("18080"));
     }
 
     #[test]
@@ -144,7 +143,7 @@ mod tests {
             env::remove_var("ROBOMINER_DATABASE_URL");
         }
         let missing = PathBuf::from("/tmp/robominer-web-missing-db-config.conf");
-        let result = connect_database(None, Some(missing), &HashMap::new());
+        let result = connect_database(None, Some(missing), &LegacyAppConfig::default());
         match previous {
             Some(value) => unsafe {
                 env::set_var("ROBOMINER_DATABASE_URL", value);
@@ -174,8 +173,8 @@ mod tests {
             env::set_var("ROBOMINER_ALLOW_INSECURE_DEV_SECRET", "1");
         }
 
-        let (host, port, config) =
-            prepare_server_config(&HashMap::new(), None).expect("defaults should prepare");
+        let (host, port, config) = prepare_server_config(&LegacyAppConfig::default(), None)
+            .expect("defaults should prepare");
 
         match previous_signup {
             Some(value) => unsafe {
