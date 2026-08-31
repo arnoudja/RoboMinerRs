@@ -69,46 +69,15 @@ The main binaries are:
 
 ## Test And Check
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the route-to-test matrix, test layout conventions,
-and coverage instructions.
-
-Run the workspace test suite the same way CI does:
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full test workflow, route-to-test
+matrix, coverage floor (93), golden fixtures, git hooks, and crate-boundary rules.
 
 ```sh
-resources/scripts/run-tests-with-db.sh
-```
-
-For a quicker loop without MySQL (library unit tests and simulation goldens):
-
-```sh
-resources/scripts/run-fast-tests.sh
-```
-
-`run-tests-with-db.sh` resolves `ROBOMINER_DATABASE_URL` (existing database, local MySQL, or persistent
-Docker) and runs `cargo test --workspace`. Without a usable database, DB integration tests skip
-themselves; golden and unit tests still run.
-
-Generate an LLVM coverage report (requires `[cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov)`):
-
-```sh
-resources/scripts/run-coverage-with-db.sh
-resources/scripts/run-coverage-with-db.sh --lcov --output-path lcov.info
-ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93 resources/scripts/run-coverage-with-db.sh
-```
-
-CI enforces the line-coverage floor via `ROBOMINER_COVERAGE_FAIL_UNDER_LINES` and uploads LCOV to
-Codecov when configured.
-
-Run the Rust formatter check:
-
-```sh
-cargo fmt --check
-```
-
-Run Clippy with warnings denied (same as CI):
-
-```sh
+resources/scripts/run-tests-with-db.sh   # same entry point as CI (MySQL 8.4)
+resources/scripts/run-fast-tests.sh      # no database
+cargo fmt --all -- --check
 cargo clippy --workspace -- -D warnings
+cargo check --workspace
 ```
 
 Enable the repo pre-commit hook (rustfmt + Clippy when `.rs` files are staged):
@@ -117,38 +86,7 @@ Enable the repo pre-commit hook (rustfmt + Clippy when `.rs` files are staged):
 git config core.hooksPath .githooks
 ```
 
-Run a compile check without producing final binaries:
-
-```sh
-cargo check --workspace
-```
-
-GitHub Actions runs `cargo fmt --check`, Clippy, and `resources/scripts/run-tests-with-db.sh`
-against MySQL 8. A separate coverage job uploads an LCOV artifact built with
-`resources/scripts/run-coverage-with-db.sh`.
-
-Fastest local workflow: reuse an existing MySQL instance or a persistent Docker
-container instead of creating a fresh database every run:
-
-```sh
-resources/scripts/run-tests-with-db.sh
-```
-
-That helper:
-
-1. Uses `ROBOMINER_DATABASE_URL` when it already points at an initialized database.
-2. Otherwise reuses MySQL on `127.0.0.1:3306` when the RoboMiner schema is present.
-3. Otherwise starts or reuses a persistent Docker container named
-  `robominer-test-mysql` on port `3307` with volume `robominer-test-mysql-data`.
-
-After the first Docker setup (~30–40 s), later runs typically add only about
-0.1 s of database setup before the ~6 s integration test suite runs.
-
-Manual setup:
-
-```sh
-ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner cargo test --workspace
-```
+## Database
 
 To initialize or refresh schema manually (`createDatabase.sql` then
 `gameData.sql`, then schema migrations):
@@ -173,6 +111,8 @@ cargo run -p robominer-engine -- migrate status --check
 exposes loopback readiness at `GET /health` (database ping + migration currency).
 
 Versioned SQL lives under `resources/database/migrations/` (`NNN_description.sql`).
+`run-tests-with-db.sh` resolves MySQL via an existing URL, local schema, or a
+persistent Docker container—details in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 
 
@@ -241,7 +181,7 @@ from `robominer-web/static`.
 It handles `/help`, `/helpTutorial`, `/helpProgramTips`, `/helpRobotProgram`,
 `/helpMechanics`, `/logoff`, `/leaderboard`, `/miningAreaOverview`,
 `/activity`, `/miningQueue`, `/miningResults`, `/account`, `/achievements`,
-`/editCode`, `/login`, `/robot`, and `/shop`.
+`/editCode`, `/login`, `/robot`, `/robotStats`, and `/shop`.
 
 Run it on the default address, `127.0.0.1:8080`:
 
@@ -271,7 +211,7 @@ HOST=0.0.0.0 PORT=8080 ROBOMINER_WEB_ROOT=robominer-web/static cargo run -p robo
 Set `ROBOMINER_DATABASE_URL` to enable database-backed pages such as
 `/leaderboard`, `/miningAreaOverview`, `/activity`, `/miningQueue`,
 `/miningResults`, `/account`, `/achievements`, `/editCode`, `/login`, `/robot`,
-and `/shop`:
+`/robotStats`, and `/shop`:
 
 ```sh
 ROBOMINER_DATABASE_URL=mysql://robominer:password@localhost/RoboMiner cargo run -p robominer-web

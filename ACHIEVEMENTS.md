@@ -262,9 +262,9 @@ numeric requirements.
 | Schema | `resources/database/createDatabase.sql` |
 | Seed data | `resources/database/gameData.sql` |
 | Claim + queries | `robominer-db/src/achievements/` |
-| Rejection copy | `robominer-domain/src/rejection_messages.rs` |
+| Rejection copy | `robominer-domain/src/rejection_messages/` |
 | Web page | `robominer-web/src/achievements_page/` |
-| Signup auto-claim | `robominer-db/src/users.rs` (`create_user`) |
+| Signup auto-claim | `robominer-db/src/users/` (`create_user`) |
 | Engine CLI | `robominer-engine` achievement commands |
 
 The achievements page shows, per unlocked track: steps completed, next step

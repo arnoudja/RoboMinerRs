@@ -27,7 +27,6 @@ flowchart TB
   dom --> db
   dom --> sim
   sim --> prog
-  db --> sim
 ```
 
 | Crate | Role |
