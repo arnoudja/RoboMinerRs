@@ -1,202 +1,10 @@
 use std::collections::HashMap;
 
-use sqlx::MySqlPool;
+use crate::{ClaimedOreRewardRecord, INITIAL_ORE_WALLET_MAX, in_placeholders};
 
-use crate::{ClaimedOreRewardRecord, ClaimedUserResults, INITIAL_ORE_WALLET_MAX, in_placeholders};
+use super::types::{ClaimableMiningOreResult, ClaimableMiningQueue};
 
-/// InnoDB deadlock SQLSTATE (`ER_LOCK_DEADLOCK` / MySQL 1213). Restart the claim
-/// transaction; one concurrent worker still wins the row locks.
-const MYSQL_DEADLOCK_SQLSTATE: &str = "40001";
-const MAX_CLAIM_DEADLOCK_ATTEMPTS: u32 = 8;
-
-pub async fn claim_user_results(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<ClaimedUserResults, sqlx::Error> {
-    let mut attempt = 0;
-    loop {
-        match claim_user_results_once(pool, user_id).await {
-            Ok(result) => return Ok(result),
-            Err(error)
-                if is_mysql_deadlock(&error) && attempt + 1 < MAX_CLAIM_DEADLOCK_ATTEMPTS =>
-            {
-                attempt += 1;
-                tracing::debug!(
-                    attempt,
-                    user_id,
-                    "retrying mining wallet claim after deadlock"
-                );
-                tokio::task::yield_now().await;
-            }
-            Err(error) => return Err(error),
-        }
-    }
-}
-
-async fn claim_user_results_once(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<ClaimedUserResults, sqlx::Error> {
-    let mut transaction = pool.begin().await?;
-    let claimable_queues = list_claimable_mining_queues(&mut transaction, user_id).await?;
-    let claimed_queues = claimable_queues.len() as u64;
-    let mut ore_rewards: HashMap<i64, i32> = HashMap::new();
-
-    if !claimable_queues.is_empty() {
-        let queue_rewards = claim_mining_queues_batch(&mut transaction, &claimable_queues).await?;
-        for (ore_id, reward) in queue_rewards {
-            *ore_rewards.entry(ore_id).or_default() += reward;
-        }
-    }
-
-    super::pending::reconcile_pending_robot_changes_in_transaction(&mut transaction, user_id)
-        .await?;
-    let ore_rewards = load_claimed_ore_rewards(&mut transaction, ore_rewards).await?;
-    transaction.commit().await?;
-
-    Ok(ClaimedUserResults {
-        claimed_queues,
-        ore_rewards,
-    })
-}
-
-fn is_mysql_deadlock(error: &sqlx::Error) -> bool {
-    is_mysql_deadlock_sqlstate(
-        error
-            .as_database_error()
-            .and_then(|database_error| database_error.code())
-            .as_deref(),
-    )
-}
-
-fn is_mysql_deadlock_sqlstate(code: Option<&str>) -> bool {
-    code == Some(MYSQL_DEADLOCK_SQLSTATE)
-}
-
-/// Distinct user ids with finished, unclaimed mining runs ready for the wallet.
-pub async fn list_user_ids_with_claimable_mining_queues(
-    pool: &MySqlPool,
-) -> Result<Vec<i64>, sqlx::Error> {
-    sqlx::query_scalar(
-        "SELECT DISTINCT Robot.userId \
-         FROM MiningQueue \
-         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
-         WHERE MiningQueue.miningEndTime IS NOT NULL \
-           AND MiningQueue.miningEndTime <= NOW() \
-           AND MiningQueue.claimed = false \
-         ORDER BY Robot.userId",
-    )
-    .fetch_all(pool)
-    .await
-}
-
-/// Seconds until the next unclaimed mining run finishes, capped at `max_sleep_seconds`.
-///
-/// When finished unclaimed runs are already ready, returns `1` so poll loops retry promptly
-/// without a busy-spin. When nothing is queued, returns `max_sleep_seconds`.
-pub async fn next_wallet_claim_delay_seconds(
-    pool: &MySqlPool,
-    max_sleep_seconds: u64,
-) -> Result<u64, sqlx::Error> {
-    let ready_now: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) \
-         FROM MiningQueue \
-         WHERE MiningQueue.miningEndTime IS NOT NULL \
-           AND MiningQueue.miningEndTime <= NOW() \
-           AND MiningQueue.claimed = false",
-    )
-    .fetch_one(pool)
-    .await?;
-    if ready_now > 0 {
-        return Ok(1.min(max_sleep_seconds));
-    }
-
-    let delay: Option<i64> = sqlx::query_scalar(
-        "SELECT TIMESTAMPDIFF(SECOND, NOW(), MIN(MiningQueue.miningEndTime)) \
-         FROM MiningQueue \
-         WHERE MiningQueue.miningEndTime IS NOT NULL \
-           AND MiningQueue.miningEndTime > NOW() \
-           AND MiningQueue.claimed = false",
-    )
-    .fetch_one(pool)
-    .await?;
-
-    Ok(delay
-        .map(|seconds| seconds.max(1) as u64)
-        .unwrap_or(max_sleep_seconds)
-        .min(max_sleep_seconds))
-}
-
-/// Read-only count of finished mining runs waiting to be claimed into the wallet.
-pub async fn count_claimable_mining_queues(
-    pool: &MySqlPool,
-    user_id: i64,
-) -> Result<u64, sqlx::Error> {
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) \
-         FROM MiningQueue \
-         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
-         WHERE MiningQueue.miningEndTime IS NOT NULL \
-           AND MiningQueue.miningEndTime <= NOW() \
-           AND Robot.userId = ? \
-           AND MiningQueue.claimed = false",
-    )
-    .bind(user_id)
-    .fetch_one(pool)
-    .await?;
-
-    Ok(count.max(0) as u64)
-}
-
-#[derive(Debug, Clone, Copy)]
-struct ClaimableMiningQueue {
-    mining_queue_id: i64,
-    mining_area_id: i64,
-    robot_id: i64,
-    robot_max_ore: i32,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct ClaimableMiningOreResult {
-    mining_queue_id: i64,
-    ore_id: i64,
-    amount: i32,
-    tax: i32,
-}
-
-async fn list_claimable_mining_queues(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    user_id: i64,
-) -> Result<Vec<ClaimableMiningQueue>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i64, i64, i32)>(
-        "SELECT MiningQueue.id, MiningQueue.miningAreaId, MiningQueue.robotId, Robot.maxOre \
-         FROM MiningQueue \
-         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
-         WHERE MiningQueue.miningEndTime IS NOT NULL \
-           AND MiningQueue.miningEndTime <= NOW() \
-           AND Robot.userId = ? \
-           AND MiningQueue.claimed = false \
-         ORDER BY MiningQueue.miningEndTime, MiningQueue.id \
-         FOR UPDATE",
-    )
-    .bind(user_id)
-    .fetch_all(&mut **transaction)
-    .await?;
-
-    Ok(rows
-        .into_iter()
-        .map(
-            |(mining_queue_id, mining_area_id, robot_id, robot_max_ore)| ClaimableMiningQueue {
-                mining_queue_id,
-                mining_area_id,
-                robot_id,
-                robot_max_ore,
-            },
-        )
-        .collect())
-}
-
-async fn load_claimed_ore_rewards(
+pub(super) async fn load_claimed_ore_rewards(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     ore_rewards: HashMap<i64, i32>,
 ) -> Result<Vec<ClaimedOreRewardRecord>, sqlx::Error> {
@@ -237,7 +45,7 @@ async fn load_claimed_ore_rewards(
     Ok(rewards)
 }
 
-async fn claim_mining_queues_batch(
+pub(super) async fn claim_mining_queues_batch(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     claimable_queues: &[ClaimableMiningQueue],
 ) -> Result<Vec<(i64, i32)>, sqlx::Error> {
@@ -635,18 +443,4 @@ async fn batch_update_mining_area_lifetime_results(
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{is_mysql_deadlock, is_mysql_deadlock_sqlstate};
-
-    #[test]
-    fn mysql_deadlock_sqlstate_matches_innodb_restart_code() {
-        assert!(is_mysql_deadlock_sqlstate(Some("40001")));
-        assert!(!is_mysql_deadlock_sqlstate(Some("HY000")));
-        assert!(!is_mysql_deadlock_sqlstate(None));
-        assert!(!is_mysql_deadlock(&sqlx::Error::RowNotFound));
-        assert!(!is_mysql_deadlock(&sqlx::Error::PoolClosed));
-    }
 }
