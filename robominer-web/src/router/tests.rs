@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::http::split_target;
+use crate::routes::{AppRoute, RoutePolicy};
 use crate::session::format_authenticated_cookie;
 use crate::static_files::static_file_path;
 use crate::{Request, Response, ServerConfig};
@@ -120,6 +121,70 @@ async fn root_route_redirects_to_mining_queue_when_logged_in() {
             .iter()
             .any(|(name, value)| *name == "Location" && value == "miningQueue")
     );
+}
+
+#[test]
+fn every_app_route_has_documented_policy() {
+    for route in AppRoute::ALL {
+        let policy = route.policy();
+        match route {
+            AppRoute::Login
+            | AppRoute::Logoff
+            | AppRoute::Help
+            | AppRoute::HelpTutorial
+            | AppRoute::HelpProgramTips
+            | AppRoute::HelpRobotProgram
+            | AppRoute::HelpMechanics => {
+                assert_eq!(policy, RoutePolicy::Public, "{route:?}");
+            }
+            AppRoute::Activity | AppRoute::Leaderboard => {
+                assert_eq!(policy, RoutePolicy::PublicRead, "{route:?}");
+            }
+            AppRoute::Achievements
+            | AppRoute::Account
+            | AppRoute::EditCode
+            | AppRoute::MiningQueue
+            | AppRoute::MiningResults
+            | AppRoute::MiningAreaOverview
+            | AppRoute::Robot
+            | AppRoute::RobotStats
+            | AppRoute::Shop => {
+                assert_eq!(
+                    policy,
+                    RoutePolicy::SessionRequired { csrf_on_post: true },
+                    "{route:?}"
+                );
+            }
+        }
+    }
+    assert_eq!(
+        AppRoute::ALL.len(),
+        18,
+        "update policy groups when adding routes"
+    );
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn session_required_routes_redirect_when_logged_out() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: true,
+        trust_proxy: false,
+    };
+
+    for app_route in AppRoute::ALL {
+        if !matches!(
+            app_route.policy(),
+            RoutePolicy::SessionRequired { csrf_on_post: true }
+        ) {
+            continue;
+        }
+        let path = app_route.path();
+        let response = route(&request(path), &config).await;
+        let expected = format!("login?returnTo={}", path.trim_start_matches('/'));
+        assert_login_redirect(&response, &expected);
+    }
 }
 
 #[tokio::test(flavor = "current_thread")]
