@@ -1,13 +1,3 @@
-use super::super::robots::format_queue_time_left;
-
-#[test]
-fn mining_queue_time_left_uses_countdown_format() {
-    assert_eq!(format_queue_time_left(0), "0:00");
-    assert_eq!(format_queue_time_left(60), "1:00");
-    assert_eq!(format_queue_time_left(150), "2:30");
-    assert_eq!(format_queue_time_left(3_661), "1:01:01");
-}
-
 #[test]
 fn mining_queue_rejection_messages_match_legacy_copy() {
     assert_eq!(

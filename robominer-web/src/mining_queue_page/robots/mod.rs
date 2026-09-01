@@ -8,7 +8,6 @@ mod queue_row;
 mod wallet;
 
 pub(in crate::mining_queue_page) use card::render_robot_card;
-pub(in crate::mining_queue_page) use queue_row::format_queue_time_left;
 pub(in crate::mining_queue_page) use wallet::render_wallet_strip;
 
 pub(super) fn enqueue_block_reason(

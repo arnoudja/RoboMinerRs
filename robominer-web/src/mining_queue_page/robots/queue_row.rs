@@ -130,3 +130,16 @@ pub(in crate::mining_queue_page) fn format_queue_time_left(seconds: i64) -> Stri
         format!("{display_minutes}:{display_seconds:02}")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::format_queue_time_left;
+
+    #[test]
+    fn mining_queue_time_left_uses_countdown_format() {
+        assert_eq!(format_queue_time_left(0), "0:00");
+        assert_eq!(format_queue_time_left(60), "1:00");
+        assert_eq!(format_queue_time_left(150), "2:30");
+        assert_eq!(format_queue_time_left(3_661), "1:01:01");
+    }
+}
