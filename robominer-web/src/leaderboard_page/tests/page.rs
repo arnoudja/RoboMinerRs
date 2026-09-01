@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use crate::ServerConfig;
 use crate::html::assert_html_contains;
+use crate::test_support::route;
 
-use super::super::leaderboard_page;
 use super::fixtures::request;
 
 #[tokio::test(flavor = "current_thread")]
@@ -15,7 +15,7 @@ async fn leaderboard_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = leaderboard_page(&request("/leaderboard"), &config).await;
+    let response = route(&request("/leaderboard"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);

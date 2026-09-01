@@ -327,3 +327,69 @@ async fn login_post_returns_429_after_auth_rate_limit() {
         .execute(&pool)
         .await;
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn account_update_post_returns_429_after_auth_rate_limit() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+    let _guard = lock_auth_rate_limiter_for_tests();
+    reset_auth_rate_limiter_for_tests();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-account-rate");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    assert_eq!(login_response.status, 302);
+    let session_cookie = cookie_header(&login_response);
+
+    let mut form = HashMap::new();
+    form.insert("username".to_string(), username.clone());
+    form.insert("email".to_string(), format!("{prefix}@example.invalid"));
+    form.insert("currentpassword".to_string(), "wrong-password".to_string());
+
+    for index in 0..=MAX_ATTEMPTS_PER_LOGIN {
+        let response = route(
+            &post_request("/account", form.clone(), Some(&session_cookie)),
+            &config,
+        )
+        .await;
+
+        if index < MAX_ATTEMPTS_PER_LOGIN {
+            assert_ne!(
+                response.status, 429,
+                "account update attempt {index} should not be rate limited yet"
+            );
+            continue;
+        }
+
+        assert_eq!(
+            response.status, 429,
+            "account update attempt {index} should be rate limited"
+        );
+        let body = response_body(&response);
+        assert!(
+            body.contains("Too many account password checks"),
+            "429 body should explain the limit:\n{body}"
+        );
+    }
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}

@@ -3,12 +3,13 @@ use std::path::PathBuf;
 
 use crate::ServerConfig;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
+use crate::test_support::route;
 
 use super::super::render::{render_mining_queue_fragment, render_mining_queue_page};
 use super::super::{
     MiningQueueAreaCostView, MiningQueueAreaSupplyView, MiningQueueAreaView,
     MiningQueueAssetSummaryView, MiningQueueDisplayItem, MiningQueueOreAssetView,
-    MiningQueuePageState, MiningQueueRobotView, MiningQueueScoreView, mining_queue_page,
+    MiningQueuePageState, MiningQueueRobotView, MiningQueueScoreView,
 };
 use super::fixtures::authenticated_request;
 
@@ -21,7 +22,7 @@ async fn mining_queue_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = mining_queue_page(&authenticated_request("/miningQueue"), &config).await;
+    let response = route(&authenticated_request("/miningQueue"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);

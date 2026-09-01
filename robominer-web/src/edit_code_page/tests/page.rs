@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use crate::ServerConfig;
 use crate::html::assert_html_contains;
+use crate::test_support::route;
 
-use super::super::edit_code_page;
 use super::fixtures::authenticated_request;
 
 #[tokio::test(flavor = "current_thread")]
@@ -15,7 +15,7 @@ async fn edit_code_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = edit_code_page(&authenticated_request("/editCode"), &config).await;
+    let response = route(&authenticated_request("/editCode"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);

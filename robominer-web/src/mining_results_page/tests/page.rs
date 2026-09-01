@@ -2,10 +2,11 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
+use crate::test_support::route;
 use crate::{Request, ServerConfig};
 
+use super::super::MiningResultsPageState;
 use super::super::render::render_mining_results_page;
-use super::super::{MiningResultsPageState, mining_results_page};
 use super::fixtures::{
     authenticated_request, sample_mining_results_state, two_robot_mining_results_state,
 };
@@ -19,7 +20,7 @@ async fn mining_results_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = mining_results_page(&authenticated_request("/miningResults"), &config).await;
+    let response = route(&authenticated_request("/miningResults"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
@@ -43,7 +44,7 @@ async fn mining_results_redirects_to_login_when_logged_out() {
         headers: HashMap::new(),
     };
 
-    let response = mining_results_page(&request, &config).await;
+    let response = route(&request, &config).await;
     assert_eq!(response.status, 302);
     assert!(
         response
@@ -67,7 +68,7 @@ async fn mining_results_unknown_rally_returns_not_found_without_database() {
         .query
         .insert("rallyResultId".to_string(), "1".to_string());
 
-    let response = mining_results_page(&request, &config).await;
+    let response = route(&request, &config).await;
     assert_eq!(response.status, 503);
 }
 
