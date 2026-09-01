@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, login_redirect, session_username};
+use crate::{Request, Response, ServerConfig, session_username};
 
 mod render;
 
@@ -17,17 +17,9 @@ pub(super) struct MiningAreaOverviewPageState {
 pub(super) async fn mining_area_overview_page(
     request: &Request,
     config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
 ) -> Response {
-    let Some(user_id) = crate::request_user_id(request) else {
-        return login_redirect(request);
-    };
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Mining area overview requires ROBOMINER_DATABASE_URL to be configured",
-        );
-    };
-
-    let result = load_mining_area_overview_state(pool, user_id).await;
+    let result = load_mining_area_overview_state(session.pool, session.user_id).await;
 
     match result {
         Ok(state) => Response::html(render::render_mining_area_overview_page(

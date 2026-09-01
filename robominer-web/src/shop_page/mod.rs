@@ -2,6 +2,7 @@ use crate::{Request, Response, ServerConfig, mutation_form_has, mutation_i64, qu
 
 use robominer_db::part_type_id;
 
+mod actions;
 mod catalog;
 mod helpers;
 mod inventory;
@@ -95,43 +96,39 @@ pub(super) struct OreAssetView {
     pub(super) depot_max_allowed: i32,
 }
 
-pub(super) async fn shop_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Shop requires ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let buy_part_id = mutation_i64(request, "buyRobotPartId");
-            let sell_part_id = mutation_i64(request, "sellRobotPartId");
-            let selected_part_type_id = query_i64(request, "selectedRobotPartTypeId");
-            let selected_tier_id = query_i64(request, "selectedTierId");
-            let selected_part_id = query_i64(request, "selectedRobotPartId");
+pub(super) async fn shop_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    let buy_part_id = mutation_i64(request, "buyRobotPartId");
+    let sell_part_id = mutation_i64(request, "sellRobotPartId");
+    let selected_part_type_id = query_i64(request, "selectedRobotPartTypeId");
+    let selected_tier_id = query_i64(request, "selectedTierId");
+    let selected_part_id = query_i64(request, "selectedRobotPartId");
 
-            let result = load_shop_state(
-                session.pool,
-                session.user_id,
-                buy_part_id,
-                sell_part_id,
-                mutation_form_has(request, "sellAllUnassigned"),
-                selected_part_type_id,
-                selected_tier_id,
-                selected_part_id,
-            )
-            .await;
-
-            match result {
-                Ok(state) => {
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_shop_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("shop", error),
-            }
-        },
+    let result = load_shop_state(
+        session.pool,
+        session.user_id,
+        buy_part_id,
+        sell_part_id,
+        mutation_form_has(request, "sellAllUnassigned"),
+        selected_part_type_id,
+        selected_tier_id,
+        selected_part_id,
     )
-    .await
+    .await;
+
+    match result {
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_shop_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("shop", error),
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -145,71 +142,14 @@ async fn load_shop_state(
     selected_tier_id: Option<i64>,
     selected_part_id: Option<i64>,
 ) -> Result<ShopPageState, crate::page_context::PageLoadError> {
-    let mut message = None;
-    if let Some(robot_part_id) = buy_part_id {
-        message = Some(
-            match robominer_db::buy_robot_part(
-                pool,
-                robominer_db::RobotPartTransactionRequest {
-                    user_id,
-                    robot_part_id,
-                },
-            )
-            .await?
-            .into_result()
-            {
-                Ok(_) => "Robot part bought".to_string(),
-                Err(rejection) => format!(
-                    "Unable to buy robot part: {}",
-                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
-                        rejection
-                    )
-                ),
-            },
-        );
-    } else if sell_all_unassigned {
-        message = Some(
-            match robominer_db::sell_all_unassigned_robot_parts(pool, user_id)
-                .await?
-                .into_result()
-            {
-                Ok(result) => {
-                    if result.sold_count == 1 {
-                        "Sold 1 unassigned robot part".to_string()
-                    } else {
-                        format!("Sold {} unassigned robot parts", result.sold_count)
-                    }
-                }
-                Err(rejection) => format!(
-                    "Unable to sell robot parts: {}",
-                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
-                        rejection
-                    )
-                ),
-            },
-        );
-    } else if let Some(robot_part_id) = sell_part_id {
-        message = Some(
-            match robominer_db::sell_robot_part(
-                pool,
-                robominer_db::RobotPartTransactionRequest {
-                    user_id,
-                    robot_part_id,
-                },
-            )
-            .await?
-            .into_result()
-            {
-                Ok(_) => "Robot part sold".to_string(),
-                Err(rejection) => format!(
-                    "Unable to sell robot part: {}",
-                    robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
-                        rejection
-                    )
-                ),
-            },
-        );
-    }
+    let message = actions::apply_shop_mutations(
+        pool,
+        user_id,
+        buy_part_id,
+        sell_part_id,
+        sell_all_unassigned,
+    )
+    .await?;
 
     let ores: Vec<OreView> = robominer_db::list_mining_area_overview_ores_for_user(pool, user_id)
         .await?

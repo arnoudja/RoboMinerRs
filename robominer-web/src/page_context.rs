@@ -67,19 +67,21 @@ pub(crate) struct PageSession<'a> {
 }
 
 impl<'a> PageSession<'a> {
-    /// Require login, valid CSRF (for mutating methods), and a database pool.
+    /// Require login, optional CSRF (for mutating methods), and a database pool.
     pub(crate) fn require(
         request: &Request,
         config: &'a ServerConfig,
         missing_db_message: &str,
+        csrf_on_post: bool,
     ) -> Result<Self, Response> {
         let Some(user_id) = request_user_id(request) else {
             return Err(login_redirect(request));
         };
-        if let Some(response) = csrf::reject_invalid_csrf(request, user_id) {
+        if csrf_on_post && let Some(response) = csrf::reject_invalid_csrf(request, user_id) {
             return Err(response);
         }
-        if crate::request_helpers::is_post(request)
+        if csrf_on_post
+            && crate::request_helpers::is_post(request)
             && let Some(response) =
                 crate::rate_limit::reject_rate_limited_mutation(request, user_id)
         {
@@ -119,23 +121,6 @@ impl<'a> PageSession<'a> {
             session_username(request),
             app_shell::hud_markup(request, config).await.as_deref(),
         ))
-    }
-}
-
-/// Run an authenticated page handler after [`PageSession::require`].
-pub(crate) async fn with_session_page<'a, F, Fut>(
-    request: &'a Request,
-    config: &'a ServerConfig,
-    missing_db_message: &str,
-    handler: F,
-) -> Response
-where
-    F: FnOnce(PageSession<'a>) -> Fut,
-    Fut: std::future::Future<Output = Response>,
-{
-    match PageSession::require(request, config, missing_db_message) {
-        Ok(session) => handler(session).await,
-        Err(response) => response,
     }
 }
 

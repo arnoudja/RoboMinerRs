@@ -2,21 +2,21 @@ use super::{
     ACTIVITY_RALLY_MAX_AREAS, ActivityFeedQuery, ActivityPageState, ActivityRallyFilter,
     RallyViewBackLink,
 };
-use crate::{Request, Response, ServerConfig, query_i64, request_user_id, session_username};
+use crate::{Request, Response, ServerConfig, query_i64, session_username};
 
 pub(super) mod render;
 mod render_feed;
 mod render_sidebar;
 
-pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Activity requires ROBOMINER_DATABASE_URL to be configured",
-        );
-    };
+pub async fn activity_page(
+    request: &Request,
+    config: &ServerConfig,
+    session_user_id: Option<i64>,
+    pool: &robominer_db::MySqlPool,
+) -> Response {
+    let user_id = session_user_id.unwrap_or(0);
 
     if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
-        let user_id = request_user_id(request).unwrap_or(0);
         let feed_query = ActivityFeedQuery::from_request(request);
         let result =
             super::view::load_rally_view_state(pool, user_id, rally_result_id, false).await;
@@ -33,7 +33,6 @@ pub async fn activity_page(request: &Request, config: &ServerConfig) -> Response
         }
     }
 
-    let user_id = request_user_id(request).unwrap_or(0);
     let feed_query = ActivityFeedQuery::from_request(request);
     let result = load_activity_state(pool, user_id, feed_query).await;
 

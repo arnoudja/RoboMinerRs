@@ -137,6 +137,7 @@ async fn protected_routes_redirect_to_login_when_logged_out() {
         "/editCode",
         "/miningQueue",
         "/miningResults",
+        "/miningAreaOverview",
         "/robot",
         "/robotStats",
         "/shop",
@@ -144,6 +145,28 @@ async fn protected_routes_redirect_to_login_when_logged_out() {
         let response = route(&request(path), &config).await;
         let expected = format!("login?returnTo={}", path.trim_start_matches('/'));
         assert_login_redirect(&response, &expected);
+    }
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn public_read_routes_do_not_require_login() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: true,
+        trust_proxy: false,
+    };
+
+    for path in ["/leaderboard", "/activity"] {
+        let response = route(&request(path), &config).await;
+        assert_ne!(
+            response.status, 302,
+            "{path} should not redirect to login when logged out"
+        );
+        assert_eq!(
+            response.status, 503,
+            "{path} without DB should return service unavailable"
+        );
     }
 }
 

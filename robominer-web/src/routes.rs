@@ -1,4 +1,15 @@
-//! Canonical app route paths and camelCase / PascalCase alias matching.
+//! Canonical app route paths, camelCase / PascalCase alias matching, and auth policy.
+
+/// Access policy enforced by the router before page handlers run.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RoutePolicy {
+    /// No session required (login, help).
+    Public,
+    /// Readable without login; optional session enriches HUD and viewer context.
+    PublicRead,
+    /// Login required; POST mutations validate CSRF and rate limits when enabled.
+    SessionRequired { csrf_on_post: bool },
+}
 
 /// Application page routes with stable camelCase URLs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -141,6 +152,28 @@ impl AppRoute {
     pub fn canonicalize(path: &str) -> Option<&'static str> {
         Self::from_path(path).map(Self::path)
     }
+
+    /// Auth and CSRF policy for this route (see [`RoutePolicy`]).
+    pub const fn policy(self) -> RoutePolicy {
+        match self {
+            Self::Login | Self::Logoff => RoutePolicy::Public,
+            Self::Help
+            | Self::HelpTutorial
+            | Self::HelpProgramTips
+            | Self::HelpRobotProgram
+            | Self::HelpMechanics => RoutePolicy::Public,
+            Self::Activity | Self::Leaderboard => RoutePolicy::PublicRead,
+            Self::Achievements
+            | Self::Account
+            | Self::EditCode
+            | Self::MiningQueue
+            | Self::MiningResults
+            | Self::MiningAreaOverview
+            | Self::Robot
+            | Self::RobotStats
+            | Self::Shop => RoutePolicy::SessionRequired { csrf_on_post: true },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -180,5 +213,46 @@ mod tests {
     fn unknown_paths_do_not_canonicalize() {
         assert_eq!(AppRoute::canonicalize("/notARealPage"), None);
         assert_eq!(AppRoute::canonicalize("/"), None);
+    }
+
+    #[test]
+    fn each_route_has_expected_policy() {
+        use super::RoutePolicy;
+
+        let public = [
+            AppRoute::Login,
+            AppRoute::Logoff,
+            AppRoute::Help,
+            AppRoute::HelpTutorial,
+            AppRoute::HelpProgramTips,
+            AppRoute::HelpRobotProgram,
+            AppRoute::HelpMechanics,
+        ];
+        let public_read = [AppRoute::Activity, AppRoute::Leaderboard];
+        let session = [
+            AppRoute::Achievements,
+            AppRoute::Account,
+            AppRoute::EditCode,
+            AppRoute::MiningQueue,
+            AppRoute::MiningResults,
+            AppRoute::MiningAreaOverview,
+            AppRoute::Robot,
+            AppRoute::RobotStats,
+            AppRoute::Shop,
+        ];
+
+        for route in public {
+            assert_eq!(route.policy(), RoutePolicy::Public, "{route:?}");
+        }
+        for route in public_read {
+            assert_eq!(route.policy(), RoutePolicy::PublicRead, "{route:?}");
+        }
+        for route in session {
+            assert_eq!(
+                route.policy(),
+                RoutePolicy::SessionRequired { csrf_on_post: true },
+                "{route:?}"
+            );
+        }
     }
 }

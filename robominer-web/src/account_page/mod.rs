@@ -2,7 +2,7 @@ use crate::rate_limit::{
     auth_attempt_is_rate_limited, client_ip, log_auth_failure, record_auth_attempt,
 };
 use crate::session;
-use crate::{Request, Response, ServerConfig, is_post, login_redirect, session_username};
+use crate::{Request, Response, ServerConfig, is_post, session_username};
 
 #[derive(Debug)]
 pub(super) struct AccountPageState {
@@ -14,14 +14,15 @@ pub(super) struct AccountPageState {
     pub(super) reissue_session_version: Option<i32>,
 }
 
-pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Response {
+pub(super) async fn account_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
     // Account updates always verify the current password (Argon2). Rate-limit before DB work.
     if is_account_update_post(request) {
-        let Some(user_id) = crate::request_user_id(request) else {
-            return login_redirect(request);
-        };
         let ip = client_ip(request, config.trust_proxy);
-        let account_key = account_rate_limit_key(user_id);
+        let account_key = account_rate_limit_key(session.user_id);
         if auth_attempt_is_rate_limited(&ip, &account_key) {
             log_auth_failure(&ip, &account_key, "rate_limited");
             return Response::too_many_requests(
@@ -31,38 +32,30 @@ pub(super) async fn account_page(request: &Request, config: &ServerConfig) -> Re
         record_auth_attempt(&ip, &account_key);
     }
 
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Account requires ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let result = load_account_page_state(session.pool, session.user_id, request).await;
+    let result = load_account_page_state(session.pool, session.user_id, request).await;
 
-            match result {
-                Ok(state) => {
-                    let reissue_session_version = state.reissue_session_version;
-                    let username_for_cookie = state.current_username.clone();
-                    let user_id = session.user_id;
-                    let mut response = session
-                        .html_with_hud(request, config, |_username, hud| {
-                            render::render_account_page(hud, &state)
-                        })
-                        .await;
-                    if let Some(session_version) = reissue_session_version {
-                        response = reissue_session_cookies(
-                            response,
-                            user_id,
-                            session_version,
-                            &username_for_cookie,
-                        );
-                    }
-                    response
-                }
-                Err(error) => crate::page_context::page_load_error("account", error),
+    match result {
+        Ok(state) => {
+            let reissue_session_version = state.reissue_session_version;
+            let username_for_cookie = state.current_username.clone();
+            let user_id = session.user_id;
+            let mut response = session
+                .html_with_hud(request, config, |_username, hud| {
+                    render::render_account_page(hud, &state)
+                })
+                .await;
+            if let Some(session_version) = reissue_session_version {
+                response = reissue_session_cookies(
+                    response,
+                    user_id,
+                    session_version,
+                    &username_for_cookie,
+                );
             }
-        },
-    )
-    .await
+            response
+        }
+        Err(error) => crate::page_context::page_load_error("account", error),
+    }
 }
 
 fn reissue_session_cookies(
