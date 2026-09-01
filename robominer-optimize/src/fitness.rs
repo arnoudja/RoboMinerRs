@@ -223,43 +223,7 @@ mod tests {
         ore_supply_record, unit_test_mining_area_record, unit_test_robot_record,
     };
 
-    fn sample_part(id: i64, type_id: i64, memory: i32) -> RobotPartRecord {
-        part_with_caps(id, type_id, memory, 2, 8, 1, 6, 3, 2)
-    }
-
-    fn part_with_caps(
-        id: i64,
-        type_id: i64,
-        memory: i32,
-        weight: i32,
-        volume: i32,
-        power_usage: i32,
-        forward: i32,
-        backward: i32,
-        rotate: i32,
-    ) -> RobotPartRecord {
-        RobotPartRecord {
-            id,
-            type_id,
-            tier_id: Some(1),
-            part_name: format!("part-{id}"),
-            ore_price_id: 1,
-            ore_capacity: 2,
-            mining_capacity: 2,
-            battery_capacity: 20,
-            memory_capacity: memory,
-            cpu_capacity: 5,
-            forward_capacity: forward,
-            backward_capacity: backward,
-            rotate_capacity: rotate,
-            recharge_time: 1,
-            scan_time: 1,
-            scan_distance: 1,
-            weight,
-            volume,
-            power_usage,
-        }
-    }
+    use crate::test_fixtures::{part_with_caps, sample_part_with_memory as sample_part};
 
     fn complete_catalog(memory: i32) -> PartCatalog {
         PartCatalog::from_parts(
