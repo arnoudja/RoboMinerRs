@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use crate::ServerConfig;
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
+use crate::test_support::route;
 
 use super::super::render::render_robot_page;
-use super::super::robot_page;
 use super::fixtures::{authenticated_request, sample_robot_state};
 
 #[tokio::test(flavor = "current_thread")]
@@ -16,7 +16,7 @@ async fn robot_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = robot_page(&authenticated_request("/robot"), &config).await;
+    let response = route(&authenticated_request("/robot"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);

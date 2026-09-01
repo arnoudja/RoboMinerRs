@@ -4,10 +4,10 @@ use crate::ServerConfig;
 use crate::html::{
     assert_contains_all, assert_html_contains, assert_html_has_class, assert_html_not_contains,
 };
+use crate::test_support::route;
 
 use super::super::{
-    ACTIVITY_RALLY_PAGE_SIZE, ActivityFeedQuery, ActivityRallyFilter, activity_page,
-    render_activity_page_at,
+    ACTIVITY_RALLY_PAGE_SIZE, ActivityFeedQuery, ActivityRallyFilter, render_activity_page_at,
 };
 use super::fixtures::{
     default_activity_feed_query, request, sample_activity_state, sample_activity_state_with_queue,
@@ -22,7 +22,7 @@ async fn activity_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = activity_page(&request("/activity"), &config).await;
+    let response = route(&request("/activity"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);

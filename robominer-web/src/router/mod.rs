@@ -2,6 +2,7 @@
 
 mod dispatch;
 mod redirect;
+mod route_policy;
 mod session_gate;
 
 #[cfg(test)]
@@ -14,6 +15,14 @@ use crate::{Response, ServerConfig, health};
 
 use redirect::canonical_path_redirect;
 use session_gate::{SessionStrip, clear_stale_session_cookies, strip_stale_session_cookie};
+
+async fn root_redirect(request: &Request) -> Response {
+    if crate::request_helpers::request_user_id(request).is_some() {
+        crate::Response::redirect(crate::routes::AppRoute::MiningQueue.href())
+    } else {
+        crate::request_helpers::login_redirect(request)
+    }
+}
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
     if matches!(request.path.as_str(), "/health" | "/Health")

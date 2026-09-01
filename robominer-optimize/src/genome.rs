@@ -186,32 +186,8 @@ impl<R: RngExt> RngLike for RandAdapter<'_, R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use robominer_db::RobotPartRecord;
+    use crate::test_fixtures::sample_part_with_tier as sample_part;
     use robominer_program::RngLike;
-
-    fn sample_part(id: i64, type_id: i64, tier_id: i64) -> RobotPartRecord {
-        RobotPartRecord {
-            id,
-            type_id,
-            tier_id: Some(tier_id),
-            part_name: format!("part-{id}"),
-            ore_price_id: 1,
-            ore_capacity: 2,
-            mining_capacity: 2,
-            battery_capacity: 20,
-            memory_capacity: 50,
-            cpu_capacity: 5,
-            forward_capacity: 6,
-            backward_capacity: 3,
-            rotate_capacity: 2,
-            recharge_time: 1,
-            scan_time: 1,
-            scan_distance: 1,
-            weight: 2,
-            volume: 8,
-            power_usage: 1,
-        }
-    }
 
     fn dual_catalog() -> PartCatalog {
         let parts = (1..=7)

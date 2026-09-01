@@ -16,43 +16,39 @@ pub(super) struct AchievementsPageState {
     pub(super) claim_message: Option<String>,
 }
 
-pub(super) async fn achievements_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Achievements require ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let session_name = session_username(request);
-            let requested_user = request
-                .query
-                .get("user")
-                .map(|value| value.trim())
-                .filter(|value| !value.is_empty())
-                .map(str::to_string);
+pub(super) async fn achievements_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    let session_name = session_username(request);
+    let requested_user = request
+        .query
+        .get("user")
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
 
-            let result = match requested_user {
-                Some(username) if username != session_name => {
-                    load_achievements_overview(session.pool, username).await
-                }
-                _ => {
-                    let achievement_id = mutation_i64(request, "achievementId");
-                    load_achievements_state(session.pool, session.user_id, achievement_id).await
-                }
-            };
+    let result = match requested_user {
+        Some(username) if username != session_name => {
+            load_achievements_overview(session.pool, username).await
+        }
+        _ => {
+            let achievement_id = mutation_i64(request, "achievementId");
+            load_achievements_state(session.pool, session.user_id, achievement_id).await
+        }
+    };
 
-            match result {
-                Ok(state) => {
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_achievements_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("achievements", error),
-            }
-        },
-    )
-    .await
+    match result {
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_achievements_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("achievements", error),
+    }
 }
 
 async fn load_achievements_state(

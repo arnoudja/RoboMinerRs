@@ -1,4 +1,15 @@
-use crate::{Request, Response, ServerConfig, is_post, mutation_i64, query_i64, query_signed_i64};
+use crate::{Request, Response, ServerConfig};
+
+mod actions;
+mod editor;
+mod library;
+mod render;
+mod scripts;
+
+#[cfg(test)]
+mod tests;
+
+use actions::load_edit_code_page_state;
 
 #[derive(Debug)]
 pub(super) struct EditCodePageState {
@@ -21,164 +32,36 @@ pub(super) struct EditCodeProgramSource {
     pub(super) verified: bool,
 }
 
-pub(super) async fn edit_code_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Edit code requires ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let result = load_edit_code_page_state(session.pool, session.user_id, request).await;
+pub(super) async fn edit_code_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    let result = load_edit_code_page_state(session.pool, session.user_id, request).await;
 
-            match result {
-                Ok(state) => {
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_edit_code_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("edit code", error),
-            }
-        },
-    )
-    .await
+    match result {
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_edit_code_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("edit code", error),
+    }
 }
 
 /// Map a `create_program_source` / `update_program_source` domain failure into a
 /// page-load error. These façades are only expected to fail with
 /// [`robominer_domain::DomainError::Database`]; any other variant is unreachable on
 /// this path today and maps to a fixed configuration error (no domain Display leak).
-fn program_source_write_page_error(
+pub(super) fn program_source_write_page_error(
     error: robominer_domain::DomainError,
 ) -> crate::page_context::PageLoadError {
     crate::page_context::PageLoadError::from_database(error).unwrap_or_else(|_| {
         crate::page_context::PageLoadError::from(sqlx::Error::Configuration(
             "unexpected domain error on program source write".into(),
         ))
-    })
-}
-
-async fn load_edit_code_page_state(
-    pool: &robominer_db::MySqlPool,
-    user_id: i64,
-    request: &Request,
-) -> Result<EditCodePageState, crate::page_context::PageLoadError> {
-    let mut message = None;
-    let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
-    let program_source_id = if is_post(request) {
-        mutation_i64(request, "programSourceId").unwrap_or(0)
-    } else {
-        query_i64(request, "programSourceId").unwrap_or(0)
-    };
-    // Client may restore the last selected program only on plain GET navigations.
-    let prefer_stored_selection =
-        !is_post(request) && !next_program_source_id.is_some_and(|source_id| source_id > 0);
-
-    if is_post(request) {
-        match request.form.get("requestType").map(String::as_str) {
-            Some("erase") if program_source_id > 0 => {
-                if let Err(rejection) =
-                    robominer_db::delete_program_source_for_user(pool, user_id, program_source_id)
-                        .await?
-                        .into_result()
-                {
-                    message = Some(format!(
-                        "Unable to delete program: {}",
-                        robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
-                    ));
-                } else {
-                    next_program_source_id = None;
-                    message = Some("Program deleted.".to_string());
-                }
-            }
-            Some("update") => {
-                let source_name = request.form.get("sourceName").cloned().unwrap_or_default();
-                let source_code = request.form.get("sourceCode").cloned().unwrap_or_default();
-                if program_source_id > 0 {
-                    if let Err(rejection) = robominer_domain::update_program_source(
-                        pool,
-                        robominer_db::ProgramSourceWriteRequest {
-                            user_id,
-                            program_source_id,
-                            source_name,
-                            source_code,
-                        },
-                    )
-                    .await
-                    .map_err(program_source_write_page_error)?
-                    .into_result()
-                    {
-                        message = Some(format!(
-                            "Unable to save program: {}",
-                            robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
-                        ));
-                    } else {
-                        let applied = robominer_db::apply_verified_program_source_to_idle_robots(
-                            pool,
-                            user_id,
-                            program_source_id,
-                        )
-                        .await?;
-                        message = Some(format_save_with_optional_apply_message(
-                            "Program saved.",
-                            &applied,
-                        ));
-                    }
-                } else if !source_name.is_empty() || !source_code.is_empty() {
-                    match robominer_domain::create_program_source(
-                        pool,
-                        robominer_db::CreateProgramSourceRequest {
-                            user_id,
-                            source_name,
-                            source_code,
-                        },
-                    )
-                    .await
-                    .map_err(program_source_write_page_error)?
-                    .into_result()
-                    {
-                        Ok(created) => {
-                            // Always select the created program (do not keep New program / -1).
-                            next_program_source_id = Some(created.program_source_id);
-                            let applied =
-                                robominer_db::apply_verified_program_source_to_idle_robots(
-                                    pool,
-                                    user_id,
-                                    created.program_source_id,
-                                )
-                                .await?;
-                            message = Some(format_save_with_optional_apply_message(
-                                "Program created.",
-                                &applied,
-                            ));
-                        }
-                        Err(rejection) => {
-                            message = Some(format!(
-                                "Unable to save program: {}",
-                                robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
-                            ));
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    let program_sources = robominer_db::list_program_source_states_for_user(pool, user_id).await?;
-    let selected_source = selected_edit_code_source(&program_sources, next_program_source_id);
-
-    let selected_program_source = selected_source
-        .map(edit_code_program_source_from_state)
-        .unwrap_or_else(default_edit_code_program_source);
-    let selected_program_source_id = selected_source.map(|state| state.source.id).unwrap_or(-1);
-
-    Ok(EditCodePageState {
-        selected_program_source_id,
-        selected_program_source,
-        program_sources,
-        message,
-        prefer_stored_selection,
     })
 }
 
@@ -258,11 +141,3 @@ pub(super) fn default_edit_code_program_source() -> EditCodeProgramSource {
         verified: false,
     }
 }
-
-mod editor;
-mod library;
-mod render;
-mod scripts;
-
-#[cfg(test)]
-mod tests;

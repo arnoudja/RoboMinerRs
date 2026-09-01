@@ -3,10 +3,11 @@ use std::path::PathBuf;
 
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::session::format_authenticated_cookie;
+use crate::test_support::route;
 use crate::{Request, ServerConfig};
 
+use super::MiningAreaOverviewPageState;
 use super::render::render_mining_area_overview_page;
-use super::{MiningAreaOverviewPageState, mining_area_overview_page};
 
 fn authenticated_request(path: &str) -> Request {
     Request {
@@ -78,8 +79,7 @@ async fn mining_area_overview_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response =
-        mining_area_overview_page(&authenticated_request("/miningAreaOverview"), &config).await;
+    let response = route(&authenticated_request("/miningAreaOverview"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
@@ -95,7 +95,7 @@ async fn mining_area_overview_requires_login() {
         trust_proxy: false,
     };
 
-    let response = mining_area_overview_page(
+    let response = route(
         &Request {
             method: "GET".to_string(),
             path: "/miningAreaOverview".to_string(),

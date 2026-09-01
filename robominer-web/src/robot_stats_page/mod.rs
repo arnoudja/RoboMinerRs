@@ -29,28 +29,24 @@ impl RobotStatsPageState {
     }
 }
 
-pub(super) async fn robot_stats_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Robot stats require ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let robot_id = query_i64(request, "robotId");
-            let result = load_robot_stats_state(session.pool, robot_id).await;
+pub(super) async fn robot_stats_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    let robot_id = query_i64(request, "robotId");
+    let result = load_robot_stats_state(session.pool, robot_id).await;
 
-            match result {
-                Ok(state) => {
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_robot_stats_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("robot stats", error),
-            }
-        },
-    )
-    .await
+    match result {
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_robot_stats_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("robot stats", error),
+    }
 }
 
 async fn load_robot_stats_state(

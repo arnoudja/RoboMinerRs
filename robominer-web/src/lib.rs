@@ -67,8 +67,8 @@ pub fn resolve_session_secret(
 }
 pub use http::{Request, Response};
 pub(crate) use request_helpers::{
-    is_post, login_redirect, mutation_form_has, mutation_i64, query_i64, query_signed_i64,
-    request_user_id, session_username,
+    is_post, mutation_form_has, mutation_i64, query_i64, query_signed_i64, request_user_id,
+    session_username,
 };
 pub use router::route;
 pub use session::{resolve_secure_cookies, validate_trust_proxy_bind};

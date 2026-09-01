@@ -1,6 +1,16 @@
-# `robominer-db` module map
+# Crate module maps
 
-The crate root re-exports symbols for convenience (`robominer_db::enqueue_mining`, etc.). Prefer explicit module paths for new APIs.
+Module ownership for large workspace crates. See [architecture.md](architecture.md) for layer
+boundaries and the “where does this rule live?” decision tree.
+
+## `robominer-db`
+
+The crate root re-exports symbols for convenience (`robominer_db::enqueue_mining`, etc.). Prefer
+explicit module paths for new APIs.
+
+**Note:** `robominer-db` holds both persistence and **transactional game rules** (shop economics,
+queue capacity, achievement unlock graphs, claim tax). Domain orchestrates simulation; db owns
+invariants that must stay inside a SQL transaction.
 
 | Module | Responsibility | Primary entry points |
 | --- | --- | --- |
@@ -21,4 +31,44 @@ The crate root re-exports symbols for convenience (`robominer_db::enqueue_mining
 | `shop/` | Part buy/sell | `buy_robot_part`, `sell_robot_part` |
 | `users/` | Accounts and auth | `create_user`, `verify_login` |
 
-See [architecture.md](architecture.md) for how this layer connects to `robominer-domain` and presentation crates.
+## `robominer-domain`
+
+Thin orchestration on top of db + sim + program. Not a general API gateway for CRUD.
+
+| Module | Responsibility | Primary entry points |
+| --- | --- | --- |
+| `loadout/` | Assemble rally/pool/mining loadouts from db rows | `load_rally_loadout`, `load_next_rally_loadout_with_claim` |
+| `simulation/` | Run rallies/pools, map outcomes to records | `run_rally_loadout_*`, `persist_rally_outcome` |
+| `robot_config.rs` | Program create/update with compile verify | `create_program_source`, `update_program_source` |
+| `rejection_messages/` | Player/CLI prose for typed db rejections | `*_rejection_message`, `Audience` |
+| `actions/` | Thin mutation wrappers shared by web + engine | `buy_robot_part`, `enqueue_mining`, etc. |
+
+## `robominer-web`
+
+Axum transport shell with a custom HTML router. Page modules follow `mod.rs` + `actions.rs` +
+`view_model.rs` + `render.rs` + tests (see [CONTRIBUTING.md](../CONTRIBUTING.md)).
+
+| Module / folder | Responsibility |
+| --- | --- |
+| `router/` | Session gate, legacy redirects, route dispatch, auth policy |
+| `routes.rs` | Canonical paths, `AppRoute`, `RoutePolicy` |
+| `page_context.rs` | `PageSession`, `PageLoadError`, HUD render helpers |
+| `csrf/`, `session/`, `rate_limit/` | Security and session management |
+| `*_page/` | Per-route handlers, mutations, view models, HTML |
+| `static/` | CSS, JS, help HTML fragments |
+| `tests/` | HTTP + DB integration tests |
+
+## `robominer-engine`
+
+CLI and background rally/mining worker. Command modules mirror web page domains.
+
+| Module | Responsibility |
+| --- | --- |
+| `cli.rs` | Clap entry, global options |
+| `dispatch/` | Subcommand routing (`shop`, `mining`, `rally`, `user`, …) |
+| `rally/` | Worker loop (`cycle.rs`), single-rally run (`run_single.rs`) |
+| `shop.rs`, `mining.rs`, `robot.rs`, … | Thin command handlers calling db/domain |
+| `db_outcome.rs` | Map `DbOutcome` to `anyhow` for operators |
+| `database.rs` | Connect wrapper around `robominer_db::connect_from_cli` |
+
+See [architecture.md](architecture.md) for how these layers connect.

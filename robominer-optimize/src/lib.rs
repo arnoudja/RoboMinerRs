@@ -12,6 +12,8 @@ mod fitness;
 mod ga;
 mod genome;
 mod report;
+#[cfg(test)]
+mod test_fixtures;
 
 pub use catalog::PartCatalog;
 pub use cli::Cli;
@@ -29,7 +31,14 @@ use robominer_program::{ExecutableProgram, compile_executable_source};
 
 pub async fn run() -> Result<()> {
     let cli = Cli::parse();
-    let pool = connect_database(cli.database_url.clone(), cli.config.clone()).await?;
+    let pool = robominer_db::connect_from_cli(
+        cli.database_url.clone(),
+        cli.config.clone(),
+        "robominer-optimize",
+    )
+    .await
+    .map_err(|error| anyhow!(error))
+    .context("failed to connect to database")?;
 
     let catalog = PartCatalog::load(&pool, cli.max_tier_id)
         .await
@@ -263,29 +272,7 @@ mod tests {
         use crate::catalog::PartCatalog;
         use robominer_db::RobotPartRecord;
 
-        fn sample_part(id: i64, type_id: i64) -> RobotPartRecord {
-            RobotPartRecord {
-                id,
-                type_id,
-                tier_id: Some(1),
-                part_name: format!("part-{id}"),
-                ore_price_id: 1,
-                ore_capacity: 2,
-                mining_capacity: 2,
-                battery_capacity: 20,
-                memory_capacity: 50,
-                cpu_capacity: 5,
-                forward_capacity: 6,
-                backward_capacity: 3,
-                rotate_capacity: 2,
-                recharge_time: 1,
-                scan_time: 1,
-                scan_distance: 1,
-                weight: 2,
-                volume: 8,
-                power_usage: 1,
-            }
-        }
+        use crate::test_fixtures::sample_part;
 
         let catalog = PartCatalog::from_parts(
             (1..=7)
@@ -332,29 +319,7 @@ mod tests {
         use crate::catalog::PartCatalog;
         use robominer_db::RobotPartRecord;
 
-        fn sample_part(id: i64, type_id: i64) -> RobotPartRecord {
-            RobotPartRecord {
-                id,
-                type_id,
-                tier_id: Some(1),
-                part_name: format!("part-{id}"),
-                ore_price_id: 1,
-                ore_capacity: 2,
-                mining_capacity: 2,
-                battery_capacity: 20,
-                memory_capacity: 50,
-                cpu_capacity: 5,
-                forward_capacity: 6,
-                backward_capacity: 3,
-                rotate_capacity: 2,
-                recharge_time: 1,
-                scan_time: 1,
-                scan_distance: 1,
-                weight: 2,
-                volume: 8,
-                power_usage: 1,
-            }
-        }
+        use crate::test_fixtures::sample_part;
 
         let parts = (1..=7)
             .flat_map(|type_id| {
@@ -399,14 +364,4 @@ mod tests {
         file.write_all(source.as_bytes()).expect("write temp");
         TempProgram { path }
     }
-}
-
-async fn connect_database(
-    database_url: Option<String>,
-    config: Option<std::path::PathBuf>,
-) -> Result<robominer_db::MySqlPool> {
-    robominer_db::connect_from_cli(database_url, config, "robominer-optimize")
-        .await
-        .map_err(|error| anyhow!(error))
-        .context("failed to connect to database")
 }

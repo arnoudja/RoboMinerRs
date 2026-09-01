@@ -14,65 +14,58 @@ pub(super) struct MiningResultsPageState {
     pub(super) selected_mining_queue_id: Option<i64>,
 }
 
-pub(super) async fn mining_results_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
-        request,
-        config,
-        "Mining results require ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
-                let result = rally_pages::load_user_rally_view_state(
-                    session.pool,
-                    session.user_id,
-                    rally_result_id,
-                )
+pub(super) async fn mining_results_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
+        let result =
+            rally_pages::load_user_rally_view_state(session.pool, session.user_id, rally_result_id)
                 .await;
 
-                return match result {
-                    Ok(Some(state)) => {
-                        session
-                            .html_read_with_hud(request, config, |username, hud| {
-                                rally_pages::render_rally_view_page(
-                                    username,
-                                    hud,
-                                    &state,
-                                    request
-                                        .query
-                                        .get("returnTo")
-                                        .map(String::as_str)
-                                        .and_then(rally_pages::valid_mining_results_return_to)
-                                        .map(rally_pages::RallyViewBackLink::MiningResults),
-                                )
-                            })
-                            .await
-                    }
-                    Ok(None) => Response::not_found(),
-                    Err(error) => crate::page_context::page_load_error("rally view", error),
-                };
+        return match result {
+            Ok(Some(state)) => {
+                session
+                    .html_read_with_hud(request, config, |username, hud| {
+                        rally_pages::render_rally_view_page(
+                            username,
+                            hud,
+                            &state,
+                            request
+                                .query
+                                .get("returnTo")
+                                .map(String::as_str)
+                                .and_then(rally_pages::valid_mining_results_return_to)
+                                .map(rally_pages::RallyViewBackLink::MiningResults),
+                        )
+                    })
+                    .await
             }
+            Ok(None) => Response::not_found(),
+            Err(error) => crate::page_context::page_load_error("rally view", error),
+        };
+    }
 
-            let preferred_run_id = query_i64(request, "runId");
-            let result = load_mining_results_state(
-                session.pool,
-                session.user_id,
-                MINING_RESULTS_MAX_SHOWN,
-                preferred_run_id,
-            )
-            .await;
-
-            match result {
-                Ok(state) => {
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_mining_results_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("mining results", error),
-            }
-        },
+    let preferred_run_id = query_i64(request, "runId");
+    let result = load_mining_results_state(
+        session.pool,
+        session.user_id,
+        MINING_RESULTS_MAX_SHOWN,
+        preferred_run_id,
     )
-    .await
+    .await;
+
+    match result {
+        Ok(state) => {
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_mining_results_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("mining results", error),
+    }
 }
 
 async fn load_mining_results_state(

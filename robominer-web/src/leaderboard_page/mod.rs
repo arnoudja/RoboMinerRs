@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, query_i64, request_user_id, session_username};
+use crate::{Request, Response, ServerConfig, query_i64, session_username};
 
 const LEADERBOARD_PAGE_SIZE: i64 = 10;
 const LEADERBOARD_MAX_LIMIT: i64 = 50;
@@ -120,14 +120,13 @@ pub(super) struct LeaderboardPageState {
     has_more_players: bool,
 }
 
-pub(super) async fn leaderboard_page(request: &Request, config: &ServerConfig) -> Response {
-    let Some(pool) = config.database_pool.as_ref() else {
-        return Response::service_unavailable(
-            "Leaderboard requires ROBOMINER_DATABASE_URL to be configured",
-        );
-    };
-
-    let user_id = request_user_id(request).unwrap_or(0);
+pub(super) async fn leaderboard_page(
+    request: &Request,
+    config: &ServerConfig,
+    user_id: Option<i64>,
+    pool: &robominer_db::MySqlPool,
+) -> Response {
+    let user_id = user_id.unwrap_or(0);
     let query = LeaderboardQuery::from_request(request);
     let result = load_leaderboard_state(pool, user_id, query).await;
 

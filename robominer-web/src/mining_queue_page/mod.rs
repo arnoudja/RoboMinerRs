@@ -104,45 +104,41 @@ pub(super) struct MiningQueueDisplayItem {
     pub(super) time_left_seconds: i64,
 }
 
-pub(super) async fn mining_queue_page(request: &Request, config: &ServerConfig) -> Response {
-    crate::page_context::with_session_page(
+pub(super) async fn mining_queue_page(
+    request: &Request,
+    config: &ServerConfig,
+    session: crate::page_context::PageSession<'_>,
+) -> Response {
+    let selected_queue_item_ids = if is_post(request) {
+        form_i64_values(request, "selectedQueueItemId")
+    } else {
+        Vec::new()
+    };
+    let result = load_mining_queue_page_state(
+        session.pool,
+        session.user_id,
         request,
-        config,
-        "Mining queue requires ROBOMINER_DATABASE_URL to be configured",
-        |session| async move {
-            let selected_queue_item_ids = if is_post(request) {
-                form_i64_values(request, "selectedQueueItemId")
-            } else {
-                Vec::new()
-            };
-            let result = load_mining_queue_page_state(
-                session.pool,
-                session.user_id,
-                request,
-                selected_queue_item_ids,
-            )
-            .await;
-
-            match result {
-                Ok(state) => {
-                    if wants_queue_fragment(request) {
-                        let hud = crate::app_shell::hud_markup(request, config)
-                            .await
-                            .unwrap_or_default();
-                        let html = render::render_mining_queue_fragment(&hud, &state);
-                        return crate::csrf::html_with_csrf(request, session.user_id, html);
-                    }
-                    session
-                        .html_with_hud(request, config, |username, hud| {
-                            render::render_mining_queue_page(username, hud, &state)
-                        })
-                        .await
-                }
-                Err(error) => crate::page_context::page_load_error("mining queue", error),
-            }
-        },
+        selected_queue_item_ids,
     )
-    .await
+    .await;
+
+    match result {
+        Ok(state) => {
+            if wants_queue_fragment(request) {
+                let hud = crate::app_shell::hud_markup(request, config)
+                    .await
+                    .unwrap_or_default();
+                let html = render::render_mining_queue_fragment(&hud, &state);
+                return crate::csrf::html_with_csrf(request, session.user_id, html);
+            }
+            session
+                .html_with_hud(request, config, |username, hud| {
+                    render::render_mining_queue_page(username, hud, &state)
+                })
+                .await
+        }
+        Err(error) => crate::page_context::page_load_error("mining queue", error),
+    }
 }
 
 async fn load_mining_queue_page_state(
@@ -167,17 +163,28 @@ async fn load_mining_queue_page_state(
                         .form
                         .get("submitType")
                         .is_some_and(|value| value == "fill");
-                    if let Err(rejection) = robominer_db::enqueue_mining(
-                        pool,
-                        robominer_db::EnqueueMiningRequest {
-                            user_id,
-                            robot_id,
-                            mining_area_id,
-                            fill,
-                        },
-                    )
-                    .await?
-                    .into_result()
+                    if let robominer_domain::EnqueueMiningOutcome::Rejected(rejection) =
+                        robominer_domain::enqueue_mining(
+                            pool,
+                            robominer_db::EnqueueMiningRequest {
+                                user_id,
+                                robot_id,
+                                mining_area_id,
+                                fill,
+                            },
+                        )
+                        .await
+                        .map_err(|error| {
+                            crate::page_context::PageLoadError::from_database(error).unwrap_or_else(
+                                |_| {
+                                    crate::page_context::PageLoadError::from(
+                                        sqlx::Error::Configuration(
+                                            "unexpected domain error on enqueue mining".into(),
+                                        ),
+                                    )
+                                },
+                            )
+                        })?
                     {
                         error_message =
                             Some(robominer_domain::rejection_messages::enqueue_mining_rejection_player_message(rejection).to_string());

@@ -208,14 +208,23 @@ above `sys.exit(1)`), then run:
 python3 resources/scripts/split-web-page.py
 ```
 
-Existing splits follow this layout: handlers and state in `mod.rs`, HTML in `render.rs`,
-pure tests in `tests.rs` or a `tests/` subdirectory as the page grows. Examples:
-`shop_page/`, `robot_page/`, `edit_code_page/`, `auth_pages/`, `rally_pages/`,
-`achievements_page/`, `account_page/`, `mining_queue_page/`, `leaderboard_page/`,
+Existing splits follow this layout:
+
+| File | Responsibility |
+| --- | --- |
+| `mod.rs` | Handler entry, page state structs, load orchestration |
+| `actions.rs` | POST mutation dispatch (`submitType`, form keys, buy/sell, etc.) |
+| `view_model.rs` | DB record → view struct mapping (when mapping is non-trivial) |
+| `render.rs` | HTML only |
+| `tests.rs` or `tests/` | Pure render/helper tests |
+
+Examples: `shop_page/` (with `actions.rs`), `mining_queue_page/` (with `actions.rs` +
+`view_model.rs`), `edit_code_page/` (with `actions.rs`), `robot_page/`, `auth_pages/`,
+`rally_pages/`, `achievements_page/`, `account_page/`, `leaderboard_page/`,
 `mining_results_page/`, `mining_area_overview_page/`, `robot_stats_page/`, `help_pages/`.
 
-New web pages should use the same `mod.rs` + `render.rs` + tests split (start with
-`tests.rs`; graduate to `tests/` when fixtures and cases need multiple files).
+New web pages should use the same split (start with `mod.rs` + `render.rs` + `tests.rs`;
+add `actions.rs` when POST branches appear; add `view_model.rs` when DB→view mapping grows).
 
 ## Test layout conventions
 

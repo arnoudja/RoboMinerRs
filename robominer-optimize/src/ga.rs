@@ -274,32 +274,8 @@ fn merge_best(best_ever: &mut Vec<RankedIndividual>, ranked: &[RankedIndividual]
 mod tests {
     use super::*;
     use crate::catalog::PartCatalog;
-    use robominer_db::RobotPartRecord;
+    use crate::test_fixtures::sample_part;
     use robominer_program::compile_executable_source;
-
-    fn sample_part(id: i64, type_id: i64) -> RobotPartRecord {
-        RobotPartRecord {
-            id,
-            type_id,
-            tier_id: Some(1),
-            part_name: format!("part-{id}"),
-            ore_price_id: 1,
-            ore_capacity: 2,
-            mining_capacity: 2,
-            battery_capacity: 20,
-            memory_capacity: 50,
-            cpu_capacity: 5,
-            forward_capacity: 6,
-            backward_capacity: 3,
-            rotate_capacity: 2,
-            recharge_time: 1,
-            scan_time: 1,
-            scan_distance: 1,
-            weight: 2,
-            volume: 8,
-            power_usage: 1,
-        }
-    }
 
     #[test]
     fn initial_population_prefers_seeded_programs() {

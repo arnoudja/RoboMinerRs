@@ -3,10 +3,11 @@ use std::path::PathBuf;
 
 use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_contains};
 use crate::session::format_authenticated_cookie;
+use crate::test_support::route;
 use crate::{Request, ServerConfig};
 
+use super::RobotStatsPageState;
 use super::render::{render_robot_stats_page, render_robot_stats_page_at};
-use super::{RobotStatsPageState, robot_stats_page};
 
 fn authenticated_request(path: &str) -> Request {
     Request {
@@ -93,7 +94,7 @@ async fn robot_stats_requires_database_configuration() {
         trust_proxy: false,
     };
 
-    let response = robot_stats_page(&authenticated_request("/robotStats"), &config).await;
+    let response = route(&authenticated_request("/robotStats"), &config).await;
     let body = response.body_utf8();
 
     assert_eq!(response.status, 503);
