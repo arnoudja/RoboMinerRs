@@ -3,8 +3,8 @@ mod support;
 
 use std::collections::HashMap;
 
-use robominer_test_support::insert_row_id;
-use robominer_web::test_support::route;
+use robominer_test_support::{Scenario, insert_row_id};
+use robominer_web::test_support::{format_authenticated_cookie, route};
 use serial_test::serial;
 use support::{
     apply_set_cookies, cookie_header, create_user_via_engine, ensure_session_configured,
@@ -24,21 +24,19 @@ async fn edit_code_create_post_inserts_program_source() {
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
-    let prefix = unique_prefix("rust-web-edit-code");
-    let username = format!("{prefix}-user");
-    let password = "test-password-1".to_string();
-    let user_id =
-        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let scenario = Scenario::user_with_robot_and_wallet(&pool).await;
+    let username = format!("{}-user", scenario.prefix);
     let config = server_config(pool.clone());
-
-    let login_response = login_with_credentials(&config, &username, &password).await;
-    let cookie = cookie_header(&login_response);
+    let cookie = format_authenticated_cookie(scenario.user_id, &username);
 
     let mut form = HashMap::new();
     form.insert("requestType".to_string(), "update".to_string());
     form.insert("programSourceId".to_string(), "-1".to_string());
     form.insert("nextProgramSourceId".to_string(), "-1".to_string());
-    form.insert("sourceName".to_string(), format!("{prefix}-program"));
+    form.insert(
+        "sourceName".to_string(),
+        format!("{}-program", scenario.prefix),
+    );
     form.insert("sourceCode".to_string(), "move(1);".to_string());
 
     let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
@@ -53,8 +51,8 @@ async fn edit_code_create_post_inserts_program_source() {
     let program_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM ProgramSource WHERE userId = ? AND sourceName = ?",
     )
-    .bind(user_id)
-    .bind(format!("{prefix}-program"))
+    .bind(scenario.user_id)
+    .bind(format!("{}-program", scenario.prefix))
     .fetch_one(&pool)
     .await
     .expect("failed to count program sources");
@@ -62,8 +60,8 @@ async fn edit_code_create_post_inserts_program_source() {
 
     let created_id: i64 =
         sqlx::query_scalar("SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?")
-            .bind(user_id)
-            .bind(format!("{prefix}-program"))
+            .bind(scenario.user_id)
+            .bind(format!("{}-program", scenario.prefix))
             .fetch_one(&pool)
             .await
             .expect("failed to load created program source id");
@@ -81,15 +79,15 @@ async fn edit_code_create_post_inserts_program_source() {
     );
 
     let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
-        .bind(user_id)
+        .bind(scenario.user_id)
         .execute(&pool)
         .await;
     let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
-        .bind(user_id)
+        .bind(scenario.user_id)
         .execute(&pool)
         .await;
     let _ = sqlx::query("DELETE FROM User WHERE id = ?")
-        .bind(user_id)
+        .bind(scenario.user_id)
         .execute(&pool)
         .await;
 }
@@ -237,19 +235,15 @@ async fn edit_code_save_post_applies_verified_program_to_linked_robots() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn edit_code_save_post_warns_when_verified_program_exceeds_linked_robot_memory() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!(
-            "skipping edit code save memory-overflow web test: ROBOMINER_DATABASE_URL is not set"
-        );
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-edit-save-mem");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();

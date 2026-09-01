@@ -169,19 +169,15 @@ async fn achievements_overview_renders_other_players_tracks() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
 async fn achievements_overview_unknown_user_shows_not_found() {
-    if std::env::var("ROBOMINER_DATABASE_URL").is_err() {
-        eprintln!(
-            "skipping achievements overview not-found web test: ROBOMINER_DATABASE_URL is not set"
-        );
+    let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
-    }
+    };
 
     ensure_session_configured();
 
-    let pool =
-        robominer_db::connect(&std::env::var("ROBOMINER_DATABASE_URL").expect("database url"))
-            .await
-            .expect("failed to connect to test database");
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
     let prefix = unique_prefix("rust-web-ach-missing");
     let username = format!("{prefix}-user");
     let password = "test-password-1".to_string();
