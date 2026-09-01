@@ -33,7 +33,7 @@ flowchart TB
 | --- | --- |
 | `robominer-program` | Robot language: parse, compile, interpret |
 | `robominer-sim` | Mining physics, scoring, rally animation payloads |
-| `robominer-db` | SQL, migrations, typed mutation contracts, read models |
+| `robominer-db` | SQL, migrations, typed mutation contracts, read models, **and transactional game rules** |
 | `robominer-domain` | Loadouts, simulation orchestration, program verify façades, rejection copy |
 | `robominer-web` | Axum HTTP host, HTML pages, static assets |
 | `robominer-engine` | CLI commands and background rally/mining worker |
@@ -41,6 +41,40 @@ flowchart TB
 | `robominer-test-support` | Shared DB fixtures for integration tests |
 
 Dependency direction is one-way: domain may depend on db; db must not depend on domain, sim, or program.
+
+## Where does this rule live?
+
+Use this decision tree when adding or changing game behaviour:
+
+```mermaid
+flowchart TD
+  start[New rule or behaviour] --> txn{Transactional invariant\nacross multiple tables?}
+  txn -->|yes| dbWrite["robominer-db write module"]
+  txn -->|no| sim{Simulation, loadout,\nor program verify?}
+  sim -->|yes| domain["robominer-domain"]
+  sim -->|no| copy{Player or CLI copy\nfor a rejection?}
+  copy -->|yes| rejection["rejection_messages"]
+  copy -->|no| present{HTTP or CLI\nformatting only?}
+  present -->|yes| edge["robominer-web or robominer-engine"]
+  present -->|no| facade{Write spans db +\nnon-db rules?}
+  facade -->|yes| domainFacade["robominer-domain façade"]
+  facade -->|no| dbDirect["Direct robominer_db from web/engine"]
+```
+
+**Examples**
+
+- Shop buy affordability and asset deduction → `robominer-db/src/shop/write.rs`
+- Rally loadout assembly and simulation run → `robominer-domain/src/loadout/`, `simulation/`
+- `"Unknown robot"` player string → `rejection_messages`, not db
+- HTML page layout and form handling → `robominer-web`
+- Thin mutation wrapper shared by web + engine → `robominer-domain/src/actions/`
+
+## HTTP routing and auth policy
+
+Each `AppRoute` in `robominer-web/src/routes.rs` declares a `RoutePolicy`: `Public`,
+`PublicRead` (optional session for HUD), or `SessionRequired { csrf_on_post }`. The router
+(`router/route_policy.rs`) enforces policy before page handlers run and passes `PageSession`
+to protected handlers.
 
 ## Typical request flows
 
