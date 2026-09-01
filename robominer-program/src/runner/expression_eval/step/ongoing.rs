@@ -1,4 +1,5 @@
 use crate::cpu_step_result::CpuStepResult;
+use crate::program_value::as_f64_for_action_arg;
 use crate::runner::expression_eval::resume::ExpressionResume;
 use crate::runner::expression_eval::schedule::{
     ExpressionWork, ExpressionWorkItem, schedule_expression,
@@ -121,7 +122,10 @@ impl ExecutableRunner {
                 let Some(eval) = self.expression_eval.as_mut() else {
                     return self.abort_with_fault();
                 };
-                eval.values.pop().map(|value| value.value).unwrap_or(0.0)
+                eval.values
+                    .pop()
+                    .map(|value| as_f64_for_action_arg(value.value))
+                    .unwrap_or(0.0)
             };
             *action_result = None;
             self.last_step_span = work_span;

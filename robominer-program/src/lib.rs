@@ -15,6 +15,7 @@ pub mod pending_action_protocol;
 mod pending_await;
 mod pending_program_motion;
 mod pose;
+mod program_value;
 mod runner;
 mod runtime;
 mod types;
@@ -34,6 +35,7 @@ pub use gp::{
 };
 pub use pending_await::{ActionAwaitKind, await_kind};
 pub use pose::{rally_map_position, rally_robot_pose};
+pub use program_value::ProgramValue;
 pub use runner::ExecutableRunner;
 pub use types::{
     AreaProperties, AreaProperty, CompileError, ExecutableAction, ExecutableActionExpression,

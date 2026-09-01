@@ -1,6 +1,7 @@
 use crate::*;
 
 use super::helpers::*;
+use crate::program_value::ProgramValue;
 
 #[test]
 fn executable_variables_drive_control_flow() {
@@ -183,15 +184,15 @@ fn runtime_variables_snapshot_flattens_scopes_with_types() {
         match runner.step(&mut context) {
             ProgramStep::Cpu => {
                 let snap = runner.runtime_variables_snapshot();
-                if snap.get("outer").map(|v| v.value) == Some(2.0)
+                if snap.get("outer").map(|v| v.value) == Some(ProgramValue::Int(2))
                     && snap.contains_key("speed")
                     && snap.contains_key("flag")
                 {
-                    assert_eq!(snap["outer"].kind, CpuStepResultKind::Int);
-                    assert_eq!(snap["flag"].kind, CpuStepResultKind::Bool);
-                    assert!((snap["flag"].value - 1.0).abs() < 1e-9);
-                    assert_eq!(snap["speed"].kind, CpuStepResultKind::Float);
-                    assert!((snap["speed"].value - 1.5).abs() < 1e-9);
+                    assert_eq!(snap["outer"].kind(), CpuStepResultKind::Int);
+                    assert_eq!(snap["flag"].kind(), CpuStepResultKind::Bool);
+                    assert_eq!(snap["flag"].value, ProgramValue::Bool(true));
+                    assert_eq!(snap["speed"].kind(), CpuStepResultKind::Float);
+                    assert_eq!(snap["speed"].value, ProgramValue::Float(1.5));
                     saw_inner_shadow = true;
                 }
             }
@@ -206,9 +207,83 @@ fn runtime_variables_snapshot_flattens_scopes_with_types() {
     );
 
     let final_snap = runner.runtime_variables_snapshot();
-    assert_eq!(final_snap.get("outer").map(|v| v.value), Some(1.0));
-    assert_eq!(final_snap["outer"].kind, CpuStepResultKind::Int);
+    assert_eq!(
+        final_snap.get("outer").map(|v| v.value),
+        Some(ProgramValue::Int(1))
+    );
+    assert_eq!(final_snap["outer"].kind(), CpuStepResultKind::Int);
     assert!(!final_snap.contains_key("speed"));
     assert!(final_snap.contains_key("flag"));
-    assert_eq!(final_snap["flag"].kind, CpuStepResultKind::Bool);
+    assert_eq!(final_snap["flag"].kind(), CpuStepResultKind::Bool);
+}
+
+#[test]
+fn int_assign_from_float_rounds_half_away_from_zero() {
+    let program = compile_executable_source("int v = 3.75; if (v == 4) { mine(); }")
+        .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+
+    let snap = runner.runtime_variables_snapshot();
+    assert_eq!(snap["v"].value, ProgramValue::Int(4));
+}
+
+#[test]
+fn int_division_truncates_toward_zero() {
+    let program =
+        compile_executable_source("int a = 7; int b = 2; int c = a / b; if (c == 3) { mine(); }")
+            .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+}
+
+#[test]
+fn mixed_int_float_compare_promotes_int_to_float() {
+    let program = compile_executable_source(
+        "int i = 4; double d = 3.75; if (d > i) { mine(); } else { rotate(90); }",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Rotate(90.0))
+    );
+}
+
+#[test]
+fn int_int_compare_uses_integer_semantics() {
+    let program = compile_executable_source(
+        "int dist = 4; int travel = 3; if (travel < dist) { mine(); } else { rotate(90); }",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Mine)
+    );
+
+    let program = compile_executable_source(
+        "int dist = 4; int travel = 4; if (travel < dist) { mine(); } else { rotate(90); }",
+    )
+    .expect("program should compile");
+    let mut runner = program.runner();
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Rotate(90.0))
+    );
 }

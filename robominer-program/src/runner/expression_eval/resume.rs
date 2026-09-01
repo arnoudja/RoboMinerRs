@@ -1,6 +1,6 @@
 use super::super::ExecutableRunner;
-use super::schedule::Truthy;
 use crate::pending_program_motion::PendingProgramMotion;
+use crate::program_value::{ProgramValue, as_f64_for_action_arg};
 use crate::types::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -39,7 +39,7 @@ impl ExecutableRunner {
     pub(super) fn apply_expression_resume(
         &mut self,
         resume: ExpressionResume,
-        value: f64,
+        value: ProgramValue,
     ) -> ExpressionComplete {
         match resume {
             ExpressionResume::RepeatCondition => {
@@ -125,9 +125,8 @@ impl ExecutableRunner {
                 ExpressionComplete::Continue
             }
             ExpressionResume::DynamicMove => {
-                let action = ExecutableAction::Move(value);
+                let action = ExecutableAction::Move(as_f64_for_action_arg(value));
                 if !PendingProgramMotion::is_chunked(action) {
-                    // Zero-distance dynamic moves are not pending; advance like a literal move(0).
                     let Some(frame) = self.stack.last_mut() else {
                         return ExpressionComplete::Fault;
                     };
@@ -136,7 +135,7 @@ impl ExecutableRunner {
                 ExpressionComplete::Step(ProgramStep::Action(action))
             }
             ExpressionResume::DynamicRotate => {
-                let action = ExecutableAction::Rotate(value);
+                let action = ExecutableAction::Rotate(as_f64_for_action_arg(value));
                 if !PendingProgramMotion::is_chunked(action) {
                     let Some(frame) = self.stack.last_mut() else {
                         return ExpressionComplete::Fault;
@@ -150,7 +149,9 @@ impl ExecutableRunner {
                     return ExpressionComplete::Fault;
                 };
                 frame.index += 1;
-                ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(value as i32)))
+                ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(
+                    as_f64_for_action_arg(value) as i32,
+                )))
             }
         }
     }

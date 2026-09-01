@@ -1,10 +1,11 @@
 //! Typed return value for one program CPU micro-step (rally replay debug).
 //!
-//! Display kinds are UI-oriented and map from AST [`ValueType`] (`Double` ≡ [`CpuStepResultKind::Float`])
-//! and expression heuristics (`for_number_literal`, `for_action`, …). Wire format uses
-//! `b`/`i`/`f` via `AnimationCpuStepResultKind` in robominer-sim.
+//! Display kinds map from [`ProgramValue`] and AST [`ValueType`] (`Double` ≡
+//! [`CpuStepResultKind::Float`]). Wire format uses `b`/`i`/`f` via
+//! `AnimationCpuStepResultKind` in robominer-sim.
 
 use crate::ast::{AreaProperty, ExecutableAction, Operator, RobotProperty, ValueType};
+use crate::program_value::ProgramValue;
 
 /// How a CPU-step return value should be displayed in the replay UI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,48 +15,54 @@ pub enum CpuStepResultKind {
     Float,
 }
 
-/// Numeric result produced by a CPU micro-step, with display kind.
+/// Typed result produced by a CPU micro-step.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CpuStepResult {
-    pub kind: CpuStepResultKind,
-    pub value: f64,
+    pub value: ProgramValue,
 }
 
 impl CpuStepResult {
-    pub fn bool_value(value: f64) -> Self {
+    pub fn kind(self) -> CpuStepResultKind {
+        self.value.kind()
+    }
+
+    /// Numeric value for animation wire format (`cpu[].r.v`, `cpu[].vs.*.v`).
+    pub fn wire_value(self) -> f64 {
+        self.value.as_f64()
+    }
+
+    pub fn bool_value(value: bool) -> Self {
         Self {
-            kind: CpuStepResultKind::Bool,
-            value,
+            value: ProgramValue::Bool(value),
         }
     }
 
-    pub fn int_value(value: f64) -> Self {
+    pub fn int_value(value: i32) -> Self {
         Self {
-            kind: CpuStepResultKind::Int,
-            value,
+            value: ProgramValue::Int(value),
         }
     }
 
     pub fn float_value(value: f64) -> Self {
         Self {
-            kind: CpuStepResultKind::Float,
-            value,
+            value: ProgramValue::Float(value),
         }
     }
 
-    pub fn from_value_type(value_type: ValueType, value: f64) -> Self {
-        match value_type {
-            ValueType::Bool => Self::bool_value(value),
-            ValueType::Int => Self::int_value(value),
-            ValueType::Double => Self::float_value(value),
+    pub fn from_program_value(value: ProgramValue) -> Self {
+        Self { value }
+    }
+
+    pub fn from_value_type(value_type: ValueType, value: ProgramValue) -> Self {
+        Self {
+            value: crate::program_value::coerce_to_value_type(value, value_type),
         }
     }
 
     /// Display heuristic for bare numeric literals: whole numbers as int, otherwise float.
-    /// Not an assign/typechecking truth source — declaration and AST types own semantics.
     pub fn for_number_literal(value: f64) -> Self {
         if (value - value.round()).abs() < 1e-9 {
-            Self::int_value(value)
+            Self::int_value(value.round() as i32)
         } else {
             Self::float_value(value)
         }
@@ -66,7 +73,7 @@ impl CpuStepResult {
     }
 
     pub fn for_ore_type(value: f64) -> Self {
-        Self::int_value(value)
+        Self::int_value(value.round() as i32)
     }
 
     pub fn for_action(action: ExecutableAction, value: f64) -> Self {
@@ -75,8 +82,8 @@ impl CpuStepResult {
             ExecutableAction::Rotate(_)
             | ExecutableAction::Mine
             | ExecutableAction::Dump(_)
-            | ExecutableAction::StartScan(_) => Self::int_value(value),
-            ExecutableAction::AwaitScanResult => Self::int_value(value),
+            | ExecutableAction::StartScan(_) => Self::int_value(value.round() as i32),
+            ExecutableAction::AwaitScanResult => Self::int_value(value.round() as i32),
         }
     }
 
@@ -103,7 +110,7 @@ impl CpuStepResult {
             | RobotProperty::MaxTurns
             | RobotProperty::MiningSpeed
             | RobotProperty::CpuSpeed
-            | RobotProperty::Orientation => Self::int_value(value),
+            | RobotProperty::Orientation => Self::int_value(value.round() as i32),
         }
     }
 
@@ -116,16 +123,11 @@ impl CpuStepResult {
             | AreaProperty::StartingOreB
             | AreaProperty::StartingOreC
             | AreaProperty::MiningTurns
-            | AreaProperty::OreTarget => Self::int_value(value),
+            | AreaProperty::OreTarget => Self::int_value(value.round() as i32),
         }
     }
 
-    pub fn for_binary_operator(
-        operator: Operator,
-        left: CpuStepResultKind,
-        right: CpuStepResultKind,
-        value: f64,
-    ) -> Self {
+    pub fn for_binary_operator(operator: Operator, result: ProgramValue) -> Self {
         match operator {
             Operator::Larger
             | Operator::Smaller
@@ -134,19 +136,13 @@ impl CpuStepResult {
             | Operator::Equal
             | Operator::NotEqual
             | Operator::And
-            | Operator::Or => Self::bool_value(value),
-            Operator::Division => Self::float_value(value),
-            Operator::Mod => Self::int_value(value),
+            | Operator::Or => Self::from_program_value(result),
+            Operator::Division => Self::from_program_value(result),
+            Operator::Mod => Self::from_program_value(result),
             Operator::Addition | Operator::Subtraction | Operator::Multiply => {
-                if matches!(left, CpuStepResultKind::Float)
-                    || matches!(right, CpuStepResultKind::Float)
-                {
-                    Self::float_value(value)
-                } else {
-                    Self::int_value(value)
-                }
+                Self::from_program_value(result)
             }
-            Operator::Undefined => Self::int_value(value),
+            Operator::Undefined => Self::int_value(0),
         }
     }
 }

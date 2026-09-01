@@ -3,6 +3,7 @@ use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::{
     ContinueProgramMotion, PendingProgramMotion, ProgramMotionCompletion,
 };
+use crate::program_value::as_f64_for_action_arg;
 use crate::runner::expression_eval::schedule::ExpressionWork;
 use crate::runner::{ExecutableRunner, StepOutcome};
 use crate::types::*;
@@ -27,8 +28,12 @@ impl ExecutableRunner {
                 return self.abort_with_fault();
             };
             match eval.work.get(eval.index).map(|item| &item.kind) {
-                Some(ExpressionWork::PushDynamicMove) => ExecutableAction::Move(arg.value),
-                Some(ExpressionWork::PushDynamicRotate) => ExecutableAction::Rotate(arg.value),
+                Some(ExpressionWork::PushDynamicMove) => {
+                    ExecutableAction::Move(as_f64_for_action_arg(arg.value))
+                }
+                Some(ExpressionWork::PushDynamicRotate) => {
+                    ExecutableAction::Rotate(as_f64_for_action_arg(arg.value))
+                }
                 _ => return self.abort_with_fault(),
             }
         };
@@ -79,14 +84,14 @@ impl ExecutableRunner {
             let Some(value) = eval.values.pop() else {
                 return self.abort_with_fault();
             };
-            value.value
+            as_f64_for_action_arg(value.value) as i32
         };
         *action_result = None;
         self.last_step_span = self
             .expression_eval
             .as_ref()
             .and_then(OngoingExpressionEval::current_span);
-        StepOutcome::Action(self.queue_pending_action(ExecutableAction::Dump(arg as i32)))
+        StepOutcome::Action(self.queue_pending_action(ExecutableAction::Dump(arg)))
     }
 
     pub(crate) fn handle_continue_program_motion(

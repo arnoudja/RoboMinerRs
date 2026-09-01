@@ -153,7 +153,7 @@ impl ExecutableRunner {
             self.start_expression_evaluation(value, ExpressionResume::Declare { name, value_type });
             StepOutcome::Continue
         } else {
-            self.variables.declare(name, 0.0, value_type);
+            self.variables.declare_default(name, value_type);
             self.advance_current_statement();
             self.last_step_span = Some(source_span);
             StepOutcome::Cpu

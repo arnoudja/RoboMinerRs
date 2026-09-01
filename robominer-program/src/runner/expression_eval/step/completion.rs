@@ -37,10 +37,7 @@ impl ExecutableRunner {
             match self.finish_expression(resume, result.value) {
                 StepOutcome::Continue => StepOutcome::Cpu,
                 StepOutcome::Action(action) => {
-                    // Issuing an action has no return yet; the expression value was the
-                    // argument (e.g. move distance), not a completed action result.
                     self.last_step_result = None;
-                    // Dynamic move/rotate/dump: highlight the call/statement, not the arg token.
                     if dynamic_call {
                         self.last_step_span = self.active_source_span;
                     }
@@ -64,7 +61,7 @@ impl ExecutableRunner {
     pub(super) fn finish_expression(
         &mut self,
         resume: ExpressionResume,
-        value: f64,
+        value: crate::program_value::ProgramValue,
     ) -> StepOutcome {
         match self.apply_expression_resume(resume, value) {
             ExpressionComplete::Continue => StepOutcome::Continue,

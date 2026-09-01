@@ -2,10 +2,11 @@ use std::collections::BTreeMap;
 
 use crate::ast::ValueType;
 use crate::cpu_step_result::CpuStepResult;
+use crate::program_value::{ProgramValue, coerce_to_value_type};
 
 #[derive(Debug, Clone, PartialEq)]
 struct RuntimeBinding {
-    value: f64,
+    value: ProgramValue,
     /// Display/type kind from declaration; sticky across later assigns/updates.
     value_type: ValueType,
 }
@@ -34,21 +35,27 @@ impl RuntimeVariables {
         }
     }
 
-    pub(crate) fn declare(&mut self, name: String, value: f64, value_type: ValueType) {
+    pub(crate) fn declare(&mut self, name: String, value: ProgramValue, value_type: ValueType) {
         if self.scopes.is_empty() {
             self.scopes.push(BTreeMap::new());
         }
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name, RuntimeBinding { value, value_type });
+            scope.insert(
+                name,
+                RuntimeBinding {
+                    value: coerce_to_value_type(value, value_type),
+                    value_type,
+                },
+            );
         }
     }
 
+    pub(crate) fn declare_default(&mut self, name: String, value_type: ValueType) {
+        self.declare(name, ProgramValue::default_for_type(value_type), value_type);
+    }
+
     pub(crate) fn get(&self, name: &str) -> f64 {
-        self.scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.get(name).map(|binding| binding.value))
-            .unwrap_or(0.0)
+        self.get_typed(name).wire_value()
     }
 
     pub(crate) fn get_typed(&self, name: &str) -> CpuStepResult {
@@ -56,14 +63,14 @@ impl RuntimeVariables {
             .iter()
             .rev()
             .find_map(|scope| {
-                scope.get(name).map(|binding| {
-                    CpuStepResult::from_value_type(binding.value_type, binding.value)
+                scope.get(name).map(|binding| CpuStepResult {
+                    value: binding.value,
                 })
             })
-            .unwrap_or_else(|| CpuStepResult::int_value(0.0))
+            .unwrap_or_else(|| CpuStepResult::int_value(0))
     }
 
-    pub(crate) fn set(&mut self, name: &str, value: f64) {
+    pub(crate) fn set(&mut self, name: &str, value: ProgramValue) {
         if let Some(scope) = self
             .scopes
             .iter_mut()
@@ -71,23 +78,23 @@ impl RuntimeVariables {
             .find(|scope| scope.contains_key(name))
         {
             if let Some(binding) = scope.get_mut(name) {
-                // Value updates do not re-infer kind; declaration type stays sticky.
-                binding.value = value;
+                binding.value = coerce_to_value_type(value, binding.value_type);
             }
         } else {
             self.declare(name.to_owned(), value, ValueType::Int);
         }
     }
 
-    pub(crate) fn update(&mut self, name: &str, delta: f64, return_updated: bool) -> CpuStepResult {
+    pub(crate) fn update(&mut self, name: &str, delta: i32, return_updated: bool) -> CpuStepResult {
         let previous = self.get_typed(name);
-        let updated = previous.value + delta;
+        let updated = match previous.value {
+            ProgramValue::Int(value) => ProgramValue::Int(value.wrapping_add(delta)),
+            ProgramValue::Float(value) => ProgramValue::Float(value + f64::from(delta)),
+            ProgramValue::Bool(value) => ProgramValue::Int(i32::from(value).wrapping_add(delta)),
+        };
         self.set(name, updated);
         if return_updated {
-            CpuStepResult {
-                kind: previous.kind,
-                value: updated,
-            }
+            CpuStepResult::from_program_value(updated)
         } else {
             previous
         }
@@ -100,7 +107,9 @@ impl RuntimeVariables {
             for (name, binding) in scope {
                 out.insert(
                     name.clone(),
-                    CpuStepResult::from_value_type(binding.value_type, binding.value),
+                    CpuStepResult {
+                        value: binding.value,
+                    },
                 );
             }
         }

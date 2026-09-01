@@ -161,32 +161,3 @@ pub(crate) fn schedule_expression(
         }
     }
 }
-
-pub(crate) trait Truthy {
-    fn is_truthy(&self) -> bool;
-}
-
-impl Truthy for f64 {
-    fn is_truthy(&self) -> bool {
-        *self != 0.0
-    }
-}
-
-pub(crate) fn evaluate_operator(operator: Operator, left: f64, right: f64) -> f64 {
-    match operator {
-        Operator::Addition => left + right,
-        Operator::Subtraction => left - right,
-        Operator::Multiply => left * right,
-        Operator::Division => left / right,
-        Operator::Mod => (left as i32 % right as i32) as f64,
-        Operator::Larger => (left > right) as i32 as f64,
-        Operator::Smaller => (left < right) as i32 as f64,
-        Operator::LargerEqual => (left >= right) as i32 as f64,
-        Operator::SmallerEqual => (left <= right) as i32 as f64,
-        Operator::Equal => (left == right) as i32 as f64,
-        Operator::NotEqual => (left != right) as i32 as f64,
-        Operator::And => (left.is_truthy() && right.is_truthy()) as i32 as f64,
-        Operator::Or => (left.is_truthy() || right.is_truthy()) as i32 as f64,
-        Operator::Undefined => 0.0,
-    }
-}
