@@ -5,15 +5,18 @@ mod mutation;
 
 #[cfg(any(test, debug_assertions))]
 pub(crate) use auth::lock_auth_rate_limiter_for_tests;
+#[cfg(any(test, debug_assertions))]
+pub(crate) use auth::reset_auth_rate_limiter_for_tests;
 #[allow(unused_imports)]
 pub(crate) use auth::{
     MAX_ATTEMPTS_PER_IP, MAX_ATTEMPTS_PER_LOGIN, auth_attempt_is_rate_limited, log_auth_failure,
-    normalize_login_key, record_auth_attempt, reset_auth_rate_limiter_for_tests,
+    normalize_login_key, record_auth_attempt,
 };
-pub(crate) use mutation::{
-    MAX_MUTATIONS_PER_USER_ACTION, reject_rate_limited_mutation,
-    reset_mutation_rate_limiter_for_tests,
-};
+#[cfg(any(test, debug_assertions))]
+pub(crate) use mutation::MAX_MUTATIONS_PER_USER_ACTION;
+pub(crate) use mutation::reject_rate_limited_mutation;
+#[cfg(any(test, debug_assertions))]
+pub(crate) use mutation::reset_mutation_rate_limiter_for_tests;
 
 use crate::http::Request;
 
