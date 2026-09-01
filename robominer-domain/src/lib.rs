@@ -12,9 +12,11 @@ pub mod robot_config;
 pub mod simulation;
 
 pub use actions::{
-    BuyRobotPartOutcome, CancelMiningQueueOutcome, EnqueueMiningOutcome,
-    SellAllUnassignedRobotPartsOutcome, SellRobotPartOutcome, buy_robot_part, cancel_mining_queue,
-    enqueue_mining, sell_all_unassigned_robot_parts, sell_robot_part,
+    BuyRobotPartOutcome, CancelMiningQueueOutcome, ClaimAchievementStepOutcome,
+    EnqueueMiningOutcome, LogoutAllDevicesOutcome, SellAllUnassignedRobotPartsOutcome,
+    SellRobotPartOutcome, UpdateRobotConfigOutcome, UpdateUserAccountOutcome, buy_robot_part,
+    cancel_mining_queue, claim_achievement_step, enqueue_mining, logout_all_devices,
+    sell_all_unassigned_robot_parts, sell_robot_part, update_robot_config, update_user_account,
 };
 
 pub use error::{DatabaseError, DomainError, RobotPartSlot};
