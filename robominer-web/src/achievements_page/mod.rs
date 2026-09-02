@@ -1,5 +1,15 @@
 use crate::{Request, Response, ServerConfig, mutation_i64, session_username};
 
+mod actions;
+mod card;
+mod overview;
+mod render;
+
+#[cfg(test)]
+mod tests;
+
+use actions::claim_achievement;
+
 #[derive(Debug)]
 pub(super) struct AchievementsPageState {
     /// When set, the page is a read-only overview of this player (or not-found).
@@ -57,24 +67,7 @@ async fn load_achievements_state(
     achievement_id: Option<i64>,
 ) -> Result<AchievementsPageState, crate::page_context::PageLoadError> {
     let claim_message = if let Some(achievement_id) = achievement_id {
-        match robominer_db::claim_achievement_step(
-            pool,
-            robominer_db::ClaimAchievementStepRequest {
-                user_id,
-                achievement_id,
-            },
-        )
-        .await?
-        .into_result()
-        {
-            Ok(_) => Some("Achievement claimed".to_string()),
-            Err(rejection) => Some(format!(
-                "Unable to claim achievement: {}",
-                robominer_domain::rejection_messages::claim_achievement_step_rejection_message(
-                    rejection
-                )
-            )),
-        }
+        claim_achievement(pool, user_id, achievement_id).await?
     } else {
         None
     };
@@ -145,10 +138,3 @@ async fn load_achievements_overview(
         claim_message: None,
     })
 }
-
-mod card;
-mod overview;
-mod render;
-
-#[cfg(test)]
-mod tests;

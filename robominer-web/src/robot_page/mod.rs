@@ -1,4 +1,17 @@
-use crate::{Request, Response, ServerConfig, is_post, mutation_i64, query_i64};
+use crate::{Request, Response, ServerConfig, query_i64};
+
+mod actions;
+mod config;
+mod config_parts;
+mod config_stats;
+mod fleet;
+mod render;
+mod scripts;
+
+#[cfg(test)]
+mod tests;
+
+use actions::apply_robot_config_mutation;
 
 #[derive(Debug)]
 pub(super) struct RobotPageState {
@@ -36,50 +49,7 @@ async fn load_robot_page_state(
     request: &Request,
     requested_robot_id: Option<i64>,
 ) -> Result<RobotPageState, crate::page_context::PageLoadError> {
-    let mut message = None;
-    if is_post(request)
-        && let Some(robot_id) = mutation_i64(request, "robotId")
-        && crate::mutation_form_has(request, &format!("robotName{robot_id}"))
-    {
-        let robot_name = request
-            .form
-            .get(&format!("robotName{robot_id}"))
-            .cloned()
-            .unwrap_or_default();
-        let result = robominer_db::update_robot_config(
-            pool,
-            robominer_db::UpdateRobotConfigRequest {
-                user_id,
-                robot_id,
-                robot_name,
-                program_source_id: mutation_i64(request, &format!("programSourceId{robot_id}"))
-                    .unwrap_or(0),
-                ore_container_id: mutation_i64(request, &format!("oreContainerId{robot_id}"))
-                    .unwrap_or(0),
-                mining_unit_id: mutation_i64(request, &format!("miningUnitId{robot_id}"))
-                    .unwrap_or(0),
-                battery_id: mutation_i64(request, &format!("batteryId{robot_id}")).unwrap_or(0),
-                memory_module_id: mutation_i64(request, &format!("memoryModuleId{robot_id}"))
-                    .unwrap_or(0),
-                cpu_id: mutation_i64(request, &format!("cpuId{robot_id}")).unwrap_or(0),
-                engine_id: mutation_i64(request, &format!("engineId{robot_id}")).unwrap_or(0),
-                ore_scanner_id: mutation_i64(request, &format!("oreScannerId{robot_id}"))
-                    .unwrap_or(0),
-            },
-        )
-        .await?;
-
-        message = Some(if let Err(rejection) = result.into_result() {
-            format!(
-                "Unable to apply robot changes: {}",
-                robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
-                    rejection
-                )
-            )
-        } else {
-            "Robot changes queued".to_string()
-        });
-    }
+    let message = apply_robot_config_mutation(pool, user_id, request).await?;
 
     let robots = robominer_db::list_robot_config_states(pool, user_id).await?;
     let selected_robot_id = requested_robot_id
@@ -96,15 +66,6 @@ async fn load_robot_page_state(
     })
 }
 
-mod config;
-mod config_parts;
-mod config_stats;
-mod fleet;
-mod render;
-mod scripts;
-
-#[cfg(test)]
-mod tests;
 pub(super) fn robot_apply_block_reason(
     robot: &robominer_db::RobotConfigStateRecord,
     program_sources: &[robominer_db::ProgramSourceRecord],

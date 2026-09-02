@@ -76,6 +76,13 @@ Each `AppRoute` in `robominer-web/src/routes.rs` declares a `RoutePolicy`: `Publ
 (`router/route_policy.rs`) enforces policy before page handlers run and passes `PageSession`
 to protected handlers.
 
+## Rate limiting
+
+Auth and mutation rate limiters in `robominer-web/src/rate_limit/` are in-memory and
+process-local. They assume a single web instance (matching the systemd deployment in
+`deploy/systemd/`). Scaling to multiple web processes would require an external store
+(for example Redis) — that is a separate scaling initiative, not the current default.
+
 ## Typical request flows
 
 **Shop buy (web):** browser POST → `robominer-web` handler → `robominer_db::buy_robot_part` → typed rejection mapped through `robominer_domain::rejection_messages`.

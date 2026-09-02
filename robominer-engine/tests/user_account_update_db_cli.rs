@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
+use robominer_test_support::Scenario;
 use serial_test::serial;
 
 use support::*;
@@ -14,14 +15,9 @@ async fn update_user_account_updates_profile_and_password() {
     let pool = robominer_db::connect(&database_url)
         .await
         .expect("failed to connect to test database");
-    let prefix = unique_test_prefix("rust-update-user-cli");
-    let user_id = insert_test_user(
-        &pool,
-        &format!("{prefix}-old-user"),
-        &format!("{prefix}-old@example.invalid"),
-        "old-password-hash",
-    )
-    .await;
+    let scenario = Scenario::user_with_robot_and_wallet(&pool).await;
+    let user_id = scenario.user_id;
+    let prefix = scenario.prefix;
     let new_username = format!("{prefix}-new-user");
     let new_email = format!("{prefix}-new@example.invalid");
 

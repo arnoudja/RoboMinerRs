@@ -219,9 +219,10 @@ Existing splits follow this layout:
 | `tests.rs` or `tests/` | Pure render/helper tests |
 
 Examples: `shop_page/` (with `actions.rs`), `mining_queue_page/` (with `actions.rs` +
-`view_model.rs`), `edit_code_page/` (with `actions.rs`), `robot_page/`, `auth_pages/`,
-`rally_pages/`, `achievements_page/`, `account_page/`, `leaderboard_page/`,
-`mining_results_page/`, `mining_area_overview_page/`, `robot_stats_page/`, `help_pages/`.
+`view_model.rs`), `edit_code_page/` (with `actions.rs`), `account_page/` (with `actions.rs`),
+`achievements_page/` (with `actions.rs`), `robot_page/` (with `actions.rs`), `auth_pages/`,
+`rally_pages/`, `leaderboard_page/`, `mining_results_page/`, `mining_area_overview_page/`,
+`robot_stats_page/`, `help_pages/`.
 
 New web pages should use the same split (start with `mod.rs` + `render.rs` + `tests.rs`;
 add `actions.rs` when POST branches appear; add `view_model.rs` when DB→view mapping grows).
@@ -237,7 +238,7 @@ add `actions.rs` when POST branches appear; add `view_model.rs` when DB→view m
 | DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_mining_queue.rs`, `db_robots.rs`, `db_achievements.rs`, `db_migrate.rs`, `claim_golden.rs`) |
 | Domain goldens | `robominer-domain/tests/*_golden.rs` | Deterministic simulation fixtures |
 | Rally animation JS | `robominer-web/static/js/rally_animation/tests/` | Headless Node tests of viewer payload/draw helpers |
-| Shared fixtures | `robominer-test-support/` | SQL setup reused by web and engine tests |
+| Shared fixtures | `robominer-test-support/` | SQL setup reused by web and engine tests; composable `Scenario::user_with_robot_and_wallet()` wraps common user+robot+wallet setup |
 
 Engine integration tests use `mod support; use support::*;` and `#[serial]` because they share
 one MySQL instance.
@@ -292,13 +293,15 @@ These rules still describe how the workspace is structured. Prefer them when add
 features; do not introduce a parallel “domain gateway” for ordinary CRUD.
 
 1. **All production SQL lives in `robominer-db`.** Domain `src` may call db helpers and map results; it must not contain `sqlx::query` or raw SQL. Integration tests under `robominer-domain/tests/` may use SQL for fixtures.
-2. **Db returns typed rejections and records, not player-facing prose.** Enums such as `EnqueueMiningRejection` live with the mutation; strings live in `robominer-domain` (`rejection_messages`).
-3. **Loadout assembly and simulation belong in domain.** Build `RallyLoadout` / `PoolLoadout`, run them, map outcomes to completed records, then call db persist helpers.
-4. **Use a domain façade only when a write spans db + non-db rules.** Program create/update must go through `robominer_domain::create_program_source` / `update_program_source` so compile verification runs. Do not call the bare db helpers from web/engine for that path.
-5. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
-6. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source` (domain façades for program save; engine `verify` CLI may mark validity without going through the façade).
-7. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
-8. **Web page loaders and handlers use `PageLoadError`, not `DomainError`.** HTML page modules return `crate::page_context::PageLoadError` for SQL/load failures (including after domain program writes via `PageLoadError::from_database`). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
+2. **Prefer `sqlx::query_as` with small `FromRow` structs for new SQL readers.** Map rows into typed records under `robominer-db/src/types/records/` rather than manual column indexing; migrate legacy readers only when touching the module.
+3. **Db returns typed rejections and records, not player-facing prose.** Enums such as `EnqueueMiningRejection` live with the mutation; strings live in `robominer-domain` (`rejection_messages`).
+4. **Loadout assembly and simulation belong in domain.** Build `RallyLoadout` / `PoolLoadout`, run them, map outcomes to completed records, then call db persist helpers.
+5. **Use a domain façade only when a write spans db + non-db rules.** Program create/update must go through `robominer_domain::create_program_source` / `update_program_source` so compile verification runs. Do not call the bare db helpers from web/engine for that path.
+6. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
+7. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source` (domain façades for program save; engine `verify` CLI may mark validity without going through the façade).
+8. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
+9. **Web page loaders and handlers use `PageLoadError`, not `DomainError`.** HTML page modules return `crate::page_context::PageLoadError` for SQL/load failures (including after domain program writes via `PageLoadError::from_database`). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
+10. **Test-only re-exports in release builds must stay cfg-gated.** Helpers such as `reset_*_rate_limiter_for_tests` in `robominer-web/src/rate_limit/` are defined under `#[cfg(any(test, debug_assertions))]`; any `pub use` of them must use the same cfg so `cargo build --release` stays green.
 
 ### Examples
 

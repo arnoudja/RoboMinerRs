@@ -4,6 +4,14 @@ use crate::rate_limit::{
 use crate::session;
 use crate::{Request, Response, ServerConfig, is_post, session_username};
 
+mod actions;
+mod render;
+
+#[cfg(test)]
+mod tests;
+
+use actions::{apply_account_mutations, is_account_update_post};
+
 #[derive(Debug)]
 pub(super) struct AccountPageState {
     pub(super) username: String,
@@ -19,7 +27,6 @@ pub(super) async fn account_page(
     config: &ServerConfig,
     session: crate::page_context::PageSession<'_>,
 ) -> Response {
-    // Account updates always verify the current password (Argon2). Rate-limit before DB work.
     if is_account_update_post(request) {
         let ip = client_ip(request, config.trust_proxy);
         let account_key = account_rate_limit_key(session.user_id);
@@ -75,14 +82,6 @@ fn reissue_session_cookies(
         .with_header("Set-Cookie", session::username_set_cookie_header(username))
 }
 
-fn is_account_update_post(request: &Request) -> bool {
-    is_post(request) && request.form.contains_key("username")
-}
-
-fn is_logout_all_devices_post(request: &Request) -> bool {
-    is_post(request) && request.form.contains_key("logoutAllDevices")
-}
-
 fn account_rate_limit_key(user_id: i64) -> String {
     format!("user:{user_id}")
 }
@@ -110,31 +109,12 @@ async fn load_account_page_state(
     let mut error_message = None;
     let mut reissue_session_version = None;
 
-    if is_logout_all_devices_post(request) {
-        match robominer_db::bump_user_session_version(pool, user_id).await? {
-            Some(session_version) => {
-                message = Some("Signed out of all other devices".to_string());
-                reissue_session_version = Some(session_version);
-            }
-            None => {
-                error_message = Some("Unknown user".to_string());
-            }
-        }
-    } else if is_post(request) && request.form.contains_key("username") {
-        let submitted_username = request.form.get("username").cloned().unwrap_or_default();
-        let submitted_email = request.form.get("email").cloned().unwrap_or_default();
+    if is_post(request) {
         let current_password = request
             .form
             .get("currentpassword")
             .cloned()
             .unwrap_or_default();
-        let new_password = request.form.get("newpassword").cloned().unwrap_or_default();
-        let confirm_password = request
-            .form
-            .get("confirmpassword")
-            .cloned()
-            .unwrap_or_default();
-
         let password_verified = robominer_db::verify_user_password(
             pool,
             robominer_db::VerifyUserPasswordRequest {
@@ -145,49 +125,24 @@ async fn load_account_page_state(
         .await?
         .is_ok();
 
-        if !password_verified {
-            username = submitted_username;
-            email = submitted_email;
-            error_message = Some("Your current password doesn't match".to_string());
-        } else if new_password != confirm_password {
-            username = submitted_username;
-            email = submitted_email;
-            error_message = Some(account_password_mismatch_message().to_string());
-        } else {
-            let password = if !new_password.is_empty() {
-                Some(new_password)
-            } else {
-                None
-            };
-            let update_result = robominer_db::update_user_account(
-                pool,
-                robominer_db::UpdateUserAccountRequest {
-                    user_id,
-                    username: submitted_username.clone(),
-                    email: submitted_email.clone(),
-                    password,
-                },
-            )
-            .await?;
-
-            match update_result.into_result() {
-                Ok(updated) => {
-                    message = Some("Account information updated".to_string());
-                    if updated.password_changed {
-                        reissue_session_version = Some(updated.session_version);
-                    }
-                    if let Some(updated_user) = robominer_db::get_user_by_id(pool, user_id).await? {
-                        username = updated_user.username;
-                        email = updated_user.email;
-                        current_username = username.clone();
-                    }
-                }
-                Err(rejection) => {
-                    username = submitted_username;
-                    email = submitted_email;
-                    error_message =
-                        Some(robominer_domain::rejection_messages::update_user_account_rejection_player_message(rejection).to_string());
-                }
+        if let Some(mutation) =
+            apply_account_mutations(pool, user_id, request, password_verified).await?
+        {
+            message = mutation.message;
+            error_message = mutation.error_message;
+            reissue_session_version = mutation.reissue_session_version;
+            if let Some(submitted_username) = mutation.submitted_username {
+                username = submitted_username;
+            }
+            if let Some(submitted_email) = mutation.submitted_email {
+                email = submitted_email;
+            }
+            if message.is_some()
+                && let Some(updated_user) = robominer_db::get_user_by_id(pool, user_id).await?
+            {
+                username = updated_user.username;
+                email = updated_user.email;
+                current_username = username.clone();
             }
         }
     }
@@ -205,8 +160,3 @@ async fn load_account_page_state(
 pub(super) fn account_password_mismatch_message() -> &'static str {
     "The passwords do not match."
 }
-
-mod render;
-
-#[cfg(test)]
-mod tests;

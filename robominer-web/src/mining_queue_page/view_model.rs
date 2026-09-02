@@ -1,12 +1,75 @@
-//! View-model mapping for the mining queue page (records → display items).
+//! View-model types and mapping for the mining queue page (records → display items).
 
 use std::collections::HashMap;
 
-use super::{
-    MiningQueueAreaCostView, MiningQueueAreaSupplyView, MiningQueueAreaView,
-    MiningQueueAssetSummaryView, MiningQueueDisplayItem, MiningQueueOreAssetView,
-    MiningQueueRobotView, MiningQueueScoreView,
-};
+#[derive(Debug)]
+pub(super) struct MiningQueueAssetSummaryView {
+    pub(super) mining_queue_size: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueOreAssetView {
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+    pub(super) max_allowed: i32,
+    pub(super) depot_max_allowed: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueRobotView {
+    pub(super) robot_id: i64,
+    pub(super) robot_name: String,
+    pub(super) recharge_time: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaView {
+    pub(super) mining_area_id: i64,
+    pub(super) area_name: String,
+    pub(super) tax_rate: i32,
+    pub(super) depot_tax_rate: i32,
+    pub(super) mining_time: i32,
+    pub(super) max_moves: i32,
+    pub(super) size_x: i32,
+    pub(super) size_y: i32,
+    pub(super) score_ore_target: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaCostView {
+    pub(super) mining_area_id: i64,
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) amount: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueAreaSupplyView {
+    pub(super) mining_area_id: i64,
+    pub(super) ore_id: i64,
+    pub(super) ore_name: String,
+    pub(super) supply: i32,
+    pub(super) radius: i32,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueScoreView {
+    pub(super) robot_id: i64,
+    pub(super) mining_area_id: i64,
+    pub(super) score: f64,
+}
+
+#[derive(Debug)]
+pub(super) struct MiningQueueDisplayItem {
+    pub(super) mining_queue_id: i64,
+    pub(super) robot_id: i64,
+    pub(super) mining_area_id: i64,
+    pub(super) area_name: String,
+    pub(super) rally_result_id: Option<i64>,
+    pub(super) status: robominer_db::MiningQueueStatus,
+    pub(super) time_left_seconds: i64,
+}
 
 pub(super) async fn load_mining_queue_display_items(
     pool: &robominer_db::MySqlPool,

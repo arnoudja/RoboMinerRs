@@ -270,7 +270,6 @@ mod tests {
     #[test]
     fn parse_fixed_parts_requires_seven_ids() {
         use crate::catalog::PartCatalog;
-        use robominer_db::RobotPartRecord;
 
         use crate::test_fixtures::sample_part;
 
@@ -317,7 +316,6 @@ mod tests {
     #[test]
     fn mutate_parts_preserves_program() {
         use crate::catalog::PartCatalog;
-        use robominer_db::RobotPartRecord;
 
         use crate::test_fixtures::sample_part;
 

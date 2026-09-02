@@ -10,6 +10,7 @@ mod program_source;
 mod rally;
 mod robot_apply;
 mod robot_config;
+mod scenario;
 mod shop;
 mod web_smoke;
 
@@ -28,5 +29,6 @@ pub use robot_config::{
     RobotConfigFixture, assert_robot_parameters, insert_robot_config_part,
     insert_user_robot_part_asset,
 };
+pub use scenario::Scenario;
 pub use shop::{ShopCatalog, ShopFixture};
 pub use web_smoke::{WebSmokeDbFixture, web_smoke_prefix};
