@@ -615,6 +615,85 @@ describe('rally animation viewer', () => {
         assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).c, undefined);
     });
 
+    it('paused pose-only samples enrich to the nearest CPU entry with variables', () => {
+        const { context } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            { x: 0, y: 0, o: 45, A: 0, B: 0, C: 0, l: 1 },
+            {
+                a: 1,
+                cpu: [
+                    {
+                        l: 1,
+                        c: 14,
+                        e: 19,
+                        r: { k: 'b', v: 0 },
+                        vs: { found: { k: 'b', v: 0 } },
+                    },
+                ],
+                s: 'cpu',
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.myRallyViewerSlot = 0;
+        context.myRallyPlayer.playing = false;
+        context.myRallyPlayer.pausedCpuIndex = null;
+
+        assert.equal(context.myRallyCpuTimeline[0].vs, undefined);
+        const enriched = context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[0], 0);
+        assert.deepEqual(enriched.vs, { found: { k: 'b', v: 0 } });
+        assert.deepEqual(enriched.r, { k: 'b', v: 0 });
+        assert.equal(enriched.c, 14);
+    });
+
+    it('CPU scrub paints Return value and Variables from timeline vs', () => {
+        const { context, document } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            { x: 0, y: 0, o: 45, A: 0, B: 0, C: 0, l: 1 },
+            {
+                a: 1,
+                cpu: [
+                    {
+                        l: 1,
+                        c: 14,
+                        e: 19,
+                        r: { k: 'b', v: 0 },
+                        vs: { found: { k: 'b', v: 0 }, turns: { k: 'i', v: 2 } },
+                    },
+                ],
+                s: 'cpu',
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.myRallyViewerSlot = 0;
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">bool found = false;</code>
+              </div>
+            </div>
+            <output id="rallySourceStepResult"></output>
+            <table><tbody id="rallySourceVariables"></tbody></table>
+        `;
+
+        context.myRallyPlayer.playing = false;
+        context.rallySeekByCpuSteps(1);
+        const frame = context.rallyPrepareFrame();
+        const debugEntry = context.rallyEntryForViewerDebug(frame.entry, frame.poseTurn);
+        context.updateRallyViewerSourceDebug(debugEntry, context.rallyViewerRobot());
+
+        const result = document.getElementById('rallySourceStepResult');
+        const variables = document.getElementById('rallySourceVariables');
+        assert.equal(result.textContent, 'false');
+        assert.equal(variables.childNodes.length, 2);
+        assert.equal(variables.childNodes[0].children[0].textContent, 'found:');
+        assert.equal(variables.childNodes[0].children[1].textContent, 'false');
+        assert.equal(variables.childNodes[1].children[0].textContent, 'turns:');
+        assert.equal(variables.childNodes[1].children[1].textContent, '2');
+    });
+
     it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {
         const { context } = loadRallyViewer();
         const payload = validPayload();

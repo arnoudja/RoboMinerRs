@@ -216,7 +216,8 @@ function updateRallySourceHighlight(highlight)
 
     if (typeof line !== 'number' || isNaN(line) || line < 1)
     {
-        myRallySourceHighlightKey = nextKey;
+        // Do not commit nextKey: a later paint with the same detail must still apply.
+        myRallySourceHighlightKey = null;
         updateRallySourceStepResult(null);
         updateRallySourceVariables(null);
         return;
@@ -225,7 +226,8 @@ function updateRallySourceHighlight(highlight)
     var current = document.getElementById('rallySourceLine' + line);
     if (!current)
     {
-        myRallySourceHighlightKey = nextKey;
+        // Line not in the snapshot yet / mismatch — leave key unset so a retry can paint.
+        myRallySourceHighlightKey = null;
         updateRallySourceStepResult(null);
         updateRallySourceVariables(null);
         return;

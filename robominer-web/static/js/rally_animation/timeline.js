@@ -394,6 +394,60 @@ function rallyTurnLevelDebugEntry(turn)
 
 
 /**
+ * True when a CPU timeline sample carries token/result/locals debug fields.
+ * Pose-only samples (legacy `l` or entry poses before the first micro-step) do not.
+ */
+function rallyCpuEntryHasDebugDetail(entry)
+{
+    return !!(entry && (entry.vs || entry.r || typeof entry.c === 'number'));
+}
+
+
+/**
+ * When paused on a pose-only sample, prefer the nearest CPU micro-step with locals /
+ * return value / token span so the source panel is not empty at t=0 or between turns.
+ */
+function rallyDetailedCpuEntryNear(entry)
+{
+    if (!entry || !myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
+    {
+        return entry;
+    }
+    if (rallyCpuEntryHasDebugDetail(entry))
+    {
+        return entry;
+    }
+
+    var turn = typeof entry.turn === 'number' ? entry.turn : 0;
+    var i;
+    for (i = 0; i < myRallyCpuTimeline.length; i++)
+    {
+        var candidate = myRallyCpuTimeline[i];
+        if (candidate.turn < turn)
+        {
+            continue;
+        }
+        if (rallyCpuEntryHasDebugDetail(candidate))
+        {
+            return candidate;
+        }
+        if (candidate.turn > turn + 1)
+        {
+            break;
+        }
+    }
+    for (i = myRallyCpuTimeline.length - 1; i >= 0; i--)
+    {
+        if (rallyCpuEntryHasDebugDetail(myRallyCpuTimeline[i]))
+        {
+            return myRallyCpuTimeline[i];
+        }
+    }
+    return entry;
+}
+
+
+/**
  * Full CPU detail (token span, return value, variables) while paused or scrubbing.
  * Continuous play keeps a line-only highlight so the panel does not flicker each micro-step.
  */
@@ -401,7 +455,7 @@ function rallyEntryForViewerDebug(entry, poseTurn)
 {
     if (!myRallyPlayer.playing)
     {
-        return entry;
+        return rallyDetailedCpuEntryNear(entry);
     }
     return rallyTurnLevelDebugEntry(poseTurn);
 }
