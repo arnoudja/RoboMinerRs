@@ -36,12 +36,14 @@
     {
       "ore_index": 0,
       "amount": 10,
-      "tax": 2
+      "tax": 2,
+      "depot_amount": 0
     },
     {
       "ore_index": 1,
       "amount": 4,
-      "tax": 1
+      "tax": 1,
+      "depot_amount": 0
     }
   ],
   "mining_area_lifetime_results": [

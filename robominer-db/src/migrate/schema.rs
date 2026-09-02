@@ -21,6 +21,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
     let has_depot_total_requirement =
         table_exists(pool, "AchievementStepDepotTotalRequirement").await?;
     let has_processing_lease = column_exists(pool, "MiningQueue", "processingLeaseUntil").await?;
+    let has_lifetime_depot_amount =
+        column_exists(pool, "RobotLifetimeResult", "depotAmount").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
@@ -30,7 +32,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
         && has_depot_amount
         && has_lifetime_total_runs
         && has_depot_total_requirement
-        && has_processing_lease)
+        && has_processing_lease
+        && has_lifetime_depot_amount)
 }
 
 pub(super) async fn ensure_schema_migration_table(pool: &MySqlPool) -> Result<(), MigrateError> {

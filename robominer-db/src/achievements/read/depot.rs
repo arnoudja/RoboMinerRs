@@ -2,11 +2,10 @@ use sqlx::MySqlPool;
 
 use crate::UserDepotTotalRecord;
 
-const USER_DEPOT_TOTAL_FOR_ORE_SQL: &str = "SELECT CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
-     FROM MiningOreResult \
-     INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-     INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
-     WHERE Robot.userId = ? AND MiningOreResult.oreId = ? AND MiningQueue.claimed = true";
+const USER_DEPOT_TOTAL_FOR_ORE_SQL: &str = "SELECT CAST(COALESCE(SUM(RobotLifetimeResult.depotAmount), 0) AS SIGNED) \
+     FROM RobotLifetimeResult \
+     INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
+     WHERE Robot.userId = ? AND RobotLifetimeResult.oreId = ?";
 
 pub(crate) async fn user_depot_total_for_ore<'e, E>(
     executor: E,
@@ -28,14 +27,14 @@ pub async fn list_user_depot_totals(
     user_id: i64,
 ) -> Result<Vec<UserDepotTotalRecord>, sqlx::Error> {
     sqlx::query_as::<_, (i64, i32)>(
-        "SELECT MiningOreResult.oreId, \
-                CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
-         FROM MiningOreResult \
-         INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
-         WHERE Robot.userId = ? AND MiningQueue.claimed = true \
-         GROUP BY MiningOreResult.oreId \
-         ORDER BY MiningOreResult.oreId",
+        "SELECT RobotLifetimeResult.oreId, \
+                CAST(COALESCE(SUM(RobotLifetimeResult.depotAmount), 0) AS SIGNED) \
+         FROM RobotLifetimeResult \
+         INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
+         WHERE Robot.userId = ? \
+         GROUP BY RobotLifetimeResult.oreId \
+         HAVING CAST(COALESCE(SUM(RobotLifetimeResult.depotAmount), 0) AS SIGNED) > 0 \
+         ORDER BY RobotLifetimeResult.oreId",
     )
     .bind(user_id)
     .fetch_all(pool)
