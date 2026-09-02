@@ -591,13 +591,19 @@ describe('rally animation viewer', () => {
         assert.equal(context.rallyCpuEntryAtTime(25).turn, 1);
     });
 
-    it('shows CPU step detail only while paused and scrubbing', () => {
+    it('shows CPU step detail while paused; strips to line-only while playing', () => {
         const { context } = loadRallyViewer();
         assert.equal(context.applyRallyResultPayload(validPayload()), null);
         context.myRallyViewerSlot = 0;
         context.myRallyPlayer.playing = false;
         context.myRallyPlayer.pausedCpuIndex = null;
         assert.equal(context.rallyCpuScrubActive(), false);
+        // Paused without scrub still shows return value / variables from the timeline entry.
+        assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).c, 9);
+        assert.deepEqual(
+            context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).vs,
+            context.myRallyCpuTimeline[2].vs
+        );
 
         context.myRallyPlayer.pausedCpuIndex = 2;
         assert.equal(context.rallyCpuScrubActive(), true);
@@ -606,6 +612,7 @@ describe('rally animation viewer', () => {
         context.myRallyPlayer.playing = true;
         context.myRallyPlayer.pausedCpuIndex = null;
         assert.equal(context.rallyCpuScrubActive(), false);
+        assert.equal(context.rallyEntryForViewerDebug(context.myRallyCpuTimeline[2], 0).c, undefined);
     });
 
     it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {

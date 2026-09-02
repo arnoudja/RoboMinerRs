@@ -372,7 +372,7 @@ function rallyCpuStepWithinTurn(cpuIndex, turn)
 }
 
 
-/** Line-only highlight for turn playback; full CPU detail is for arrow-key scrub only. */
+/** Line-only highlight for continuous turn playback (no return value / locals). */
 function rallyTurnLevelDebugEntry(turn)
 {
     var robot = rallyViewerRobot();
@@ -393,9 +393,13 @@ function rallyTurnLevelDebugEntry(turn)
 }
 
 
+/**
+ * Full CPU detail (token span, return value, variables) while paused or scrubbing.
+ * Continuous play keeps a line-only highlight so the panel does not flicker each micro-step.
+ */
 function rallyEntryForViewerDebug(entry, poseTurn)
 {
-    if (rallyCpuScrubActive())
+    if (!myRallyPlayer.playing)
     {
         return entry;
     }
