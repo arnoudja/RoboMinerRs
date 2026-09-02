@@ -265,7 +265,10 @@ function updateRobotDebugPanel(robot, poseTurn, sourceLine)
  */
 function updateRallyViewerSourceDebug(entry, viewerRobot)
 {
-    if (typeof myRallyViewerSlot !== 'number' || !viewerRobot)
+    // Presence of the resolved viewer robot is enough — `rallyViewerRobot()` already
+    // falls back to robot[0] when `myRallyViewerSlot` is unset. Gating on slot alone
+    // left Variables/Return empty whenever the panel DOM existed without a slot.
+    if (!viewerRobot)
     {
         return;
     }

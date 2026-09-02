@@ -694,6 +694,61 @@ describe('rally animation viewer', () => {
         assert.equal(variables.childNodes[1].children[1].textContent, '2');
     });
 
+    it('paints Variables when viewerSlot is null but rallyViewerRobot() resolves', () => {
+        const { context, document } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            { x: 0, y: 0, o: 45, A: 0, B: 0, C: 0, l: 1 },
+            {
+                a: 1,
+                cpu: [
+                    {
+                        l: 1,
+                        c: 5,
+                        e: 12,
+                        r: { k: 'i', v: 3 },
+                        vs: {
+                            dist: { k: 'i', v: 4 },
+                            travel: { k: 'i', v: 3 },
+                            teller: { k: 'i', v: 1 },
+                        },
+                    },
+                ],
+                s: 'cpu',
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        // Bootstrap leaves slot null when config.viewerSlot is absent; robot[0] is the fallback.
+        context.myRallyViewerSlot = null;
+        document.body.innerHTML = `
+            <div id="rallySourceCode">
+              <div class="rally-view-source-line" id="rallySourceLine1">
+                <span class="rally-view-source-lineno">1</span>
+                <code class="rally-view-source-text">int travel = move(oreDistance());</code>
+              </div>
+            </div>
+            <output id="rallySourceStepResult"></output>
+            <table><tbody id="rallySourceVariables"></tbody></table>
+        `;
+
+        context.myRallyPlayer.playing = false;
+        context.rallySeekByCpuSteps(1);
+        const frame = context.rallyPrepareFrame();
+        const debugEntry = context.rallyEntryForViewerDebug(frame.entry, frame.poseTurn);
+        assert.ok(context.rallyViewerRobot());
+        context.updateRallyViewerSourceDebug(debugEntry, context.rallyViewerRobot());
+
+        const variables = document.getElementById('rallySourceVariables');
+        assert.equal(variables.childNodes.length, 3);
+        assert.equal(variables.childNodes[0].children[0].textContent, 'dist:');
+        assert.equal(variables.childNodes[0].children[1].textContent, '4');
+        assert.equal(variables.childNodes[1].children[0].textContent, 'teller:');
+        assert.equal(variables.childNodes[1].children[1].textContent, '1');
+        assert.equal(variables.childNodes[2].children[0].textContent, 'travel:');
+        assert.equal(variables.childNodes[2].children[1].textContent, '3');
+        assert.equal(document.getElementById('rallySourceStepResult').textContent, '3');
+    });
+
     it('keeps move token and variables highlighted across sticky pending-motion cycles', () => {
         const { context } = loadRallyViewer();
         const payload = validPayload();

@@ -189,6 +189,81 @@ fn animation_data_records_visible_program_variables() {
 }
 
 #[test]
+fn animation_data_records_block_scoped_dist_travel_locals() {
+    // Matches the player program pattern (teller/dist/travel); scan() is required
+    // before oreType()/oreDistance() return positive values.
+    let program = seeded_program(
+        "int teller = 0;\n\
+         scan();\n\
+         if (oreType() > 0) {\n\
+             int dist = oreDistance();\n\
+             int travel = move(oreDistance());\n\
+             if (travel < dist) teller++;\n\
+         }\n",
+    );
+    let mut ground = Ground::new(8, 8);
+    // Ore under the spawn cell so scan finds it at distance 0.
+    ground.at_mut(0, 0).add_ore(0, 8);
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 16;
+    spec.cpu_speed = 72;
+    spec.scan_time = 1;
+    spec.forward_speed = 1.0;
+
+    let mut simulation = Simulation::new(
+        ground,
+        1,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[OreAnimationData {
+        ore_id: 1,
+        max_amount: 8,
+    }]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("animation payload should be JSON");
+
+    let mut saw_dist_travel = false;
+    for location in payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations")
+    {
+        if let Some(cpu) = location.get("cpu").and_then(|value| value.as_array()) {
+            for step in cpu {
+                let Some(vs) = step.get("vs") else {
+                    continue;
+                };
+                if vs.get("dist").is_some() && vs.get("travel").is_some() {
+                    assert_eq!(
+                        vs.get("dist")
+                            .and_then(|v| v.get("k"))
+                            .and_then(|v| v.as_str()),
+                        Some("i")
+                    );
+                    assert_eq!(
+                        vs.get("travel")
+                            .and_then(|v| v.get("k"))
+                            .and_then(|v| v.as_str()),
+                        Some("i")
+                    );
+                    assert!(
+                        vs.get("teller").is_some(),
+                        "teller should remain visible: {vs}"
+                    );
+                    saw_dist_travel = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    assert!(
+        saw_dist_travel,
+        "should record block-scoped dist/travel in cpu[].vs: {data}"
+    );
+}
+
+#[test]
 fn animation_data_includes_depot_when_capacity_is_unlocked() {
     let program = seeded_program("mine(); dump(0);");
     let mut ground = Ground::new(4, 4);
