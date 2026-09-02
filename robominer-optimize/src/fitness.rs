@@ -216,7 +216,6 @@ fn build_rally_loadout(
 mod tests {
     use super::*;
     use crate::catalog::PartCatalog;
-    use robominer_db::RobotPartRecord;
     use robominer_domain::loadout::{MiningAreaLoadout, RobotLoadout, RobotLoadoutParts};
     use robominer_program::compile_executable_source;
     use robominer_test_support::{
