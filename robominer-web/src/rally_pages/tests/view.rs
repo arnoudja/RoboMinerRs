@@ -366,6 +366,19 @@ fn rally_view_highlights_viewer_robot_and_shows_context() {
         sidebar_pos < source_pos,
         "players sidebar box should be outside and above the debug source box"
     );
+    let return_pos = html
+        .find(r#"class="rally-view-source-return""#)
+        .expect("return value row missing");
+    let variables_pos = html
+        .find(r#"class="rally-view-source-variables""#)
+        .expect("variables row missing");
+    let code_pos = html
+        .find(r#"class="rally-view-source-code" id="rallySourceCode""#)
+        .expect("source code box missing");
+    assert!(
+        return_pos < code_pos && variables_pos < code_pos,
+        "return value and variables should render above the source code box so they stay on-screen"
+    );
 }
 
 #[test]

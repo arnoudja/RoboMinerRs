@@ -247,7 +247,8 @@
     align-items: center;
     display: flex;
     gap: 10px;
-    margin: 8px 0 0;
+    /* Above the code box: keep a gap under the note, then space before Variables. */
+    margin: 0 0 8px;
 }
 
 .rally-view-source-return-label,
@@ -282,7 +283,8 @@
     align-items: flex-start;
     display: flex;
     gap: 10px;
-    margin: 8px 0 0;
+    /* Sit with Return value above the code listing. */
+    margin: 0 0 10px;
 }
 
 .rally-view-source-variables-label {

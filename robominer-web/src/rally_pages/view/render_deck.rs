@@ -144,6 +144,14 @@ fn render_rally_view_source(
             body.push_str(
                 r#"<p class="rally-view-source-note">Highlighted token is the program work running this CPU cycle. Source is the private snapshot from this rally.</p>"#,
             );
+            // Return value + Variables sit above the code box so they stay on-screen when
+            // the tall source listing would otherwise push them below the viewport fold.
+            body.push_str(
+                r#"<div class="rally-view-source-return"><label class="rally-view-source-return-label" for="rallySourceStepResult">Return value</label><output class="rally-view-source-result" id="rallySourceStepResult" for="rallySourceCode" aria-live="polite"></output></div>"#,
+            );
+            body.push_str(
+                r#"<div class="rally-view-source-variables"><div class="rally-view-source-variables-label" id="rallySourceVariablesLabel">Variables</div><table class="rally-view-source-variables-table" aria-labelledby="rallySourceVariablesLabel"><tbody id="rallySourceVariables" aria-live="polite"></tbody></table></div>"#,
+            );
             if let Some(program_source_id) = program_source_id {
                 render_rally_view_edit_code_link(body, program_source_id, true);
             }
@@ -158,12 +166,6 @@ fn render_rally_view_source(
                 ));
             }
             body.push_str("</div>");
-            body.push_str(
-                r#"<div class="rally-view-source-return"><label class="rally-view-source-return-label" for="rallySourceStepResult">Return value</label><output class="rally-view-source-result" id="rallySourceStepResult" for="rallySourceCode" aria-live="polite"></output></div>"#,
-            );
-            body.push_str(
-                r#"<div class="rally-view-source-variables"><div class="rally-view-source-variables-label" id="rallySourceVariablesLabel">Variables</div><table class="rally-view-source-variables-table" aria-labelledby="rallySourceVariablesLabel"><tbody id="rallySourceVariables" aria-live="polite"></tbody></table></div>"#,
-            );
         }
         _ => {
             body.push_str(

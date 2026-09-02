@@ -7,6 +7,10 @@ function rallyReadSidePanelOrder()
     try
     {
         var stored = window.localStorage.getItem(RALLY_SIDE_PANEL_ORDER_KEY);
+        if (stored === RALLY_SIDE_PANEL_ORDER_PLAYERS)
+        {
+            return RALLY_SIDE_PANEL_ORDER_PLAYERS;
+        }
         if (stored === RALLY_SIDE_PANEL_ORDER_PROGRAM)
         {
             return RALLY_SIDE_PANEL_ORDER_PROGRAM;
@@ -16,7 +20,9 @@ function rallyReadSidePanelOrder()
     {
         // Ignore storage access failures (private mode, disabled storage).
     }
-    return RALLY_SIDE_PANEL_ORDER_PLAYERS;
+    // Default: program first so Return value / Variables are above the fold
+    // without scrolling past the players column.
+    return RALLY_SIDE_PANEL_ORDER_PROGRAM;
 }
 
 function rallyWriteSidePanelOrder(order)

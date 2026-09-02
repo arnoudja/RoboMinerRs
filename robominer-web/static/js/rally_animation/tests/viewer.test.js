@@ -967,24 +967,10 @@ describe('rally animation viewer', () => {
         return { column, programPanel, playersPanel, programButton, playersButton };
     }
 
-    it('defaults to players-first side panel order', () => {
+    it('defaults to program-first side panel order', () => {
         const { context, document, elements } = loadRallyViewer();
         const { column, programPanel, playersPanel, programButton, playersButton } =
-            installSidePanelDom(document, elements, 'program');
-
-        context.rallyApplySidePanelOrder();
-
-        assert.equal(column.children[0], playersPanel);
-        assert.equal(column.children[1], programPanel);
-        assert.equal(playersButton.disabled, true);
-        assert.equal(programButton.disabled, false);
-    });
-
-    it('applies program-first side panel order from storage', () => {
-        const { context, document, elements } = loadRallyViewer();
-        context.localStorage.setItem('robominer.rallySidePanelOrder', 'program');
-        const { column, programPanel, playersPanel, programButton, playersButton } =
-            installSidePanelDom(document, elements);
+            installSidePanelDom(document, elements, 'players');
 
         context.rallyApplySidePanelOrder();
 
@@ -992,6 +978,20 @@ describe('rally animation viewer', () => {
         assert.equal(column.children[1], playersPanel);
         assert.equal(programButton.disabled, true);
         assert.equal(playersButton.disabled, false);
+    });
+
+    it('applies players-first side panel order from storage', () => {
+        const { context, document, elements } = loadRallyViewer();
+        context.localStorage.setItem('robominer.rallySidePanelOrder', 'players');
+        const { column, programPanel, playersPanel, programButton, playersButton } =
+            installSidePanelDom(document, elements);
+
+        context.rallyApplySidePanelOrder();
+
+        assert.equal(column.children[0], playersPanel);
+        assert.equal(column.children[1], programPanel);
+        assert.equal(playersButton.disabled, true);
+        assert.equal(programButton.disabled, false);
     });
 
     it('Move up puts program panel first and persists preference', () => {
