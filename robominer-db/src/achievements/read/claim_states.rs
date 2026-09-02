@@ -39,13 +39,11 @@ pub async fn list_achievement_claim_states_for_user(
                           WHERE AchievementStepDepotTotalRequirement.achievementId = AchievementStep.achievementId \
                             AND AchievementStepDepotTotalRequirement.step = AchievementStep.step \
                             AND AchievementStepDepotTotalRequirement.amount > \
-                              (SELECT CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
-                               FROM MiningOreResult \
-                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                              (SELECT CAST(COALESCE(SUM(RobotLifetimeResult.depotAmount), 0) AS SIGNED) \
+                               FROM RobotLifetimeResult \
+                               INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
-                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
-                                 AND MiningQueue.claimed = true)) \
+                                 AND RobotLifetimeResult.oreId = AchievementStepDepotTotalRequirement.oreId)) \
                      THEN 1 ELSE 0 END \
          FROM UserAchievement \
          LEFT JOIN AchievementStep \

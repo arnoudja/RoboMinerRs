@@ -77,13 +77,11 @@ pub async fn list_achievement_page_states_for_user(
                           WHERE AchievementStepDepotTotalRequirement.achievementId = AchievementStep.achievementId \
                             AND AchievementStepDepotTotalRequirement.step = AchievementStep.step \
                             AND AchievementStepDepotTotalRequirement.amount > \
-                              (SELECT CAST(COALESCE(SUM(MiningOreResult.depotAmount), 0) AS SIGNED) \
-                               FROM MiningOreResult \
-                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                              (SELECT CAST(COALESCE(SUM(RobotLifetimeResult.depotAmount), 0) AS SIGNED) \
+                               FROM RobotLifetimeResult \
+                               INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
-                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
-                                 AND MiningQueue.claimed = true)) \
+                                 AND RobotLifetimeResult.oreId = AchievementStepDepotTotalRequirement.oreId)) \
                      THEN 1 ELSE 0 END AS claimable \
          FROM UserAchievement \
          INNER JOIN Achievement ON Achievement.id = UserAchievement.achievementId \
@@ -266,13 +264,11 @@ pub async fn list_achievement_page_depot_total_requirements_for_user(
     sqlx::query_as::<_, (i64, i64, String, i32, i32)>(
         "SELECT UserAchievement.achievementId, Ore.id, Ore.oreName, \
                 AchievementStepDepotTotalRequirement.amount, \
-                CAST(COALESCE((SELECT SUM(MiningOreResult.depotAmount) \
-                               FROM MiningOreResult \
-                               INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-                               INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+                CAST(COALESCE((SELECT SUM(RobotLifetimeResult.depotAmount) \
+                               FROM RobotLifetimeResult \
+                               INNER JOIN Robot ON Robot.id = RobotLifetimeResult.robotId \
                                WHERE Robot.userId = UserAchievement.userId \
-                                 AND MiningOreResult.oreId = AchievementStepDepotTotalRequirement.oreId \
-                                 AND MiningQueue.claimed = true), 0) AS SIGNED) \
+                                 AND RobotLifetimeResult.oreId = AchievementStepDepotTotalRequirement.oreId), 0) AS SIGNED) \
          FROM UserAchievement \
          INNER JOIN AchievementStep \
            ON AchievementStep.achievementId = UserAchievement.achievementId \

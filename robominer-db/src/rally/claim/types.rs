@@ -11,5 +11,6 @@ pub(super) struct ClaimableMiningOreResult {
     pub mining_queue_id: i64,
     pub ore_id: i64,
     pub amount: i32,
+    pub depot_amount: i32,
     pub tax: i32,
 }

@@ -74,10 +74,15 @@ count as `900.0`), so a displayed tie meets the requirement.
 ### Lifetime depot totals
 
 `AchievementStepDepotTotalRequirement` compares against the sum of
-`MiningOreResult.depotAmount` on **claimed** mining-queue results for the
-required `oreId`, aggregated across all of the user's robots. This is **gross
-depot ore** (before tax), counted when the user claims finished mining-queue
-results — the same timing as lifetime mined totals.
+`RobotLifetimeResult.depotAmount` for the required `oreId`, aggregated across all
+of the user's robots. This is **gross depot ore** (before tax), accumulated when
+the user claims finished mining-queue results — the same durable accumulator
+pattern and timing as lifetime mined totals (`RobotLifetimeResult.amount`).
+
+Per-run `MiningOreResult.depotAmount` remains the source written at rally
+persist and used for claim tax; claim upserts those amounts into
+`RobotLifetimeResult.depotAmount` so achievement progress does not shrink when
+old claimed queue history is cleaned up.
 
 A step with **no** rows in any requirement table is claimable as soon as it is
 the user's next step (for example the signup reward).

@@ -83,6 +83,7 @@ pub(super) async fn claim_mining_queues_batch(
                 ore_result.ore_id,
                 ore_result.amount,
                 ore_result.tax,
+                ore_result.depot_amount,
             ));
             let reward = ore_result.amount - ore_result.tax;
             if reward > 0 {
@@ -123,7 +124,7 @@ async fn increment_robot_mining_runs_batch(
 
 async fn batch_upsert_robot_lifetime_results(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    rows: &[(i64, i64, i32, i32)],
+    rows: &[(i64, i64, i32, i32, i32)],
 ) -> Result<(), sqlx::Error> {
     const CHUNK: usize = 64;
     for chunk in rows.chunks(CHUNK) {
@@ -132,22 +133,25 @@ async fn batch_upsert_robot_lifetime_results(
         }
         let value_placeholders = chunk
             .iter()
-            .map(|_| "(?, ?, ?, ?)")
+            .map(|_| "(?, ?, ?, ?, ?)")
             .collect::<Vec<_>>()
             .join(", ");
         let query = format!(
-            "INSERT INTO RobotLifetimeResult (robotId, oreId, amount, tax) VALUES {value_placeholders} \
+            "INSERT INTO RobotLifetimeResult (robotId, oreId, amount, tax, depotAmount) \
+             VALUES {value_placeholders} \
              ON DUPLICATE KEY UPDATE \
              amount = amount + VALUES(amount), \
-             tax = tax + VALUES(tax)"
+             tax = tax + VALUES(tax), \
+             depotAmount = depotAmount + VALUES(depotAmount)"
         );
         let mut query_builder = sqlx::query(&query);
-        for (robot_id, ore_id, amount, tax) in chunk {
+        for (robot_id, ore_id, amount, tax, depot_amount) in chunk {
             query_builder = query_builder
                 .bind(robot_id)
                 .bind(ore_id)
                 .bind(amount)
-                .bind(tax);
+                .bind(tax)
+                .bind(depot_amount);
         }
         query_builder.execute(&mut **transaction).await?;
     }
@@ -318,12 +322,12 @@ async fn list_claimable_mining_ore_results_batch(
 
     let placeholders = in_placeholders(queue_ids.len());
     let query = format!(
-        "SELECT miningQueueId, oreId, amount, COALESCE(tax, 0) \
+        "SELECT miningQueueId, oreId, amount, depotAmount, COALESCE(tax, 0) \
          FROM MiningOreResult \
          WHERE miningQueueId IN ({placeholders}) \
          ORDER BY miningQueueId, oreId"
     );
-    let mut query_builder = sqlx::query_as::<_, (i64, i64, i32, i32)>(&query);
+    let mut query_builder = sqlx::query_as::<_, (i64, i64, i32, i32, i32)>(&query);
     for queue_id in queue_ids {
         query_builder = query_builder.bind(queue_id);
     }
@@ -332,10 +336,11 @@ async fn list_claimable_mining_ore_results_batch(
     Ok(rows
         .into_iter()
         .map(
-            |(mining_queue_id, ore_id, amount, tax)| ClaimableMiningOreResult {
+            |(mining_queue_id, ore_id, amount, depot_amount, tax)| ClaimableMiningOreResult {
                 mining_queue_id,
                 ore_id,
                 amount,
+                depot_amount,
                 tax,
             },
         )

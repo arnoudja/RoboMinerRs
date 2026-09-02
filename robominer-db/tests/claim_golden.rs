@@ -38,6 +38,7 @@ struct GoldenRobotLifetimeResult {
     ore_index: usize,
     amount: i32,
     tax: i32,
+    depot_amount: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -153,7 +154,7 @@ async fn load_robot_lifetime_results(
     scenario: &ClaimScenario,
 ) -> Vec<GoldenRobotLifetimeResult> {
     let rows = sqlx::query(
-        "SELECT oreId, amount, tax \
+        "SELECT oreId, amount, tax, depotAmount \
          FROM RobotLifetimeResult \
          WHERE robotId = ? \
          ORDER BY oreId",
@@ -168,6 +169,7 @@ async fn load_robot_lifetime_results(
             ore_index: ore_index(scenario, row.get("oreId")),
             amount: row.get("amount"),
             tax: row.get("tax"),
+            depot_amount: row.get("depotAmount"),
         })
         .collect()
 }

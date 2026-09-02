@@ -31,7 +31,8 @@
     {
       "ore_index": 0,
       "amount": 6,
-      "tax": 1
+      "tax": 1,
+      "depot_amount": 0
     }
   ],
   "mining_area_lifetime_results": [
