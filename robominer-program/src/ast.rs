@@ -189,7 +189,8 @@ impl ExecutableExpression {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExecutableExpressionKind {
-    Number(f64),
+    Int(i64),
+    Float(f64),
     Bool(bool),
     Variable(String),
     VariableUpdate {

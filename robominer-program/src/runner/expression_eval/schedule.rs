@@ -13,7 +13,8 @@ pub(crate) struct ExpressionWorkItem {
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum ExpressionWork {
-    PushNumber(f64),
+    PushInt(i64),
+    PushFloat(f64),
     PushBool(bool),
     PushVariable(String),
     PushVariableUpdate {
@@ -53,8 +54,11 @@ pub(crate) fn schedule_expression(
     };
 
     match &expression.kind {
-        ExecutableExpressionKind::Number(value) => {
-            push(work, ExpressionWork::PushNumber(*value));
+        ExecutableExpressionKind::Int(value) => {
+            push(work, ExpressionWork::PushInt(*value));
+        }
+        ExecutableExpressionKind::Float(value) => {
+            push(work, ExpressionWork::PushFloat(*value));
         }
         ExecutableExpressionKind::Bool(value) => {
             push(work, ExpressionWork::PushBool(*value));
@@ -159,34 +163,5 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::Action(action) => {
             push(work, ExpressionWork::PushAction(*action));
         }
-    }
-}
-
-pub(crate) trait Truthy {
-    fn is_truthy(&self) -> bool;
-}
-
-impl Truthy for f64 {
-    fn is_truthy(&self) -> bool {
-        *self != 0.0
-    }
-}
-
-pub(crate) fn evaluate_operator(operator: Operator, left: f64, right: f64) -> f64 {
-    match operator {
-        Operator::Addition => left + right,
-        Operator::Subtraction => left - right,
-        Operator::Multiply => left * right,
-        Operator::Division => left / right,
-        Operator::Mod => (left as i32 % right as i32) as f64,
-        Operator::Larger => (left > right) as i32 as f64,
-        Operator::Smaller => (left < right) as i32 as f64,
-        Operator::LargerEqual => (left >= right) as i32 as f64,
-        Operator::SmallerEqual => (left <= right) as i32 as f64,
-        Operator::Equal => (left == right) as i32 as f64,
-        Operator::NotEqual => (left != right) as i32 as f64,
-        Operator::And => (left.is_truthy() && right.is_truthy()) as i32 as f64,
-        Operator::Or => (left.is_truthy() || right.is_truthy()) as i32 as f64,
-        Operator::Undefined => 0.0,
     }
 }

@@ -5,8 +5,8 @@ use crate::cpu_step_result::CpuStepResult;
 
 #[derive(Debug, Clone, PartialEq)]
 struct RuntimeBinding {
-    value: f64,
-    /// Display/type kind from declaration; sticky across later assigns/updates.
+    value: CpuStepResult,
+    /// Declaration type; sticky across later assigns (values are coerced on write).
     value_type: ValueType,
 }
 
@@ -34,36 +34,30 @@ impl RuntimeVariables {
         }
     }
 
-    pub(crate) fn declare(&mut self, name: String, value: f64, value_type: ValueType) {
+    pub(crate) fn declare(&mut self, name: String, value: CpuStepResult, value_type: ValueType) {
         if self.scopes.is_empty() {
             self.scopes.push(BTreeMap::new());
         }
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name, RuntimeBinding { value, value_type });
+            scope.insert(
+                name,
+                RuntimeBinding {
+                    value: value.coerce_to(value_type),
+                    value_type,
+                },
+            );
         }
-    }
-
-    pub(crate) fn get(&self, name: &str) -> f64 {
-        self.scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.get(name).map(|binding| binding.value))
-            .unwrap_or(0.0)
     }
 
     pub(crate) fn get_typed(&self, name: &str) -> CpuStepResult {
         self.scopes
             .iter()
             .rev()
-            .find_map(|scope| {
-                scope.get(name).map(|binding| {
-                    CpuStepResult::from_value_type(binding.value_type, binding.value)
-                })
-            })
-            .unwrap_or_else(|| CpuStepResult::int_value(0.0))
+            .find_map(|scope| scope.get(name).map(|binding| binding.value))
+            .unwrap_or(CpuStepResult::Int(0))
     }
 
-    pub(crate) fn set(&mut self, name: &str, value: f64) {
+    pub(crate) fn set(&mut self, name: &str, value: CpuStepResult) {
         if let Some(scope) = self
             .scopes
             .iter_mut()
@@ -71,23 +65,30 @@ impl RuntimeVariables {
             .find(|scope| scope.contains_key(name))
         {
             if let Some(binding) = scope.get_mut(name) {
-                // Value updates do not re-infer kind; declaration type stays sticky.
-                binding.value = value;
+                binding.value = value.coerce_to(binding.value_type);
             }
         } else {
             self.declare(name.to_owned(), value, ValueType::Int);
         }
     }
 
-    pub(crate) fn update(&mut self, name: &str, delta: f64, return_updated: bool) -> CpuStepResult {
+    pub(crate) fn update(&mut self, name: &str, delta: i64, return_updated: bool) -> CpuStepResult {
         let previous = self.get_typed(name);
-        let updated = previous.value + delta;
+        let value_type = self
+            .scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.get(name).map(|binding| binding.value_type))
+            .unwrap_or(ValueType::Int);
+        let updated = match value_type {
+            ValueType::Double => CpuStepResult::Float(previous.as_f64() + delta as f64),
+            ValueType::Int | ValueType::Bool => {
+                CpuStepResult::Int(previous.as_i64().wrapping_add(delta))
+            }
+        };
         self.set(name, updated);
         if return_updated {
-            CpuStepResult {
-                kind: previous.kind,
-                value: updated,
-            }
+            self.get_typed(name)
         } else {
             previous
         }
@@ -98,10 +99,7 @@ impl RuntimeVariables {
         let mut out = BTreeMap::new();
         for scope in &self.scopes {
             for (name, binding) in scope {
-                out.insert(
-                    name.clone(),
-                    CpuStepResult::from_value_type(binding.value_type, binding.value),
-                );
+                out.insert(name.clone(), binding.value);
             }
         }
         out

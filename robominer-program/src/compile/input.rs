@@ -290,7 +290,9 @@ impl CompileInput {
         }
     }
 
-    pub(super) fn extract_number_value(&mut self) -> Option<f64> {
+    pub(super) fn extract_number_literal(
+        &mut self,
+    ) -> Option<crate::ast::ExecutableExpressionKind> {
         self.get_next_word();
 
         if !self.next_word.is_empty() {
@@ -319,9 +321,24 @@ impl CompileInput {
 
         if has_digits || has_decimal {
             let value: String = self.source[start..self.pos].iter().collect();
-            let value = value.parse().ok();
             self.extract_next_word();
-            value
+            if has_decimal {
+                value
+                    .parse::<f64>()
+                    .ok()
+                    .map(crate::ast::ExecutableExpressionKind::Float)
+            } else {
+                value
+                    .parse::<i64>()
+                    .ok()
+                    .map(crate::ast::ExecutableExpressionKind::Int)
+                    .or_else(|| {
+                        value
+                            .parse::<f64>()
+                            .ok()
+                            .map(crate::ast::ExecutableExpressionKind::Float)
+                    })
+            }
         } else {
             self.pos = start;
             None

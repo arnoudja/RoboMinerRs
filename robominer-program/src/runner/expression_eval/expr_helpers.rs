@@ -5,7 +5,8 @@ use crate::types::{
 impl ExecutableExpression {
     pub(crate) fn literal_number(&self) -> Option<f64> {
         match &self.kind {
-            ExecutableExpressionKind::Number(value) => Some(*value),
+            ExecutableExpressionKind::Int(value) => Some(*value as f64),
+            ExecutableExpressionKind::Float(value) => Some(*value),
             _ => None,
         }
     }
@@ -45,7 +46,8 @@ impl ExecutableExpression {
             | ExecutableExpressionKind::OreType
             | ExecutableExpressionKind::RobotProperty(_)
             | ExecutableExpressionKind::AreaProperty(_) => None,
-            ExecutableExpressionKind::Number(_)
+            ExecutableExpressionKind::Int(_)
+            | ExecutableExpressionKind::Float(_)
             | ExecutableExpressionKind::Bool(_)
             | ExecutableExpressionKind::Variable(_)
             | ExecutableExpressionKind::VariableUpdate { .. }

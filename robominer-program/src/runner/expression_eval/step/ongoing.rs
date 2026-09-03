@@ -121,7 +121,7 @@ impl ExecutableRunner {
                 let Some(eval) = self.expression_eval.as_mut() else {
                     return self.abort_with_fault();
                 };
-                eval.values.pop().map(|value| value.value).unwrap_or(0.0)
+                eval.values.pop().map(|value| value.as_f64()).unwrap_or(0.0)
             };
             *action_result = None;
             self.last_step_span = work_span;

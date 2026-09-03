@@ -125,7 +125,7 @@ fn count_numbers_in_statement(statement: &ExecutableStatement) -> usize {
 
 fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
     match &expression.kind {
-        ExecutableExpressionKind::Number(_) => 1,
+        ExecutableExpressionKind::Int(_) | ExecutableExpressionKind::Float(_) => 1,
         ExecutableExpressionKind::UnaryNot(inner)
         | ExecutableExpressionKind::UnaryMinus(inner)
         | ExecutableExpressionKind::Abs(inner)
@@ -238,7 +238,16 @@ fn apply_number_jitter_in_expression(
     rng: &mut impl RngLike,
 ) -> bool {
     match &mut expression.kind {
-        ExecutableExpressionKind::Number(value) => {
+        ExecutableExpressionKind::Int(value) => {
+            if *counter == target {
+                *value = jitter_number(*value as f64, rng).trunc() as i64;
+                true
+            } else {
+                *counter += 1;
+                false
+            }
+        }
+        ExecutableExpressionKind::Float(value) => {
             if *counter == target {
                 *value = jitter_number(*value, rng);
                 true

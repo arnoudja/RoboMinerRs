@@ -425,12 +425,12 @@
                 <tr>
                     <td class="helptable">/</td>
                     <td class="helptable">&lt;value_1&gt; / &lt;value_2&gt;</td>
-                    <td class="helptable">Divides value_1 by value_2.</td>
+                    <td class="helptable">Divides value_1 by value_2. When both sides are ints, the result is an int truncated toward zero; if either side is a double, the result is a double.</td>
                 </tr>
                 <tr>
                     <td class="helptable">%</td>
                     <td class="helptable">&lt;value_1&gt; % &lt;value_2&gt;</td>
-                    <td class="helptable">Calculates the remainder when dividing value_1 by value_2.</td>
+                    <td class="helptable">Calculates the integer remainder when dividing value_1 by value_2 (operands are converted to int first).</td>
                 </tr>
             </table></div>
             <h3>Compare expressions</h3>
@@ -592,7 +592,7 @@
                 <tr>
                     <td class="helptable">Value:</td>
                     <td class="helptable">A fixed value of the right type or an expression.</td>
-                    <td class="helptable">When the value is not of the same type as the variable, the value is converted.</td>
+                    <td class="helptable">When the value is not of the same type as the variable, it is converted: float to int truncates toward zero; nonzero numbers become true and zero becomes false; true/false become 1/0.</td>
                 </tr>
             </table></div>
             <p class="helptext">Example:</p>
@@ -612,11 +612,12 @@
                 <tr>
                     <td class="helptable">Value:</td>
                     <td class="helptable">A fixed value of the right type or an expression.</td>
-                    <td class="helptable">When the value is not of the same type as the variable, the value is converted.</td>
+                    <td class="helptable">When the value is not of the same type as the variable, it is converted: float to int truncates toward zero; nonzero numbers become true and zero becomes false; true/false become 1/0.</td>
                 </tr>
             </table></div>
             <p class="helptext">Example:</p>
             <p class="helptext">miningAmount = mine();</p>
+            <p class="helptext">Integer division: when both sides of <code>/</code> are ints (or bools coerced to int), the result is an int truncated toward zero (for example <code>5 / 2</code> is <code>2</code>). If either side is a double, the result is a double.</p>
             <h3>Variable usage</h3>
             <p class="helptext">Variables can be used instead of fixed values in expressions.</p>
             <h3>Variable scope</h3>

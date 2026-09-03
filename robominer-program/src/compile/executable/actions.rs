@@ -54,7 +54,7 @@ pub(super) fn parse_executable_action_statement(
         let action = match call {
             DumpCall::All => ExecutableActionExpression::Dump(ExecutableExpression::new(
                 span,
-                ExecutableExpressionKind::Number(0.0),
+                ExecutableExpressionKind::Int(0),
             )),
             DumpCall::Typed(expression) => ExecutableActionExpression::Dump(expression),
         };

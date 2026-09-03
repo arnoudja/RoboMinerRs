@@ -39,8 +39,8 @@ fn executable_ore_distance_returns_typed_double() {
         match runner.step(&mut context) {
             ProgramStep::Cpu => {
                 if let Some(result) = runner.take_last_step_result() {
-                    assert_eq!(result.kind, CpuStepResultKind::Float);
-                    assert!((result.value - 3.5).abs() < 1e-9);
+                    assert_eq!(result.kind(), CpuStepResultKind::Float);
+                    assert_eq!(result, CpuStepResult::Float(3.5));
                     return;
                 }
             }
