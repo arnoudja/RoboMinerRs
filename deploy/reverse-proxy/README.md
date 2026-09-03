@@ -26,10 +26,12 @@ trustproxy 1
 Public self-registration is off by default. Set `allowsignup 1` (or
 `ROBOMINER_ALLOW_SIGNUP=1`) to open sign-up; keep `allowsignup 0` for invite-only.
 
-`trustproxy 1` trusts `X-Forwarded-For` / `X-Real-Ip` for login rate limits and
-auth failure logs. Enable only when a reverse proxy overwrites those headers;
+`trustproxy 1` trusts `X-Real-Ip` then `X-Forwarded-For` for login rate limits and
+auth failure logs. Enable only when a reverse proxy **overwrites** those headers
+with the connecting client address (the example nginx/Caddy configs do this);
 leave unset (default off) if the app is reachable directly. Override with
-`ROBOMINER_TRUST_PROXY=1`.
+`ROBOMINER_TRUST_PROXY=1`. Do not use `$proxy_add_x_forwarded_for` — that
+prepends a client-controlled hop and defeats rate limiting.
 
 `sessionsecret` is required whenever the web host binds outside localhost.
 Behind a reverse proxy, keep `host` on loopback so the application is not
@@ -95,9 +97,9 @@ Caddy obtains Let's Encrypt certificates automatically for public hostnames.
 
 ## Notes
 
-- The proxy forwards `Host`, `X-Forwarded-For`, and `X-Forwarded-Proto`.
-  RoboMiner does not require these headers today, but they are included for
-  compatibility with standard proxy setups.
+- The proxy must overwrite `X-Real-IP` and `X-Forwarded-For` with `$remote_addr`
+  (nginx) or `{remote_host}` (Caddy). RoboMiner prefers `X-Real-IP` when
+  `trustproxy` is on so a spoofed client XFF hop cannot bypass login rate limits.
 - Static CSS is served by `robominer-web` from `webroot`; the proxy does not
   need a separate static file root unless you choose to offload assets later.
 - Keep `robominer-engine` off the public internet. It only needs database access

@@ -153,6 +153,16 @@ async fn add_security_headers(request: HyperRequest, next: Next) -> AxumResponse
              connect-src 'self'",
         ),
     );
+    let is_html = headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value.to_ascii_lowercase().starts_with("text/html"));
+    if is_html {
+        headers.insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("private, no-store"),
+        );
+    }
     response
 }
 

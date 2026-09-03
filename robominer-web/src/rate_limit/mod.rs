@@ -23,20 +23,22 @@ use crate::http::Request;
 /// Client IP for rate limiting / auth logs.
 ///
 /// When `trust_proxy` is true (behind a reverse proxy that sets client headers),
-/// prefers `X-Forwarded-For` then `X-Real-Ip`. Otherwise uses the peer address
-/// injected by the Axum acceptor (`x-robominer-peer`).
+/// prefers `X-Real-Ip` (proxy-set `$remote_addr`) then the first
+/// `X-Forwarded-For` hop. Preferring Real-IP avoids client-spoofed XFF when the
+/// proxy also sets Real-IP (nginx/Caddy examples overwrite both). Otherwise uses
+/// the peer address injected by the Axum acceptor (`x-robominer-peer`).
 pub(crate) fn client_ip(request: &Request, trust_proxy: bool) -> String {
     if trust_proxy {
-        if let Some(forwarded) = request.headers.get("x-forwarded-for")
-            && let Some(first) = forwarded.split(',').next()
-        {
-            let trimmed = first.trim();
+        if let Some(real_ip) = request.headers.get("x-real-ip") {
+            let trimmed = real_ip.trim();
             if !trimmed.is_empty() {
                 return trimmed.to_string();
             }
         }
-        if let Some(real_ip) = request.headers.get("x-real-ip") {
-            let trimmed = real_ip.trim();
+        if let Some(forwarded) = request.headers.get("x-forwarded-for")
+            && let Some(first) = forwarded.split(',').next()
+        {
+            let trimmed = first.trim();
             if !trimmed.is_empty() {
                 return trimmed.to_string();
             }
@@ -106,7 +108,22 @@ mod tests {
             ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
         ]));
         assert_eq!(client_ip(&request, false), "127.0.0.1");
-        assert_eq!(client_ip(&request, true), "203.0.113.9");
+        // Prefer X-Real-IP (set to $remote_addr by the proxy) over X-Forwarded-For.
+        assert_eq!(client_ip(&request, true), "10.0.0.2");
+    }
+
+    #[test]
+    fn client_ip_prefers_real_ip_over_spoofed_forwarded_for() {
+        // Client-supplied XFF must not win when the proxy also set X-Real-IP.
+        let request = request_with_headers(HashMap::from([
+            (
+                "x-forwarded-for".to_string(),
+                "198.51.100.99, 203.0.113.10".to_string(),
+            ),
+            ("x-real-ip".to_string(), "203.0.113.10".to_string()),
+            ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
+        ]));
+        assert_eq!(client_ip(&request, true), "203.0.113.10");
     }
 
     #[test]
@@ -119,10 +136,10 @@ mod tests {
             ("x-real-ip".to_string(), "10.0.0.2".to_string()),
             ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
         ]));
-        assert_eq!(client_ip(&request, true), "203.0.113.9");
-        request.headers.remove("x-forwarded-for");
         assert_eq!(client_ip(&request, true), "10.0.0.2");
         request.headers.remove("x-real-ip");
+        assert_eq!(client_ip(&request, true), "203.0.113.9");
+        request.headers.remove("x-forwarded-for");
         assert_eq!(client_ip(&request, true), "127.0.0.1");
         request.headers.clear();
         assert_eq!(client_ip(&request, true), "unknown");

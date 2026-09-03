@@ -218,10 +218,15 @@ pub(super) fn remember_cookie(login_name: &str, remember: bool) -> Option<String
             cookie_encode(login_name)
         ))
     } else {
-        Some(format!(
-            "remember=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{secure}"
-        ))
+        Some(remember_clear_cookie_header())
     }
+}
+
+pub(super) fn remember_clear_cookie_header() -> String {
+    format!(
+        "remember=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        session::secure_cookie_suffix()
+    )
 }
 
 fn cookie_encode(value: &str) -> String {

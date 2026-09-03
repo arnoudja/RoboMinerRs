@@ -104,10 +104,15 @@ mod tests {
             valid_login_return_to("miningResults?rallyResultId=12"),
             Some("miningResults?rallyResultId=12")
         );
+        assert_eq!(valid_login_return_to("shop"), Some("shop"));
         assert_eq!(valid_login_return_to("https://evil.test"), None);
+        assert_eq!(valid_login_return_to("https:evil.com"), None);
         assert_eq!(valid_login_return_to("/shop"), None);
         assert_eq!(valid_login_return_to("login"), None);
         assert_eq!(valid_login_return_to("login?returnTo=shop"), None);
+        assert_eq!(valid_login_return_to("logoff"), None);
+        assert_eq!(valid_login_return_to("notARealPage"), None);
+        assert_eq!(valid_login_return_to("notARealPage?x=1"), None);
     }
 
     #[test]

@@ -47,6 +47,11 @@ fn logoff_response_clearing_cookies() -> Response {
             "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
         )
         .with_header("Set-Cookie", session::username_clear_cookie_header())
+        .with_header("Set-Cookie", process::remember_clear_cookie_header())
+        .with_header(
+            "Set-Cookie",
+            crate::csrf::anonymous_csrf_clear_cookie_header(),
+        )
 }
 
 fn logoff_html_response() -> Response {
