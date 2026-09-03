@@ -1,33 +1,33 @@
+use crate::db_outcome::finish_db_outcome;
 use crate::output::escape_state_field;
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 
 pub(crate) async fn buy_robot_part(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
     let user_id = request.user_id;
-    match robominer_domain::buy_robot_part(pool, request)
+    let outcome = robominer_db::buy_robot_part(pool, request)
         .await
-        .context("failed to buy robot part")?
-    {
-        robominer_domain::BuyRobotPartOutcome::Success(result) => {
+        .context("failed to buy robot part")?;
+    finish_db_outcome(
+        outcome,
+        |result| {
             println!(
                 "Bought robot part {} for user {}",
                 result.robot_part_id, user_id
             );
             Ok(())
-        }
-        robominer_domain::BuyRobotPartOutcome::Rejected(rejection) => {
-            let message = format!(
+        },
+        |rejection| {
+            format!(
                 "unable to buy robot part: {}",
                 robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
                     rejection
                 )
-            );
-            eprintln!("{message}");
-            bail!(message)
-        }
-    }
+            )
+        },
+    )
 }
 
 pub(crate) async fn sell_robot_part(
@@ -35,28 +35,27 @@ pub(crate) async fn sell_robot_part(
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
     let user_id = request.user_id;
-    match robominer_domain::sell_robot_part(pool, request)
+    let outcome = robominer_db::sell_robot_part(pool, request)
         .await
-        .context("failed to sell robot part")?
-    {
-        robominer_domain::SellRobotPartOutcome::Success(result) => {
+        .context("failed to sell robot part")?;
+    finish_db_outcome(
+        outcome,
+        |result| {
             println!(
                 "Sold robot part {} for user {}",
                 result.robot_part_id, user_id
             );
             Ok(())
-        }
-        robominer_domain::SellRobotPartOutcome::Rejected(rejection) => {
-            let message = format!(
+        },
+        |rejection| {
+            format!(
                 "unable to sell robot part: {}",
                 robominer_domain::rejection_messages::robot_part_transaction_rejection_message(
                     rejection
                 )
-            );
-            eprintln!("{message}");
-            bail!(message)
-        }
-    }
+            )
+        },
+    )
 }
 
 pub(crate) async fn shop_robot_part_states(

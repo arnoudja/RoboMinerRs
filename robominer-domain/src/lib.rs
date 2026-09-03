@@ -3,21 +3,12 @@
 //! rejection copy. Persistence and typed mutation contracts live in `robominer-db`.
 //! See `CONTRIBUTING.md` for the crate boundary.
 
-mod actions;
 mod constants;
 mod error;
 pub mod loadout;
 pub mod rejection_messages;
 pub mod robot_config;
 pub mod simulation;
-
-pub use actions::{
-    BuyRobotPartOutcome, CancelMiningQueueOutcome, ClaimAchievementStepOutcome,
-    EnqueueMiningOutcome, LogoutAllDevicesOutcome, SellAllUnassignedRobotPartsOutcome,
-    SellRobotPartOutcome, UpdateRobotConfigOutcome, UpdateUserAccountOutcome, buy_robot_part,
-    cancel_mining_queue, claim_achievement_step, enqueue_mining, logout_all_devices,
-    sell_all_unassigned_robot_parts, sell_robot_part, update_robot_config, update_user_account,
-};
 
 pub use error::{DatabaseError, DomainError, RobotPartSlot};
 

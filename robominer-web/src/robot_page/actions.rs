@@ -1,15 +1,6 @@
 //! Robot configuration mutations for the robot page.
 
 use crate::{Request, mutation_form_has, mutation_i64};
-use robominer_domain::{DomainError, UpdateRobotConfigOutcome};
-
-fn robot_mutation_error(error: DomainError) -> crate::page_context::PageLoadError {
-    crate::page_context::PageLoadError::from_database(error).unwrap_or_else(|_| {
-        crate::page_context::PageLoadError::from(sqlx::Error::Configuration(
-            "unexpected domain error on robot config update".into(),
-        ))
-    })
-}
 
 pub(super) async fn apply_robot_config_mutation(
     pool: &robominer_db::MySqlPool,
@@ -29,7 +20,7 @@ pub(super) async fn apply_robot_config_mutation(
         .cloned()
         .unwrap_or_default();
 
-    match robominer_domain::update_robot_config(
+    match robominer_db::update_robot_config(
         pool,
         robominer_db::UpdateRobotConfigRequest {
             user_id,
@@ -48,11 +39,10 @@ pub(super) async fn apply_robot_config_mutation(
             ore_scanner_id: mutation_i64(request, &format!("oreScannerId{robot_id}")).unwrap_or(0),
         },
     )
-    .await
-    .map_err(robot_mutation_error)?
+    .await?
     {
-        UpdateRobotConfigOutcome::Success(_) => Ok(Some("Robot changes queued".to_string())),
-        UpdateRobotConfigOutcome::Rejected(rejection) => Ok(Some(format!(
+        robominer_db::DbOutcome::Success(_) => Ok(Some("Robot changes queued".to_string())),
+        robominer_db::DbOutcome::Rejected(rejection) => Ok(Some(format!(
             "Unable to apply robot changes: {}",
             robominer_domain::rejection_messages::update_robot_config_rejection_player_message(
                 rejection

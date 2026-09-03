@@ -64,9 +64,7 @@ pub(crate) fn valid_login_return_to(value: &str) -> Option<&str> {
     }
     // Only allow known app routes (relative href, optional query).
     let absolute = format!("/{path}");
-    if crate::routes::AppRoute::from_path(&absolute).is_none() {
-        return None;
-    }
+    crate::routes::AppRoute::from_path(&absolute)?;
     Some(value)
 }
 

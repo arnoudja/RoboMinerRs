@@ -1,10 +1,6 @@
 //! Account update and logout-all-devices mutations.
 
 use crate::{Request, is_post};
-use robominer_domain::{
-    DomainError, LogoutAllDevicesOutcome, UpdateUserAccountOutcome, logout_all_devices,
-    update_user_account,
-};
 
 pub(super) struct AccountMutationResult {
     pub(super) message: Option<String>,
@@ -12,14 +8,6 @@ pub(super) struct AccountMutationResult {
     pub(super) reissue_session_version: Option<i32>,
     pub(super) submitted_username: Option<String>,
     pub(super) submitted_email: Option<String>,
-}
-
-fn account_mutation_error(error: DomainError) -> crate::page_context::PageLoadError {
-    crate::page_context::PageLoadError::from_database(error).unwrap_or_else(|_| {
-        crate::page_context::PageLoadError::from(sqlx::Error::Configuration(
-            "unexpected domain error on account mutation".into(),
-        ))
-    })
 }
 
 pub(super) fn is_account_update_post(request: &Request) -> bool {
@@ -38,18 +26,15 @@ pub(super) async fn apply_account_mutations(
 ) -> Result<Option<AccountMutationResult>, crate::page_context::PageLoadError> {
     if is_logout_all_devices_post(request) {
         return Ok(Some(
-            match logout_all_devices(pool, user_id)
-                .await
-                .map_err(account_mutation_error)?
-            {
-                LogoutAllDevicesOutcome::Success { session_version } => AccountMutationResult {
+            match robominer_db::bump_user_session_version(pool, user_id).await? {
+                Some(session_version) => AccountMutationResult {
                     message: Some("Signed out of all other devices".to_string()),
                     error_message: None,
                     reissue_session_version: Some(session_version),
                     submitted_username: None,
                     submitted_email: None,
                 },
-                LogoutAllDevicesOutcome::UnknownUser => AccountMutationResult {
+                None => AccountMutationResult {
                     message: None,
                     error_message: Some("Unknown user".to_string()),
                     reissue_session_version: None,
@@ -99,7 +84,7 @@ pub(super) async fn apply_account_mutations(
         None
     };
 
-    match update_user_account(
+    match robominer_db::update_user_account(
         pool,
         robominer_db::UpdateUserAccountRequest {
             user_id,
@@ -108,17 +93,16 @@ pub(super) async fn apply_account_mutations(
             password,
         },
     )
-    .await
-    .map_err(account_mutation_error)?
+    .await?
     {
-        UpdateUserAccountOutcome::Success(updated) => Ok(Some(AccountMutationResult {
+        robominer_db::DbOutcome::Success(updated) => Ok(Some(AccountMutationResult {
             message: Some("Account information updated".to_string()),
             error_message: None,
             reissue_session_version: updated.password_changed.then_some(updated.session_version),
             submitted_username: None,
             submitted_email: None,
         })),
-        UpdateUserAccountOutcome::Rejected(rejection) => Ok(Some(AccountMutationResult {
+        robominer_db::DbOutcome::Rejected(rejection) => Ok(Some(AccountMutationResult {
             message: None,
             error_message: Some(
                 robominer_domain::rejection_messages::update_user_account_rejection_player_message(

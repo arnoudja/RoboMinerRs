@@ -67,7 +67,8 @@ flowchart TD
 - Rally loadout assembly and simulation run → `robominer-domain/src/loadout/`, `simulation/`
 - `"Unknown robot"` player string → `rejection_messages`, not db
 - HTML page layout and form handling → `robominer-web`
-- Thin mutation wrapper shared by web + engine → `robominer-domain/src/actions/`
+- Shop buy / enqueue / account update → direct `robominer_db` from web/engine + `rejection_messages`
+- Program create/update with compile verify → `robominer-domain` (`robot_config.rs`)
 
 ## HTTP routing and auth policy
 

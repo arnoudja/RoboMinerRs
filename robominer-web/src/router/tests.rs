@@ -418,8 +418,9 @@ async fn post_logoff_with_csrf_clears_session_cookie() {
         "logoff should clear the remember cookie, got: {cookie_headers:?}"
     );
     assert!(
-        cookie_headers.iter().any(|header| header
-            .starts_with("robominer_csrf=; Max-Age=0;")),
+        cookie_headers
+            .iter()
+            .any(|header| header.starts_with("robominer_csrf=; Max-Age=0;")),
         "logoff should clear the anonymous CSRF cookie, got: {cookie_headers:?}"
     );
 }
