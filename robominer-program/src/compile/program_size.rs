@@ -56,7 +56,9 @@ fn dynamic_action_size(action: &ExecutableActionExpression) -> usize {
 
 fn expression_size(expression: &ExecutableExpression) -> usize {
     match &expression.kind {
-        ExecutableExpressionKind::Number(_) | ExecutableExpressionKind::Bool(_) => 1,
+        ExecutableExpressionKind::Int(_)
+        | ExecutableExpressionKind::Float(_)
+        | ExecutableExpressionKind::Bool(_) => 1,
         ExecutableExpressionKind::Variable(_) => 1,
         ExecutableExpressionKind::VariableUpdate { operator, .. } => {
             if *operator == VariableOperator::None {

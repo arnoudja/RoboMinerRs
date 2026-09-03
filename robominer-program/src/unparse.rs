@@ -174,7 +174,8 @@ fn unparse_dynamic_action(action: &ExecutableActionExpression, out: &mut String)
 
 fn unparse_expression(expression: &ExecutableExpression, out: &mut String, parent_priority: usize) {
     match &expression.kind {
-        ExecutableExpressionKind::Number(value) => unparse_number(*value, out),
+        ExecutableExpressionKind::Int(value) => out.push_str(&format!("{value}")),
+        ExecutableExpressionKind::Float(value) => unparse_number(*value, out),
         ExecutableExpressionKind::Bool(true) => out.push_str("true"),
         ExecutableExpressionKind::Bool(false) => out.push_str("false"),
         ExecutableExpressionKind::Variable(name) => out.push_str(name),

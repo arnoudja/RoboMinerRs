@@ -250,7 +250,7 @@ impl Simulation {
                     // StartScan returns scan_time synchronously on issue (unlike move/mine).
                     let _ = step_result;
                     let scan_time = self.start_scan(robot_index, direction);
-                    let result = CpuStepResult::int_value(scan_time as f64);
+                    let result = CpuStepResult::int_value(i64::from(scan_time));
                     push_recorded_cpu_step(
                         &mut cpu_steps,
                         step_span,

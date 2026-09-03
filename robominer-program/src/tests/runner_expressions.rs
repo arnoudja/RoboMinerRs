@@ -3,6 +3,44 @@ use crate::*;
 use super::helpers::*;
 
 #[test]
+fn expression_int_division_truncates() {
+    let program = compile_executable_source("dump(5 / 2);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(2))
+    );
+}
+
+#[test]
+fn expression_mixed_division_yields_float_then_truncates_on_dump() {
+    let program = compile_executable_source("dump(5 / 2.0);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    // dump ore type is i32; 2.5 truncates toward zero → 2
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(2))
+    );
+}
+
+#[test]
+fn assign_coerces_float_to_int() {
+    let program =
+        compile_executable_source("int n = 3.9; dump(n);").expect("program should compile");
+    let mut runner = program.runner();
+    let mut context = test_context(5, None);
+
+    assert_eq!(
+        runner.next_action(&mut context),
+        Some(ExecutableAction::Dump(3))
+    );
+}
+
+#[test]
 fn expression_operator_precedence_multiplies_before_adding() {
     let program = compile_executable_source("dump(1 + 2 * 3);").expect("program should compile");
     let mut runner = program.runner();
@@ -284,9 +322,9 @@ fn expression_negative_number_literal_is_not_unary_minus() {
         ExecutableStatementKind::Declare {
             value: Some(expr), ..
         } => {
-            assert_eq!(expr.kind, ExecutableExpressionKind::Number(-45.0));
+            assert_eq!(expr.kind, ExecutableExpressionKind::Int(-45));
         }
-        other => panic!("expected declare with Number(-45), got {other:?}"),
+        other => panic!("expected declare with Int(-45), got {other:?}"),
     }
 
     assert_eq!(program.actions(), &[ExecutableAction::Rotate(-45.0)]);

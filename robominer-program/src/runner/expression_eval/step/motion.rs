@@ -27,8 +27,8 @@ impl ExecutableRunner {
                 return self.abort_with_fault();
             };
             match eval.work.get(eval.index).map(|item| &item.kind) {
-                Some(ExpressionWork::PushDynamicMove) => ExecutableAction::Move(arg.value),
-                Some(ExpressionWork::PushDynamicRotate) => ExecutableAction::Rotate(arg.value),
+                Some(ExpressionWork::PushDynamicMove) => ExecutableAction::Move(arg.as_f64()),
+                Some(ExpressionWork::PushDynamicRotate) => ExecutableAction::Rotate(arg.as_f64()),
                 _ => return self.abort_with_fault(),
             }
         };
@@ -79,7 +79,7 @@ impl ExecutableRunner {
             let Some(value) = eval.values.pop() else {
                 return self.abort_with_fault();
             };
-            value.value
+            value.as_f64()
         };
         *action_result = None;
         self.last_step_span = self

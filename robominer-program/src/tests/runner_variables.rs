@@ -183,15 +183,13 @@ fn runtime_variables_snapshot_flattens_scopes_with_types() {
         match runner.step(&mut context) {
             ProgramStep::Cpu => {
                 let snap = runner.runtime_variables_snapshot();
-                if snap.get("outer").map(|v| v.value) == Some(2.0)
+                if snap.get("outer") == Some(&CpuStepResult::Int(2))
                     && snap.contains_key("speed")
                     && snap.contains_key("flag")
                 {
-                    assert_eq!(snap["outer"].kind, CpuStepResultKind::Int);
-                    assert_eq!(snap["flag"].kind, CpuStepResultKind::Bool);
-                    assert!((snap["flag"].value - 1.0).abs() < 1e-9);
-                    assert_eq!(snap["speed"].kind, CpuStepResultKind::Float);
-                    assert!((snap["speed"].value - 1.5).abs() < 1e-9);
+                    assert_eq!(snap["outer"].kind(), CpuStepResultKind::Int);
+                    assert_eq!(snap["flag"], CpuStepResult::Bool(true));
+                    assert_eq!(snap["speed"], CpuStepResult::Float(1.5));
                     saw_inner_shadow = true;
                 }
             }
@@ -206,9 +204,9 @@ fn runtime_variables_snapshot_flattens_scopes_with_types() {
     );
 
     let final_snap = runner.runtime_variables_snapshot();
-    assert_eq!(final_snap.get("outer").map(|v| v.value), Some(1.0));
-    assert_eq!(final_snap["outer"].kind, CpuStepResultKind::Int);
+    assert_eq!(final_snap.get("outer"), Some(&CpuStepResult::Int(1)));
+    assert_eq!(final_snap["outer"].kind(), CpuStepResultKind::Int);
     assert!(!final_snap.contains_key("speed"));
     assert!(final_snap.contains_key("flag"));
-    assert_eq!(final_snap["flag"].kind, CpuStepResultKind::Bool);
+    assert_eq!(final_snap["flag"].kind(), CpuStepResultKind::Bool);
 }

@@ -225,7 +225,7 @@ fn statement_move_completion_records_travel_step_result() {
     let result = runner
         .take_last_step_result()
         .expect("statement move completion should expose travel as r");
-    assert!((result.value - 2.0).abs() < 1e-9);
+    assert_eq!(result, CpuStepResult::Float(2.0));
 }
 
 #[test]

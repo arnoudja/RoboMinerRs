@@ -68,8 +68,8 @@ impl RecordedCpuStep {
 
 fn animation_cpu_step_result(result: robominer_program::CpuStepResult) -> AnimationCpuStepResult {
     AnimationCpuStepResult {
-        k: AnimationCpuStepResultKind::from(result.kind),
-        v: result.value,
+        k: AnimationCpuStepResultKind::from(result.kind()),
+        v: result.wire_f64(),
     }
 }
 

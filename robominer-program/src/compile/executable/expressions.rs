@@ -259,9 +259,7 @@ fn parse_single_expression_kind(
         )));
     }
 
-    Ok(input
-        .extract_number_value()
-        .map(ExecutableExpressionKind::Number))
+    Ok(input.extract_number_literal())
 }
 
 fn parse_call_argument(input: &mut CompileInput) -> Result<ExecutableExpression, CompileError> {

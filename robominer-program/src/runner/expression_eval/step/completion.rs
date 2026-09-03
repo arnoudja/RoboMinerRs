@@ -34,7 +34,7 @@ impl ExecutableRunner {
                     | ExpressionResume::DynamicRotate
                     | ExpressionResume::DynamicDump
             );
-            match self.finish_expression(resume, result.value) {
+            match self.finish_expression(resume, result) {
                 StepOutcome::Continue => StepOutcome::Cpu,
                 StepOutcome::Action(action) => {
                     // Issuing an action has no return yet; the expression value was the
@@ -64,7 +64,7 @@ impl ExecutableRunner {
     pub(super) fn finish_expression(
         &mut self,
         resume: ExpressionResume,
-        value: f64,
+        value: crate::cpu_step_result::CpuStepResult,
     ) -> StepOutcome {
         match self.apply_expression_resume(resume, value) {
             ExpressionComplete::Continue => StepOutcome::Continue,

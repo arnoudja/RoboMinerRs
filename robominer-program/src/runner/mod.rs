@@ -95,7 +95,7 @@ impl ExecutableRunner {
     }
 
     pub fn runtime_variable(&self, name: &str) -> f64 {
-        self.variables.get(name)
+        self.variables.get_typed(name).as_f64()
     }
 
     /// Flattened name → typed value map of currently visible locals.

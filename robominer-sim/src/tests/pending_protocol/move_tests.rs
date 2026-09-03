@@ -228,7 +228,7 @@ fn pending_pin_keeps_line_only_issuer_over_columned_reseed() {
                             start_col: 14,
                             end_col: 15,
                         },
-                        ExecutableExpressionKind::Number(1.0),
+                        ExecutableExpressionKind::Int(1),
                     )),
                 },
             ),

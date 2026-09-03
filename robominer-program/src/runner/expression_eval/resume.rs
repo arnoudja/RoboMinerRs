@@ -1,5 +1,5 @@
 use super::super::ExecutableRunner;
-use super::schedule::Truthy;
+use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::PendingProgramMotion;
 use crate::types::*;
 
@@ -39,7 +39,7 @@ impl ExecutableRunner {
     pub(super) fn apply_expression_resume(
         &mut self,
         resume: ExpressionResume,
-        value: f64,
+        value: CpuStepResult,
     ) -> ExpressionComplete {
         match resume {
             ExpressionResume::RepeatCondition => {
@@ -125,7 +125,7 @@ impl ExecutableRunner {
                 ExpressionComplete::Continue
             }
             ExpressionResume::DynamicMove => {
-                let action = ExecutableAction::Move(value);
+                let action = ExecutableAction::Move(value.as_f64());
                 if !PendingProgramMotion::is_chunked(action) {
                     // Zero-distance dynamic moves are not pending; advance like a literal move(0).
                     let Some(frame) = self.stack.last_mut() else {
@@ -136,7 +136,7 @@ impl ExecutableRunner {
                 ExpressionComplete::Step(ProgramStep::Action(action))
             }
             ExpressionResume::DynamicRotate => {
-                let action = ExecutableAction::Rotate(value);
+                let action = ExecutableAction::Rotate(value.as_f64());
                 if !PendingProgramMotion::is_chunked(action) {
                     let Some(frame) = self.stack.last_mut() else {
                         return ExpressionComplete::Fault;
@@ -150,7 +150,9 @@ impl ExecutableRunner {
                     return ExpressionComplete::Fault;
                 };
                 frame.index += 1;
-                ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(value as i32)))
+                ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(
+                    value.as_i64() as i32,
+                )))
             }
         }
     }

@@ -1,6 +1,6 @@
-use crate::cpu_step_result::{CpuStepResult, CpuStepResultKind};
+use crate::cpu_step_result::CpuStepResult;
 use crate::runner::ExecutableRunner;
-use crate::runner::expression_eval::schedule::{ExpressionWork, Truthy, evaluate_operator};
+use crate::runner::expression_eval::schedule::ExpressionWork;
 use crate::types::*;
 
 use super::OngoingExpressionEval;
@@ -13,7 +13,8 @@ impl ExecutableRunner {
         work: ExpressionWork,
     ) -> Result<(), ()> {
         match work {
-            ExpressionWork::PushNumber(value) => self.push_number_work(value),
+            ExpressionWork::PushInt(value) => self.push_int_work(value),
+            ExpressionWork::PushFloat(value) => self.push_float_work(value),
             ExpressionWork::PushBool(value) => self.push_bool_work(value),
             ExpressionWork::PushVariable(name) => self.push_variable_work(&name),
             ExpressionWork::PushVariableUpdate { name, operator } => {
@@ -52,17 +53,23 @@ impl ExecutableRunner {
         self.expression_eval.as_mut().ok_or(())
     }
 
-    fn push_number_work(&mut self, value: f64) -> Result<(), ()> {
+    fn push_int_work(&mut self, value: i64) -> Result<(), ()> {
         let eval = self.eval_mut()?;
-        eval.values.push(CpuStepResult::for_number_literal(value));
+        eval.values.push(CpuStepResult::Int(value));
+        eval.index += 1;
+        Ok(())
+    }
+
+    fn push_float_work(&mut self, value: f64) -> Result<(), ()> {
+        let eval = self.eval_mut()?;
+        eval.values.push(CpuStepResult::Float(value));
         eval.index += 1;
         Ok(())
     }
 
     fn push_bool_work(&mut self, value: bool) -> Result<(), ()> {
         let eval = self.eval_mut()?;
-        eval.values
-            .push(CpuStepResult::bool_value(if value { 1.0 } else { 0.0 }));
+        eval.values.push(CpuStepResult::Bool(value));
         eval.index += 1;
         Ok(())
     }
@@ -81,10 +88,10 @@ impl ExecutableRunner {
         operator: VariableOperator,
     ) -> Result<(), ()> {
         let result = match operator {
-            VariableOperator::PreIncrement => self.variables.update(name, 1.0, true),
-            VariableOperator::PreDecrement => self.variables.update(name, -1.0, true),
-            VariableOperator::PostIncrement => self.variables.update(name, 1.0, false),
-            VariableOperator::PostDecrement => self.variables.update(name, -1.0, false),
+            VariableOperator::PreIncrement => self.variables.update(name, 1, true),
+            VariableOperator::PreDecrement => self.variables.update(name, -1, true),
+            VariableOperator::PostIncrement => self.variables.update(name, 1, false),
+            VariableOperator::PostDecrement => self.variables.update(name, -1, false),
             VariableOperator::None => self.variables.get_typed(name),
         };
         let eval = self.eval_mut()?;
@@ -96,7 +103,7 @@ impl ExecutableRunner {
     fn push_time_work(&mut self, context: &ExecutionContext) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         eval.values
-            .push(CpuStepResult::int_value(context.time_left as f64));
+            .push(CpuStepResult::int_value(i64::from(context.time_left)));
         eval.index += 1;
         Ok(())
     }
@@ -133,17 +140,19 @@ impl ExecutableRunner {
 
     fn push_ore_work(&mut self, context: &ExecutionContext) -> Result<(), ()> {
         let eval = self.eval_mut()?;
-        let ore_type = eval.values.pop().ok_or(())?.value as i32;
+        let ore_type = eval.values.pop().ok_or(())?.as_i64() as i32;
         let amount = if ore_type == 0 {
-            context.ore.iter().sum::<i32>() as f64
+            i64::from(context.ore.iter().sum::<i32>())
         } else if ore_type > 0 {
-            context
-                .ore
-                .get((ore_type - 1) as usize)
-                .copied()
-                .unwrap_or(0) as f64
+            i64::from(
+                context
+                    .ore
+                    .get((ore_type - 1) as usize)
+                    .copied()
+                    .unwrap_or(0),
+            )
         } else {
-            0.0
+            0
         };
         eval.values.push(CpuStepResult::int_value(amount));
         eval.index += 1;
@@ -164,13 +173,9 @@ impl ExecutableRunner {
 
     fn apply_unary_not_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
-        let value = eval.values.pop().ok_or(())?.value;
+        let value = eval.values.pop().ok_or(())?;
         eval.values
-            .push(CpuStepResult::bool_value(if value.is_truthy() {
-                0.0
-            } else {
-                1.0
-            }));
+            .push(CpuStepResult::bool_value(!value.is_truthy()));
         eval.index += 1;
         Ok(())
     }
@@ -178,13 +183,7 @@ impl ExecutableRunner {
     fn apply_unary_minus_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
-        let value = -operand.value;
-        eval.values
-            .push(if operand.kind == CpuStepResultKind::Float {
-                CpuStepResult::float_value(value)
-            } else {
-                CpuStepResult::int_value(value)
-            });
+        eval.values.push(operand.unary_minus());
         eval.index += 1;
         Ok(())
     }
@@ -192,13 +191,7 @@ impl ExecutableRunner {
     fn apply_abs_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
-        let value = operand.value.abs();
-        eval.values
-            .push(if operand.kind == CpuStepResultKind::Float {
-                CpuStepResult::float_value(value)
-            } else {
-                CpuStepResult::int_value(value)
-            });
+        eval.values.push(operand.abs());
         eval.index += 1;
         Ok(())
     }
@@ -207,7 +200,7 @@ impl ExecutableRunner {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
         eval.values
-            .push(CpuStepResult::float_value(operand.value.sqrt()));
+            .push(CpuStepResult::float_value(operand.as_f64().sqrt()));
         eval.index += 1;
         Ok(())
     }
@@ -215,8 +208,9 @@ impl ExecutableRunner {
     fn apply_sin_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
-        eval.values
-            .push(CpuStepResult::float_value(operand.value.to_radians().sin()));
+        eval.values.push(CpuStepResult::float_value(
+            operand.as_f64().to_radians().sin(),
+        ));
         eval.index += 1;
         Ok(())
     }
@@ -224,8 +218,9 @@ impl ExecutableRunner {
     fn apply_cos_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
-        eval.values
-            .push(CpuStepResult::float_value(operand.value.to_radians().cos()));
+        eval.values.push(CpuStepResult::float_value(
+            operand.as_f64().to_radians().cos(),
+        ));
         eval.index += 1;
         Ok(())
     }
@@ -233,8 +228,9 @@ impl ExecutableRunner {
     fn apply_tan_work(&mut self) -> Result<(), ()> {
         let eval = self.eval_mut()?;
         let operand = eval.values.pop().ok_or(())?;
-        eval.values
-            .push(CpuStepResult::float_value(operand.value.to_radians().tan()));
+        eval.values.push(CpuStepResult::float_value(
+            operand.as_f64().to_radians().tan(),
+        ));
         eval.index += 1;
         Ok(())
     }
@@ -243,8 +239,7 @@ impl ExecutableRunner {
         let eval = self.eval_mut()?;
         let right = eval.values.pop().ok_or(())?;
         let left = eval.values.pop().ok_or(())?;
-        let value = left.value.min(right.value);
-        eval.values.push(promote_min_max(&left, &right, value));
+        eval.values.push(CpuStepResult::evaluate_min(left, right));
         eval.index += 1;
         Ok(())
     }
@@ -253,8 +248,7 @@ impl ExecutableRunner {
         let eval = self.eval_mut()?;
         let right = eval.values.pop().ok_or(())?;
         let left = eval.values.pop().ok_or(())?;
-        let value = left.value.max(right.value);
-        eval.values.push(promote_min_max(&left, &right, value));
+        eval.values.push(CpuStepResult::evaluate_max(left, right));
         eval.index += 1;
         Ok(())
     }
@@ -263,21 +257,9 @@ impl ExecutableRunner {
         let eval = self.eval_mut()?;
         let right = eval.values.pop().ok_or(())?;
         let left = eval.values.pop().ok_or(())?;
-        let value = evaluate_operator(operator, left.value, right.value);
-        eval.values.push(CpuStepResult::for_binary_operator(
-            operator, left.kind, right.kind, value,
-        ));
+        eval.values
+            .push(CpuStepResult::evaluate_binary(operator, left, right));
         eval.index += 1;
         Ok(())
-    }
-}
-
-fn promote_min_max(left: &CpuStepResult, right: &CpuStepResult, value: f64) -> CpuStepResult {
-    if matches!(left.kind, CpuStepResultKind::Float)
-        || matches!(right.kind, CpuStepResultKind::Float)
-    {
-        CpuStepResult::float_value(value)
-    } else {
-        CpuStepResult::int_value(value)
     }
 }
