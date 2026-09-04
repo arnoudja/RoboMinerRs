@@ -53,7 +53,7 @@ pub(super) fn valid_email(email: &str) -> bool {
 }
 
 pub(super) fn valid_password(password: &str) -> bool {
-    password.len() >= 8
+    (8..=128).contains(&password.len())
 }
 
 pub(super) async fn verify_password_hash(
@@ -100,8 +100,10 @@ mod tests {
     }
 
     #[test]
-    fn valid_password_requires_at_least_eight_characters() {
+    fn valid_password_requires_at_least_eight_and_at_most_128_characters() {
         assert!(valid_password("12345678"));
         assert!(!valid_password("short"));
+        assert!(valid_password(&"a".repeat(128)));
+        assert!(!valid_password(&"a".repeat(129)));
     }
 }

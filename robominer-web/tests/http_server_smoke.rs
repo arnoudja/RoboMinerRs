@@ -152,6 +152,12 @@ fn serve_returns_static_css_and_rejects_oversized_body() {
         "expected layout partials+help stylesheet links only, got {help_stylesheet_count} in:\n{help_response}"
     );
     assert!(
+        help_response
+            .to_ascii_lowercase()
+            .contains("cache-control: private, no-store"),
+        "expected private no-store Cache-Control on HTML, got:\n{help_response}"
+    );
+    assert!(
         !help_response.contains(r#"href="css/pages/shop.css?v="#),
         "help page should not load unrelated page CSS, got:\n{help_response}"
     );

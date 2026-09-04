@@ -110,6 +110,13 @@ pub(crate) fn anonymous_csrf_cookie_header(token: &str) -> String {
     )
 }
 
+pub(crate) fn anonymous_csrf_clear_cookie_header() -> String {
+    format!(
+        "{ANON_CSRF_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        session::secure_cookie_suffix()
+    )
+}
+
 pub(crate) fn anonymous_csrf_cookie(request: &Request) -> Option<String> {
     request
         .headers

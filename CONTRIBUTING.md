@@ -300,7 +300,7 @@ features; do not introduce a parallel “domain gateway” for ordinary CRUD.
 6. **Otherwise prefer direct `robominer_db` from web/engine.** Shop buy, enqueue mining, claim achievement, page read models, and similar CRUD call db, then map rejections through domain message helpers.
 7. **Do not push sim/compile into db.** Db may store verification flags; domain/engine owns invoking `robominer_program::verify_source` (domain façades for program save; engine `verify` CLI may mark validity without going through the façade).
 8. **Do not grow a general “domain API gateway.”** Thin façades that only forward to db without extra rules are noise—call db from the edge instead.
-9. **Web page loaders and handlers use `PageLoadError`, not `DomainError`.** HTML page modules return `crate::page_context::PageLoadError` for SQL/load failures (including after domain program writes via `PageLoadError::from_database`). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
+9. **Web page loaders and handlers use `PageLoadError`, not `DomainError`.** HTML page modules return `crate::page_context::PageLoadError` for SQL/load failures (including after domain program writes via `PageLoadError::from_domain`). Reserve `robominer_domain::DomainError` for loadout/simulation and other domain rule failures.
 10. **Test-only re-exports in release builds must stay cfg-gated.** Helpers such as `reset_*_rate_limiter_for_tests` in `robominer-web/src/rate_limit/` are defined under `#[cfg(any(test, debug_assertions))]`; any `pub use` of them must use the same cfg so `cargo build --release` stays green.
 
 ### Examples

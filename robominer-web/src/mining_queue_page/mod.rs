@@ -100,8 +100,8 @@ async fn load_mining_queue_page_state(
                         .form
                         .get("submitType")
                         .is_some_and(|value| value == "fill");
-                    if let robominer_domain::EnqueueMiningOutcome::Rejected(rejection) =
-                        robominer_domain::enqueue_mining(
+                    if let robominer_db::DbOutcome::Rejected(rejection) =
+                        robominer_db::enqueue_mining(
                             pool,
                             robominer_db::EnqueueMiningRequest {
                                 user_id,
@@ -110,18 +110,7 @@ async fn load_mining_queue_page_state(
                                 fill,
                             },
                         )
-                        .await
-                        .map_err(|error| {
-                            crate::page_context::PageLoadError::from_database(error).unwrap_or_else(
-                                |_| {
-                                    crate::page_context::PageLoadError::from(
-                                        sqlx::Error::Configuration(
-                                            "unexpected domain error on enqueue mining".into(),
-                                        ),
-                                    )
-                                },
-                            )
-                        })?
+                        .await?
                     {
                         error_message =
                             Some(robominer_domain::rejection_messages::enqueue_mining_rejection_player_message(rejection).to_string());

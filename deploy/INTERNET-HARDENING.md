@@ -41,7 +41,7 @@ trustproxy 1
 | `sessionsecret` | Signs session cookies; required (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
 | `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** when unset so plain HTTP (including `host 0.0.0.0` on a LAN) keeps working |
 | `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
-| `trustproxy 1` | Trust `X-Forwarded-For` / `X-Real-Ip` for login rate limits and auth logs. Refused at startup unless `host` is loopback |
+| `trustproxy 1` | Trust `X-Real-Ip` then `X-Forwarded-For` for login rate limits and auth logs (proxy must overwrite both with the connecting client). Refused at startup unless `host` is loopback |
 
 Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
 `ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`,

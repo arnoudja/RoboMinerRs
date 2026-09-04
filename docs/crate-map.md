@@ -41,7 +41,6 @@ Thin orchestration on top of db + sim + program. Not a general API gateway for C
 | `simulation/` | Run rallies/pools, map outcomes to records | `run_rally_loadout_*`, `persist_rally_outcome` |
 | `robot_config.rs` | Program create/update with compile verify | `create_program_source`, `update_program_source` |
 | `rejection_messages/` | Player/CLI prose for typed db rejections | `*_rejection_message`, `Audience` |
-| `actions/` | Thin mutation wrappers shared by web + engine | `buy_robot_part`, `enqueue_mining`, etc. |
 
 ## `robominer-web`
 

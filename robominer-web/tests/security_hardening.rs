@@ -55,6 +55,20 @@ async fn post_logoff_through_route_clears_session_and_blocks_protected_pages() {
                 && value.starts_with("robominer_session=; Max-Age=0;")),
         "POST /logoff should clear the session cookie"
     );
+    assert!(
+        logoff_response.headers.iter().any(
+            |(name, value)| *name == "Set-Cookie" && value.starts_with("remember=; Max-Age=0;")
+        ),
+        "POST /logoff should clear the remember cookie"
+    );
+    assert!(
+        logoff_response
+            .headers
+            .iter()
+            .any(|(name, value)| *name == "Set-Cookie"
+                && value.starts_with("robominer_csrf=; Max-Age=0;")),
+        "POST /logoff should clear the anonymous CSRF cookie"
+    );
 
     let cleared_cookie = apply_set_cookies(&session_cookie, &logoff_response);
     assert!(

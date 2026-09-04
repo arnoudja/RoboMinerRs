@@ -1,6 +1,6 @@
+use crate::db_outcome::finish_db_outcome;
 use crate::output::escape_state_field;
 use anyhow::{Context, Result};
-use robominer_domain::UpdateRobotConfigOutcome;
 
 pub(crate) async fn robot_config_states(
     pool: &robominer_db::MySqlPool,
@@ -79,24 +79,23 @@ pub(crate) async fn update_robot_config(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::UpdateRobotConfigRequest,
 ) -> Result<()> {
-    match robominer_domain::update_robot_config(pool, request)
+    let outcome = robominer_db::update_robot_config(pool, request)
         .await
-        .context("failed to update robot configuration")?
-    {
-        UpdateRobotConfigOutcome::Success(result) => {
+        .context("failed to update robot configuration")?;
+    finish_db_outcome(
+        outcome,
+        |result| {
             let mode = if result.pending { "pending" } else { "active" };
             println!("Updated {mode} configuration for robot {}", result.robot_id);
             Ok(())
-        }
-        UpdateRobotConfigOutcome::Rejected(rejection) => {
-            let message = format!(
+        },
+        |rejection| {
+            format!(
                 "unable to update robot configuration: {}",
                 robominer_domain::rejection_messages::update_robot_config_rejection_cli_message(
                     rejection
                 )
-            );
-            eprintln!("{message}");
-            anyhow::bail!(message)
-        }
-    }
+            )
+        },
+    )
 }

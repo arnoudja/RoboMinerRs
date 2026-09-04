@@ -51,7 +51,7 @@ pub(crate) fn login_return_to_from_request(request: &Request) -> Option<String> 
 
 pub(crate) fn valid_login_return_to(value: &str) -> Option<&str> {
     if value.is_empty()
-        || value.contains("://")
+        || value.contains(':')
         || value.starts_with("//")
         || value.starts_with('/')
         || value.contains('\\')
@@ -62,6 +62,9 @@ pub(crate) fn valid_login_return_to(value: &str) -> Option<&str> {
     if path.eq_ignore_ascii_case("login") || path.eq_ignore_ascii_case("logoff") {
         return None;
     }
+    // Only allow known app routes (relative href, optional query).
+    let absolute = format!("/{path}");
+    crate::routes::AppRoute::from_path(&absolute)?;
     Some(value)
 }
 

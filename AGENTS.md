@@ -33,6 +33,27 @@ noted here.
   local MySQL on `127.0.0.1:3306` when the schema is present, so Docker is not
   required here. If a fresh DB is ever needed, run
   `resources/scripts/init-ci-database.sh` (or with `ROBOMINER_FORCE_DB_REINIT=1`).
+- **InnoDB OS error 22** (`Invalid argument` on file `close` in
+  `/var/log/mysql/error.log`): snapshot/overlay-backed datadir files can become
+  unusable after a kernel or image change. Docker is often unavailable on these
+  VMs, so recover host MySQL by reinitializing the datadir, then reloading
+  schema:
+
+  ```sh
+  sudo service mysql stop || true
+  sudo mv /var/lib/mysql "/var/lib/mysql.broken-$(date +%s)"
+  sudo mkdir -p /var/lib/mysql /var/run/mysqld
+  sudo chown mysql:mysql /var/lib/mysql /var/run/mysqld
+  sudo mysqld --initialize-insecure --user=mysql --datadir=/var/lib/mysql
+  sudo service mysql start
+  sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'root'; CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY 'root'; CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED WITH caching_sha2_password BY 'root'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+  resources/scripts/init-ci-database.sh
+  mysqladmin ping -h127.0.0.1 -urobominer -ppassword
+  ```
+
+  Fresh files on the same overlay root work; only the stale snapshot datadir
+  fails. Prefer Docker MySQL 8.4 via `ensure-test-mysql.sh` when `docker` is
+  available.
 
 ### Running the web host
 

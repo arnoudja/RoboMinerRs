@@ -14,7 +14,9 @@ The database scripts are kept under `resources/database/`:
 - `gameData.sql` — seed data (ores, parts, areas, achievements)
 
 Further docs: [CONTRIBUTING.md](CONTRIBUTING.md) (tests, coverage, **db vs domain
-boundary**), [ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
+boundary**), [docs/architecture.md](docs/architecture.md) (crate layers and request
+flows), [docs/crate-map.md](docs/crate-map.md) (module ownership),
+[ACHIEVEMENTS.md](ACHIEVEMENTS.md) (progression and claim flow),
 [gameflow.md](gameflow.md) (early-game balance notes), [ROBOTS.md](ROBOTS.md)
 (sample robot programs).
 
