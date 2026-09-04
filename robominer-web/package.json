@@ -1,7 +1,6 @@
 {
   "name": "robominer-web-static",
   "private": true,
-  "type": "module",
   "description": "Dev-only lint tooling for robominer-web/static JS (no runtime deps).",
   "scripts": {
     "lint": "eslint static/js --max-warnings 0"
