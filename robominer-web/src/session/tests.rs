@@ -69,11 +69,19 @@ fn validate_trust_proxy_bind_requires_loopback() {
 }
 
 #[test]
-fn resolve_secure_cookies_defaults_off_unless_explicit() {
+fn resolve_secure_cookies_defaults_off_on_loopback() {
     assert!(!super::resolve_secure_cookies(None, "127.0.0.1", false).unwrap());
-    assert!(!super::resolve_secure_cookies(None, "0.0.0.0", false).unwrap());
     assert!(super::resolve_secure_cookies(Some(true), "127.0.0.1", false).unwrap());
     assert!(super::resolve_secure_cookies(Some(true), "127.0.0.1", true).unwrap());
+}
+
+#[test]
+fn resolve_secure_cookies_requires_secure_on_non_loopback_bind() {
+    let error = super::resolve_secure_cookies(None, "0.0.0.0", false).unwrap_err();
+    assert!(error.contains("securecookies") || error.contains("ROBOMINER_SECURE_COOKIES"));
+    let error = super::resolve_secure_cookies(Some(false), "0.0.0.0", false).unwrap_err();
+    assert!(error.contains("securecookies") || error.contains("ROBOMINER_SECURE_COOKIES"));
+    assert!(super::resolve_secure_cookies(Some(true), "0.0.0.0", false).unwrap());
 }
 
 #[test]

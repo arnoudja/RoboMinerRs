@@ -65,13 +65,15 @@ pub fn validate_trust_proxy_bind(host: &str, trust_proxy: bool) -> Result<(), &'
 
 /// Resolve the Secure cookie flag.
 ///
-/// Explicit `securecookies` / env wins when set. Defaults **off** so LAN HTTP
-/// binds keep working. When `trust_proxy` is on (TLS terminated at a reverse
-/// proxy), Secure cookies are required — refuse rather than silently serving
-/// stealable session cookies over any HTTP hop to the proxy.
+/// Explicit `securecookies` / env wins when set. Defaults **off** on loopback
+/// so local HTTP keeps working. Non-loopback binds require Secure cookies
+/// (stealable session cookies over cleartext LAN/WAN HTTP). When `trust_proxy`
+/// is on (TLS terminated at a reverse proxy), Secure cookies are required —
+/// refuse rather than silently serving stealable session cookies over any HTTP
+/// hop to the proxy.
 pub fn resolve_secure_cookies(
     configured: Option<bool>,
-    _bind_host: &str,
+    bind_host: &str,
     trust_proxy: bool,
 ) -> Result<bool, &'static str> {
     let enabled = configured.unwrap_or(false);
@@ -79,6 +81,12 @@ pub fn resolve_secure_cookies(
         return Err(
             "trustproxy / ROBOMINER_TRUST_PROXY requires securecookies 1 \
              (or ROBOMINER_SECURE_COOKIES=1) so session cookies are marked Secure behind TLS",
+        );
+    }
+    if !enabled && !is_local_bind_host(bind_host) {
+        return Err(
+            "non-loopback bind requires securecookies 1 (or ROBOMINER_SECURE_COOKIES=1) \
+             so session cookies are marked Secure",
         );
     }
     Ok(enabled)

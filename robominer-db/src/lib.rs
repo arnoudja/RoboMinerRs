@@ -1,11 +1,15 @@
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used))]
-//! Persistence layer: SQL, migrations, pool/config, record DTOs, and typed
-//! `*Request` / `*Rejection` contracts. Game logic, simulation, and rejection
-//! copy live in `robominer-domain`. See `CONTRIBUTING.md` for the crate boundary.
+//! Persistence layer: SQL, migrations, pool/config, record DTOs, typed
+//! `*Request` / `*Rejection` contracts, and **transactional multi-table game
+//! rules** (shop economics, queue capacity, achievement claims, claim tax).
+//! Loadouts, simulation/verify façades, and rejection copy live in
+//! `robominer-domain`. See `CONTRIBUTING.md` and `docs/architecture.md`.
 //!
 //! Public surface is intentionally flat (`pub use module::*`) so call sites can
 //! use `robominer_db::enqueue_mining` without deep paths. Prefer adding new
 //! exports through the owning module's `pub use` rather than new wildcards.
+//! Prefer `robominer_db::module::…` paths for new APIs; do not expand root
+//! wildcards for new symbols.
 
 pub use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;

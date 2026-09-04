@@ -7,7 +7,9 @@ use sha2::Sha256;
 
 use crate::http::Request;
 
-use config::{DEFAULT_DEV_SESSION_SECRET, session_ttl_secs};
+#[cfg(test)]
+use config::DEFAULT_DEV_SESSION_SECRET;
+use config::session_ttl_secs;
 
 mod config;
 
@@ -205,7 +207,17 @@ pub(crate) fn constant_time_eq_str(left: &str, right: &str) -> bool {
 }
 
 fn session_secret() -> &'static [u8] {
-    SESSION_SECRET.get_or_init(|| DEFAULT_DEV_SESSION_SECRET.as_bytes().to_vec())
+    #[cfg(test)]
+    {
+        SESSION_SECRET.get_or_init(|| DEFAULT_DEV_SESSION_SECRET.as_bytes().to_vec())
+    }
+    #[cfg(not(test))]
+    {
+        match SESSION_SECRET.get() {
+            Some(secret) => secret.as_slice(),
+            None => panic!("configure_session_secret must be called at startup"),
+        }
+    }
 }
 
 fn session_expiry_timestamp(ttl_secs: u64) -> u64 {

@@ -1,5 +1,5 @@
 use super::render::{achievement_progress_percent, render_achievement_progress};
-use crate::html::EscapedHtml;
+use crate::html::{EscapedHtml, label_value};
 
 pub(super) fn render_achievement_card(
     body: &mut String,
@@ -62,13 +62,23 @@ pub(super) fn render_achievement_card(
 
     body.push_str(r#"<section class="achievement-rewards"><h3 class="achievement-section-title">Next reward</h3><ul class="achievement-reward-list">"#);
     body.push_str(&format!(
-        r#"<li><span class="achievement-reward-label">Points</span><span class="achievement-reward-value">{}</span></li>"#,
-        achievement.next_achievement_points
+        "<li>{}</li>",
+        label_value(
+            "achievement-reward-label",
+            "achievement-reward-value",
+            "Points",
+            achievement.next_achievement_points,
+        )
     ));
     if achievement.mining_queue_reward > 0 {
         body.push_str(&format!(
-            r#"<li><span class="achievement-reward-label">Queue increase</span><span class="achievement-reward-value">+{}</span></li>"#,
-            achievement.mining_queue_reward
+            "<li>{}</li>",
+            label_value(
+                "achievement-reward-label",
+                "achievement-reward-value",
+                "Queue increase",
+                format!("+{}", achievement.mining_queue_reward),
+            )
         ));
     }
     if let Some(ore_name) = &achievement.ore_name {
@@ -77,10 +87,13 @@ pub(super) fn render_achievement_card(
             .max(achievement.max_ore_reward);
         if new_ore_maximum > achievement.current_ore_maximum {
             body.push_str(&format!(
-                r#"<li><span class="achievement-reward-label">{} ore maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
-                EscapedHtml::from(ore_name.as_str()),
-                achievement.current_ore_maximum,
-                new_ore_maximum
+                "<li>{}</li>",
+                label_value(
+                    "achievement-reward-label",
+                    "achievement-reward-value",
+                    format!("{} ore maximum", EscapedHtml::from(ore_name.as_str())),
+                    format!("{} → {}", achievement.current_ore_maximum, new_ore_maximum),
+                )
             ));
         }
         let new_depot_maximum = achievement
@@ -88,20 +101,39 @@ pub(super) fn render_achievement_card(
             .max(achievement.max_depot_reward);
         if new_depot_maximum > achievement.current_depot_maximum {
             body.push_str(&format!(
-                r#"<li><span class="achievement-reward-label">{} depot maximum</span><span class="achievement-reward-value">{} → {}</span></li>"#,
-                EscapedHtml::from(ore_name.as_str()),
-                achievement.current_depot_maximum,
-                new_depot_maximum
+                "<li>{}</li>",
+                label_value(
+                    "achievement-reward-label",
+                    "achievement-reward-value",
+                    format!("{} depot maximum", EscapedHtml::from(ore_name.as_str())),
+                    format!(
+                        "{} → {}",
+                        achievement.current_depot_maximum, new_depot_maximum
+                    ),
+                )
             ));
         }
     }
     if i64::from(achievement.robot_reward) > robot_count {
-        body.push_str(r#"<li><span class="achievement-reward-label">Robot</span><span class="achievement-reward-value">New robot</span></li>"#);
+        body.push_str(&format!(
+            "<li>{}</li>",
+            label_value(
+                "achievement-reward-label",
+                "achievement-reward-value",
+                "Robot",
+                "New robot",
+            )
+        ));
     }
     if let Some(mining_area_name) = &achievement.mining_area_name {
         body.push_str(&format!(
-            r#"<li><span class="achievement-reward-label">Mining area</span><span class="achievement-reward-value">{}</span></li>"#,
-            EscapedHtml::from(mining_area_name.as_str())
+            "<li>{}</li>",
+            label_value(
+                "achievement-reward-label",
+                "achievement-reward-value",
+                "Mining area",
+                EscapedHtml::from(mining_area_name.as_str()),
+            )
         ));
     }
     body.push_str("</ul></section>");

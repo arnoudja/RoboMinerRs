@@ -71,7 +71,12 @@ async fn create_user_inserts_user_and_claims_initial_achievement() {
         .expect("created user should exist");
     assert_eq!(user.username, username);
     assert_eq!(user.email, email);
-    assert!(user.password_hash.starts_with("$argon2"));
+    let password_hash: String = sqlx::query_scalar("SELECT password FROM User WHERE id = ?")
+        .bind(created.user_id)
+        .fetch_one(&pool)
+        .await
+        .expect("password hash should load");
+    assert!(password_hash.starts_with("$argon2"));
     assert_eq!(user.achievement_points, 10);
     assert_eq!(user.mining_queue_size, 1);
     assert_eq!(user.session_version, 0);

@@ -1,7 +1,7 @@
 use super::LEADERBOARD_SIDEBAR_AREA_STANDINGS;
 use super::LeaderboardTab;
 use super::render_shared::leaderboard_activity_area_href;
-use crate::html::{EscapedHtml, html_attr};
+use crate::html::{EscapedHtml, html_attr, label_value};
 
 pub(super) fn render_leaderboard_climb_hint(body: &mut String, tab: LeaderboardTab) {
     let (summary, links): (&str, &[(&str, &str)]) = match tab {
@@ -138,15 +138,27 @@ fn render_leaderboard_sidebar_standings(
     body.push_str(r#"<h2 class="leaderboard-section-title">Your standings</h2>"#);
     body.push_str(r#"<ul class="leaderboard-standing-list">"#);
     body.push_str(&format!(
-        r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label">Achievement rank</span><span class="leaderboard-standing-value"><a class="leaderboard-standing-link" href="achievements">#{} · {} pts</a></span></li>"#,
-        standing.achievement_rank,
-        standing.achievement_points,
+        r#"<li class="leaderboard-standing-item">{}</li>"#,
+        label_value(
+            "leaderboard-standing-label",
+            "leaderboard-standing-value",
+            "Achievement rank",
+            format!(
+                r#"<a class="leaderboard-standing-link" href="achievements">#{} · {} pts</a>"#,
+                standing.achievement_rank, standing.achievement_points,
+            ),
+        ),
     ));
 
     if let Some(insight) = viewer_climb_insight(standing, mining_area_scores) {
         body.push_str(&format!(
-            r#"<li class="leaderboard-standing-item leaderboard-standing-climb"><span class="leaderboard-standing-label">Closest to #1</span><span class="leaderboard-standing-value">{}</span></li>"#,
-            EscapedHtml::from(insight.as_str()),
+            r#"<li class="leaderboard-standing-item leaderboard-standing-climb">{}</li>"#,
+            label_value(
+                "leaderboard-standing-label",
+                "leaderboard-standing-value",
+                "Closest to #1",
+                EscapedHtml::from(insight.as_str()),
+            ),
         ));
     }
 
@@ -156,10 +168,18 @@ fn render_leaderboard_sidebar_standings(
         .find(|(_, robot)| robot.username == viewer_username)
     {
         body.push_str(&format!(
-            r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label">Top robot list</span><span class="leaderboard-standing-value">#{} · {} ({:.1} ore/run)</span></li>"#,
-            index + 1,
-            EscapedHtml::from(robot.robot_name.as_str()),
-            robot.ore_per_run,
+            r#"<li class="leaderboard-standing-item">{}</li>"#,
+            label_value(
+                "leaderboard-standing-label",
+                "leaderboard-standing-value",
+                "Top robot list",
+                format!(
+                    "#{} · {} ({:.1} ore/run)",
+                    index + 1,
+                    EscapedHtml::from(robot.robot_name.as_str()),
+                    robot.ore_per_run,
+                ),
+            ),
         ));
     }
 
@@ -169,19 +189,35 @@ fn render_leaderboard_sidebar_standings(
         .take(LEADERBOARD_SIDEBAR_AREA_STANDINGS)
     {
         body.push_str(&format!(
-            r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label"><a class="leaderboard-standing-link" href="{}">{}</a></span><span class="leaderboard-standing-value">#{} · {:.1} with {}</span></li>"#,
-            html_attr(&leaderboard_activity_area_href(area.mining_area_id)),
-            EscapedHtml::from(area.area_name.as_str()),
-            area.rank,
-            area.score,
-            EscapedHtml::from(area.robot_name.as_str()),
+            r#"<li class="leaderboard-standing-item">{}</li>"#,
+            label_value(
+                "leaderboard-standing-label",
+                "leaderboard-standing-value",
+                format!(
+                    r#"<a class="leaderboard-standing-link" href="{}">{}</a>"#,
+                    html_attr(&leaderboard_activity_area_href(area.mining_area_id)),
+                    EscapedHtml::from(area.area_name.as_str()),
+                ),
+                format!(
+                    "#{} · {:.1} with {}",
+                    area.rank,
+                    area.score,
+                    EscapedHtml::from(area.robot_name.as_str()),
+                ),
+            ),
         ));
     }
 
     if standing.area_standings.is_empty() {
-        body.push_str(
-            r#"<li class="leaderboard-standing-item"><span class="leaderboard-standing-label">Area scores</span><span class="leaderboard-standing-value">No ranked runs yet</span></li>"#,
-        );
+        body.push_str(&format!(
+            r#"<li class="leaderboard-standing-item">{}</li>"#,
+            label_value(
+                "leaderboard-standing-label",
+                "leaderboard-standing-value",
+                "Area scores",
+                "No ranked runs yet",
+            ),
+        ));
     }
 
     body.push_str("</ul></section>");

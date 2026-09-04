@@ -44,17 +44,6 @@ pub async fn create_program_source(
     })
 }
 
-pub async fn delete_program_source(
-    pool: &MySqlPool,
-    program_source_id: i64,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!("DELETE FROM ProgramSource WHERE id = ?", program_source_id)
-        .execute(pool)
-        .await?;
-
-    Ok(())
-}
-
 pub async fn update_program_source(
     pool: &MySqlPool,
     request: ProgramSourceWriteRequest,
