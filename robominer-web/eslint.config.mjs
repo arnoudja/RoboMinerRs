@@ -5,8 +5,9 @@ import globals from "globals";
  * Lint the multi-file IIFE static scripts.
  *
  * `no-undef` / `no-unused-vars` stay off: scripts share globals across <script>
- * tags without modules. `prefer-const` is on; `no-var` stays off so existing
- * IIFEs are not a mass rewrite.
+ * tags without modules. `prefer-const` is on; `no-var` is enforced for
+ * `static/js/common/**` and stays off elsewhere so remaining IIFEs are not a
+ * mass rewrite.
  */
 export default [
   {
@@ -38,6 +39,12 @@ export default [
       "no-new-func": "error",
       "no-with": "error",
       "no-empty": ["error", { allowEmptyCatch: true }],
+    },
+  },
+  {
+    files: ["static/js/common/**/*.js"],
+    rules: {
+      "no-var": "error",
     },
   },
 ];

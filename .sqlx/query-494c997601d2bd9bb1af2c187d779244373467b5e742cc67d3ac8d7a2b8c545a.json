@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO UserRobotPartAsset (userId, robotPartId, totalOwned) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE totalOwned = totalOwned + 1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "494c997601d2bd9bb1af2c187d779244373467b5e742cc67d3ac8d7a2b8c545a"
+}

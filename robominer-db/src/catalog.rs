@@ -17,11 +17,141 @@ pub const DEFAULT_PART_IDS: [i64; 7] = [101, 201, 301, 401, 501, 601, 701];
 
 use sqlx::MySqlPool;
 
-use crate::mappers::{robot_part_record, shop_robot_part_catalog_record};
 use crate::{
     OreRecord, RobotPartRecord, RobotPartTypeRecord, ShopRobotPartCatalogRecord,
     ShopRobotPartCostRecord,
 };
+
+#[derive(sqlx::FromRow)]
+pub(crate) struct RobotPartRow {
+    id: i64,
+    #[sqlx(rename = "typeId")]
+    type_id: i64,
+    #[sqlx(rename = "tierId")]
+    tier_id: Option<i64>,
+    #[sqlx(rename = "partName")]
+    part_name: String,
+    #[sqlx(rename = "orePriceId")]
+    ore_price_id: i64,
+    #[sqlx(rename = "oreCapacity")]
+    ore_capacity: i32,
+    #[sqlx(rename = "miningCapacity")]
+    mining_capacity: i32,
+    #[sqlx(rename = "batteryCapacity")]
+    battery_capacity: i32,
+    #[sqlx(rename = "memoryCapacity")]
+    memory_capacity: i32,
+    #[sqlx(rename = "cpuCapacity")]
+    cpu_capacity: i32,
+    #[sqlx(rename = "forwardCapacity")]
+    forward_capacity: i32,
+    #[sqlx(rename = "backwardCapacity")]
+    backward_capacity: i32,
+    #[sqlx(rename = "rotateCapacity")]
+    rotate_capacity: i32,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+    #[sqlx(rename = "scanTime")]
+    scan_time: i32,
+    #[sqlx(rename = "scanDistance")]
+    scan_distance: i32,
+    weight: i32,
+    volume: i32,
+    #[sqlx(rename = "powerUsage")]
+    power_usage: i32,
+}
+
+impl From<RobotPartRow> for RobotPartRecord {
+    fn from(row: RobotPartRow) -> Self {
+        Self {
+            id: row.id,
+            type_id: row.type_id,
+            tier_id: row.tier_id,
+            part_name: row.part_name,
+            ore_price_id: row.ore_price_id,
+            ore_capacity: row.ore_capacity,
+            mining_capacity: row.mining_capacity,
+            battery_capacity: row.battery_capacity,
+            memory_capacity: row.memory_capacity,
+            cpu_capacity: row.cpu_capacity,
+            forward_capacity: row.forward_capacity,
+            backward_capacity: row.backward_capacity,
+            rotate_capacity: row.rotate_capacity,
+            recharge_time: row.recharge_time,
+            scan_time: row.scan_time,
+            scan_distance: row.scan_distance,
+            weight: row.weight,
+            volume: row.volume,
+            power_usage: row.power_usage,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ShopRobotPartCatalogRow {
+    #[sqlx(rename = "id")]
+    robot_part_id: i64,
+    #[sqlx(rename = "typeId")]
+    type_id: i64,
+    #[sqlx(rename = "tierId")]
+    tier_id: i64,
+    #[sqlx(rename = "oreName")]
+    tier_name: String,
+    #[sqlx(rename = "partName")]
+    part_name: String,
+    #[sqlx(rename = "oreCapacity")]
+    ore_capacity: i32,
+    #[sqlx(rename = "miningCapacity")]
+    mining_capacity: i32,
+    #[sqlx(rename = "batteryCapacity")]
+    battery_capacity: i32,
+    #[sqlx(rename = "memoryCapacity")]
+    memory_capacity: i32,
+    #[sqlx(rename = "cpuCapacity")]
+    cpu_capacity: i32,
+    #[sqlx(rename = "forwardCapacity")]
+    forward_capacity: i32,
+    #[sqlx(rename = "backwardCapacity")]
+    backward_capacity: i32,
+    #[sqlx(rename = "rotateCapacity")]
+    rotate_capacity: i32,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+    #[sqlx(rename = "scanTime")]
+    scan_time: i32,
+    #[sqlx(rename = "scanDistance")]
+    scan_distance: i32,
+    weight: i32,
+    volume: i32,
+    #[sqlx(rename = "powerUsage")]
+    power_usage: i32,
+}
+
+impl From<ShopRobotPartCatalogRow> for ShopRobotPartCatalogRecord {
+    fn from(row: ShopRobotPartCatalogRow) -> Self {
+        Self {
+            robot_part_id: row.robot_part_id,
+            type_id: row.type_id,
+            tier_id: row.tier_id,
+            tier_name: row.tier_name,
+            part_name: row.part_name,
+            ore_capacity: row.ore_capacity,
+            mining_capacity: row.mining_capacity,
+            battery_capacity: row.battery_capacity,
+            memory_capacity: row.memory_capacity,
+            cpu_capacity: row.cpu_capacity,
+            forward_capacity: row.forward_capacity,
+            backward_capacity: row.backward_capacity,
+            rotate_capacity: row.rotate_capacity,
+            recharge_time: row.recharge_time,
+            scan_time: row.scan_time,
+            scan_distance: row.scan_distance,
+            weight: row.weight,
+            volume: row.volume,
+            power_usage: row.power_usage,
+        }
+    }
+}
 
 pub async fn list_robot_part_types(
     pool: &MySqlPool,
@@ -58,7 +188,7 @@ pub async fn list_ores(pool: &MySqlPool) -> Result<Vec<OreRecord>, sqlx::Error> 
 pub async fn list_shop_robot_part_catalog(
     pool: &MySqlPool,
 ) -> Result<Vec<ShopRobotPartCatalogRecord>, sqlx::Error> {
-    let rows = sqlx::query(
+    sqlx::query_as::<_, ShopRobotPartCatalogRow>(
         "SELECT RobotPart.id, RobotPart.typeId, RobotPart.tierId, Ore.oreName, \
                 RobotPart.partName, RobotPart.oreCapacity, RobotPart.miningCapacity, \
                 RobotPart.batteryCapacity, RobotPart.memoryCapacity, RobotPart.cpuCapacity, \
@@ -70,11 +200,12 @@ pub async fn list_shop_robot_part_catalog(
          ORDER BY RobotPart.typeId, RobotPart.id",
     )
     .fetch_all(pool)
-    .await?;
-
-    rows.into_iter()
-        .map(shop_robot_part_catalog_record)
-        .collect()
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(ShopRobotPartCatalogRecord::from)
+            .collect()
+    })
 }
 
 pub async fn list_shop_robot_part_costs(
@@ -107,7 +238,7 @@ pub async fn get_robot_part(
     pool: &MySqlPool,
     robot_part_id: i64,
 ) -> Result<Option<RobotPartRecord>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, RobotPartRow>(
         "SELECT id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \
                 batteryCapacity, memoryCapacity, cpuCapacity, forwardCapacity, backwardCapacity, \
                 rotateCapacity, rechargeTime, scanTime, scanDistance, weight, volume, powerUsage \
@@ -116,13 +247,12 @@ pub async fn get_robot_part(
     )
     .bind(robot_part_id)
     .fetch_optional(pool)
-    .await?;
-
-    row.map(robot_part_record).transpose()
+    .await
+    .map(|row| row.map(RobotPartRecord::from))
 }
 
 pub async fn list_robot_parts(pool: &MySqlPool) -> Result<Vec<RobotPartRecord>, sqlx::Error> {
-    let rows = sqlx::query(
+    sqlx::query_as::<_, RobotPartRow>(
         "SELECT id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \
                 batteryCapacity, memoryCapacity, cpuCapacity, forwardCapacity, backwardCapacity, \
                 rotateCapacity, rechargeTime, scanTime, scanDistance, weight, volume, powerUsage \
@@ -130,7 +260,6 @@ pub async fn list_robot_parts(pool: &MySqlPool) -> Result<Vec<RobotPartRecord>, 
          ORDER BY typeId, id",
     )
     .fetch_all(pool)
-    .await?;
-
-    rows.into_iter().map(robot_part_record).collect()
+    .await
+    .map(|rows| rows.into_iter().map(RobotPartRecord::from).collect())
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE MiningQueue SET score = ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "878d3ac848577375dd2cc4bfc7bd6d3a7d8f072e32832d9e2e4874d703e47f1c"
+}

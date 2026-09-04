@@ -1,12 +1,12 @@
 (function(global) {
     function getParam(name) {
-        var search = global.location.search;
+        const search = global.location.search;
         if (!search) {
             return null;
         }
-        var params = search.substring(1).split('&');
-        for (var index = 0; index < params.length; index += 1) {
-            var pair = params[index].split('=');
+        const params = search.substring(1).split('&');
+        for (let index = 0; index < params.length; index += 1) {
+            const pair = params[index].split('=');
             if (decodeURIComponent(pair[0]) === name && pair[1]) {
                 return decodeURIComponent(pair[1]);
             }
@@ -18,17 +18,17 @@
         if (!names || !names.length) {
             return false;
         }
-        var search = global.location.search;
+        const search = global.location.search;
         if (!search) {
             return false;
         }
-        var wanted = {};
-        for (var nameIndex = 0; nameIndex < names.length; nameIndex += 1) {
+        const wanted = {};
+        for (let nameIndex = 0; nameIndex < names.length; nameIndex += 1) {
             wanted[names[nameIndex]] = true;
         }
-        var params = search.substring(1).split('&');
-        for (var paramIndex = 0; paramIndex < params.length; paramIndex += 1) {
-            var paramName = decodeURIComponent(params[paramIndex].split('=')[0]);
+        const params = search.substring(1).split('&');
+        for (let paramIndex = 0; paramIndex < params.length; paramIndex += 1) {
+            const paramName = decodeURIComponent(params[paramIndex].split('=')[0]);
             if (wanted[paramName]) {
                 return true;
             }
@@ -43,10 +43,10 @@
         if (typeof params === 'string') {
             return params;
         }
-        var parts = [];
-        for (var key in params) {
+        const parts = [];
+        for (const key in params) {
             if (Object.prototype.hasOwnProperty.call(params, key)) {
-                var value = params[key];
+                const value = params[key];
                 if (value !== null && value !== undefined && value !== '') {
                     parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(String(value)));
                 }
@@ -56,8 +56,8 @@
     }
 
     function replaceQuery(path, params) {
-        var query = buildQueryString(params);
-        var url = query ? path + '?' + query : path;
+        const query = buildQueryString(params);
+        const url = query ? path + '?' + query : path;
         if (global.history && global.history.replaceState) {
             global.history.replaceState(null, '', url);
         }

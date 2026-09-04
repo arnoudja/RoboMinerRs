@@ -1,6 +1,6 @@
 (function() {
-    var toggle = document.getElementById('app-shell-nav-toggle');
-    var label = document.querySelector('label[for="app-shell-nav-toggle"]');
+    const toggle = document.getElementById('app-shell-nav-toggle');
+    const label = document.querySelector('label[for="app-shell-nav-toggle"]');
     if (!toggle || !label) {
         return;
     }

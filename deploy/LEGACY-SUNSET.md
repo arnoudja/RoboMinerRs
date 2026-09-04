@@ -56,9 +56,21 @@ sunset criteria are met.
 | Sunset | Prefer `EnvironmentFile` / env vars (see `deploy/systemd/robominer.env.example`); deprecate file format in a major release |
 | Risk | Medium for existing Pi/systemd installs — provide migration notes in `deploy/systemd/` |
 
+## `__Host-` cookie prefix (not yet)
+
+| Item | Detail |
+| --- | --- |
+| Location | `robominer-web/src/session/`, `robominer-web/src/csrf/` |
+| Current | Cookies `robominer_session`, `robominer_username`, `robominer_csrf` use `Path=/`, no `Domain`; `Secure` only when `securecookies` is on |
+| Sunset | Rename to `__Host-*` only when every real deploy forces Secure (HTTPS end-to-end). Checklist before flip: (1) `securecookies 1` required in all production env files / docs, (2) no plain-HTTP LAN deploys that still need cookies, (3) clear old cookie names on login/logoff, (4) proxy TLS terminates correctly |
+| Risk | High for LAN/HTTP installs — browsers reject `__Host-` without Secure |
+
 ## Recommended order
 
 1. ~~Tighten open-redirect and session rules~~ **Done** (`returnTo` whitelist, CSRF logoff, Secure+trustproxy, session secret floor, TTL cap)
-2. Remove PascalCase redirects when analytics show zero use
-3. Bump minimum session version after TTL window (remember-me max age is 30 days)
-4. Leave ore-ordering and conf-file paths until a deliberate migration release
+2. ~~Trustproxy missing Real-IP footgun~~ **Done** (dedicated `proxy-missing-real-ip` key + error log)
+3. Remove PascalCase redirects when analytics show zero use
+4. Bump minimum session version after TTL window (remember-me max age is 30 days)
+5. `__Host-` cookies only after Secure is mandatory on every deploy path
+6. Leave ore-ordering and conf-file paths until a deliberate migration release
+7. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)

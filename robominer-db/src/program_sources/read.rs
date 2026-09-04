@@ -1,7 +1,71 @@
 use sqlx::MySqlPool;
 
-use crate::mappers::{ProgramSourceRow, program_source_rows, program_source_state_record};
-use crate::{ProgramSourceRecord, ProgramSourceVerification};
+use crate::{ProgramSourceRecord, ProgramSourceStateRecord, ProgramSourceVerification};
+
+#[derive(sqlx::FromRow)]
+pub(crate) struct ProgramSourceRow {
+    id: i64,
+    #[sqlx(rename = "userId")]
+    user_id: i64,
+    #[sqlx(rename = "sourceName")]
+    source_name: String,
+    #[sqlx(rename = "sourceCode")]
+    source_code: Option<String>,
+    verified: bool,
+    #[sqlx(rename = "compiledSize")]
+    compiled_size: i32,
+    #[sqlx(rename = "errorDescription")]
+    error_description: Option<String>,
+}
+
+impl From<ProgramSourceRow> for ProgramSourceRecord {
+    fn from(row: ProgramSourceRow) -> Self {
+        Self {
+            id: row.id,
+            user_id: row.user_id,
+            source_name: row.source_name,
+            source_code: row.source_code,
+            verified: row.verified,
+            compiled_size: row.compiled_size,
+            error_description: row.error_description.unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ProgramSourceStateRow {
+    id: i64,
+    #[sqlx(rename = "userId")]
+    user_id: i64,
+    #[sqlx(rename = "sourceName")]
+    source_name: String,
+    #[sqlx(rename = "sourceCode")]
+    source_code: Option<String>,
+    verified: bool,
+    #[sqlx(rename = "compiledSize")]
+    compiled_size: i32,
+    #[sqlx(rename = "errorDescription")]
+    error_description: Option<String>,
+    #[sqlx(rename = "linkedRobotCount")]
+    linked_robot_count: i64,
+}
+
+impl From<ProgramSourceStateRow> for ProgramSourceStateRecord {
+    fn from(row: ProgramSourceStateRow) -> Self {
+        Self {
+            source: ProgramSourceRecord {
+                id: row.id,
+                user_id: row.user_id,
+                source_name: row.source_name,
+                source_code: row.source_code,
+                verified: row.verified,
+                compiled_size: row.compiled_size,
+                error_description: row.error_description.unwrap_or_default(),
+            },
+            linked_robot_count: row.linked_robot_count,
+        }
+    }
+}
 
 pub async fn get_program_source(
     pool: &MySqlPool,
@@ -26,14 +90,14 @@ pub async fn list_program_sources_for_user(
     .bind(user_id)
     .fetch_all(pool)
     .await
-    .map(program_source_rows)
+    .map(|rows| rows.into_iter().map(ProgramSourceRecord::from).collect())
 }
 
 pub async fn list_program_source_states_for_user(
     pool: &MySqlPool,
     user_id: i64,
-) -> Result<Vec<crate::ProgramSourceStateRecord>, sqlx::Error> {
-    let rows = sqlx::query(
+) -> Result<Vec<ProgramSourceStateRecord>, sqlx::Error> {
+    sqlx::query_as::<_, ProgramSourceStateRow>(
         "SELECT ProgramSource.id, ProgramSource.userId, ProgramSource.sourceName, \
                 ProgramSource.sourceCode, ProgramSource.verified, ProgramSource.compiledSize, \
                 ProgramSource.errorDescription, \
@@ -45,9 +109,12 @@ pub async fn list_program_source_states_for_user(
     )
     .bind(user_id)
     .fetch_all(pool)
-    .await?;
-
-    rows.into_iter().map(program_source_state_record).collect()
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(ProgramSourceStateRecord::from)
+            .collect()
+    })
 }
 
 pub async fn get_program_source_verification(

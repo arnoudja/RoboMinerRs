@@ -1,5 +1,4 @@
 use sqlx::MySqlPool;
-use sqlx::Row;
 
 use crate::robots::{add_default_robot_for_user, user_robot_count};
 use crate::users::touch_user_last_login_time;
@@ -8,14 +7,21 @@ use crate::{
     db_ok, db_reject,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, sqlx::FromRow)]
 struct AchievementStepState {
+    #[sqlx(rename = "achievementPoints")]
     achievement_points: i32,
+    #[sqlx(rename = "miningQueueReward")]
     mining_queue_reward: i32,
+    #[sqlx(rename = "robotReward")]
     robot_reward: i32,
+    #[sqlx(rename = "miningAreaId")]
     mining_area_id: Option<i64>,
+    #[sqlx(rename = "oreId")]
     ore_id: Option<i64>,
+    #[sqlx(rename = "maxOreReward")]
     max_ore_reward: i32,
+    #[sqlx(rename = "maxDepotReward")]
     max_depot_reward: i32,
 }
 
@@ -136,7 +142,7 @@ async fn load_achievement_step(
     achievement_id: i64,
     step: i32,
 ) -> Result<Option<AchievementStepState>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, AchievementStepState>(
         "SELECT achievementPoints, miningQueueReward, robotReward, miningAreaId, oreId, \
                 maxOreReward, maxDepotReward \
          FROM AchievementStep \
@@ -145,20 +151,7 @@ async fn load_achievement_step(
     .bind(achievement_id)
     .bind(step)
     .fetch_optional(&mut **transaction)
-    .await?;
-
-    row.map(|row| {
-        Ok(AchievementStepState {
-            achievement_points: row.try_get("achievementPoints")?,
-            mining_queue_reward: row.try_get("miningQueueReward")?,
-            robot_reward: row.try_get("robotReward")?,
-            mining_area_id: row.try_get("miningAreaId")?,
-            ore_id: row.try_get("oreId")?,
-            max_ore_reward: row.try_get("maxOreReward")?,
-            max_depot_reward: row.try_get("maxDepotReward")?,
-        })
-    })
-    .transpose()
+    .await
 }
 
 async fn achievement_requirements_met(

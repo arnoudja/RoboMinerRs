@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE ProgramSource SET errorDescription = ?, verified = false, compiledSize = -1 WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4d88ad1f333224b52b7c80342327e2763b5b8ac2cc78beee871c10fe1881cbc0"
+}
