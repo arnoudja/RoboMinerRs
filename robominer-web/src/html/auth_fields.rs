@@ -17,7 +17,7 @@ pub(crate) fn render_password_field(
     ));
     body.push_str(r#"<div class="auth-password-wrap">"#);
     body.push_str(&format!(
-        r#"<input class="auth-input auth-password-input" type="password" id="{field_id}" name="{name}" placeholder="{placeholder}"{extra_attrs} />"#,
+        r#"<input class="auth-input auth-password-input" type="password" id="{field_id}" name="{name}" placeholder="{placeholder}" maxlength="128"{extra_attrs} />"#,
     ));
     body.push_str(&format!(
         r#"<button type="button" class="auth-password-toggle" data-target="{field_id}" aria-controls="{field_id}" aria-pressed="false">Show</button>"#,

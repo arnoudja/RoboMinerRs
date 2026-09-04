@@ -130,7 +130,7 @@ fn render_login_form(body: &mut String, state: &LoginPageState) {
         "password",
         "Password",
         "Your password",
-        &format!(" required{password_autofocus}"),
+        &format!(" required autocomplete=\"current-password\"{password_autofocus}"),
         None,
     );
     body.push_str(
@@ -199,7 +199,7 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
         "newpassword",
         "Password",
         "Choose a password",
-        r#" required pattern=".{8,}""#,
+        r#" required pattern=".{8,}" autocomplete="new-password""#,
         Some("At least 8 characters."),
     );
     render_password_field(
@@ -208,7 +208,7 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
         "confirmpassword",
         "Confirm password",
         "Confirm your password",
-        " required",
+        r#" required autocomplete="new-password""#,
         None,
     );
     body.push_str(r#"<button type="submit" class="auth-submit">Sign up</button>"#);

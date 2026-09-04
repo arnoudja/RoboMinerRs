@@ -56,7 +56,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         "currentpassword",
         "Current password",
         "Your current password",
-        r#" required"#,
+        r#" required autocomplete="current-password""#,
         None,
     );
     render_password_field(
@@ -65,7 +65,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         "newpassword",
         "New password",
         "New password, empty to leave unchanged",
-        r#" pattern="^$|.{8,}""#,
+        r#" pattern="^$|.{8,}" autocomplete="new-password""#,
         Some("At least 8 characters when changing password."),
     );
     render_password_field(
@@ -74,7 +74,7 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         "confirmpassword",
         "Confirm password",
         "Confirm your new password",
-        "",
+        r#" autocomplete="new-password""#,
         None,
     );
     body.push_str(r#"<button type="submit" class="auth-submit">Save changes</button>"#);
