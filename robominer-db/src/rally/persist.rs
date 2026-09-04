@@ -314,11 +314,13 @@ async fn update_robot_mining_area_score(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     participant: &CompletedRallyParticipantRecord,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE MiningQueue SET score = ? WHERE id = ?")
-        .bind(participant.score)
-        .bind(participant.mining_queue_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "UPDATE MiningQueue SET score = ? WHERE id = ?",
+        participant.score,
+        participant.mining_queue_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     let previous = sqlx::query_as::<_, (i32, f64)>(
         "SELECT totalRuns, score \

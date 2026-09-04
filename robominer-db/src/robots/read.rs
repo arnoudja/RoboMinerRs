@@ -1,10 +1,201 @@
 use sqlx::MySqlPool;
 
-use crate::mappers::{robot_config_state_record, robot_record};
 use crate::{
     RobotConfigPartAssetStateRecord, RobotConfigStateRecord, RobotLifetimeOreStatRecord,
     RobotMiningAreaScoreRecord, RobotMiningAreaStatRecord, RobotRecord, RobotStatsHeaderRecord,
 };
+
+#[derive(sqlx::FromRow)]
+struct RobotRow {
+    id: i64,
+    #[sqlx(rename = "userId")]
+    user_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    #[sqlx(rename = "sourceCode")]
+    source_code: String,
+    #[sqlx(rename = "programSourceId")]
+    program_source_id: Option<i64>,
+    #[sqlx(rename = "oreContainerId")]
+    ore_container_id: Option<i64>,
+    #[sqlx(rename = "miningUnitId")]
+    mining_unit_id: Option<i64>,
+    #[sqlx(rename = "batteryId")]
+    battery_id: Option<i64>,
+    #[sqlx(rename = "memoryModuleId")]
+    memory_module_id: Option<i64>,
+    #[sqlx(rename = "cpuId")]
+    cpu_id: Option<i64>,
+    #[sqlx(rename = "engineId")]
+    engine_id: Option<i64>,
+    #[sqlx(rename = "oreScannerId")]
+    ore_scanner_id: Option<i64>,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+    #[sqlx(rename = "maxOre")]
+    max_ore: i32,
+    #[sqlx(rename = "miningSpeed")]
+    mining_speed: i32,
+    #[sqlx(rename = "maxTurns")]
+    max_turns: i32,
+    #[sqlx(rename = "memorySize")]
+    memory_size: i32,
+    #[sqlx(rename = "cpuSpeed")]
+    cpu_speed: i32,
+    #[sqlx(rename = "forwardSpeed")]
+    forward_speed: f64,
+    #[sqlx(rename = "backwardSpeed")]
+    backward_speed: f64,
+    #[sqlx(rename = "rotateSpeed")]
+    rotate_speed: i32,
+    #[sqlx(rename = "robotSize")]
+    robot_size: f64,
+    #[sqlx(rename = "scanTime")]
+    scan_time: i32,
+    #[sqlx(rename = "scanDistance")]
+    scan_distance: i32,
+    #[sqlx(rename = "totalMiningRuns")]
+    total_mining_runs: i32,
+}
+
+impl From<RobotRow> for RobotRecord {
+    fn from(row: RobotRow) -> Self {
+        Self {
+            id: row.id,
+            user_id: row.user_id,
+            robot_name: row.robot_name,
+            source_code: row.source_code,
+            program_source_id: row.program_source_id,
+            ore_container_id: row.ore_container_id,
+            mining_unit_id: row.mining_unit_id,
+            battery_id: row.battery_id,
+            memory_module_id: row.memory_module_id,
+            cpu_id: row.cpu_id,
+            engine_id: row.engine_id,
+            ore_scanner_id: row.ore_scanner_id,
+            recharge_time: row.recharge_time,
+            max_ore: row.max_ore,
+            mining_speed: row.mining_speed,
+            max_turns: row.max_turns,
+            memory_size: row.memory_size,
+            cpu_speed: row.cpu_speed,
+            forward_speed: row.forward_speed,
+            backward_speed: row.backward_speed,
+            rotate_speed: row.rotate_speed,
+            robot_size: row.robot_size,
+            scan_time: row.scan_time,
+            scan_distance: row.scan_distance,
+            total_mining_runs: row.total_mining_runs,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct RobotConfigStateRow {
+    #[sqlx(rename = "robotId")]
+    robot_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    #[sqlx(rename = "programSourceId")]
+    program_source_id: i64,
+    #[sqlx(rename = "oreContainerId")]
+    ore_container_id: i64,
+    #[sqlx(rename = "oreContainerName")]
+    ore_container_name: String,
+    #[sqlx(rename = "miningUnitId")]
+    mining_unit_id: i64,
+    #[sqlx(rename = "miningUnitName")]
+    mining_unit_name: String,
+    #[sqlx(rename = "batteryId")]
+    battery_id: i64,
+    #[sqlx(rename = "batteryName")]
+    battery_name: String,
+    #[sqlx(rename = "batteryCapacity")]
+    battery_capacity: i32,
+    #[sqlx(rename = "memoryModuleId")]
+    memory_module_id: i64,
+    #[sqlx(rename = "memoryModuleName")]
+    memory_module_name: String,
+    #[sqlx(rename = "cpuId")]
+    cpu_id: i64,
+    #[sqlx(rename = "cpuName")]
+    cpu_name: String,
+    #[sqlx(rename = "engineId")]
+    engine_id: i64,
+    #[sqlx(rename = "engineName")]
+    engine_name: String,
+    #[sqlx(rename = "engineForwardCapacity")]
+    engine_forward_capacity: i32,
+    #[sqlx(rename = "oreScannerId")]
+    ore_scanner_id: i64,
+    #[sqlx(rename = "oreScannerName")]
+    ore_scanner_name: String,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+    #[sqlx(rename = "maxOre")]
+    max_ore: i32,
+    #[sqlx(rename = "miningSpeed")]
+    mining_speed: i32,
+    #[sqlx(rename = "maxTurns")]
+    max_turns: i32,
+    #[sqlx(rename = "memorySize")]
+    memory_size: i32,
+    #[sqlx(rename = "cpuSpeed")]
+    cpu_speed: i32,
+    #[sqlx(rename = "forwardSpeed")]
+    forward_speed: f64,
+    #[sqlx(rename = "backwardSpeed")]
+    backward_speed: f64,
+    #[sqlx(rename = "rotateSpeed")]
+    rotate_speed: i32,
+    #[sqlx(rename = "robotSize")]
+    robot_size: f64,
+    #[sqlx(rename = "scanTime")]
+    scan_time: i32,
+    #[sqlx(rename = "scanDistance")]
+    scan_distance: i32,
+    #[sqlx(rename = "changePending")]
+    change_pending: bool,
+}
+
+impl From<RobotConfigStateRow> for RobotConfigStateRecord {
+    fn from(row: RobotConfigStateRow) -> Self {
+        Self {
+            robot_id: row.robot_id,
+            robot_name: row.robot_name,
+            program_source_id: row.program_source_id,
+            ore_container_id: row.ore_container_id,
+            ore_container_name: row.ore_container_name,
+            mining_unit_id: row.mining_unit_id,
+            mining_unit_name: row.mining_unit_name,
+            battery_id: row.battery_id,
+            battery_name: row.battery_name,
+            battery_capacity: row.battery_capacity,
+            memory_module_id: row.memory_module_id,
+            memory_module_name: row.memory_module_name,
+            cpu_id: row.cpu_id,
+            cpu_name: row.cpu_name,
+            engine_id: row.engine_id,
+            engine_name: row.engine_name,
+            engine_forward_capacity: row.engine_forward_capacity,
+            ore_scanner_id: row.ore_scanner_id,
+            ore_scanner_name: row.ore_scanner_name,
+            recharge_time: row.recharge_time,
+            max_ore: row.max_ore,
+            mining_speed: row.mining_speed,
+            max_turns: row.max_turns,
+            memory_size: row.memory_size,
+            cpu_speed: row.cpu_speed,
+            forward_speed: row.forward_speed,
+            backward_speed: row.backward_speed,
+            rotate_speed: row.rotate_speed,
+            robot_size: row.robot_size,
+            scan_time: row.scan_time,
+            scan_distance: row.scan_distance,
+            change_pending: row.change_pending,
+        }
+    }
+}
 
 #[derive(sqlx::FromRow)]
 struct RobotConfigPartAssetRow {
@@ -57,7 +248,7 @@ pub async fn list_robot_config_states(
 ) -> Result<Vec<RobotConfigStateRecord>, sqlx::Error> {
     crate::reconcile_pending_robot_changes_for_user(pool, user_id).await?;
 
-    let rows = sqlx::query(
+    sqlx::query_as::<_, RobotConfigStateRow>(
         "SELECT Robot.id AS robotId, \
                 Robot.robotName, \
                 Robot.programSourceId, \
@@ -111,9 +302,12 @@ pub async fn list_robot_config_states(
     )
     .bind(user_id)
     .fetch_all(pool)
-    .await?;
-
-    rows.into_iter().map(robot_config_state_record).collect()
+    .await
+    .map(|rows| {
+        rows.into_iter()
+            .map(RobotConfigStateRecord::from)
+            .collect()
+    })
 }
 
 pub async fn list_robot_config_part_asset_states(
@@ -170,7 +364,7 @@ pub async fn get_robot(
     pool: &MySqlPool,
     robot_id: i64,
 ) -> Result<Option<RobotRecord>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, RobotRow>(
         "SELECT id, userId, robotName, sourceCode, programSourceId, oreContainerId, \
                 miningUnitId, batteryId, memoryModuleId, cpuId, engineId, oreScannerId, \
                 rechargeTime, maxOre, miningSpeed, maxTurns, memorySize, cpuSpeed, \
@@ -181,9 +375,8 @@ pub async fn get_robot(
     )
     .bind(robot_id)
     .fetch_optional(pool)
-    .await?;
-
-    row.map(robot_record).transpose()
+    .await
+    .map(|row| row.map(RobotRecord::from))
 }
 
 pub async fn get_ai_robot(

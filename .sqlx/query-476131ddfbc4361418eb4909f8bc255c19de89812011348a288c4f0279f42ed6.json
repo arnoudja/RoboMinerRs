@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO ProgramSource (userId, sourceName, sourceCode, verified, compiledSize, errorDescription) VALUES (?, ?, ?, false, -1, '')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "476131ddfbc4361418eb4909f8bc255c19de89812011348a288c4f0279f42ed6"
+}

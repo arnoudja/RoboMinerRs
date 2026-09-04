@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM ProgramSource WHERE id = ? AND userId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "1e4a0529b3c176a4634f525fb9b0571af559fe8699863292eff86c98f7ed313d"
+}

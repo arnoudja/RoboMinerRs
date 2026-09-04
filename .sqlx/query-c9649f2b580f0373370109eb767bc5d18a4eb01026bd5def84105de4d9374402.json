@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM PendingRobotChanges WHERE robotId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "c9649f2b580f0373370109eb767bc5d18a4eb01026bd5def84105de4d9374402"
+}

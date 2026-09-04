@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE Robot SET robotName = ?, programSourceId = ? WHERE id = ? AND userId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "4ae34e1e8927cc7d98cfd31a35f13d4e5f3bbe3e35bb30358c10c8e3775b8d08"
+}

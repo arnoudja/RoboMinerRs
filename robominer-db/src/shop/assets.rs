@@ -35,13 +35,13 @@ pub(crate) async fn add_user_robot_part_asset(
     user_id: i64,
     robot_part_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO UserRobotPartAsset (userId, robotPartId, totalOwned) \
          VALUES (?, ?, 1) \
          ON DUPLICATE KEY UPDATE totalOwned = totalOwned + 1",
+        user_id,
+        robot_part_id
     )
-    .bind(user_id)
-    .bind(robot_part_id)
     .execute(&mut **transaction)
     .await?;
 

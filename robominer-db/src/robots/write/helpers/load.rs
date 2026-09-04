@@ -3,7 +3,8 @@ use sqlx::Row;
 use super::super::super::{
     PendingRobotUpdateState, ProgramSourceUpdateState, RequestedRobotParts, RobotUpdateState,
 };
-use crate::mappers::{ProgramSourceRow, program_source_record, robot_part_record};
+use crate::catalog::RobotPartRow;
+use crate::program_sources::ProgramSourceRow;
 use crate::{ProgramSourceRecord, RobotPartRecord, UpdateRobotConfigRequest};
 
 pub(crate) fn generated_robot_name(username: &str, robot_number: i64) -> String {
@@ -55,7 +56,7 @@ pub(crate) async fn find_or_create_default_program_source(
     .fetch_optional(&mut **transaction)
     .await?
     {
-        return Ok(program_source_record(row));
+        return Ok(ProgramSourceRecord::from(row));
     }
 
     let source_code = default_program_source_code();
@@ -246,7 +247,7 @@ async fn load_robot_part_for_update(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_part_id: i64,
 ) -> Result<Option<RobotPartRecord>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, RobotPartRow>(
         "SELECT id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \
                 batteryCapacity, memoryCapacity, cpuCapacity, forwardCapacity, backwardCapacity, \
                 rotateCapacity, rechargeTime, scanTime, scanDistance, weight, volume, powerUsage \
@@ -256,16 +257,15 @@ async fn load_robot_part_for_update(
     )
     .bind(robot_part_id)
     .fetch_optional(&mut **transaction)
-    .await?;
-
-    row.map(robot_part_record).transpose()
+    .await
+    .map(|row| row.map(RobotPartRecord::from))
 }
 
 pub(crate) async fn load_robot_part(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_part_id: i64,
 ) -> Result<Option<RobotPartRecord>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, RobotPartRow>(
         "SELECT id, typeId, tierId, partName, orePriceId, oreCapacity, miningCapacity, \
                 batteryCapacity, memoryCapacity, cpuCapacity, forwardCapacity, backwardCapacity, \
                 rotateCapacity, rechargeTime, scanTime, scanDistance, weight, volume, powerUsage \
@@ -274,9 +274,8 @@ pub(crate) async fn load_robot_part(
     )
     .bind(robot_part_id)
     .fetch_optional(&mut **transaction)
-    .await?;
-
-    row.map(robot_part_record).transpose()
+    .await
+    .map(|row| row.map(RobotPartRecord::from))
 }
 
 pub(crate) fn valid_robot_name(robot_name: &str) -> bool {

@@ -62,10 +62,12 @@ pub(super) async fn delete_pending_robot_config(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM PendingRobotChanges WHERE robotId = ?")
-        .bind(robot_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "DELETE FROM PendingRobotChanges WHERE robotId = ?",
+        robot_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }
@@ -124,15 +126,15 @@ pub(super) async fn update_robot_header(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     request: &UpdateRobotConfigRequest,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE Robot \
          SET robotName = ?, programSourceId = ? \
          WHERE id = ? AND userId = ?",
+        request.robot_name,
+        request.program_source_id,
+        request.robot_id,
+        request.user_id
     )
-    .bind(&request.robot_name)
-    .bind(request.program_source_id)
-    .bind(request.robot_id)
-    .bind(request.user_id)
     .execute(&mut **transaction)
     .await?;
 
