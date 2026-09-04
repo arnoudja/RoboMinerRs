@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 
 use crate::ClaimedMiningQueueCleanupSummary;
@@ -41,7 +42,7 @@ pub(super) async fn cleanup_old_claimed_mining_queue_items(
     let queue_ids: Vec<i64> = old_items.iter().map(|(id, _)| *id).collect();
     let placeholders = crate::in_placeholders(queue_ids.len());
     let delete_query = format!("DELETE FROM MiningQueue WHERE id IN ({placeholders})");
-    let mut delete_builder = sqlx::query(&delete_query);
+    let mut delete_builder = sqlx::query(assert_sql_safe(delete_query));
     for queue_id in &queue_ids {
         delete_builder = delete_builder.bind(queue_id);
     }

@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 
 use super::errors::MigrateError;
@@ -41,7 +42,9 @@ async fn drop_column_foreign_key(
     }
 
     let sql = format!("ALTER TABLE `{table_name}` DROP FOREIGN KEY `{constraint_name}`");
-    sqlx::query(&sql).execute(&mut **conn).await?;
+    sqlx::query(assert_sql_safe(sql))
+        .execute(&mut **conn)
+        .await?;
     Ok(())
 }
 
@@ -60,7 +63,9 @@ async fn ensure_nullable_int_column(
     }
 
     let sql = format!("ALTER TABLE `{table_name}` ADD COLUMN `{column_name}` INT NULL");
-    sqlx::query(&sql).execute(&mut **conn).await?;
+    sqlx::query(assert_sql_safe(sql))
+        .execute(&mut **conn)
+        .await?;
     Ok(())
 }
 
@@ -94,7 +99,9 @@ pub(super) async fn execute_sql_script(pool: &MySqlPool, sql: &str) -> Result<()
     // on a single session.
     let mut conn = pool.acquire().await?;
     for statement in split_sql_statements(sql) {
-        sqlx::query(&statement).execute(&mut *conn).await?;
+        sqlx::query(assert_sql_safe(statement))
+            .execute(&mut *conn)
+            .await?;
     }
     Ok(())
 }

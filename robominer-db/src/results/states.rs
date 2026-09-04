@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 
 use crate::MiningResultStateRecord;
@@ -70,7 +71,7 @@ pub async fn list_mining_result_states_for_user(
     user_id: i64,
     maximum_results: i64,
 ) -> Result<Vec<MiningResultStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, MiningResultStateRow>(&format!(
+    sqlx::query_as::<_, MiningResultStateRow>(assert_sql_safe(format!(
         "SELECT {MINING_RESULT_STATE_COLUMNS} \
          FROM MiningQueue \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
@@ -81,7 +82,7 @@ pub async fn list_mining_result_states_for_user(
          GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
          LIMIT ?"
-    ))
+    )))
     .bind(user_id)
     .bind(maximum_results)
     .fetch_all(pool)
@@ -98,7 +99,7 @@ pub async fn list_mining_result_states_for_robot(
     robot_id: i64,
     maximum_results: i64,
 ) -> Result<Vec<MiningResultStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, MiningResultStateRow>(&format!(
+    sqlx::query_as::<_, MiningResultStateRow>(assert_sql_safe(format!(
         "SELECT {MINING_RESULT_STATE_COLUMNS} \
          FROM MiningQueue \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
@@ -108,7 +109,7 @@ pub async fn list_mining_result_states_for_robot(
          GROUP BY {MINING_RESULT_STATE_GROUP_BY} \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC \
          LIMIT ?"
-    ))
+    )))
     .bind(robot_id)
     .bind(maximum_results)
     .fetch_all(pool)

@@ -11,10 +11,10 @@ fn default_part_id_list_sql() -> String {
 }
 
 pub async fn ensure_default_robot_parts(pool: &MySqlPool) {
-    let existing_default_parts: i64 = sqlx::query_scalar(&format!(
+    let existing_default_parts: i64 = sqlx::query_scalar(robominer_db::assert_sql_safe(format!(
         "SELECT COUNT(*) FROM RobotPart WHERE id IN ({})",
         default_part_id_list_sql()
-    ))
+    )))
     .fetch_one(pool)
     .await
     .expect("failed to count default robot parts");

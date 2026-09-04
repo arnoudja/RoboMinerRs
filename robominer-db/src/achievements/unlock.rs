@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 
 pub async fn reconcile_successor_unlocks(
@@ -78,7 +79,7 @@ async fn successor_requirements_met(
          FROM UserAchievement \
          WHERE userId = ? AND achievementId IN ({placeholders})"
     );
-    let mut query_builder = sqlx::query_as::<_, (i64, i32)>(&query).bind(user_id);
+    let mut query_builder = sqlx::query_as::<_, (i64, i32)>(assert_sql_safe(query)).bind(user_id);
     for predecessor_id in &predecessor_ids {
         query_builder = query_builder.bind(predecessor_id);
     }

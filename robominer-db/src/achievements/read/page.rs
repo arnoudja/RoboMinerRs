@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 use sqlx::Row;
 
@@ -95,7 +96,7 @@ pub async fn list_achievement_page_states_for_user(
         initial = INITIAL_ORE_WALLET_MAX,
     );
 
-    sqlx::query(&query)
+    sqlx::query(assert_sql_safe(query))
         .bind(user_id)
         .fetch_all(pool)
         .await

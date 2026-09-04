@@ -1,5 +1,7 @@
 use sqlx::MySqlPool;
 
+use crate::assert_sql_safe;
+
 use crate::{MiningResultActionStateRecord, MiningResultAreaOreRecord, MiningResultOreStateRecord};
 
 pub async fn list_mining_result_ore_states_for_user(
@@ -7,7 +9,7 @@ pub async fn list_mining_result_ore_states_for_user(
     user_id: i64,
     maximum_results: i64,
 ) -> Result<Vec<MiningResultOreStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String, i32, i32, i32)>(&format!(
+    sqlx::query_as::<_, (i64, i64, String, i32, i32, i32)>(assert_sql_safe(format!(
         "SELECT MiningQueue.id, MiningOreResult.oreId, Ore.oreName, \
                 MiningOreResult.amount, COALESCE(MiningOreResult.tax, 0), \
                 MiningOreResult.amount - COALESCE(MiningOreResult.tax, 0) \
@@ -17,7 +19,7 @@ pub async fn list_mining_result_ore_states_for_user(
          WHERE MiningQueue.id IN ({}) \
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC, Ore.id",
         super::RECENT_CLAIMED_MINING_QUEUE_IDS_FOR_USER
-    ))
+    )))
     .bind(user_id)
     .bind(maximum_results)
     .fetch_all(pool)
@@ -43,7 +45,7 @@ pub async fn list_mining_result_action_states_for_user(
     user_id: i64,
     maximum_results: i64,
 ) -> Result<Vec<MiningResultActionStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i32, i32)>(&format!(
+    sqlx::query_as::<_, (i64, i32, i32)>(assert_sql_safe(format!(
         "SELECT MiningQueue.id, RobotActionsDone.actionType, RobotActionsDone.amount \
          FROM MiningQueue \
          INNER JOIN RobotActionsDone ON RobotActionsDone.miningQueueId = MiningQueue.id \
@@ -51,7 +53,7 @@ pub async fn list_mining_result_action_states_for_user(
          ORDER BY MiningQueue.miningEndTime DESC, MiningQueue.id DESC, \
                   RobotActionsDone.actionType",
         super::RECENT_CLAIMED_MINING_QUEUE_IDS_FOR_USER
-    ))
+    )))
     .bind(user_id)
     .bind(maximum_results)
     .fetch_all(pool)
@@ -74,7 +76,7 @@ pub async fn list_mining_result_area_ores_for_user(
     user_id: i64,
     maximum_results: i64,
 ) -> Result<Vec<MiningResultAreaOreRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String)>(&format!(
+    sqlx::query_as::<_, (i64, i64, String)>(assert_sql_safe(format!(
         "SELECT DISTINCT MiningQueue.miningAreaId, Ore.id, Ore.oreName \
          FROM MiningQueue \
          INNER JOIN MiningAreaOreSupply \
@@ -83,7 +85,7 @@ pub async fn list_mining_result_area_ores_for_user(
          WHERE MiningQueue.id IN ({}) \
          ORDER BY MiningQueue.miningAreaId, Ore.id DESC",
         super::RECENT_CLAIMED_MINING_QUEUE_IDS_FOR_USER
-    ))
+    )))
     .bind(user_id)
     .bind(maximum_results)
     .fetch_all(pool)
