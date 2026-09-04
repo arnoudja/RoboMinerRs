@@ -38,10 +38,10 @@ trustproxy 1
 | Key | Purpose |
 | --- | --- |
 | `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
-| `sessionsecret` | Signs session cookies; required (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
-| `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** when unset so plain HTTP (including `host 0.0.0.0` on a LAN) keeps working |
+| `sessionsecret` | Signs session cookies; required and must be ≥32 characters (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
+| `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** when unset so plain HTTP (including `host 0.0.0.0` on a LAN) keeps working. **Required** when `trustproxy 1` is set (startup fails otherwise) |
 | `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
-| `trustproxy 1` | Trust `X-Real-Ip` then `X-Forwarded-For` for login rate limits and auth logs (proxy must overwrite both with the connecting client). Refused at startup unless `host` is loopback |
+| `trustproxy 1` | Trust only `X-Real-Ip` for login rate limits and auth logs (proxy must set it to `$remote_addr`). Refused at startup unless `host` is loopback; also requires `securecookies 1` |
 
 Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
 `ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`,
@@ -210,7 +210,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Session invalidation on password change / logoff / logout-all-devices | `User.sessionVersion` bumped; cookie version checked on each request |
 | Opaque `/health` failures | 503 body is `unavailable` only; SQL/migration detail stays in logs |
 | Program source size cap | 16 KiB UTF-8 bytes on create/update |
-| Client IP | Peer address by default; `trustproxy 1` enables proxy headers (loopback bind required) |
+| Client IP | Peer address by default; `trustproxy 1` trusts only `X-Real-Ip` (loopback bind + `securecookies 1` required) |
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |

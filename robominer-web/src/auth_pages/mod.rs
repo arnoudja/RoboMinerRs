@@ -17,20 +17,26 @@ pub(super) struct LoginPageState {
 
 pub(super) async fn logoff_page(request: &Request, config: &ServerConfig) -> Response {
     if is_post(request) {
-        if let Some(user_id) = request_user_id(request)
-            && let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id)
-        {
-            return response;
+        if let Some(user_id) = request_user_id(request) {
+            if let Some(response) = crate::csrf::reject_invalid_csrf(request, user_id) {
+                return response;
+            }
+            if let Some(pool) = config.database_pool.as_ref()
+                && let Err(error) = robominer_db::bump_user_session_version(pool, user_id).await
+            {
+                tracing::error!(%error, user_id, "failed to bump session version on logoff");
+                return crate::page_context::page_load_error(
+                    "logoff",
+                    crate::page_context::PageLoadError::from(error),
+                );
+            }
+            return logoff_response_clearing_cookies();
         }
-        if let Some(user_id) = request_user_id(request)
-            && let Some(pool) = config.database_pool.as_ref()
-            && let Err(error) = robominer_db::bump_user_session_version(pool, user_id).await
-        {
-            tracing::error!(%error, user_id, "failed to bump session version on logoff");
-            return crate::page_context::page_load_error(
-                "logoff",
-                crate::page_context::PageLoadError::from(error),
-            );
+
+        // No session cookie: require anonymous CSRF before clearing cookies so a
+        // cross-site POST cannot force Set-Cookie clears (logout CSRF).
+        if let Some(response) = crate::csrf::reject_invalid_anonymous_csrf(request) {
+            return response;
         }
         return logoff_response_clearing_cookies();
     }
@@ -44,7 +50,10 @@ fn logoff_response_clearing_cookies() -> Response {
         .with_header("Set-Cookie", session::session_clear_cookie_header())
         .with_header(
             "Set-Cookie",
-            "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
+            format!(
+                "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+                session::secure_cookie_suffix()
+            ),
         )
         .with_header("Set-Cookie", session::username_clear_cookie_header())
         .with_header("Set-Cookie", process::remember_clear_cookie_header())

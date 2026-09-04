@@ -82,8 +82,9 @@ pub struct ServerConfig {
     /// When false, the sign-up form is hidden and create-user POSTs are rejected.
     /// Config/env default is off (`allowsignup` / `ROBOMINER_ALLOW_SIGNUP` unset).
     pub allow_signup: bool,
-    /// When true, trust `X-Forwarded-For` / `X-Real-Ip` for client IP (rate limits,
-    /// auth logs). Enable only behind a reverse proxy that overwrites those headers.
+    /// When true, trust only `X-Real-Ip` for client IP (rate limits, auth logs).
+    /// Enable only behind a reverse proxy that sets that header to `$remote_addr`.
+    /// Requires loopback bind and Secure cookies.
     pub trust_proxy: bool,
 }
 

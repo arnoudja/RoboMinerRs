@@ -1,6 +1,8 @@
 use sqlx::MySqlPool;
 
-use super::password::{valid_email, valid_password, valid_username, verify_password_hash};
+use super::password::{
+    password_eligible_for_verify, valid_email, valid_password, valid_username, verify_password_hash,
+};
 use crate::achievements::claim_achievement_step_in_transaction;
 use crate::password::{burn_password_verify_time, hash_password_async};
 use crate::{
@@ -228,6 +230,10 @@ pub async fn verify_login(
     pool: &MySqlPool,
     request: VerifyLoginRequest,
 ) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+    if !password_eligible_for_verify(&request.password) {
+        return db_reject(VerifyLoginRejection::InvalidPassword);
+    }
+
     let Some((user_id, password_hash, session_version)) = sqlx::query_as::<_, (i64, String, i32)>(
         "SELECT id, password, sessionVersion FROM User WHERE username = ? OR email = ?",
     )
@@ -258,6 +264,10 @@ pub async fn verify_user_password(
     pool: &MySqlPool,
     request: VerifyUserPasswordRequest,
 ) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+    if !password_eligible_for_verify(&request.password) {
+        return db_reject(VerifyLoginRejection::InvalidPassword);
+    }
+
     let Some((password_hash, session_version)) = sqlx::query_as::<_, (String, i32)>(
         "SELECT password, sessionVersion FROM User WHERE id = ?",
     )

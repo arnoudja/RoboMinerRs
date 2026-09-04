@@ -12,7 +12,8 @@ use crate::Request;
 fn ensure_test_session_secret() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
-        super::configure_session_secret("test-session-secret").expect("configure secret");
+        super::configure_session_secret("test-session-secret-at-least-32-chars")
+            .expect("configure secret");
         super::configure_secure_cookies(false);
     });
 }
@@ -55,6 +56,12 @@ fn resolve_session_secret_requires_secret_for_public_bind() {
 }
 
 #[test]
+fn resolve_session_secret_rejects_short_configured_secret() {
+    let error = resolve_session_secret(Some("too-short"), "127.0.0.1", true).unwrap_err();
+    assert!(error.contains("at least 32"));
+}
+
+#[test]
 fn validate_trust_proxy_bind_requires_loopback() {
     assert!(super::validate_trust_proxy_bind("127.0.0.1", true).is_ok());
     assert!(super::validate_trust_proxy_bind("0.0.0.0", true).is_err());
@@ -63,16 +70,18 @@ fn validate_trust_proxy_bind_requires_loopback() {
 
 #[test]
 fn resolve_secure_cookies_defaults_off_unless_explicit() {
-    assert!(!super::resolve_secure_cookies(None, "127.0.0.1", false));
-    assert!(!super::resolve_secure_cookies(None, "127.0.0.1", true));
-    // LAN HTTP binds must not force Secure — browsers would drop CSRF cookies.
-    assert!(!super::resolve_secure_cookies(None, "0.0.0.0", false));
-    assert!(!super::resolve_secure_cookies(Some(false), "0.0.0.0", true));
-    assert!(super::resolve_secure_cookies(
-        Some(true),
-        "127.0.0.1",
-        false
-    ));
+    assert!(!super::resolve_secure_cookies(None, "127.0.0.1", false).unwrap());
+    assert!(!super::resolve_secure_cookies(None, "0.0.0.0", false).unwrap());
+    assert!(super::resolve_secure_cookies(Some(true), "127.0.0.1", false).unwrap());
+    assert!(super::resolve_secure_cookies(Some(true), "127.0.0.1", true).unwrap());
+}
+
+#[test]
+fn resolve_secure_cookies_requires_secure_when_trust_proxy() {
+    let error = super::resolve_secure_cookies(None, "127.0.0.1", true).unwrap_err();
+    assert!(error.contains("securecookies"));
+    let error = super::resolve_secure_cookies(Some(false), "127.0.0.1", true).unwrap_err();
+    assert!(error.contains("ROBOMINER_SECURE_COOKIES"));
 }
 
 #[test]
@@ -207,7 +216,8 @@ fn session_clear_cookie_expires_session() {
 
 #[test]
 fn secure_cookie_suffix_is_applied_when_enabled() {
-    super::configure_session_secret("secure-cookie-test-secret").expect("configure secret");
+    super::configure_session_secret("secure-cookie-test-secret-32chars!!")
+        .expect("configure secret");
     super::configure_secure_cookies(true);
 
     let cookie = session_set_cookie_header(42, false, 0);

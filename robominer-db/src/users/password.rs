@@ -56,6 +56,15 @@ pub(super) fn valid_password(password: &str) -> bool {
     (8..=128).contains(&password.len())
 }
 
+/// Passwords accepted into Argon2 verify / timing-burn paths.
+///
+/// Create/update still require [`valid_password`] (8..=128). Login/account
+/// verify rejects empty and oversize inputs before hashing so a 1 MiB body
+/// cannot turn Argon2 into a cheap CPU DoS.
+pub(super) fn password_eligible_for_verify(password: &str) -> bool {
+    !password.is_empty() && password.len() <= 128
+}
+
 pub(super) async fn verify_password_hash(
     password: &str,
     password_hash: &str,
@@ -65,7 +74,7 @@ pub(super) async fn verify_password_hash(
 
 #[cfg(test)]
 mod tests {
-    use super::{valid_email, valid_password, valid_username};
+    use super::{password_eligible_for_verify, valid_email, valid_password, valid_username};
 
     #[test]
     fn valid_username_requires_three_to_255_alphanumeric_or_separator_chars() {
@@ -105,5 +114,13 @@ mod tests {
         assert!(!valid_password("short"));
         assert!(valid_password(&"a".repeat(128)));
         assert!(!valid_password(&"a".repeat(129)));
+    }
+
+    #[test]
+    fn password_eligible_for_verify_rejects_empty_and_oversize() {
+        assert!(!password_eligible_for_verify(""));
+        assert!(!password_eligible_for_verify(&"a".repeat(129)));
+        assert!(password_eligible_for_verify("short"));
+        assert!(password_eligible_for_verify(&"a".repeat(128)));
     }
 }

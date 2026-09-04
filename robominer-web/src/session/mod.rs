@@ -40,6 +40,12 @@ pub fn configure_session_secret(secret: &str) -> Result<(), String> {
     if secret.is_empty() {
         return Err("session secret must not be empty".to_string());
     }
+    if secret.len() < config::MIN_SESSION_SECRET_LEN {
+        return Err(format!(
+            "session secret must be at least {} characters",
+            config::MIN_SESSION_SECRET_LEN
+        ));
+    }
     if HmacSha256::new_from_slice(secret.as_bytes()).is_err() {
         return Err("session secret length is invalid for HMAC".to_string());
     }
