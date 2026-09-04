@@ -126,11 +126,15 @@ schema_already_current() {
 index_exists() {
     local table="$1"
     local index="$2"
-    mysql_app -N -e \
+    # information_schema.statistics has one row per indexed column, so a
+    # multi-column index can return COUNT > 1. Match Rust schema.rs (count > 0).
+    local count
+    count="$(mysql_app -N -e \
         "SELECT COUNT(*) FROM information_schema.statistics
          WHERE table_schema = DATABASE()
            AND table_name = '${table}'
-           AND index_name = '${index}'" 2>/dev/null | grep -qx '1'
+           AND index_name = '${index}'" 2>/dev/null | tr -d '[:space:]')"
+    [[ "${count}" =~ ^[1-9][0-9]*$ ]]
 }
 
 is_applied() {
