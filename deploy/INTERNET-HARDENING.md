@@ -145,7 +145,9 @@ sudo fail2ban-client status robominer-login
   - Avoid `GRANT ALL` / `%` host wildcards outside local CI
 - Strong password; store only in `/etc/robominer/robominer.conf` (`chmod 0640`)
 - For non-localhost MySQL, require TLS in the URL (`?ssl-mode=REQUIRED` or
-  equivalent). The app warns when a remote host URL omits TLS.
+  equivalent). Connect **fails** when a remote host URL omits TLS unless
+  `ROBOMINER_ALLOW_INSECURE_MYSQL=1` is set (escape hatch for unusual
+  private-network setups).
 - Apply pending schema migrations after install or deploy (the systemd install
   script does not migrate unless you pass `--migrate`):
 

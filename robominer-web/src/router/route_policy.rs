@@ -41,3 +41,43 @@ pub(super) fn enforce_policy<'a>(
         }
     }
 }
+
+pub(super) fn require_session<'a>(
+    access: Result<RouteAccess<'a>, Response>,
+) -> Result<PageSession<'a>, Response> {
+    match access {
+        Ok(RouteAccess::Session(session)) => Ok(session),
+        Err(response) => Err(response),
+        Ok(other) => {
+            tracing::error!(
+                access = route_access_label(&other),
+                "route policy mismatch: expected Session"
+            );
+            Err(Response::internal_error())
+        }
+    }
+}
+
+pub(super) fn require_public_read<'a>(
+    access: Result<RouteAccess<'a>, Response>,
+) -> Result<(Option<i64>, &'a MySqlPool), Response> {
+    match access {
+        Ok(RouteAccess::PublicRead { user_id, pool }) => Ok((user_id, pool)),
+        Err(response) => Err(response),
+        Ok(other) => {
+            tracing::error!(
+                access = route_access_label(&other),
+                "route policy mismatch: expected PublicRead"
+            );
+            Err(Response::internal_error())
+        }
+    }
+}
+
+fn route_access_label(access: &RouteAccess<'_>) -> &'static str {
+    match access {
+        RouteAccess::Public => "Public",
+        RouteAccess::PublicRead { .. } => "PublicRead",
+        RouteAccess::Session(_) => "Session",
+    }
+}
