@@ -29,9 +29,7 @@ use crate::http::Request;
 /// Otherwise uses the peer address injected by the Axum acceptor
 /// (`x-robominer-peer`).
 pub(crate) fn client_ip(request: &Request, trust_proxy: bool) -> String {
-    if trust_proxy
-        && let Some(real_ip) = request.headers.get("x-real-ip")
-    {
+    if trust_proxy && let Some(real_ip) = request.headers.get("x-real-ip") {
         let trimmed = real_ip.trim();
         if !trimmed.is_empty() {
             return trimmed.to_string();

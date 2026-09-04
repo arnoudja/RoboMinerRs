@@ -54,7 +54,7 @@ resources/scripts/run-tests-with-db.sh
 That script:
 
 1. Resolves `ROBOMINER_DATABASE_URL` via `ensure-test-mysql.sh` (existing URL, local MySQL, or persistent Docker).
-2. Runs rally animation JS tests (`resources/scripts/run-rally-animation-js-tests.sh`; requires Node).
+2. Runs rally animation JS tests (`resources/scripts/run-page-js-tests.sh`; requires Node).
 3. Runs `cargo nextest run --workspace --profile ci` when nextest is installed, otherwise `cargo test --workspace` with a single test thread.
 
 The `ci` profile uses a single test thread so DB integration binaries that share MySQL stay serialized via `#[serial]`.

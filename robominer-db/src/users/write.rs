@@ -1,6 +1,6 @@
 use sqlx::MySqlPool;
 
-use super::password::{
+use super::validation::{
     password_eligible_for_verify, valid_email, valid_password, valid_username, verify_password_hash,
 };
 use crate::achievements::claim_achievement_step_in_transaction;

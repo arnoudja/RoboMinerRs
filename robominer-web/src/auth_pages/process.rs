@@ -215,7 +215,7 @@ pub(super) fn remember_cookie(login_name: &str, remember: bool) -> Option<String
     if remember {
         Some(format!(
             "remember={}; Max-Age=2678400; Path=/; HttpOnly; SameSite=Lax{secure}",
-            cookie_encode(login_name)
+            session::cookie_encode(login_name)
         ))
     } else {
         Some(remember_clear_cookie_header())
@@ -227,18 +227,6 @@ pub(super) fn remember_clear_cookie_header() -> String {
         "remember=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
         session::secure_cookie_suffix()
     )
-}
-
-fn cookie_encode(value: &str) -> String {
-    value
-        .bytes()
-        .flat_map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'-' | b'.' | b'@' => {
-                vec![byte as char]
-            }
-            _ => format!("%{byte:02X}").chars().collect(),
-        })
-        .collect()
 }
 
 pub(super) fn login_failure_message() -> &'static str {

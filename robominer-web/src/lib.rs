@@ -24,6 +24,7 @@ mod mining_area_overview_page;
 mod mining_queue_page;
 mod mining_results_page;
 mod page_context;
+mod percent_encode;
 mod rally_pages;
 mod rate_limit;
 mod request_helpers;

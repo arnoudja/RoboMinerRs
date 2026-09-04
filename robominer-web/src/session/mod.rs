@@ -236,15 +236,7 @@ fn encode_hex(bytes: &[u8]) -> String {
 }
 
 pub(crate) fn cookie_encode(value: &str) -> String {
-    value
-        .bytes()
-        .flat_map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'-' | b'.' | b'@' => {
-                vec![byte as char]
-            }
-            _ => format!("%{byte:02X}").chars().collect(),
-        })
-        .collect()
+    crate::percent_encode::percent_encode(value, b"_-.@")
 }
 
 #[cfg(test)]

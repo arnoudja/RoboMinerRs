@@ -47,4 +47,4 @@ Rust serializes rally replay data in [`robominer-sim/src/animation_payload.rs`](
 - Rust: `animation_payload::tests::golden_payload_v2_deserializes` validates [`resources/rally_animation/golden_payload_v2.json`](../resources/rally_animation/golden_payload_v2.json).
 - Node: `robominer-web/static/js/rally_animation/tests/contract.test.js` checks version constants and golden payload acceptance.
 
-When changing the wire format, bump `ANIMATION_PAYLOAD_VERSION`, refresh the golden JSON if shape changes, and re-run `resources/scripts/run-rally-animation-js-tests.sh`.
+When changing the wire format, bump `ANIMATION_PAYLOAD_VERSION`, refresh the golden JSON if shape changes, and re-run `resources/scripts/run-page-js-tests.sh`.
