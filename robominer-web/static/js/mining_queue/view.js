@@ -1,11 +1,11 @@
 (function(global) {
     function install(ctx) {
         function formatTimeLeft(seconds) {
-            var secondsLeft = Math.max(0, Math.floor(seconds));
-            var displaySeconds = secondsLeft % 60;
-            var displayMinutes = Math.floor(secondsLeft / 60) % 60;
-            var displayHours = Math.floor(secondsLeft / 3600);
-            var result = displayHours > 0 ? displayHours + ':' : '';
+            const secondsLeft = Math.max(0, Math.floor(seconds));
+            const displaySeconds = secondsLeft % 60;
+            const displayMinutes = Math.floor(secondsLeft / 60) % 60;
+            const displayHours = Math.floor(secondsLeft / 3600);
+            let result = displayHours > 0 ? displayHours + ':' : '';
             if (displayMinutes < 10 && displayHours > 0) {
                 result += '0';
             }
@@ -20,10 +20,10 @@
             if (!hudSource) {
                 return;
             }
-            var incomingHud = hudSource.querySelector('.app-shell-hud');
-            var hudTarget = document.querySelector('.app-shell-hud');
+            const incomingHud = hudSource.querySelector('.app-shell-hud');
+            const hudTarget = document.querySelector('.app-shell-hud');
             if (incomingHud) {
-                var hudParent = hudTarget && (hudTarget.parentNode || hudTarget.parent);
+                const hudParent = hudTarget && (hudTarget.parentNode || hudTarget.parent);
                 if (!hudParent) {
                     return;
                 }
@@ -31,7 +31,7 @@
                 hudTarget.remove();
                 return;
             }
-            var trimmed = (hudSource.innerHTML || '').trim();
+            const trimmed = (hudSource.innerHTML || '').trim();
             if (!trimmed) {
                 return;
             }
@@ -41,25 +41,25 @@
         }
 
         function applyFragment(html, root) {
-            var parser = new window.DOMParser();
-            var doc = parser.parseFromString(html, 'text/html');
-            var fragmentRoot = root || ctx.pageRoot || document;
-            var fragment = doc.getElementById('mining-queue-fragment');
+            const parser = new window.DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const fragmentRoot = root || ctx.pageRoot || document;
+            const fragment = doc.getElementById('mining-queue-fragment');
             if (!fragment) {
                 throw new Error('missing mining queue fragment');
             }
 
-            var hudSource = doc.getElementById('mining-queue-hud-fragment');
+            const hudSource = doc.getElementById('mining-queue-hud-fragment');
             applyHudFragment(hudSource);
 
-            var dynamicSource = doc.getElementById('mining-queue-dynamic-fragment');
+            const dynamicSource = doc.getElementById('mining-queue-dynamic-fragment');
             if (!dynamicSource) {
                 throw new Error('missing mining queue dynamic fragment');
             }
 
-            var walletSource = dynamicSource.querySelector('.mining-queue-wallet');
-            var walletTarget = fragmentRoot.querySelector('.mining-queue-wallet');
-            var walletParent = walletTarget && (walletTarget.parentNode || walletTarget.parent);
+            const walletSource = dynamicSource.querySelector('.mining-queue-wallet');
+            const walletTarget = fragmentRoot.querySelector('.mining-queue-wallet');
+            const walletParent = walletTarget && (walletTarget.parentNode || walletTarget.parent);
             if (walletSource && walletTarget && walletParent) {
                 walletParent.insertBefore(walletSource, walletTarget);
                 walletTarget.remove();
@@ -67,46 +67,46 @@
                 walletTarget.outerHTML = walletSource.outerHTML;
             }
 
-            var deck = fragmentRoot.querySelector('.mining-queue-deck');
+            const deck = fragmentRoot.querySelector('.mining-queue-deck');
             fragmentRoot.querySelectorAll('.page-help-hint, .mining-queue-error').forEach(function(node) {
                 node.remove();
             });
-            var messages = dynamicSource.querySelectorAll('.page-help-hint, .mining-queue-error');
-            for (var messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
+            const messages = dynamicSource.querySelectorAll('.page-help-hint, .mining-queue-error');
+            for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
                 if (deck) {
                     fragmentRoot.insertBefore(messages[messageIndex].cloneNode(true), deck);
                 }
             }
 
-            var robotsSource = doc.getElementById('mining-queue-robots-fragment');
-            var robotsTarget = fragmentRoot.querySelector('.mining-queue-robots');
+            const robotsSource = doc.getElementById('mining-queue-robots-fragment');
+            const robotsTarget = fragmentRoot.querySelector('.mining-queue-robots');
             if (robotsSource && robotsTarget) {
                 applyRobotsFragment(robotsSource, robotsTarget);
             }
 
-            var configSource = doc.getElementById('mining-queue-clear-config');
-            var configTarget = document.getElementById('mining-queue-clear-config');
+            const configSource = doc.getElementById('mining-queue-clear-config');
+            const configTarget = document.getElementById('mining-queue-clear-config');
             if (configSource && configTarget) {
                 configTarget.textContent = configSource.textContent;
             }
         }
 
         function cardRobotId(card) {
-            var fromAttr = card.getAttribute('data-robot-id');
+            const fromAttr = card.getAttribute('data-robot-id');
             if (fromAttr) {
                 return fromAttr;
             }
-            var robotInput = card.querySelector('input[name="robotId"]');
+            const robotInput = card.querySelector('input[name="robotId"]');
             return robotInput && robotInput.value ? String(robotInput.value) : '';
         }
 
         function mapRobotCards(root) {
-            var cards = root.querySelectorAll('.mining-queue-card');
-            var map = {};
-            var ids = [];
-            for (var index = 0; index < cards.length; index += 1) {
-                var card = cards[index];
-                var robotId = cardRobotId(card);
+            const cards = root.querySelectorAll('.mining-queue-card');
+            const map = {};
+            const ids = [];
+            for (let index = 0; index < cards.length; index += 1) {
+                const card = cards[index];
+                const robotId = cardRobotId(card);
                 if (!robotId) {
                     return null;
                 }
@@ -124,7 +124,7 @@
             if (leftIds.length !== rightIds.length) {
                 return false;
             }
-            for (var index = 0; index < leftIds.length; index += 1) {
+            for (let index = 0; index < leftIds.length; index += 1) {
                 if (leftIds[index] !== rightIds[index]) {
                     return false;
                 }
@@ -136,20 +136,20 @@
             if (!liveSelect || !incomingSelect) {
                 return;
             }
-            var incomingByValue = {};
-            var incomingOptions = incomingSelect.options || incomingSelect.querySelectorAll('option');
-            for (var incomingIndex = 0; incomingIndex < incomingOptions.length; incomingIndex += 1) {
-                var incomingOption = incomingOptions[incomingIndex];
+            const incomingByValue = {};
+            const incomingOptions = incomingSelect.options || incomingSelect.querySelectorAll('option');
+            for (let incomingIndex = 0; incomingIndex < incomingOptions.length; incomingIndex += 1) {
+                const incomingOption = incomingOptions[incomingIndex];
                 incomingByValue[String(incomingOption.value)] = incomingOption;
             }
-            var liveOptions = liveSelect.options || liveSelect.querySelectorAll('option');
-            for (var liveIndex = 0; liveIndex < liveOptions.length; liveIndex += 1) {
-                var liveOption = liveOptions[liveIndex];
-                var match = incomingByValue[String(liveOption.value)];
+            const liveOptions = liveSelect.options || liveSelect.querySelectorAll('option');
+            for (let liveIndex = 0; liveIndex < liveOptions.length; liveIndex += 1) {
+                const liveOption = liveOptions[liveIndex];
+                const match = incomingByValue[String(liveOption.value)];
                 if (!match) {
                     continue;
                 }
-                var blockReason = match.getAttribute('data-block-reason');
+                const blockReason = match.getAttribute('data-block-reason');
                 if (blockReason === null || blockReason === '') {
                     liveOption.removeAttribute('data-block-reason');
                 } else {
@@ -159,19 +159,19 @@
         }
 
         function syncClearButton(liveCard, incomingCard) {
-            var liveClear = liveCard.querySelector('.mining-queue-clear-btn');
-            var incomingClear = incomingCard.querySelector('.mining-queue-clear-btn');
+            const liveClear = liveCard.querySelector('.mining-queue-clear-btn');
+            const incomingClear = incomingCard.querySelector('.mining-queue-clear-btn');
             if (!liveClear || !incomingClear) {
                 return;
             }
-            var clearableCount = incomingClear.getAttribute('data-clearable-count');
+            const clearableCount = incomingClear.getAttribute('data-clearable-count');
             if (clearableCount === null) {
                 liveClear.removeAttribute('data-clearable-count');
             } else {
                 liveClear.setAttribute('data-clearable-count', clearableCount);
             }
             liveClear.disabled = !!incomingClear.disabled;
-            var title = incomingClear.getAttribute('title');
+            const title = incomingClear.getAttribute('title');
             if (title === null || title === '') {
                 liveClear.removeAttribute('title');
             } else {
@@ -180,23 +180,23 @@
         }
 
         function syncCsrfToken(liveCard, incomingCard) {
-            var incomingCsrf = incomingCard.querySelector('input[name="csrfToken"]');
+            const incomingCsrf = incomingCard.querySelector('input[name="csrfToken"]');
             if (!incomingCsrf || !incomingCsrf.value) {
                 return;
             }
-            var liveCsrf = liveCard.querySelector('input[name="csrfToken"]');
+            const liveCsrf = liveCard.querySelector('input[name="csrfToken"]');
             if (liveCsrf) {
                 liveCsrf.value = incomingCsrf.value;
                 liveCsrf.setAttribute('value', incomingCsrf.value);
                 return;
             }
-            var robotInput = liveCard.querySelector('input[name="robotId"]');
-            var created = document.createElement('input');
+            const robotInput = liveCard.querySelector('input[name="robotId"]');
+            const created = document.createElement('input');
             created.type = 'hidden';
             created.name = 'csrfToken';
             created.value = incomingCsrf.value;
             created.setAttribute('value', incomingCsrf.value);
-            var insertParent = robotInput && (robotInput.parentNode || robotInput.parent);
+            const insertParent = robotInput && (robotInput.parentNode || robotInput.parent);
             if (insertParent) {
                 insertParent.insertBefore(created, robotInput);
             } else {
@@ -206,8 +206,8 @@
 
         function patchRobotCardActions(liveCard, incomingCard) {
             syncCsrfToken(liveCard, incomingCard);
-            var liveSelect = liveCard.querySelector('select.mining-queue-area-select');
-            var incomingSelect = incomingCard.querySelector('select.mining-queue-area-select');
+            const liveSelect = liveCard.querySelector('select.mining-queue-area-select');
+            const incomingSelect = incomingCard.querySelector('select.mining-queue-area-select');
             syncOptionBlockReasons(liveSelect, incomingSelect);
             syncClearButton(liveCard, incomingCard);
             if (liveSelect) {
@@ -219,19 +219,19 @@
         }
 
         function applyRobotsFragment(robotsSource, robotsTarget) {
-            var liveCards = mapRobotCards(robotsTarget);
-            var incomingCards = mapRobotCards(robotsSource);
+            const liveCards = mapRobotCards(robotsTarget);
+            const incomingCards = mapRobotCards(robotsSource);
             if (!liveCards || !incomingCards || !sameRobotIdSet(liveCards.ids, incomingCards.ids)) {
                 robotsTarget.innerHTML = robotsSource.innerHTML;
                 return;
             }
 
-            for (var index = 0; index < liveCards.ids.length; index += 1) {
-                var robotId = liveCards.ids[index];
-                var liveCard = liveCards.map[robotId];
-                var incomingCard = incomingCards.map[robotId];
-                var liveStatus = liveCard.querySelector('.mining-queue-card-status');
-                var incomingStatus = incomingCard.querySelector('.mining-queue-card-status');
+            for (let index = 0; index < liveCards.ids.length; index += 1) {
+                const robotId = liveCards.ids[index];
+                const liveCard = liveCards.map[robotId];
+                const incomingCard = incomingCards.map[robotId];
+                const liveStatus = liveCard.querySelector('.mining-queue-card-status');
+                const incomingStatus = incomingCard.querySelector('.mining-queue-card-status');
                 if (!liveStatus || !incomingStatus) {
                     robotsTarget.innerHTML = robotsSource.innerHTML;
                     return;
@@ -242,7 +242,7 @@
         }
 
         function formDataToUrlEncoded(formData) {
-            var params = new URLSearchParams();
+            const params = new URLSearchParams();
             formData.forEach(function(value, key) {
                 params.append(key, value);
             });
@@ -250,9 +250,9 @@
         }
 
         function fetchFragment(method, url, body) {
-            var scrollEl = document.getElementById('main-content');
-            var scrollTop = scrollEl ? scrollEl.scrollTop : 0;
-            var options = {
+            const scrollEl = document.getElementById('main-content');
+            const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+            const options = {
                 method: method,
                 credentials: 'same-origin'
             };
@@ -278,9 +278,9 @@
         }
 
         function showMiningAreaDetails(areaId) {
-            var panels = document.querySelectorAll('tbody.mining-queue-area-panel');
-            for (var index = 0; index < panels.length; index += 1) {
-                var panel = panels[index];
+            const panels = document.querySelectorAll('tbody.mining-queue-area-panel');
+            for (let index = 0; index < panels.length; index += 1) {
+                const panel = panels[index];
                 if (panel.id === 'miningAreaDetails' + areaId) {
                     panel.classList.add('mining-queue-area-panel-active');
                 } else {
@@ -296,19 +296,19 @@
         }
 
         function updateRobotEnqueueState(select) {
-            var form = select.closest('.mining-queue-card');
+            const form = select.closest('.mining-queue-card');
             if (!form) {
                 return;
             }
-            var selectedOption = select.options[select.selectedIndex];
-            var blockReason = selectedOption ? selectedOption.getAttribute('data-block-reason') : '';
+            const selectedOption = select.options[select.selectedIndex];
+            let blockReason = selectedOption ? selectedOption.getAttribute('data-block-reason') : '';
             if (blockReason === null) {
                 blockReason = '';
             }
-            var disabled = blockReason.length > 0;
-            var buttons = form.querySelectorAll('button[name="submitType"][value="add"], button[name="submitType"][value="fill"]');
-            for (var buttonIndex = 0; buttonIndex < buttons.length; buttonIndex += 1) {
-                var button = buttons[buttonIndex];
+            const disabled = blockReason.length > 0;
+            const buttons = form.querySelectorAll('button[name="submitType"][value="add"], button[name="submitType"][value="fill"]');
+            for (let buttonIndex = 0; buttonIndex < buttons.length; buttonIndex += 1) {
+                const button = buttons[buttonIndex];
                 button.disabled = disabled;
                 if (disabled) {
                     button.setAttribute('title', blockReason);
@@ -316,7 +316,7 @@
                     button.removeAttribute('title');
                 }
             }
-            var hint = form.querySelector('.mining-queue-action-hint');
+            const hint = form.querySelector('.mining-queue-action-hint');
             if (hint) {
                 hint.textContent = blockReason;
                 hint.hidden = !disabled;
@@ -324,26 +324,26 @@
         }
 
         function startTimer(cell) {
-            var seconds = Number(cell.getAttribute('data-seconds-left'));
+            const seconds = Number(cell.getAttribute('data-seconds-left'));
             if (!isFinite(seconds)) {
                 return;
             }
-            var refreshOnComplete = cell.getAttribute('data-refresh-on-complete') === 'true';
-            var progressTotal = Number(cell.getAttribute('data-progress-total'));
+            const refreshOnComplete = cell.getAttribute('data-refresh-on-complete') === 'true';
+            const progressTotal = Number(cell.getAttribute('data-progress-total'));
             function updateProgress(secondsLeft) {
                 if (!isFinite(progressTotal) || progressTotal <= 0) {
                     return;
                 }
-                var run = cell.closest('.mining-queue-run-active');
+                const run = cell.closest('.mining-queue-run-active');
                 if (!run) {
                     return;
                 }
-                var progressBar = run.querySelector('progress.mining-queue-progress');
+                const progressBar = run.querySelector('progress.mining-queue-progress');
                 if (!progressBar) {
                     return;
                 }
-                var elapsed = progressTotal - Math.max(0, secondsLeft);
-                var percent = Math.min(100, Math.max(0, (elapsed / progressTotal) * 100));
+                const elapsed = progressTotal - Math.max(0, secondsLeft);
+                const percent = Math.min(100, Math.max(0, (elapsed / progressTotal) * 100));
                 progressBar.value = percent.toFixed(1);
             }
             if (seconds <= 0) {
@@ -353,10 +353,10 @@
                 }
                 return;
             }
-            var startTime = Date.now();
+            const startTime = Date.now();
             updateProgress(seconds);
-            var interval = window.setInterval(function() {
-                var secondsLeft = seconds - ((Date.now() - startTime) / 1000);
+            const interval = window.setInterval(function() {
+                const secondsLeft = seconds - ((Date.now() - startTime) / 1000);
                 if (secondsLeft > 0) {
                     cell.textContent = formatTimeLeft(secondsLeft);
                     updateProgress(secondsLeft);
@@ -374,13 +374,13 @@
         }
 
         function areaNameOverflows(area) {
-            var target = area.querySelector('a') || area;
+            const target = area.querySelector('a') || area;
             return target.scrollWidth > target.clientWidth + 1;
         }
 
         function syncQueuedStatusVisibility(row) {
-            var area = row.querySelector('.mining-queue-run-area');
-            var status = row.querySelector('.mining-queue-status-queued');
+            const area = row.querySelector('.mining-queue-run-area');
+            const status = row.querySelector('.mining-queue-status-queued');
             if (!area || !status) {
                 return;
             }
@@ -391,8 +391,8 @@
         }
 
         function syncAllQueuedStatusVisibility() {
-            var rows = document.querySelectorAll('.mining-queue-run-row');
-            for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+            const rows = document.querySelectorAll('.mining-queue-run-row');
+            for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
                 syncQueuedStatusVisibility(rows[rowIndex]);
             }
         }
@@ -408,27 +408,27 @@
                 return;
             }
             ctx.resizeObserver = new ResizeObserver(scheduleSync);
-            var containers = document.querySelectorAll('.mining-queue-card, .mining-queue-run, .mining-queue-upcoming-list li');
-            for (var containerIndex = 0; containerIndex < containers.length; containerIndex += 1) {
+            const containers = document.querySelectorAll('.mining-queue-card, .mining-queue-run, .mining-queue-upcoming-list li');
+            for (let containerIndex = 0; containerIndex < containers.length; containerIndex += 1) {
                 ctx.resizeObserver.observe(containers[containerIndex]);
             }
         }
 
         function initView(options) {
-            var robotAreaSelects = document.querySelectorAll('.mining-queue-card select[name^="miningArea"]');
-            for (var selectIndex = 0; selectIndex < robotAreaSelects.length; selectIndex += 1) {
+            const robotAreaSelects = document.querySelectorAll('.mining-queue-card select[name^="miningArea"]');
+            for (let selectIndex = 0; selectIndex < robotAreaSelects.length; selectIndex += 1) {
                 updateRobotEnqueueState(robotAreaSelects[selectIndex]);
             }
 
-            var forms = document.querySelectorAll('.mining-queue-card');
-            for (var formIndex = 0; formIndex < forms.length; formIndex += 1) {
+            const forms = document.querySelectorAll('.mining-queue-card');
+            for (let formIndex = 0; formIndex < forms.length; formIndex += 1) {
                 ctx.updateClearButtonLabel(forms[formIndex]);
             }
 
             observeQueuedStatusVisibility();
 
-            var cells = document.querySelectorAll('.miningqueuetime[data-seconds-left]');
-            for (var cellIndex = 0; cellIndex < cells.length; cellIndex += 1) {
+            const cells = document.querySelectorAll('.miningqueuetime[data-seconds-left]');
+            for (let cellIndex = 0; cellIndex < cells.length; cellIndex += 1) {
                 startTimer(cells[cellIndex]);
             }
 

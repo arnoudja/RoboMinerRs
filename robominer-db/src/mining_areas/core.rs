@@ -1,10 +1,108 @@
 use sqlx::MySqlPool;
 
-use crate::mappers::{
-    MiningAreaRow, MiningRallyQueueRow, mining_area_record, mining_area_rows,
-    mining_rally_queue_rows,
+use crate::{
+    MiningAreaOreSupplyRecord, MiningAreaRecord, MiningQueueRecord, MiningRallyQueueRecord,
 };
-use crate::{MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord};
+
+#[derive(sqlx::FromRow)]
+struct MiningAreaRow {
+    id: i64,
+    #[sqlx(rename = "areaName")]
+    area_name: String,
+    #[sqlx(rename = "orePriceId")]
+    ore_price_id: i64,
+    #[sqlx(rename = "sizeX")]
+    size_x: i32,
+    #[sqlx(rename = "sizeY")]
+    size_y: i32,
+    #[sqlx(rename = "maxMoves")]
+    max_moves: i32,
+    #[sqlx(rename = "miningTime")]
+    mining_time: i32,
+    #[sqlx(rename = "taxRate")]
+    tax_rate: i32,
+    #[sqlx(rename = "depotTaxRate")]
+    depot_tax_rate: i32,
+    #[sqlx(rename = "scoreOreTarget")]
+    score_ore_target: i32,
+    #[sqlx(rename = "aiRobotId")]
+    ai_robot_id: i64,
+}
+
+impl From<MiningAreaRow> for MiningAreaRecord {
+    fn from(row: MiningAreaRow) -> Self {
+        Self {
+            id: row.id,
+            area_name: row.area_name,
+            ore_price_id: row.ore_price_id,
+            size_x: row.size_x,
+            size_y: row.size_y,
+            max_moves: row.max_moves,
+            mining_time: row.mining_time,
+            tax_rate: row.tax_rate,
+            depot_tax_rate: row.depot_tax_rate,
+            score_ore_target: row.score_ore_target,
+            ai_robot_id: row.ai_robot_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub(crate) struct MiningRallyQueueRow {
+    pub(crate) id: i64,
+    #[sqlx(rename = "miningAreaId")]
+    pub(crate) mining_area_id: i64,
+    #[sqlx(rename = "robotId")]
+    pub(crate) robot_id: i64,
+    #[sqlx(rename = "userId")]
+    pub(crate) user_id: i64,
+    #[sqlx(rename = "rallyResultId")]
+    pub(crate) rally_result_id: Option<i64>,
+    #[sqlx(rename = "playerNumber")]
+    pub(crate) player_number: Option<i32>,
+    pub(crate) score: Option<f64>,
+    pub(crate) claimed: bool,
+    #[sqlx(rename = "secondsLeft")]
+    pub(crate) seconds_left: i32,
+}
+
+impl From<MiningRallyQueueRow> for MiningRallyQueueRecord {
+    fn from(row: MiningRallyQueueRow) -> Self {
+        Self {
+            queue: MiningQueueRecord {
+                id: row.id,
+                mining_area_id: row.mining_area_id,
+                robot_id: row.robot_id,
+                rally_result_id: row.rally_result_id,
+                player_number: row.player_number,
+                score: row.score,
+                claimed: row.claimed,
+            },
+            user_id: row.user_id,
+            seconds_left: row.seconds_left,
+        }
+    }
+}
+
+/// Keep the first queue row per user, then cap at four participants.
+pub(crate) fn mining_rally_queue_rows(
+    rows: Vec<MiningRallyQueueRow>,
+) -> Vec<MiningRallyQueueRecord> {
+    let mut seen_users = Vec::new();
+
+    rows.into_iter()
+        .filter(|row| {
+            if seen_users.contains(&row.user_id) {
+                false
+            } else {
+                seen_users.push(row.user_id);
+                true
+            }
+        })
+        .take(4)
+        .map(MiningRallyQueueRecord::from)
+        .collect()
+}
 
 pub async fn list_mining_areas(pool: &MySqlPool) -> Result<Vec<MiningAreaRecord>, sqlx::Error> {
     sqlx::query_as::<_, MiningAreaRow>(
@@ -14,7 +112,7 @@ pub async fn list_mining_areas(pool: &MySqlPool) -> Result<Vec<MiningAreaRecord>
     )
     .fetch_all(pool)
     .await
-    .map(mining_area_rows)
+    .map(|rows| rows.into_iter().map(MiningAreaRecord::from).collect())
 }
 
 pub async fn get_mining_area(
@@ -29,7 +127,7 @@ pub async fn get_mining_area(
     .bind(mining_area_id)
     .fetch_optional(pool)
     .await
-    .map(|row| row.map(mining_area_record))
+    .map(|row| row.map(MiningAreaRecord::from))
 }
 
 pub async fn list_mining_area_ore_supplies(

@@ -85,7 +85,7 @@ mod tests {
         lock_auth_rate_limiter_for_tests,
     };
     use super::mutation::{
-        lock_mutation_rate_limiter_for_tests, mutation_action_family,
+        MAX_MUTATIONS_PER_IP, lock_mutation_rate_limiter_for_tests, mutation_action_family,
         mutation_attempt_is_rate_limited, record_mutation_attempt,
     };
     use super::*;
@@ -203,13 +203,34 @@ mod tests {
         let _guard = lock_mutation_rate_limiter_for_tests();
         reset_mutation_rate_limiter_for_tests();
         let user_id = 99_i64;
+        let ip = "198.51.100.40";
         for _ in 0..MAX_MUTATIONS_PER_USER_ACTION {
-            assert!(!mutation_attempt_is_rate_limited(user_id, "shop"));
-            record_mutation_attempt(user_id, "shop");
+            assert!(!mutation_attempt_is_rate_limited(ip, user_id, "shop"));
+            record_mutation_attempt(ip, user_id, "shop");
         }
-        assert!(mutation_attempt_is_rate_limited(user_id, "shop"));
-        assert!(!mutation_attempt_is_rate_limited(user_id, "robot"));
-        assert!(!mutation_attempt_is_rate_limited(user_id + 1, "shop"));
+        assert!(mutation_attempt_is_rate_limited(ip, user_id, "shop"));
+        assert!(!mutation_attempt_is_rate_limited(ip, user_id, "robot"));
+        assert!(!mutation_attempt_is_rate_limited(ip, user_id + 1, "shop"));
+    }
+
+    #[test]
+    fn mutation_rate_limiter_trips_on_shared_ip_budget() {
+        let _guard = lock_mutation_rate_limiter_for_tests();
+        reset_mutation_rate_limiter_for_tests();
+        let ip = "198.51.100.41";
+        for index in 0..MAX_MUTATIONS_PER_IP {
+            let user_id = i64::from(index as u32);
+            // Spread across action families so the user/action bucket is not the tripwire.
+            let action = if index % 2 == 0 { "shop" } else { "robot" };
+            assert!(!mutation_attempt_is_rate_limited(ip, user_id, action));
+            record_mutation_attempt(ip, user_id, action);
+        }
+        assert!(mutation_attempt_is_rate_limited(ip, 9_999, "edit_code"));
+        assert!(!mutation_attempt_is_rate_limited(
+            "203.0.113.9",
+            9_999,
+            "edit_code"
+        ));
     }
 
     #[test]

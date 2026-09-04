@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE PoolItem SET totalScore = totalScore + ?, runsDone = runsDone + 1 WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "38886b7b7bb0c2feafda9bfe903ff63f2d4fa8ce601a140038612427b1c8f65f"
+}

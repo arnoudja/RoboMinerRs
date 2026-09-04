@@ -99,9 +99,10 @@ Caddy obtains Let's Encrypt certificates automatically for public hostnames.
 
 - The proxy **must** set `X-Real-IP` to the connecting client (`$remote_addr` in
   nginx, `{remote_host}` in Caddy). With `trustproxy 1`, RoboMiner uses only
-  that header for rate-limit keys; missing it collapses clients to the local
-  peer (`127.0.0.1`). `X-Forwarded-For` / `X-Forwarded-Proto` are still useful
-  for other tooling but are not used for app rate limits.
+  that header for rate-limit keys; missing/blank Real-IP uses the dedicated key
+  `proxy-missing-real-ip` (and logs an error) instead of collapsing onto the
+  loopback peer. `X-Forwarded-For` / `X-Forwarded-Proto` are still useful for
+  other tooling but are not used for app rate limits.
 - Static CSS is served by `robominer-web` from `webroot`; the proxy does not
   need a separate static file root unless you choose to offload assets later.
 - Keep `robominer-engine` off the public internet. It only needs database access

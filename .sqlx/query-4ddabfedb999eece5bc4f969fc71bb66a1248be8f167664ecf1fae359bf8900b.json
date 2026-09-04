@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO PoolItemMiningTotals (poolItemId, oreId, totalMined) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE totalMined = totalMined + VALUES(totalMined)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "4ddabfedb999eece5bc4f969fc71bb66a1248be8f167664ecf1fae359bf8900b"
+}

@@ -1,5 +1,3 @@
-use sqlx::Row;
-
 use super::super::super::{
     PendingRobotUpdateState, ProgramSourceUpdateState, RequestedRobotParts, RobotUpdateState,
 };
@@ -89,7 +87,7 @@ pub(crate) async fn load_robot_for_update(
     robot_id: i64,
     user_id: i64,
 ) -> Result<Option<RobotUpdateState>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, RobotUpdateState>(
         "SELECT id, userId, sourceCode, oreContainerId, miningUnitId, batteryId, \
                 memoryModuleId, cpuId, engineId, oreScannerId \
          FROM Robot \
@@ -99,23 +97,7 @@ pub(crate) async fn load_robot_for_update(
     .bind(robot_id)
     .bind(user_id)
     .fetch_optional(&mut **transaction)
-    .await?;
-
-    row.map(|row| {
-        Ok(RobotUpdateState {
-            id: row.try_get("id")?,
-            user_id: row.try_get("userId")?,
-            source_code: row.try_get("sourceCode")?,
-            ore_container_id: row.try_get("oreContainerId")?,
-            mining_unit_id: row.try_get("miningUnitId")?,
-            battery_id: row.try_get("batteryId")?,
-            memory_module_id: row.try_get("memoryModuleId")?,
-            cpu_id: row.try_get("cpuId")?,
-            engine_id: row.try_get("engineId")?,
-            ore_scanner_id: row.try_get("oreScannerId")?,
-        })
-    })
-    .transpose()
+    .await
 }
 
 pub(crate) fn robot_part_baseline(
@@ -149,7 +131,7 @@ pub(crate) async fn load_pending_robot_changes_for_update(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_id: i64,
 ) -> Result<Option<PendingRobotUpdateState>, sqlx::Error> {
-    let row = sqlx::query(
+    sqlx::query_as::<_, PendingRobotUpdateState>(
         "SELECT sourceCode, oreContainerId, miningUnitId, batteryId, memoryModuleId, \
                 cpuId, engineId, oreScannerId \
          FROM PendingRobotChanges \
@@ -158,21 +140,7 @@ pub(crate) async fn load_pending_robot_changes_for_update(
     )
     .bind(robot_id)
     .fetch_optional(&mut **transaction)
-    .await?;
-
-    row.map(|row| {
-        Ok(PendingRobotUpdateState {
-            source_code: row.try_get("sourceCode")?,
-            ore_container_id: row.try_get("oreContainerId")?,
-            mining_unit_id: row.try_get("miningUnitId")?,
-            battery_id: row.try_get("batteryId")?,
-            memory_module_id: row.try_get("memoryModuleId")?,
-            cpu_id: row.try_get("cpuId")?,
-            engine_id: row.try_get("engineId")?,
-            ore_scanner_id: row.try_get("oreScannerId")?,
-        })
-    })
-    .transpose()
+    .await
 }
 
 pub(crate) async fn load_program_source_for_update(

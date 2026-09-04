@@ -5,29 +5,46 @@
 
 use crate::RobotPartRecord;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, sqlx::FromRow)]
 struct RobotUpdateState {
     id: i64,
+    #[sqlx(rename = "userId")]
     user_id: i64,
+    #[sqlx(rename = "sourceCode")]
     source_code: String,
+    #[sqlx(rename = "oreContainerId")]
     ore_container_id: Option<i64>,
+    #[sqlx(rename = "miningUnitId")]
     mining_unit_id: Option<i64>,
+    #[sqlx(rename = "batteryId")]
     battery_id: Option<i64>,
+    #[sqlx(rename = "memoryModuleId")]
     memory_module_id: Option<i64>,
+    #[sqlx(rename = "cpuId")]
     cpu_id: Option<i64>,
+    #[sqlx(rename = "engineId")]
     engine_id: Option<i64>,
+    #[sqlx(rename = "oreScannerId")]
     ore_scanner_id: Option<i64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, sqlx::FromRow)]
 struct PendingRobotUpdateState {
+    #[sqlx(rename = "sourceCode")]
     source_code: String,
+    #[sqlx(rename = "oreContainerId")]
     ore_container_id: Option<i64>,
+    #[sqlx(rename = "miningUnitId")]
     mining_unit_id: Option<i64>,
+    #[sqlx(rename = "batteryId")]
     battery_id: Option<i64>,
+    #[sqlx(rename = "memoryModuleId")]
     memory_module_id: Option<i64>,
+    #[sqlx(rename = "cpuId")]
     cpu_id: Option<i64>,
+    #[sqlx(rename = "engineId")]
     engine_id: Option<i64>,
+    #[sqlx(rename = "oreScannerId")]
     ore_scanner_id: Option<i64>,
 }
 
