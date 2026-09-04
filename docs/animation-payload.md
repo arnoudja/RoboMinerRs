@@ -58,5 +58,3 @@ regenerate the viewer contract. When changing the wire format:
 3. Commit the regenerated `contract.js`
 4. Refresh golden JSON if the payload shape changed
 5. Run `resources/scripts/run-page-js-tests.sh`
-
-When changing the wire format, bump `ANIMATION_PAYLOAD_VERSION`, refresh the golden JSON if shape changes, and re-run `resources/scripts/run-page-js-tests.sh`.
