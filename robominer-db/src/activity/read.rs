@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use sqlx::MySqlPool;
 
 use crate::{
@@ -184,7 +185,7 @@ pub async fn list_activity_rally_participants_for_queues(
            AND MiningQueue.playerNumber > 0 \
          ORDER BY RecentQueue.id, MiningQueue.playerNumber"
     );
-    let mut query = sqlx::query_as::<_, (i64, i32, String, String)>(&query);
+    let mut query = sqlx::query_as::<_, (i64, i32, String, String)>(assert_sql_safe(query));
     for mining_queue_id in mining_queue_ids {
         query = query.bind(mining_queue_id);
     }

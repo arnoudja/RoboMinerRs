@@ -1,7 +1,36 @@
 use sqlx::MySqlPool;
-use sqlx::Row;
 
 use crate::AchievementOverviewTrackRecord;
+
+#[derive(sqlx::FromRow)]
+struct AchievementOverviewTrackRow {
+    #[sqlx(rename = "achievementId")]
+    achievement_id: i64,
+    title: String,
+    description: String,
+    #[sqlx(rename = "stepsClaimed")]
+    steps_claimed: i32,
+    #[sqlx(rename = "numberOfSteps")]
+    number_of_steps: i64,
+    #[sqlx(rename = "pointsEarned")]
+    points_earned: i64,
+    #[sqlx(rename = "totalPoints")]
+    total_points: i64,
+}
+
+impl From<AchievementOverviewTrackRow> for AchievementOverviewTrackRecord {
+    fn from(row: AchievementOverviewTrackRow) -> Self {
+        Self {
+            achievement_id: row.achievement_id,
+            title: row.title,
+            description: row.description,
+            steps_claimed: row.steps_claimed,
+            number_of_steps: row.number_of_steps,
+            points_earned: row.points_earned,
+            total_points: row.total_points,
+        }
+    }
+}
 
 /// Unlocked achievement tracks for a read-only player overview.
 ///
@@ -11,7 +40,7 @@ pub async fn list_achievement_overview_tracks_for_user(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<AchievementOverviewTrackRecord>, sqlx::Error> {
-    sqlx::query(
+    sqlx::query_as::<_, AchievementOverviewTrackRow>(
         "SELECT Achievement.id AS achievementId, \
                 Achievement.title AS title, \
                 Achievement.description AS description, \
@@ -37,17 +66,7 @@ pub async fn list_achievement_overview_tracks_for_user(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(|row| {
-                Ok(AchievementOverviewTrackRecord {
-                    achievement_id: row.try_get("achievementId")?,
-                    title: row.try_get("title")?,
-                    description: row.try_get("description")?,
-                    steps_claimed: row.try_get("stepsClaimed")?,
-                    number_of_steps: row.try_get("numberOfSteps")?,
-                    points_earned: row.try_get("pointsEarned")?,
-                    total_points: row.try_get("totalPoints")?,
-                })
-            })
-            .collect::<Result<Vec<_>, sqlx::Error>>()
-    })?
+            .map(AchievementOverviewTrackRecord::from)
+            .collect()
+    })
 }

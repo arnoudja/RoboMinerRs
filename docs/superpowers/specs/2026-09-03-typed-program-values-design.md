@@ -1,5 +1,10 @@
 # Typed program values (int / bool / float)
 
+> **Status: implemented** (merged in #41). The runtime uses a tagged
+> `CpuStepResult` union with `i64` ints, real `bool`, and `f64` floats; help
+> text and AST literals match. Keep this document as design history — do not
+> re-implement.
+
 ## Problem
 
 Robot programs declare `int`, `double`/`float`, and `bool` variables, but the Rust VM stores every runtime value as `f64` with a sticky display kind. Arithmetic, comparisons, and logic all run in floating point; the kind is only used when formatting rally debug output (JS rounds ints / formats bools).

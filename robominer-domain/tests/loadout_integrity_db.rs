@@ -6,7 +6,7 @@ use robominer_test_support::{PoolFixture, RallyFixture};
 use serial_test::serial;
 use sqlx::{Executor, MySqlPool};
 
-async fn orphan_update(pool: &MySqlPool, sql: &str, bind_a: i64, bind_b: i64) {
+async fn orphan_update(pool: &MySqlPool, sql: &'static str, bind_a: i64, bind_b: i64) {
     let mut conn = pool.acquire().await.expect("acquire connection");
     conn.execute("SET FOREIGN_KEY_CHECKS=0")
         .await

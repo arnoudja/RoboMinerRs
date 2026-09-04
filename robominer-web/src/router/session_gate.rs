@@ -79,7 +79,10 @@ pub(super) fn clear_stale_session_cookies(response: Response) -> Response {
         .with_header("Set-Cookie", session_clear_cookie_header())
         .with_header(
             "Set-Cookie",
-            "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax",
+            format!(
+                "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+                session::secure_cookie_suffix()
+            ),
         )
         .with_header("Set-Cookie", session::username_clear_cookie_header())
 }

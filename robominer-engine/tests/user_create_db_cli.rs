@@ -85,10 +85,10 @@ async fn create_user_inserts_initial_user_state() {
         .map(|id| id.to_string())
         .collect::<Vec<_>>()
         .join(", ");
-    let default_part_assets: i64 = sqlx::query_scalar(&format!(
+    let default_part_assets: i64 = sqlx::query_scalar(robominer_db::assert_sql_safe(format!(
         "SELECT COUNT(*) FROM UserRobotPartAsset \
          WHERE userId = ? AND robotPartId IN ({id_list})"
-    ))
+    )))
     .bind(user_id)
     .fetch_one(&pool)
     .await

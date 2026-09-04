@@ -14,7 +14,7 @@ mod initial_ore_wallet_max;
 mod query_util;
 
 pub use initial_ore_wallet_max::INITIAL_ORE_WALLET_MAX;
-pub use query_util::in_placeholders;
+pub use query_util::{assert_sql_safe, in_placeholders};
 
 pub const SCORE_HISTORY_FACTOR: f64 = 5.0;
 pub const SCORE_START_FACTOR: f64 = 1.4;

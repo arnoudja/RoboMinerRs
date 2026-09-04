@@ -1,3 +1,4 @@
+use crate::assert_sql_safe;
 use std::collections::HashMap;
 
 use crate::{ClaimedOreRewardRecord, INITIAL_ORE_WALLET_MAX, in_placeholders};
@@ -19,7 +20,7 @@ pub(super) async fn load_claimed_ore_rewards(
     let ore_ids: Vec<i64> = positive.iter().map(|(ore_id, _)| *ore_id).collect();
     let placeholders = in_placeholders(ore_ids.len());
     let query = format!("SELECT id, oreName FROM Ore WHERE id IN ({placeholders})");
-    let mut query_builder = sqlx::query_as::<_, (i64, String)>(&query);
+    let mut query_builder = sqlx::query_as::<_, (i64, String)>(assert_sql_safe(query));
     for ore_id in &ore_ids {
         query_builder = query_builder.bind(ore_id);
     }
@@ -144,7 +145,7 @@ async fn batch_upsert_robot_lifetime_results(
              tax = tax + VALUES(tax), \
              depotAmount = depotAmount + VALUES(depotAmount)"
         );
-        let mut query_builder = sqlx::query(&query);
+        let mut query_builder = sqlx::query(assert_sql_safe(query));
         for (robot_id, ore_id, amount, tax, depot_amount) in chunk {
             query_builder = query_builder
                 .bind(robot_id)
@@ -184,7 +185,7 @@ async fn batch_upsert_user_ore_assets_from_rewards(
         .collect();
     let placeholders = in_placeholders(robot_ids.len());
     let query = format!("SELECT id, userId FROM Robot WHERE id IN ({placeholders})");
-    let mut query_builder = sqlx::query_as::<_, (i64, i64)>(&query);
+    let mut query_builder = sqlx::query_as::<_, (i64, i64)>(assert_sql_safe(query));
     for robot_id in &robot_ids {
         query_builder = query_builder.bind(robot_id);
     }
@@ -225,7 +226,7 @@ async fn batch_upsert_user_ore_assets_from_rewards(
         let existing_query = format!(
             "SELECT userId, oreId FROM UserOreAsset WHERE (userId, oreId) IN ({pair_placeholders})"
         );
-        let mut existing_builder = sqlx::query_as::<_, (i64, i64)>(&existing_query);
+        let mut existing_builder = sqlx::query_as::<_, (i64, i64)>(assert_sql_safe(existing_query));
         for (user_id, ore_id, _) in chunk {
             existing_builder = existing_builder.bind(user_id).bind(ore_id);
         }
@@ -245,7 +246,7 @@ async fn batch_upsert_user_ore_assets_from_rewards(
              ON DUPLICATE KEY UPDATE \
              amount = LEAST(maxAllowed, amount + VALUES(amount))"
         );
-        let mut query_builder = sqlx::query(&query);
+        let mut query_builder = sqlx::query(assert_sql_safe(query));
         for (user_id, ore_id, reward) in chunk {
             let amount_value = if existing.contains(&(*user_id, *ore_id)) {
                 *reward
@@ -274,7 +275,7 @@ async fn mark_mining_queues_claimed_batch(
 
     let placeholders = in_placeholders(queue_ids.len());
     let query = format!("UPDATE MiningQueue SET claimed = true WHERE id IN ({placeholders})");
-    let mut query_builder = sqlx::query(&query);
+    let mut query_builder = sqlx::query(assert_sql_safe(query));
     for queue_id in queue_ids {
         query_builder = query_builder.bind(queue_id);
     }
@@ -303,7 +304,7 @@ async fn calculate_mining_ore_result_tax_batch(
                    * MiningArea.depotTaxRate / 100) \
          WHERE MiningOreResult.miningQueueId IN ({placeholders})"
     );
-    let mut query_builder = sqlx::query(&query);
+    let mut query_builder = sqlx::query(assert_sql_safe(query));
     for queue_id in queue_ids {
         query_builder = query_builder.bind(queue_id);
     }
@@ -327,7 +328,7 @@ async fn list_claimable_mining_ore_results_batch(
          WHERE miningQueueId IN ({placeholders}) \
          ORDER BY miningQueueId, oreId"
     );
-    let mut query_builder = sqlx::query_as::<_, (i64, i64, i32, i32, i32)>(&query);
+    let mut query_builder = sqlx::query_as::<_, (i64, i64, i32, i32, i32)>(assert_sql_safe(query));
     for queue_id in queue_ids {
         query_builder = query_builder.bind(queue_id);
     }

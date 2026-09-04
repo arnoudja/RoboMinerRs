@@ -76,10 +76,10 @@ impl ClaimResultsFixture {
 
         let mining_queue_id = insert_row_id(
             pool,
-            sqlx::query(&format!(
+            sqlx::query(robominer_db::assert_sql_safe(format!(
                 "INSERT INTO MiningQueue (miningAreaId, robotId, creationTime, miningEndTime, claimed) \
                  VALUES (?, ?, TIMESTAMPADD(SECOND, -20, NOW()), {mining_end_time_sql}, false)"
-            ))
+            )))
             .bind(mining_area_id)
             .bind(robot_id),
         )

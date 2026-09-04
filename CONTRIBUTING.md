@@ -91,8 +91,9 @@ Do not commit updated fixtures unless the behavior change is deliberate. CI neve
 
 ### Compile-checked SQL (`query!`)
 
-Claim and mining-queue enqueue/cancel hot paths use `sqlx::query!` / `query_scalar!` with offline
-metadata under [`.sqlx/`](.sqlx/). After editing those SQL strings or the tables they touch:
+Claim, mining-queue enqueue/cancel, and user session bump / last-login hot paths use
+`sqlx::query!` / `query_scalar!` with offline metadata under [`.sqlx/`](.sqlx/). After editing
+those SQL strings or the tables they touch:
 
 ```sh
 export DATABASE_URL=mysql://robominer:password@127.0.0.1:3306/RoboMiner
@@ -100,8 +101,9 @@ cargo sqlx prepare --workspace -- --package robominer-db --lib
 ```
 
 Commit the regenerated `.sqlx/` JSON. CI and local builds without a live DB should set
-`SQLX_OFFLINE=true` (CI already does). Dynamic `IN (...)` lists and `FOR UPDATE` locks stay on
-runtime `sqlx::query`. See [docs/SQLX-0.9-UPGRADE.md](docs/SQLX-0.9-UPGRADE.md).
+`SQLX_OFFLINE=true` (CI already does). Dynamic `IN (...)` lists and other built SQL must use
+[`robominer_db::assert_sql_safe`](robominer-db/src/query_util.rs) (sqlx 0.9 `SqlSafeStr`).
+See [docs/SQLX-0.9-UPGRADE.md](docs/SQLX-0.9-UPGRADE.md).
 
 ### Fast tests (no database)
 

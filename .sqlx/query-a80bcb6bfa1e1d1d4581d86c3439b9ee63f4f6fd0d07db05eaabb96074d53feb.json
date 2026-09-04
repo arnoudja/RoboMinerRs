@@ -9,8 +9,10 @@
         "type_info": {
           "type": "LongLong",
           "flags": "BINARY",
+          "collation": 63,
           "max_size": 21
-        }
+        },
+        "origin": "Expression"
       }
     ],
     "parameters": {

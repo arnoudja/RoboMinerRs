@@ -22,9 +22,10 @@ static SESSION_NONCE: AtomicU64 = AtomicU64::new(1);
 
 #[allow(unused_imports)]
 pub use config::{
-    DEFAULT_SESSION_TTL_HOURS, DEFAULT_SESSION_TTL_SECS, configure_secure_cookies,
-    configure_session_ttl_secs, is_local_bind_host, resolve_secure_cookies, resolve_session_secret,
-    resolve_session_ttl_secs, validate_trust_proxy_bind,
+    DEFAULT_SESSION_TTL_HOURS, DEFAULT_SESSION_TTL_SECS, MAX_SESSION_TTL_SECS,
+    configure_secure_cookies, configure_session_ttl_secs, is_local_bind_host,
+    resolve_secure_cookies, resolve_session_secret, resolve_session_ttl_secs,
+    validate_trust_proxy_bind,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
