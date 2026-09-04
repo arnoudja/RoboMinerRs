@@ -4,6 +4,10 @@ use sqlx::Row;
 use super::errors::MigrateError;
 
 pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, MigrateError> {
+    // Checklist must cover every migration represented by createDatabase.sql /
+    // resources/database/migrations/*.sql. When adding a migration that also
+    // lands in createDatabase.sql, add a matching probe here so empty
+    // SchemaMigration tables are not silently baselined without that change.
     let user_table_exists = table_exists(pool, "User").await?;
     if !user_table_exists {
         return Ok(false);
@@ -23,6 +27,9 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
     let has_processing_lease = column_exists(pool, "MiningQueue", "processingLeaseUntil").await?;
     let has_lifetime_depot_amount =
         column_exists(pool, "RobotLifetimeResult", "depotAmount").await?;
+    // Migration 012: claimable wallet-index on MiningQueue.
+    let has_claimable_index =
+        index_exists(pool, "MiningQueue", "idx_mining_queue_claimable").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
@@ -33,7 +40,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
         && has_lifetime_total_runs
         && has_depot_total_requirement
         && has_processing_lease
-        && has_lifetime_depot_amount)
+        && has_lifetime_depot_amount
+        && has_claimable_index)
 }
 
 pub(super) async fn ensure_schema_migration_table(pool: &MySqlPool) -> Result<(), MigrateError> {
@@ -101,6 +109,24 @@ async fn column_exists(
     )
     .bind(table_name)
     .bind(column_name)
+    .fetch_one(pool)
+    .await?;
+    Ok(count > 0)
+}
+
+async fn index_exists(
+    pool: &MySqlPool,
+    table_name: &str,
+    index_name: &str,
+) -> Result<bool, MigrateError> {
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM information_schema.statistics
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND index_name = ?",
+    )
+    .bind(table_name)
+    .bind(index_name)
     .fetch_one(pool)
     .await?;
     Ok(count > 0)
