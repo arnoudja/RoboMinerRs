@@ -6,12 +6,63 @@ use crate::{
     ActivityRecentUserRecord,
 };
 
+#[derive(sqlx::FromRow)]
+struct ActivityRecentUserRow {
+    #[sqlx(rename = "id")]
+    user_id: i64,
+    username: String,
+    #[sqlx(rename = "lastLoginTimeMillis")]
+    last_login_time_millis: i64,
+}
+
+impl From<ActivityRecentUserRow> for ActivityRecentUserRecord {
+    fn from(row: ActivityRecentUserRow) -> Self {
+        Self {
+            user_id: row.user_id,
+            username: row.username,
+            last_login_time_millis: row.last_login_time_millis,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ActivityRecentRallyRow {
+    #[sqlx(rename = "id")]
+    mining_queue_id: i64,
+    #[sqlx(rename = "rallyResultId")]
+    rally_result_id: Option<i64>,
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "areaName")]
+    mining_area_name: String,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    username: String,
+    #[sqlx(rename = "miningEndTimeMillis")]
+    mining_end_time_millis: i64,
+}
+
+impl From<ActivityRecentRallyRow> for ActivityRecentRallyRecord {
+    fn from(row: ActivityRecentRallyRow) -> Self {
+        Self {
+            mining_queue_id: row.mining_queue_id,
+            rally_result_id: row.rally_result_id,
+            mining_area_id: row.mining_area_id,
+            mining_area_name: row.mining_area_name,
+            robot_name: row.robot_name,
+            username: row.username,
+            mining_end_time_millis: row.mining_end_time_millis,
+        }
+    }
+}
+
 pub async fn list_activity_recent_users(
     pool: &MySqlPool,
     maximum_users: i64,
 ) -> Result<Vec<ActivityRecentUserRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i64)>(
-        "SELECT id, username, CAST(UNIX_TIMESTAMP(lastLoginTime) * 1000 AS SIGNED) \
+    sqlx::query_as::<_, ActivityRecentUserRow>(
+        "SELECT id, username, \
+                CAST(UNIX_TIMESTAMP(lastLoginTime) * 1000 AS SIGNED) AS lastLoginTimeMillis \
          FROM User \
          WHERE id > 1 \
          ORDER BY lastLoginTime DESC \
@@ -22,13 +73,7 @@ pub async fn list_activity_recent_users(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(user_id, username, last_login_time_millis)| ActivityRecentUserRecord {
-                    user_id,
-                    username,
-                    last_login_time_millis,
-                },
-            )
+            .map(ActivityRecentUserRecord::from)
             .collect()
     })
 }
@@ -49,10 +94,11 @@ pub async fn list_activity_recent_rally_feed(
     limit: i64,
 ) -> Result<(Vec<ActivityRecentRallyRecord>, bool), sqlx::Error> {
     let fetch_limit = limit.saturating_add(1);
-    let rows = sqlx::query_as::<_, (i64, Option<i64>, i64, String, String, String, i64)>(
-        "SELECT MiningQueue.id, MiningQueue.rallyResultId, MiningArea.id, MiningArea.areaName, \
-                Robot.robotName, User.username, \
+    let rows = sqlx::query_as::<_, ActivityRecentRallyRow>(
+        "SELECT MiningQueue.id, MiningQueue.rallyResultId, MiningArea.id AS miningAreaId, \
+                MiningArea.areaName, Robot.robotName, User.username, \
                 CAST(UNIX_TIMESTAMP(MiningQueue.miningEndTime) * 1000 AS SIGNED) \
+                  AS miningEndTimeMillis \
          FROM MiningQueue \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
@@ -80,25 +126,7 @@ pub async fn list_activity_recent_rally_feed(
     Ok((
         rows.into_iter()
             .take(usize::try_from(limit).unwrap_or(usize::MAX))
-            .map(
-                |(
-                    mining_queue_id,
-                    rally_result_id,
-                    mining_area_id,
-                    mining_area_name,
-                    robot_name,
-                    username,
-                    mining_end_time_millis,
-                )| ActivityRecentRallyRecord {
-                    mining_queue_id,
-                    rally_result_id,
-                    mining_area_id,
-                    mining_area_name,
-                    robot_name,
-                    username,
-                    mining_end_time_millis,
-                },
-            )
+            .map(ActivityRecentRallyRecord::from)
             .collect(),
         has_more,
     ))

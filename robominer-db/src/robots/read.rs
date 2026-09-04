@@ -383,25 +383,38 @@ pub async fn get_ai_robot(
     pool: &MySqlPool,
     robot_id: i64,
 ) -> Result<Option<crate::AIRobotRecord>, sqlx::Error> {
-    sqlx::query_as::<
-        _,
-        (
-            i64,
-            String,
-            String,
-            i32,
-            i32,
-            i32,
-            i32,
-            f64,
-            f64,
-            i32,
-            f64,
-            i32,
-            i32,
-            i32,
-        ),
-    >(
+    #[derive(sqlx::FromRow)]
+    struct AiRobotRow {
+        id: i64,
+        #[sqlx(rename = "robotName")]
+        robot_name: String,
+        #[sqlx(rename = "sourceCode")]
+        source_code: String,
+        #[sqlx(rename = "maxOre")]
+        max_ore: i32,
+        #[sqlx(rename = "miningSpeed")]
+        mining_speed: i32,
+        #[sqlx(rename = "maxTurns")]
+        max_turns: i32,
+        #[sqlx(rename = "cpuSpeed")]
+        cpu_speed: i32,
+        #[sqlx(rename = "forwardSpeed")]
+        forward_speed: f64,
+        #[sqlx(rename = "backwardSpeed")]
+        backward_speed: f64,
+        #[sqlx(rename = "rotateSpeed")]
+        rotate_speed: i32,
+        #[sqlx(rename = "robotSize")]
+        robot_size: f64,
+        #[sqlx(rename = "scanTime")]
+        scan_time: i32,
+        #[sqlx(rename = "scanDistance")]
+        scan_distance: i32,
+        #[sqlx(rename = "depotSize")]
+        depot_size: i32,
+    }
+
+    sqlx::query_as::<_, AiRobotRow>(
         "SELECT id, robotName, sourceCode, maxOre, miningSpeed, maxTurns, cpuSpeed, \
                 forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance, \
                 depotSize \
@@ -412,39 +425,22 @@ pub async fn get_ai_robot(
     .fetch_optional(pool)
     .await
     .map(|row| {
-        row.map(
-            |(
-                id,
-                robot_name,
-                source_code,
-                max_ore,
-                mining_speed,
-                max_turns,
-                cpu_speed,
-                forward_speed,
-                backward_speed,
-                rotate_speed,
-                robot_size,
-                scan_time,
-                scan_distance,
-                depot_size,
-            )| crate::AIRobotRecord {
-                id,
-                robot_name,
-                source_code,
-                max_ore,
-                mining_speed,
-                max_turns,
-                cpu_speed,
-                forward_speed,
-                backward_speed,
-                rotate_speed,
-                robot_size,
-                scan_time,
-                scan_distance,
-                depot_size,
-            },
-        )
+        row.map(|row| crate::AIRobotRecord {
+            id: row.id,
+            robot_name: row.robot_name,
+            source_code: row.source_code,
+            max_ore: row.max_ore,
+            mining_speed: row.mining_speed,
+            max_turns: row.max_turns,
+            cpu_speed: row.cpu_speed,
+            forward_speed: row.forward_speed,
+            backward_speed: row.backward_speed,
+            rotate_speed: row.rotate_speed,
+            robot_size: row.robot_size,
+            scan_time: row.scan_time,
+            scan_distance: row.scan_distance,
+            depot_size: row.depot_size,
+        })
     })
 }
 
