@@ -194,21 +194,25 @@ pub async fn bump_user_session_version(
 ) -> Result<Option<i32>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    let updated = sqlx::query("UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?")
-        .bind(user_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+    let updated = sqlx::query!(
+        "UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?",
+        user_id
+    )
+    .execute(&mut *transaction)
+    .await?
+    .rows_affected();
 
     if updated == 0 {
         transaction.rollback().await?;
         return Ok(None);
     }
 
-    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&mut *transaction)
-        .await?;
+    let session_version = sqlx::query_scalar!(
+        r#"SELECT sessionVersion AS "session_version!: i32" FROM User WHERE id = ?"#,
+        user_id
+    )
+    .fetch_one(&mut *transaction)
+    .await?;
 
     transaction.commit().await?;
     Ok(Some(session_version))
@@ -218,10 +222,12 @@ pub(crate) async fn touch_user_last_login_time(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE User SET lastLoginTime = NOW() WHERE id = ?")
-        .bind(user_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "UPDATE User SET lastLoginTime = NOW() WHERE id = ?",
+        user_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }
