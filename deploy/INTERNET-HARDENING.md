@@ -39,7 +39,7 @@ trustproxy 1
 | --- | --- |
 | `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
 | `sessionsecret` | Signs session cookies; required and must be ≥32 characters (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
-| `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** when unset so plain HTTP (including `host 0.0.0.0` on a LAN) keeps working. **Required** when `trustproxy 1` is set (startup fails otherwise) |
+| `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** on loopback so local HTTP keeps working. **Required** for non-loopback binds (`host 0.0.0.0`, etc.) and when `trustproxy 1` is set (startup fails otherwise) |
 | `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
 | `trustproxy 1` | Trust only `X-Real-Ip` for login rate limits and auth logs (proxy must set it to `$remote_addr`). Refused at startup unless `host` is loopback; also requires `securecookies 1`. If Real-IP is missing/blank, the app uses the dedicated key `proxy-missing-real-ip` (not the loopback peer) and logs an error so a misconfigured proxy does not share one bucket across all clients |
 

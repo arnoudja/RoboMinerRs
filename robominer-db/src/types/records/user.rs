@@ -3,7 +3,6 @@ pub struct UserRecord {
     pub id: i64,
     pub username: String,
     pub email: String,
-    pub password_hash: String,
     pub achievement_points: i32,
     pub mining_queue_size: i32,
     pub session_version: i32,

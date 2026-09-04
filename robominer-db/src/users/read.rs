@@ -7,8 +7,6 @@ struct UserRow {
     id: i64,
     username: String,
     email: String,
-    #[sqlx(rename = "password")]
-    password_hash: String,
     #[sqlx(rename = "achievementPoints")]
     achievement_points: i32,
     #[sqlx(rename = "miningQueueSize")]
@@ -23,7 +21,6 @@ impl From<UserRow> for UserRecord {
             id: row.id,
             username: row.username,
             email: row.email,
-            password_hash: row.password_hash,
             achievement_points: row.achievement_points,
             mining_queue_size: row.mining_queue_size,
             session_version: row.session_version,
@@ -36,7 +33,7 @@ pub async fn get_user_by_id(
     user_id: i64,
 ) -> Result<Option<UserRecord>, sqlx::Error> {
     sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, email, password, achievementPoints, miningQueueSize, sessionVersion \
+        "SELECT id, username, email, achievementPoints, miningQueueSize, sessionVersion \
          FROM User \
          WHERE id = ?",
     )
