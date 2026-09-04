@@ -1,6 +1,6 @@
 use sqlx::MySqlPool;
 
-use crate::mappers::{MiningRallyQueueRow, mining_rally_queue_rows};
+use crate::mining_areas::{MiningRallyQueueRow, mining_rally_queue_rows};
 use crate::{
     CompletedRallyActionRecord, CompletedRallyOreRecord, CompletedRallyParticipantRecord,
     CompletedRallyRecord, DbOutcome, MiningRallyQueueRecord, PersistRallyRejection, db_ok,

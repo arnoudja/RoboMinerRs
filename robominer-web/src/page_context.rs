@@ -73,8 +73,11 @@ impl<'a> PageSession<'a> {
         }
         if csrf_on_post
             && crate::request_helpers::is_post(request)
-            && let Some(response) =
-                crate::rate_limit::reject_rate_limited_mutation(request, user_id)
+            && let Some(response) = crate::rate_limit::reject_rate_limited_mutation(
+                request,
+                user_id,
+                &crate::rate_limit::client_ip(request, config.trust_proxy),
+            )
         {
             return Err(response);
         }

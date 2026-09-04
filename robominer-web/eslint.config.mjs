@@ -6,8 +6,8 @@ import globals from "globals";
  *
  * `no-undef` / `no-unused-vars` stay off: scripts share globals across <script>
  * tags without modules. `prefer-const` is on; `no-var` is enforced for
- * `static/js/common/**` and stays off elsewhere so remaining IIFEs are not a
- * mass rewrite.
+ * `static/js/common/**` and `static/js/mining_queue/view.js`, and stays off
+ * elsewhere so remaining IIFEs are not a mass rewrite.
  */
 export default [
   {
@@ -43,6 +43,12 @@ export default [
   },
   {
     files: ["static/js/common/**/*.js"],
+    rules: {
+      "no-var": "error",
+    },
+  },
+  {
+    files: ["static/js/mining_queue/view.js"],
     rules: {
       "no-var": "error",
     },

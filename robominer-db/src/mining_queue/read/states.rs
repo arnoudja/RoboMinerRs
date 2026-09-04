@@ -2,23 +2,43 @@ use sqlx::MySqlPool;
 
 use crate::{MiningQueueStateRecord, MiningQueueStatus};
 
+#[derive(sqlx::FromRow)]
+struct MiningQueueTimingRow {
+    #[sqlx(rename = "id")]
+    mining_queue_id: i64,
+    #[sqlx(rename = "robotId")]
+    robot_id: i64,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+    #[sqlx(rename = "miningTime")]
+    mining_time: i32,
+    #[sqlx(rename = "isRecharging")]
+    is_recharging: i8,
+    #[sqlx(rename = "rechargeSecondsLeft")]
+    recharge_seconds_left: Option<i64>,
+    #[sqlx(rename = "miningSecondsLeft")]
+    mining_seconds_left: Option<i64>,
+    #[sqlx(rename = "startSecondsLeft")]
+    start_seconds_left: i64,
+}
+
 pub async fn list_mining_queue_states_for_user(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueueStateRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, (i64, i64, i32, i32, i8, Option<i64>, Option<i64>, i64)>(
+    let rows = sqlx::query_as::<_, MiningQueueTimingRow>(
         "SELECT MiningQueue.id, MiningQueue.robotId, Robot.rechargeTime, MiningArea.miningTime, \
                 CASE WHEN Robot.rechargeEndTime > NOW() \
                        AND (Robot.miningEndTime IS NULL \
                             OR Robot.miningEndTime <= NOW() \
                             OR Robot.miningEndTime > Robot.rechargeEndTime) \
-                     THEN 1 ELSE 0 END, \
-                TIMESTAMPDIFF(SECOND, NOW(), Robot.rechargeEndTime), \
-                TIMESTAMPDIFF(SECOND, NOW(), Robot.miningEndTime), \
+                     THEN 1 ELSE 0 END AS isRecharging, \
+                TIMESTAMPDIFF(SECOND, NOW(), Robot.rechargeEndTime) AS rechargeSecondsLeft, \
+                TIMESTAMPDIFF(SECOND, NOW(), Robot.miningEndTime) AS miningSecondsLeft, \
                 TIMESTAMPDIFF(SECOND, NOW(), \
                     GREATEST( \
                         COALESCE(Robot.rechargeEndTime, MiningQueue.creationTime), \
-                        MiningQueue.creationTime)) \
+                        MiningQueue.creationTime)) AS startSecondsLeft \
          FROM MiningQueue \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
@@ -34,39 +54,29 @@ pub async fn list_mining_queue_states_for_user(
     let mut current_robot_id = None;
     let mut robot_time_left = 0_i64;
 
-    for (
-        mining_queue_id,
-        robot_id,
-        recharge_time,
-        mining_time,
-        is_recharging,
-        recharge_seconds_left,
-        mining_seconds_left,
-        start_seconds_left,
-    ) in rows
-    {
-        let first_queue_for_robot = current_robot_id != Some(robot_id);
+    for row in rows {
+        let first_queue_for_robot = current_robot_id != Some(row.robot_id);
 
         let (status, time_left_seconds, updated_robot_time_left) = derive_mining_queue_state(
             first_queue_for_robot,
             robot_time_left,
             &MiningQueueTimingInput {
-                recharge_time,
-                mining_time,
-                is_recharging: is_recharging != 0,
-                recharge_seconds_left,
-                mining_seconds_left,
-                start_seconds_left,
+                recharge_time: row.recharge_time,
+                mining_time: row.mining_time,
+                is_recharging: row.is_recharging != 0,
+                recharge_seconds_left: row.recharge_seconds_left,
+                mining_seconds_left: row.mining_seconds_left,
+                start_seconds_left: row.start_seconds_left,
             },
         );
         robot_time_left = updated_robot_time_left;
         if first_queue_for_robot {
-            current_robot_id = Some(robot_id);
+            current_robot_id = Some(row.robot_id);
         }
 
         states.push(MiningQueueStateRecord {
-            mining_queue_id,
-            robot_id,
+            mining_queue_id: row.mining_queue_id,
+            robot_id: row.robot_id,
             status,
             time_left_seconds,
         });

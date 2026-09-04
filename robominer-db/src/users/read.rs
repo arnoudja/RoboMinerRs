@@ -2,11 +2,40 @@ use sqlx::MySqlPool;
 
 use crate::UserRecord;
 
+#[derive(sqlx::FromRow)]
+struct UserRow {
+    id: i64,
+    username: String,
+    email: String,
+    #[sqlx(rename = "password")]
+    password_hash: String,
+    #[sqlx(rename = "achievementPoints")]
+    achievement_points: i32,
+    #[sqlx(rename = "miningQueueSize")]
+    mining_queue_size: i32,
+    #[sqlx(rename = "sessionVersion")]
+    session_version: i32,
+}
+
+impl From<UserRow> for UserRecord {
+    fn from(row: UserRow) -> Self {
+        Self {
+            id: row.id,
+            username: row.username,
+            email: row.email,
+            password_hash: row.password_hash,
+            achievement_points: row.achievement_points,
+            mining_queue_size: row.mining_queue_size,
+            session_version: row.session_version,
+        }
+    }
+}
+
 pub async fn get_user_by_id(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Option<UserRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, String, String, i32, i32, i32)>(
+    sqlx::query_as::<_, UserRow>(
         "SELECT id, username, email, password, achievementPoints, miningQueueSize, sessionVersion \
          FROM User \
          WHERE id = ?",
@@ -14,29 +43,7 @@ pub async fn get_user_by_id(
     .bind(user_id)
     .fetch_optional(pool)
     .await
-    .map(|row| {
-        row.map(
-            |(
-                id,
-                username,
-                email,
-                password_hash,
-                achievement_points,
-                mining_queue_size,
-                session_version,
-            )| {
-                UserRecord {
-                    id,
-                    username,
-                    email,
-                    password_hash,
-                    achievement_points,
-                    mining_queue_size,
-                    session_version,
-                }
-            },
-        )
-    })
+    .map(|row| row.map(UserRecord::from))
 }
 
 /// Resolve a public username to a user id without loading credentials.

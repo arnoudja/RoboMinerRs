@@ -205,7 +205,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Request timeouts | 30s |
 | POST-only form mutations | GET cannot drive shop/queue/account writes |
 | App login rate limit | Sliding window by IP and login name → 429; empty keys pruned |
-| App mutation rate limit | 30 POSTs per 60s per user and action family → 429 |
+| App mutation rate limit | 30 POSTs per 60s per user and action family, plus 60 POSTs per 60s per client IP → 429 |
 | Account password rate limit | `/account` POSTs limited by IP and `user:{id}` before Argon2 verify |
 | Session invalidation on password change / logoff / logout-all-devices | `User.sessionVersion` bumped; cookie version checked on each request |
 | Opaque `/health` failures | 503 body is `unavailable` only; SQL/migration detail stays in logs |

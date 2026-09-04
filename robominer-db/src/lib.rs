@@ -27,7 +27,6 @@ pub mod assets;
 pub mod catalog;
 pub mod config;
 pub mod leaderboard;
-mod mappers;
 pub mod migrate;
 pub mod mining_areas;
 pub mod mining_queue;
@@ -198,9 +197,8 @@ pub fn resolve_max_connections(
 
 #[cfg(test)]
 mod tests {
-    use crate::mappers::{
-        MiningRallyQueueRow, PoolItemRow, mining_rally_queue_rows, next_pool_rally_item_rows,
-    };
+    use crate::mining_areas::{MiningRallyQueueRow, mining_rally_queue_rows};
+    use crate::pool::{PoolItemRow, next_pool_rally_item_rows};
     use crate::{
         DEFAULT_MAX_CONNECTIONS, ensure_remote_mysql_tls_with_allow, mysql_url_host,
         mysql_url_requests_tls, resolve_max_connections,
@@ -342,14 +340,14 @@ mod tests {
         total_score: f64,
         runs_done: i32,
     ) -> PoolItemRow {
-        (
+        PoolItemRow {
             id,
             pool_id,
             robot_id,
-            format!("mine({id});"),
+            source_code: format!("mine({id});"),
             total_score,
             runs_done,
-        )
+        }
     }
 
     fn mining_rally_queue_row(
@@ -359,16 +357,16 @@ mod tests {
         user_id: i64,
         seconds_left: i32,
     ) -> MiningRallyQueueRow {
-        (
+        MiningRallyQueueRow {
             id,
             mining_area_id,
             robot_id,
             user_id,
-            None,
-            None,
-            None,
-            false,
+            rally_result_id: None,
+            player_number: None,
+            score: None,
+            claimed: false,
             seconds_left,
-        )
+        }
     }
 }

@@ -69,8 +69,10 @@ sunset criteria are met.
 
 1. ~~Tighten open-redirect and session rules~~ **Done** (`returnTo` whitelist, CSRF logoff, Secure+trustproxy, session secret floor, TTL cap)
 2. ~~Trustproxy missing Real-IP footgun~~ **Done** (dedicated `proxy-missing-real-ip` key + error log)
-3. Remove PascalCase redirects when analytics show zero use
-4. Bump minimum session version after TTL window (remember-me max age is 30 days)
-5. `__Host-` cookies only after Secure is mandatory on every deploy path
-6. Leave ore-ordering and conf-file paths until a deliberate migration release
-7. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
+3. ~~Mutation IP co-limit~~ **Done** (60 POSTs / 60s per client IP alongside user+action budgets)
+4. Remove PascalCase redirects when analytics show zero use
+5. Bump minimum session version after TTL window (remember-me max age is 30 days)
+6. `__Host-` cookies only after Secure is mandatory on every deploy path
+7. Leave ore-ordering and conf-file paths until a deliberate migration release
+8. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
+9. App-level HSTS — leave to the reverse proxy; do not emit HSTS on loopback HTTP binds
