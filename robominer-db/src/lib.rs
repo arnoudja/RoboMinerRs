@@ -73,7 +73,7 @@ pub async fn connect_with_max_connections(
     database_url: &str,
     max_connections: u32,
 ) -> Result<MySqlPool, sqlx::Error> {
-    warn_if_remote_mysql_without_tls(database_url);
+    ensure_remote_mysql_tls(database_url)?;
     MySqlPoolOptions::new()
         .max_connections(max_connections)
         .acquire_timeout(std::time::Duration::from_secs(30))
@@ -81,18 +81,55 @@ pub async fn connect_with_max_connections(
         .await
 }
 
-fn warn_if_remote_mysql_without_tls(database_url: &str) {
+/// Refuse non-loopback MySQL URLs that do not request TLS, unless
+/// `ROBOMINER_ALLOW_INSECURE_MYSQL=1` is set.
+fn ensure_remote_mysql_tls(database_url: &str) -> Result<(), sqlx::Error> {
+    ensure_remote_mysql_tls_with_allow(database_url, insecure_mysql_allowed())
+}
+
+fn insecure_mysql_allowed() -> bool {
+    matches!(
+        std::env::var("ROBOMINER_ALLOW_INSECURE_MYSQL").as_deref(),
+        Ok("1") | Ok("true") | Ok("TRUE") | Ok("yes") | Ok("YES")
+    )
+}
+
+fn ensure_remote_mysql_tls_with_allow(
+    database_url: &str,
+    allow_insecure: bool,
+) -> Result<(), sqlx::Error> {
     let Some(host) = mysql_url_host(database_url) else {
-        return;
+        return Ok(());
     };
     if matches!(host.as_str(), "127.0.0.1" | "localhost" | "::1") {
-        return;
+        return Ok(());
     }
+    if mysql_url_requests_tls(database_url) {
+        return Ok(());
+    }
+    if allow_insecure {
+        tracing::warn!(
+            host = %host,
+            "MySQL host is not loopback and URL does not request TLS; \
+             continuing because ROBOMINER_ALLOW_INSECURE_MYSQL is set"
+        );
+        return Ok(());
+    }
+    Err(sqlx::Error::Configuration(
+        format!(
+            "MySQL host {host:?} is not loopback and URL does not request TLS \
+             (add ?ssl-mode=REQUIRED, or set ROBOMINER_ALLOW_INSECURE_MYSQL=1)"
+        )
+        .into(),
+    ))
+}
+
+fn mysql_url_requests_tls(database_url: &str) -> bool {
     let query = database_url
         .split_once('?')
         .map(|(_, query)| query)
         .unwrap_or("");
-    let has_ssl = query.split('&').any(|pair| {
+    query.split('&').any(|pair| {
         let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
         let key = key.to_ascii_lowercase();
         let value = value.to_ascii_lowercase();
@@ -101,14 +138,7 @@ fn warn_if_remote_mysql_without_tls(database_url: &str) {
             ("ssl-mode", "required" | "verify_ca" | "verify_identity")
                 | ("sslmode", "require" | "verify-ca" | "verify-full")
         )
-    });
-    if !has_ssl {
-        tracing::warn!(
-            host = %host,
-            "MySQL host is not loopback and URL does not request TLS (ssl-mode=REQUIRED); \
-             prefer private network + TLS for remote databases"
-        );
-    }
+    })
 }
 
 fn mysql_url_host(database_url: &str) -> Option<String> {
@@ -171,7 +201,10 @@ mod tests {
     use crate::mappers::{
         MiningRallyQueueRow, PoolItemRow, mining_rally_queue_rows, next_pool_rally_item_rows,
     };
-    use crate::{DEFAULT_MAX_CONNECTIONS, resolve_max_connections};
+    use crate::{
+        DEFAULT_MAX_CONNECTIONS, ensure_remote_mysql_tls_with_allow, mysql_url_host,
+        mysql_url_requests_tls, resolve_max_connections,
+    };
 
     #[test]
     fn resolve_max_connections_defaults_and_prefers_env() {
@@ -196,6 +229,66 @@ mod tests {
         assert_eq!(
             resolve_max_connections(Some(""), Some("8")).expect("empty env falls back"),
             8
+        );
+    }
+
+    #[test]
+    fn mysql_url_host_parses_auth_and_ipv6() {
+        assert_eq!(
+            mysql_url_host("mysql://u:p@db.example.com:3306/RoboMiner").as_deref(),
+            Some("db.example.com")
+        );
+        assert_eq!(
+            mysql_url_host("mysql://robominer:password@127.0.0.1:3306/RoboMiner").as_deref(),
+            Some("127.0.0.1")
+        );
+        assert_eq!(
+            mysql_url_host("mysql://u:p@[::1]:3306/RoboMiner").as_deref(),
+            Some("::1")
+        );
+    }
+
+    #[test]
+    fn mysql_url_requests_tls_detects_ssl_mode_query() {
+        assert!(mysql_url_requests_tls(
+            "mysql://u:p@db.example.com/RoboMiner?ssl-mode=REQUIRED"
+        ));
+        assert!(mysql_url_requests_tls(
+            "mysql://u:p@db.example.com/RoboMiner?sslmode=verify-full"
+        ));
+        assert!(!mysql_url_requests_tls(
+            "mysql://u:p@db.example.com/RoboMiner"
+        ));
+        assert!(!mysql_url_requests_tls(
+            "mysql://u:p@db.example.com/RoboMiner?ssl-mode=DISABLED"
+        ));
+    }
+
+    #[test]
+    fn remote_mysql_without_tls_is_rejected_unless_allowlisted() {
+        let remote = "mysql://u:p@db.example.com:3306/RoboMiner";
+        assert!(ensure_remote_mysql_tls_with_allow(remote, false).is_err());
+        assert!(ensure_remote_mysql_tls_with_allow(remote, true).is_ok());
+        assert!(
+            ensure_remote_mysql_tls_with_allow(
+                "mysql://u:p@db.example.com/RoboMiner?ssl-mode=REQUIRED",
+                false
+            )
+            .is_ok()
+        );
+        assert!(
+            ensure_remote_mysql_tls_with_allow(
+                "mysql://robominer:password@127.0.0.1:3306/RoboMiner",
+                false
+            )
+            .is_ok()
+        );
+        assert!(
+            ensure_remote_mysql_tls_with_allow(
+                "mysql://robominer:password@localhost/RoboMiner",
+                false
+            )
+            .is_ok()
         );
     }
 
