@@ -251,16 +251,16 @@ pub async fn list_mining_queue_page_area_yields(
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaYieldRecord>, sqlx::Error> {
     sqlx::query_as::<_, MiningQueuePageAreaYieldRow>(
-        "SELECT MiningAreaAverageResult.miningAreaId, MiningAreaAverageResult.oreId, \
+        "SELECT MiningAreaLifetimeResult.miningAreaId, MiningAreaLifetimeResult.oreId, \
                 Ore.oreName, \
-                CAST(CASE WHEN MiningAreaAverageResult.totalContainerSize > 0 \
-                          THEN MiningAreaAverageResult.totalAmount * 100.0 / MiningAreaAverageResult.totalContainerSize \
+                CAST(CASE WHEN MiningAreaLifetimeResult.totalContainerSize > 0 \
+                          THEN MiningAreaLifetimeResult.totalAmount * 100.0 / MiningAreaLifetimeResult.totalContainerSize \
                           ELSE 0.0 END AS DOUBLE) AS percentage \
-         FROM MiningAreaAverageResult \
-         INNER JOIN UserMiningArea ON UserMiningArea.miningAreaId = MiningAreaAverageResult.miningAreaId \
-         INNER JOIN Ore ON Ore.id = MiningAreaAverageResult.oreId \
+         FROM MiningAreaLifetimeResult \
+         INNER JOIN UserMiningArea ON UserMiningArea.miningAreaId = MiningAreaLifetimeResult.miningAreaId \
+         INNER JOIN Ore ON Ore.id = MiningAreaLifetimeResult.oreId \
          WHERE UserMiningArea.userId = ? \
-         ORDER BY MiningAreaAverageResult.miningAreaId, MiningAreaAverageResult.oreId DESC",
+         ORDER BY MiningAreaLifetimeResult.miningAreaId, MiningAreaLifetimeResult.oreId DESC",
     )
     .bind(user_id)
     .fetch_all(pool)
