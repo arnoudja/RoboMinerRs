@@ -50,7 +50,7 @@ sunset criteria are met.
 ## `/etc/robominer/robominer.conf`
 
 | Item | Detail |
-| --- |
+| --- | --- |
 | Location | `robominer-web/src/startup.rs`, `robominer-db/src/config.rs` |
 | Behavior | Legacy key/value file merged with environment variables |
 | Sunset | Prefer `EnvironmentFile` / env vars (see `deploy/systemd/robominer.env.example`); deprecate file format in a major release |
@@ -58,7 +58,7 @@ sunset criteria are met.
 
 ## Recommended order
 
-1. Tighten open-redirect and session rules (already in progress)
+1. ~~Tighten open-redirect and session rules~~ **Done** (`returnTo` whitelist, CSRF logoff, Secure+trustproxy, session secret floor, TTL cap)
 2. Remove PascalCase redirects when analytics show zero use
-3. Bump minimum session version after TTL window
+3. Bump minimum session version after TTL window (remember-me max age is 30 days)
 4. Leave ore-ordering and conf-file paths until a deliberate migration release

@@ -2,6 +2,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 pub const DEFAULT_SESSION_TTL_HOURS: u64 = 24;
 pub const DEFAULT_SESSION_TTL_SECS: u64 = DEFAULT_SESSION_TTL_HOURS * 60 * 60;
+/// Upper bound for configured (non-remember-me) session TTL.
+pub const MAX_SESSION_TTL_SECS: u64 = 30 * 24 * 60 * 60;
 pub const DEFAULT_DEV_SESSION_SECRET: &str = "robominer-dev-session-secret-change-me";
 /// Minimum length for configured session secrets (dev default already qualifies).
 pub const MIN_SESSION_SECRET_LEN: usize = 32;
@@ -137,12 +139,17 @@ fn validate_session_ttl_secs(ttl_secs: u64, name: &str) -> Result<u64, String> {
     if ttl_secs == 0 {
         return Err(format!("{name} must be greater than 0"));
     }
+    if ttl_secs > MAX_SESSION_TTL_SECS {
+        return Err(format!(
+            "{name} must be at most {MAX_SESSION_TTL_SECS} seconds (30 days)"
+        ));
+    }
     Ok(ttl_secs)
 }
 
 pub(super) fn session_ttl_secs(persistent: bool) -> u64 {
     if persistent {
-        30 * 24 * 60 * 60
+        MAX_SESSION_TTL_SECS
     } else {
         SESSION_TTL_SECS.load(Ordering::Relaxed)
     }

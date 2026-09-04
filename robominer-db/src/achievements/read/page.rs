@@ -1,12 +1,78 @@
 use crate::assert_sql_safe;
 use sqlx::MySqlPool;
-use sqlx::Row;
 
 use crate::{
     AchievementPageDepotTotalRequirementRecord, AchievementPagePointsSummaryRecord,
     AchievementPageScoreRequirementRecord, AchievementPageStateRecord,
     AchievementPageTotalRequirementRecord, INITIAL_ORE_WALLET_MAX,
 };
+
+#[derive(sqlx::FromRow)]
+struct AchievementPageStateRow {
+    #[sqlx(rename = "achievementId")]
+    achievement_id: i64,
+    title: String,
+    description: String,
+    #[sqlx(rename = "stepsClaimed")]
+    steps_claimed: i32,
+    #[sqlx(rename = "numberOfSteps")]
+    number_of_steps: i64,
+    #[sqlx(rename = "achievementPointsEarned")]
+    achievement_points_earned: i64,
+    #[sqlx(rename = "totalAchievementPoints")]
+    total_achievement_points: i64,
+    step: i32,
+    #[sqlx(rename = "nextAchievementPoints")]
+    next_achievement_points: i32,
+    #[sqlx(rename = "miningQueueReward")]
+    mining_queue_reward: i32,
+    #[sqlx(rename = "robotReward")]
+    robot_reward: i32,
+    #[sqlx(rename = "oreId")]
+    ore_id: Option<i64>,
+    #[sqlx(rename = "oreName")]
+    ore_name: Option<String>,
+    #[sqlx(rename = "currentOreMaximum")]
+    current_ore_maximum: i32,
+    #[sqlx(rename = "maxOreReward")]
+    max_ore_reward: i32,
+    #[sqlx(rename = "currentDepotMaximum")]
+    current_depot_maximum: i32,
+    #[sqlx(rename = "maxDepotReward")]
+    max_depot_reward: i32,
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: Option<i64>,
+    #[sqlx(rename = "miningAreaName")]
+    mining_area_name: Option<String>,
+    claimable: i8,
+}
+
+impl From<AchievementPageStateRow> for AchievementPageStateRecord {
+    fn from(row: AchievementPageStateRow) -> Self {
+        Self {
+            achievement_id: row.achievement_id,
+            title: row.title,
+            description: row.description,
+            steps_claimed: row.steps_claimed,
+            number_of_steps: row.number_of_steps,
+            achievement_points_earned: row.achievement_points_earned,
+            total_achievement_points: row.total_achievement_points,
+            step: row.step,
+            next_achievement_points: row.next_achievement_points,
+            mining_queue_reward: row.mining_queue_reward,
+            robot_reward: row.robot_reward,
+            ore_id: row.ore_id,
+            ore_name: row.ore_name,
+            current_ore_maximum: row.current_ore_maximum,
+            max_ore_reward: row.max_ore_reward,
+            current_depot_maximum: row.current_depot_maximum,
+            max_depot_reward: row.max_depot_reward,
+            mining_area_id: row.mining_area_id,
+            mining_area_name: row.mining_area_name,
+            claimable: row.claimable != 0,
+        }
+    }
+}
 
 pub async fn list_achievement_page_states_for_user(
     pool: &MySqlPool,
@@ -96,38 +162,15 @@ pub async fn list_achievement_page_states_for_user(
         initial = INITIAL_ORE_WALLET_MAX,
     );
 
-    sqlx::query(assert_sql_safe(query))
+    sqlx::query_as::<_, AchievementPageStateRow>(assert_sql_safe(query))
         .bind(user_id)
         .fetch_all(pool)
         .await
         .map(|rows| {
             rows.into_iter()
-                .map(|row| {
-                    Ok(AchievementPageStateRecord {
-                        achievement_id: row.try_get("achievementId")?,
-                        title: row.try_get("title")?,
-                        description: row.try_get("description")?,
-                        steps_claimed: row.try_get("stepsClaimed")?,
-                        number_of_steps: row.try_get("numberOfSteps")?,
-                        achievement_points_earned: row.try_get("achievementPointsEarned")?,
-                        total_achievement_points: row.try_get("totalAchievementPoints")?,
-                        step: row.try_get("step")?,
-                        next_achievement_points: row.try_get("nextAchievementPoints")?,
-                        mining_queue_reward: row.try_get("miningQueueReward")?,
-                        robot_reward: row.try_get("robotReward")?,
-                        ore_id: row.try_get("oreId")?,
-                        ore_name: row.try_get("oreName")?,
-                        current_ore_maximum: row.try_get("currentOreMaximum")?,
-                        max_ore_reward: row.try_get("maxOreReward")?,
-                        current_depot_maximum: row.try_get("currentDepotMaximum")?,
-                        max_depot_reward: row.try_get("maxDepotReward")?,
-                        mining_area_id: row.try_get("miningAreaId")?,
-                        mining_area_name: row.try_get("miningAreaName")?,
-                        claimable: row.try_get::<i8, _>("claimable")? != 0,
-                    })
-                })
-                .collect::<Result<Vec<_>, sqlx::Error>>()
-        })?
+                .map(AchievementPageStateRecord::from)
+                .collect()
+        })
 }
 
 pub async fn load_achievement_page_points_summary_for_user(

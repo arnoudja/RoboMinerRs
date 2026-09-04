@@ -152,6 +152,9 @@ fn resolve_session_ttl_secs_prefers_env_over_config() {
 fn resolve_session_ttl_secs_rejects_invalid_values() {
     assert!(resolve_session_ttl_secs(Some("0"), None, None, None).is_err());
     assert!(resolve_session_ttl_secs(None, Some("abc"), None, None).is_err());
+    let over_max = (super::MAX_SESSION_TTL_SECS + 1).to_string();
+    let error = resolve_session_ttl_secs(Some(&over_max), None, None, None).unwrap_err();
+    assert!(error.contains("30 days"));
 }
 
 #[test]
