@@ -107,11 +107,30 @@ table_exists() {
 }
 
 schema_already_current() {
+    # Keep in sync with robominer-db/src/migrate/schema.rs schema_already_current.
     mysql_app -N -e "SELECT 1 FROM User LIMIT 1" >/dev/null 2>&1 \
         && column_exists Robot scanTime \
         && ! column_exists Robot scanSpeed \
+        && column_exists User sessionVersion \
         && column_exists MiningArea scoreOreTarget \
-        && table_exists AIRobot
+        && table_exists AIRobot \
+        && column_exists MiningArea depotTaxRate \
+        && column_exists MiningOreResult depotAmount \
+        && column_exists MiningAreaLifetimeResult totalRuns \
+        && table_exists AchievementStepDepotTotalRequirement \
+        && column_exists MiningQueue processingLeaseUntil \
+        && index_exists MiningQueue idx_mining_queue_claimable \
+        && column_exists RobotLifetimeResult depotAmount
+}
+
+index_exists() {
+    local table="$1"
+    local index="$2"
+    mysql_app -N -e \
+        "SELECT COUNT(*) FROM information_schema.statistics
+         WHERE table_schema = DATABASE()
+           AND table_name = '${table}'
+           AND index_name = '${index}'" 2>/dev/null | grep -qx '1'
 }
 
 is_applied() {

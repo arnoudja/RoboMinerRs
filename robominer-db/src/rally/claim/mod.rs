@@ -1,6 +1,7 @@
 mod batch;
 mod deadlock;
 mod queries;
+mod tax;
 mod types;
 
 use std::collections::HashMap;

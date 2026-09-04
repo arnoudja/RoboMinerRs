@@ -57,7 +57,7 @@ pub(super) async fn claim_mining_queues_batch(
 
     increment_robot_mining_runs_batch(transaction, claimable_queues).await?;
     mark_mining_queues_claimed_batch(transaction, &queue_ids).await?;
-    calculate_mining_ore_result_tax_batch(transaction, &queue_ids).await?;
+    super::tax::calculate_mining_ore_result_tax_batch(transaction, &queue_ids).await?;
     let ore_results = list_claimable_mining_ore_results_batch(transaction, &queue_ids).await?;
 
     let mut ore_results_by_queue: HashMap<i64, Vec<ClaimableMiningOreResult>> = HashMap::new();
@@ -275,35 +275,6 @@ async fn mark_mining_queues_claimed_batch(
 
     let placeholders = in_placeholders(queue_ids.len());
     let query = format!("UPDATE MiningQueue SET claimed = true WHERE id IN ({placeholders})");
-    let mut query_builder = sqlx::query(assert_sql_safe(query));
-    for queue_id in queue_ids {
-        query_builder = query_builder.bind(queue_id);
-    }
-    query_builder.execute(&mut **transaction).await?;
-
-    Ok(())
-}
-
-async fn calculate_mining_ore_result_tax_batch(
-    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
-    queue_ids: &[i64],
-) -> Result<(), sqlx::Error> {
-    if queue_ids.is_empty() {
-        return Ok(());
-    }
-
-    let placeholders = in_placeholders(queue_ids.len());
-    let query = format!(
-        "UPDATE MiningOreResult \
-         INNER JOIN MiningQueue ON MiningQueue.id = MiningOreResult.miningQueueId \
-         INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
-         SET MiningOreResult.tax = \
-             FLOOR(GREATEST(MiningOreResult.amount - MiningOreResult.depotAmount, 0) \
-                   * MiningArea.taxRate / 100) \
-           + FLOOR(LEAST(MiningOreResult.depotAmount, MiningOreResult.amount) \
-                   * MiningArea.depotTaxRate / 100) \
-         WHERE MiningOreResult.miningQueueId IN ({placeholders})"
-    );
     let mut query_builder = sqlx::query(assert_sql_safe(query));
     for queue_id in queue_ids {
         query_builder = query_builder.bind(queue_id);

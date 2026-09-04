@@ -4,6 +4,7 @@ mod banners;
 mod csrf;
 mod format;
 mod json;
+mod label_value;
 mod layout;
 mod ore_costs;
 mod shell;
@@ -23,6 +24,7 @@ pub(crate) use format::{
     optional_title_attr, selected_attr,
 };
 pub(crate) use json::embed_json_script;
+pub(crate) use label_value::label_value;
 pub(crate) use layout::layout;
 pub(crate) use ore_costs::{format_ore_shortfall, ore_costs_affordable, render_ore_entry_costs};
 pub(crate) use shell::page_footer;

@@ -22,6 +22,29 @@ pub use runner::{
 mod tests {
     use super::{EMBEDDED_MIGRATIONS, load_migrations_from_dir, split_sql_statements};
 
+    /// Migrations that introduce a distinctive marker checked by
+    /// `schema_already_current`. Versions not listed are covered by a later
+    /// probe once createDatabase.sql includes them (002, 004, 007 today).
+    const BASELINE_PROBE_MIGRATIONS: &[&str] = &[
+        "001_rename_scan_speed_to_scan_time",
+        "003_user_session_version",
+        "005_mining_area_score_ore_target",
+        "006_ai_robot_table",
+        "008_container_and_depot_tax_rates",
+        "009_mining_area_lifetime_total_runs",
+        "010_achievement_step_depot_total_requirement",
+        "011_mining_queue_processing_lease",
+        "012_mining_queue_claimable_index",
+        "013_robot_lifetime_depot_amount",
+    ];
+
+    /// Migrations intentionally without their own probe (covered by later markers).
+    const BASELINE_COVERED_BY_LATER_PROBE: &[&str] = &[
+        "002_mining_queue_executed_source_code",
+        "004_ore_depot_capacity",
+        "007_ai_robot_depot_size",
+    ];
+
     #[test]
     fn embedded_migrations_match_filesystem() {
         let dir = super::default_migrations_dir();
@@ -34,6 +57,32 @@ mod tests {
             assert_eq!(
                 split_sql_statements(disk_sql),
                 split_sql_statements(embedded_sql)
+            );
+        }
+    }
+
+    #[test]
+    fn every_embedded_migration_has_baseline_probe_policy() {
+        for (version, _) in EMBEDDED_MIGRATIONS {
+            let probed = BASELINE_PROBE_MIGRATIONS.contains(version);
+            let deferred = BASELINE_COVERED_BY_LATER_PROBE.contains(version);
+            assert!(
+                probed ^ deferred,
+                "migration {version} must be listed in exactly one of \
+                 BASELINE_PROBE_MIGRATIONS or BASELINE_COVERED_BY_LATER_PROBE \
+                 (update schema_already_current + migrate-database.sh when adding probes)"
+            );
+        }
+
+        for version in BASELINE_PROBE_MIGRATIONS
+            .iter()
+            .chain(BASELINE_COVERED_BY_LATER_PROBE.iter())
+        {
+            assert!(
+                EMBEDDED_MIGRATIONS
+                    .iter()
+                    .any(|(embedded, _)| embedded == version),
+                "stale baseline policy entry {version} is not an embedded migration"
             );
         }
     }
