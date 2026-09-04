@@ -7,7 +7,7 @@ use crate::{
     static_files,
 };
 
-use super::route_policy::{RouteAccess, enforce_policy};
+use super::route_policy::{enforce_policy, require_public_read, require_session};
 
 pub(super) async fn dispatch(request: &Request, config: &ServerConfig) -> Response {
     if !matches!(request.method.as_str(), "GET" | "HEAD" | "POST") {
@@ -23,54 +23,52 @@ pub(super) async fn dispatch(request: &Request, config: &ServerConfig) -> Respon
     };
 
     match route {
-        AppRoute::Achievements => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Achievements require ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                achievements_page::achievements_page(request, config, session).await
+        AppRoute::Achievements => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Achievements require ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => achievements_page::achievements_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::Account => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Account requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                account_page::account_page(request, config, session).await
+        }
+        AppRoute::Account => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Account requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => account_page::account_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::Activity => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Activity requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::PublicRead { user_id, pool }) => {
-                rally_pages::activity_page(request, config, user_id, pool).await
+        }
+        AppRoute::Activity => {
+            match require_public_read(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Activity requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok((user_id, pool)) => {
+                    rally_pages::activity_page(request, config, user_id, pool).await
+                }
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::EditCode => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Edit code requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                edit_code_page::edit_code_page(request, config, session).await
+        }
+        AppRoute::EditCode => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Edit code requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => edit_code_page::edit_code_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
+        }
         AppRoute::Help => {
             help_pages::help_page(request, config, request.query.contains_key("welcome")).await
         }
@@ -94,91 +92,91 @@ pub(super) async fn dispatch(request: &Request, config: &ServerConfig) -> Respon
         AppRoute::HelpMechanics => {
             help_pages::help_text_page(request, config, AppRoute::HelpMechanics.href(), None).await
         }
-        AppRoute::Leaderboard => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Leaderboard requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::PublicRead { user_id, pool }) => {
-                leaderboard_page::leaderboard_page(request, config, user_id, pool).await
+        AppRoute::Leaderboard => {
+            match require_public_read(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Leaderboard requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok((user_id, pool)) => {
+                    leaderboard_page::leaderboard_page(request, config, user_id, pool).await
+                }
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
+        }
         AppRoute::Login => auth_pages::login_page(request, config).await,
         AppRoute::Logoff => auth_pages::logoff_page(request, config).await,
-        AppRoute::MiningQueue => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Mining queue requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                mining_queue_page::mining_queue_page(request, config, session).await
+        AppRoute::MiningQueue => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Mining queue requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => mining_queue_page::mining_queue_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::MiningResults => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Mining results require ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                mining_results_page::mining_results_page(request, config, session).await
+        }
+        AppRoute::MiningResults => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Mining results require ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => {
+                    mining_results_page::mining_results_page(request, config, session).await
+                }
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::MiningAreaOverview => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Mining area overview requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                mining_area_overview_page::mining_area_overview_page(request, config, session).await
+        }
+        AppRoute::MiningAreaOverview => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Mining area overview requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => {
+                    mining_area_overview_page::mining_area_overview_page(request, config, session)
+                        .await
+                }
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::Robot => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Robot workshop requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                robot_page::robot_page(request, config, session).await
+        }
+        AppRoute::Robot => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Robot workshop requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => robot_page::robot_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::RobotStats => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Robot stats require ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                robot_stats_page::robot_stats_page(request, config, session).await
+        }
+        AppRoute::RobotStats => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Robot stats require ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => robot_stats_page::robot_stats_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
-        AppRoute::Shop => match enforce_policy(
-            request,
-            config,
-            route.policy(),
-            "Shop requires ROBOMINER_DATABASE_URL to be configured",
-        ) {
-            Ok(RouteAccess::Session(session)) => {
-                shop_page::shop_page(request, config, session).await
+        }
+        AppRoute::Shop => {
+            match require_session(enforce_policy(
+                request,
+                config,
+                route.policy(),
+                "Shop requires ROBOMINER_DATABASE_URL to be configured",
+            )) {
+                Ok(session) => shop_page::shop_page(request, config, session).await,
+                Err(response) => response,
             }
-            Err(response) => response,
-            Ok(_) => Response::internal_error(),
-        },
+        }
     }
 }
