@@ -20,20 +20,33 @@ pub(crate) use mutation::reset_mutation_rate_limiter_for_tests;
 
 use crate::http::Request;
 
+/// Rate-limit / auth-log key when `trust_proxy` is on but `X-Real-Ip` is absent
+/// or blank. Avoids collapsing every client onto the loopback peer.
+pub(crate) const PROXY_MISSING_REAL_IP_KEY: &str = "proxy-missing-real-ip";
+
 /// Client IP for rate limiting / auth logs.
 ///
 /// When `trust_proxy` is true (behind a reverse proxy that sets client headers),
 /// uses only `X-Real-Ip` (proxy-set `$remote_addr`). Falling back to
 /// `X-Forwarded-For` is intentionally omitted: misconfigured proxies that
 /// append client-supplied XFF would reintroduce spoofable rate-limit keys.
-/// Otherwise uses the peer address injected by the Axum acceptor
-/// (`x-robominer-peer`).
+/// Missing/blank Real-IP uses [`PROXY_MISSING_REAL_IP_KEY`] (and logs an error)
+/// instead of the peer address, so a misconfigured proxy does not share one
+/// bucket across all clients. Otherwise uses the peer address injected by the
+/// Axum acceptor (`x-robominer-peer`).
 pub(crate) fn client_ip(request: &Request, trust_proxy: bool) -> String {
-    if trust_proxy && let Some(real_ip) = request.headers.get("x-real-ip") {
-        let trimmed = real_ip.trim();
-        if !trimmed.is_empty() {
-            return trimmed.to_string();
+    if trust_proxy {
+        if let Some(real_ip) = request.headers.get("x-real-ip") {
+            let trimmed = real_ip.trim();
+            if !trimmed.is_empty() {
+                return trimmed.to_string();
+            }
         }
+        tracing::error!(
+            path = %request.path,
+            "trustproxy enabled but X-Real-Ip missing or blank; using dedicated rate-limit key"
+        );
+        return PROXY_MISSING_REAL_IP_KEY.to_string();
     }
     if let Some(peer) = request.headers.get("x-robominer-peer") {
         let trimmed = peer.trim();
@@ -128,12 +141,17 @@ mod tests {
         ]));
         assert_eq!(client_ip(&request, true), "10.0.0.2");
         request.headers.remove("x-real-ip");
-        // Spoofable XFF must not become the rate-limit key.
-        assert_eq!(client_ip(&request, true), "127.0.0.1");
+        // Spoofable XFF must not become the rate-limit key; missing Real-IP must
+        // not collapse onto the loopback peer either.
+        assert_eq!(client_ip(&request, true), PROXY_MISSING_REAL_IP_KEY);
         request.headers.remove("x-forwarded-for");
-        assert_eq!(client_ip(&request, true), "127.0.0.1");
+        assert_eq!(client_ip(&request, true), PROXY_MISSING_REAL_IP_KEY);
+        request
+            .headers
+            .insert("x-real-ip".to_string(), "   ".to_string());
+        assert_eq!(client_ip(&request, true), PROXY_MISSING_REAL_IP_KEY);
         request.headers.clear();
-        assert_eq!(client_ip(&request, true), "unknown");
+        assert_eq!(client_ip(&request, true), PROXY_MISSING_REAL_IP_KEY);
     }
 
     #[test]
