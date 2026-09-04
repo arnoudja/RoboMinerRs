@@ -17,6 +17,7 @@ mod program;
 mod rally;
 mod robot;
 mod shop;
+mod shutdown;
 mod user;
 mod verify;
 

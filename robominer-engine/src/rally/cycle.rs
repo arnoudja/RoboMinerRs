@@ -18,7 +18,7 @@ pub(crate) async fn run_rallies(
 
     if options.loop_mode {
         let mut cycle = 0_u64;
-        let mut shutdown = shutdown_signal();
+        let mut shutdown = crate::shutdown::shutdown_signal();
 
         loop {
             cycle += 1;
@@ -179,37 +179,4 @@ struct RunRalliesSummary {
     ran: usize,
     skipped: usize,
     failed: usize,
-}
-
-struct ShutdownSignal {
-    receiver: tokio::sync::watch::Receiver<bool>,
-}
-
-impl ShutdownSignal {
-    fn requested(&self) -> bool {
-        *self.receiver.borrow()
-    }
-
-    async fn wait(&mut self) {
-        if self.requested() {
-            return;
-        }
-
-        let _ = self.receiver.changed().await;
-    }
-}
-
-fn shutdown_signal() -> ShutdownSignal {
-    let (sender, receiver) = tokio::sync::watch::channel(false);
-
-    tokio::spawn(async move {
-        if let Err(error) = tokio::signal::ctrl_c().await {
-            eprintln!("failed to listen for shutdown signal: {error}");
-            return;
-        }
-
-        let _ = sender.send(true);
-    });
-
-    ShutdownSignal { receiver }
 }
