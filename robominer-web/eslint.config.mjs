@@ -4,9 +4,9 @@ import globals from "globals";
 /**
  * Lint the multi-file IIFE static scripts.
  *
- * `no-undef` stays off: scripts share globals across <script> tags without
- * modules. Prefer `eqeqeq` / `no-debugger` / eval-family rules as CI gates.
- * `no-var` is off so existing IIFEs are not a mass rewrite.
+ * `no-undef` / `no-unused-vars` stay off: scripts share globals across <script>
+ * tags without modules. `prefer-const` is on; `no-var` stays off so existing
+ * IIFEs are not a mass rewrite.
  */
 export default [
   {
@@ -30,7 +30,7 @@ export default [
       "no-undef": "off",
       "no-unused-vars": "off",
       "no-var": "off",
-      "prefer-const": "off",
+      "prefer-const": "error",
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-debugger": "error",
       "no-eval": "error",

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "99c8fe9e097439205cc9675f3a8b39032760eed7726ce3cf7ca4097aaf62f274"
+}

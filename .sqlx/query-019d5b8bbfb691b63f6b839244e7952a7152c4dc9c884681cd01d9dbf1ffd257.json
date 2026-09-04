@@ -1,0 +1,24 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT sessionVersion AS \"session_version!: i32\" FROM User WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "session_version!: i32",
+        "type_info": {
+          "type": "Long",
+          "flags": "NOT_NULL",
+          "max_size": 11
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "019d5b8bbfb691b63f6b839244e7952a7152c4dc9c884681cd01d9dbf1ffd257"
+}

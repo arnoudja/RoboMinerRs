@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE User SET lastLoginTime = NOW() WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "b95ec014af671df08c0b95d3543c96db0cab7fe1da5bed9a71d928c797391041"
+}

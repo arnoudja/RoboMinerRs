@@ -1,6 +1,8 @@
 use sqlx::MySqlPool;
 
-use super::password::{valid_email, valid_password, valid_username, verify_password_hash};
+use super::validation::{
+    password_eligible_for_verify, valid_email, valid_password, valid_username, verify_password_hash,
+};
 use crate::achievements::claim_achievement_step_in_transaction;
 use crate::password::{burn_password_verify_time, hash_password_async};
 use crate::{
@@ -192,21 +194,25 @@ pub async fn bump_user_session_version(
 ) -> Result<Option<i32>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
 
-    let updated = sqlx::query("UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?")
-        .bind(user_id)
-        .execute(&mut *transaction)
-        .await?
-        .rows_affected();
+    let updated = sqlx::query!(
+        "UPDATE User SET sessionVersion = sessionVersion + 1 WHERE id = ?",
+        user_id
+    )
+    .execute(&mut *transaction)
+    .await?
+    .rows_affected();
 
     if updated == 0 {
         transaction.rollback().await?;
         return Ok(None);
     }
 
-    let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
-        .bind(user_id)
-        .fetch_one(&mut *transaction)
-        .await?;
+    let session_version = sqlx::query_scalar!(
+        r#"SELECT sessionVersion AS "session_version!: i32" FROM User WHERE id = ?"#,
+        user_id
+    )
+    .fetch_one(&mut *transaction)
+    .await?;
 
     transaction.commit().await?;
     Ok(Some(session_version))
@@ -216,10 +222,12 @@ pub(crate) async fn touch_user_last_login_time(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE User SET lastLoginTime = NOW() WHERE id = ?")
-        .bind(user_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "UPDATE User SET lastLoginTime = NOW() WHERE id = ?",
+        user_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }
@@ -228,6 +236,10 @@ pub async fn verify_login(
     pool: &MySqlPool,
     request: VerifyLoginRequest,
 ) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+    if !password_eligible_for_verify(&request.password) {
+        return db_reject(VerifyLoginRejection::InvalidPassword);
+    }
+
     let Some((user_id, password_hash, session_version)) = sqlx::query_as::<_, (i64, String, i32)>(
         "SELECT id, password, sessionVersion FROM User WHERE username = ? OR email = ?",
     )
@@ -258,6 +270,10 @@ pub async fn verify_user_password(
     pool: &MySqlPool,
     request: VerifyUserPasswordRequest,
 ) -> Result<DbOutcome<VerifiedLogin, VerifyLoginRejection>, sqlx::Error> {
+    if !password_eligible_for_verify(&request.password) {
+        return db_reject(VerifyLoginRejection::InvalidPassword);
+    }
+
     let Some((password_hash, session_version)) = sqlx::query_as::<_, (String, i32)>(
         "SELECT password, sessionVersion FROM User WHERE id = ?",
     )

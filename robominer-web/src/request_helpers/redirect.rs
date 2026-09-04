@@ -69,15 +69,7 @@ pub(crate) fn valid_login_return_to(value: &str) -> Option<&str> {
 }
 
 pub(crate) fn encode_query_component(value: &str) -> String {
-    value
-        .bytes()
-        .flat_map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                vec![byte as char]
-            }
-            _ => format!("%{byte:02X}").chars().collect(),
-        })
-        .collect()
+    crate::percent_encode::percent_encode(value, b"-_.~")
 }
 
 pub(crate) fn auth_page_href(signup: bool, return_to: Option<&str>) -> String {

@@ -3,8 +3,8 @@
 //! Primary entry points: [`create_user`], [`verify_login`],
 //! [`get_user_by_id`].
 
-mod password;
 mod read;
+mod validation;
 mod write;
 
 pub use read::*;

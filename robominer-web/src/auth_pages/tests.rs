@@ -55,7 +55,7 @@ async fn get_logoff_page_does_not_expire_session_cookies() {
 }
 
 #[tokio::test(flavor = "current_thread")]
-async fn post_logoff_without_session_expires_legacy_cookies() {
+async fn post_logoff_without_session_or_csrf_does_not_clear_cookies() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
@@ -64,6 +64,36 @@ async fn post_logoff_without_session_expires_legacy_cookies() {
     };
     let mut request = request("/logoff");
     request.method = "POST".to_string();
+    let response = logoff_page(&request, &config).await;
+    let cookie_headers: Vec<_> = response
+        .headers
+        .iter()
+        .filter(|(name, _)| *name == "Set-Cookie")
+        .map(|(_, value)| value.as_str())
+        .collect();
+
+    assert_eq!(response.status, 403);
+    assert!(
+        cookie_headers.is_empty(),
+        "anonymous POST /logoff without CSRF must not emit Set-Cookie clears"
+    );
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn post_logoff_with_anonymous_csrf_clears_cookies() {
+    let config = ServerConfig {
+        static_root: PathBuf::from("robominer-web/static"),
+        database_pool: None,
+        allow_signup: false,
+        trust_proxy: false,
+    };
+    let token = crate::csrf::new_anonymous_csrf_token();
+    let mut request = request("/logoff");
+    request.method = "POST".to_string();
+    request.form.insert("csrfToken".to_string(), token.clone());
+    request
+        .headers
+        .insert("cookie".to_string(), format!("robominer_csrf={token}"));
     let response = logoff_page(&request, &config).await;
     let cookie_headers: Vec<_> = response
         .headers
@@ -87,12 +117,6 @@ async fn post_logoff_without_session_expires_legacy_cookies() {
         cookie_headers
             .iter()
             .any(|header| header.starts_with("robominer_username=;"))
-    );
-    assert!(
-        !cookie_headers
-            .iter()
-            .any(|header| header.starts_with("JSESSIONID=;")),
-        "JSESSIONID clear is legacy Java noise and should be removed"
     );
 }
 

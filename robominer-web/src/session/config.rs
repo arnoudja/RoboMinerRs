@@ -3,6 +3,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 pub const DEFAULT_SESSION_TTL_HOURS: u64 = 24;
 pub const DEFAULT_SESSION_TTL_SECS: u64 = DEFAULT_SESSION_TTL_HOURS * 60 * 60;
 pub const DEFAULT_DEV_SESSION_SECRET: &str = "robominer-dev-session-secret-change-me";
+/// Minimum length for configured session secrets (dev default already qualifies).
+pub const MIN_SESSION_SECRET_LEN: usize = 32;
 
 pub(super) static SECURE_COOKIES: AtomicBool = AtomicBool::new(false);
 pub(super) static SESSION_TTL_SECS: AtomicU64 = AtomicU64::new(DEFAULT_SESSION_TTL_SECS);
@@ -20,6 +22,11 @@ pub fn resolve_session_secret(
         .map(str::trim)
         .filter(|secret| !secret.is_empty())
     {
+        if secret.len() < MIN_SESSION_SECRET_LEN {
+            return Err(
+                "ROBOMINER_SESSION_SECRET (or sessionsecret in config) must be at least 32 characters",
+            );
+        }
         return Ok(secret.to_string());
     }
 
@@ -54,15 +61,25 @@ pub fn validate_trust_proxy_bind(host: &str, trust_proxy: bool) -> Result<(), &'
     Ok(())
 }
 
-/// Resolve the Secure cookie flag. Explicit `securecookies` / env wins; when
-/// unset, default **off** so LAN HTTP binds (`0.0.0.0`) and loopback keep
-/// working. Production HTTPS must set `securecookies 1` explicitly.
+/// Resolve the Secure cookie flag.
+///
+/// Explicit `securecookies` / env wins when set. Defaults **off** so LAN HTTP
+/// binds keep working. When `trust_proxy` is on (TLS terminated at a reverse
+/// proxy), Secure cookies are required — refuse rather than silently serving
+/// stealable session cookies over any HTTP hop to the proxy.
 pub fn resolve_secure_cookies(
     configured: Option<bool>,
     _bind_host: &str,
-    _trust_proxy: bool,
-) -> bool {
-    configured.unwrap_or(false)
+    trust_proxy: bool,
+) -> Result<bool, &'static str> {
+    let enabled = configured.unwrap_or(false);
+    if trust_proxy && !enabled {
+        return Err(
+            "trustproxy / ROBOMINER_TRUST_PROXY requires securecookies 1 \
+             (or ROBOMINER_SECURE_COOKIES=1) so session cookies are marked Secure behind TLS",
+        );
+    }
+    Ok(enabled)
 }
 
 pub fn configure_secure_cookies(enabled: bool) {

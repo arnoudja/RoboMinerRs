@@ -5,11 +5,163 @@ use crate::{
     MiningQueuePageAreaYieldRecord, MiningQueuePageItemRecord, MiningQueuePageRobotRecord,
 };
 
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageRobotRow {
+    #[sqlx(rename = "id")]
+    robot_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    #[sqlx(rename = "rechargeTime")]
+    recharge_time: i32,
+}
+
+impl From<MiningQueuePageRobotRow> for MiningQueuePageRobotRecord {
+    fn from(row: MiningQueuePageRobotRow) -> Self {
+        Self {
+            robot_id: row.robot_id,
+            robot_name: row.robot_name,
+            recharge_time: row.recharge_time,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageAreaRow {
+    #[sqlx(rename = "id")]
+    mining_area_id: i64,
+    #[sqlx(rename = "areaName")]
+    area_name: String,
+    #[sqlx(rename = "taxRate")]
+    tax_rate: i32,
+    #[sqlx(rename = "depotTaxRate")]
+    depot_tax_rate: i32,
+    #[sqlx(rename = "miningTime")]
+    mining_time: i32,
+    #[sqlx(rename = "maxMoves")]
+    max_moves: i32,
+    #[sqlx(rename = "sizeX")]
+    size_x: i32,
+    #[sqlx(rename = "sizeY")]
+    size_y: i32,
+    #[sqlx(rename = "scoreOreTarget")]
+    score_ore_target: i32,
+}
+
+impl From<MiningQueuePageAreaRow> for MiningQueuePageAreaRecord {
+    fn from(row: MiningQueuePageAreaRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            area_name: row.area_name,
+            tax_rate: row.tax_rate,
+            depot_tax_rate: row.depot_tax_rate,
+            mining_time: row.mining_time,
+            max_moves: row.max_moves,
+            size_x: row.size_x,
+            size_y: row.size_y,
+            score_ore_target: row.score_ore_target,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageAreaCostRow {
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "oreId")]
+    ore_id: i64,
+    #[sqlx(rename = "oreName")]
+    ore_name: String,
+    amount: i32,
+}
+
+impl From<MiningQueuePageAreaCostRow> for MiningQueuePageAreaCostRecord {
+    fn from(row: MiningQueuePageAreaCostRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            ore_id: row.ore_id,
+            ore_name: row.ore_name,
+            amount: row.amount,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageAreaSupplyRow {
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "oreId")]
+    ore_id: i64,
+    #[sqlx(rename = "oreName")]
+    ore_name: String,
+    supply: i32,
+    radius: i32,
+}
+
+impl From<MiningQueuePageAreaSupplyRow> for MiningQueuePageAreaSupplyRecord {
+    fn from(row: MiningQueuePageAreaSupplyRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            ore_id: row.ore_id,
+            ore_name: row.ore_name,
+            supply: row.supply,
+            radius: row.radius,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageAreaYieldRow {
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "oreId")]
+    ore_id: i64,
+    #[sqlx(rename = "oreName")]
+    ore_name: String,
+    percentage: f64,
+}
+
+impl From<MiningQueuePageAreaYieldRow> for MiningQueuePageAreaYieldRecord {
+    fn from(row: MiningQueuePageAreaYieldRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            ore_id: row.ore_id,
+            ore_name: row.ore_name,
+            percentage: row.percentage,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct MiningQueuePageItemRow {
+    #[sqlx(rename = "miningQueueId")]
+    mining_queue_id: i64,
+    #[sqlx(rename = "robotId")]
+    robot_id: i64,
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "areaName")]
+    area_name: String,
+    #[sqlx(rename = "rallyResultId")]
+    rally_result_id: Option<i64>,
+}
+
+impl From<MiningQueuePageItemRow> for MiningQueuePageItemRecord {
+    fn from(row: MiningQueuePageItemRow) -> Self {
+        Self {
+            mining_queue_id: row.mining_queue_id,
+            robot_id: row.robot_id,
+            mining_area_id: row.mining_area_id,
+            area_name: row.area_name,
+            rally_result_id: row.rally_result_id,
+        }
+    }
+}
+
 pub async fn list_mining_queue_page_robots(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageRobotRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i32)>(
+    sqlx::query_as::<_, MiningQueuePageRobotRow>(
         "SELECT id, robotName, rechargeTime \
          FROM Robot \
          WHERE userId = ? \
@@ -20,13 +172,7 @@ pub async fn list_mining_queue_page_robots(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(robot_id, robot_name, recharge_time)| MiningQueuePageRobotRecord {
-                    robot_id,
-                    robot_name,
-                    recharge_time,
-                },
-            )
+            .map(MiningQueuePageRobotRecord::from)
             .collect()
     })
 }
@@ -35,7 +181,7 @@ pub async fn list_mining_queue_page_areas(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i32, i32, i32, i32, i32, i32, i32)>(
+    sqlx::query_as::<_, MiningQueuePageAreaRow>(
         "SELECT MiningArea.id, MiningArea.areaName, MiningArea.taxRate, MiningArea.depotTaxRate, \
                 MiningArea.miningTime, MiningArea.maxMoves, MiningArea.sizeX, MiningArea.sizeY, \
                 MiningArea.scoreOreTarget \
@@ -49,31 +195,7 @@ pub async fn list_mining_queue_page_areas(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(
-                    mining_area_id,
-                    area_name,
-                    tax_rate,
-                    depot_tax_rate,
-                    mining_time,
-                    max_moves,
-                    size_x,
-                    size_y,
-                    score_ore_target,
-                )| {
-                    MiningQueuePageAreaRecord {
-                        mining_area_id,
-                        area_name,
-                        tax_rate,
-                        depot_tax_rate,
-                        mining_time,
-                        max_moves,
-                        size_x,
-                        size_y,
-                        score_ore_target,
-                    }
-                },
-            )
+            .map(MiningQueuePageAreaRecord::from)
             .collect()
     })
 }
@@ -82,8 +204,8 @@ pub async fn list_mining_queue_page_area_costs(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaCostRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String, i32)>(
-        "SELECT MiningArea.id, OrePriceAmount.oreId, Ore.oreName, OrePriceAmount.amount \
+    sqlx::query_as::<_, MiningQueuePageAreaCostRow>(
+        "SELECT MiningArea.id AS miningAreaId, OrePriceAmount.oreId, Ore.oreName, OrePriceAmount.amount \
          FROM MiningArea \
          INNER JOIN UserMiningArea ON UserMiningArea.miningAreaId = MiningArea.id \
          INNER JOIN OrePriceAmount ON OrePriceAmount.orePriceId = MiningArea.orePriceId \
@@ -96,14 +218,7 @@ pub async fn list_mining_queue_page_area_costs(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_area_id, ore_id, ore_name, amount)| MiningQueuePageAreaCostRecord {
-                    mining_area_id,
-                    ore_id,
-                    ore_name,
-                    amount,
-                },
-            )
+            .map(MiningQueuePageAreaCostRecord::from)
             .collect()
     })
 }
@@ -112,7 +227,7 @@ pub async fn list_mining_queue_page_area_supplies(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaSupplyRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String, i32, i32)>(
+    sqlx::query_as::<_, MiningQueuePageAreaSupplyRow>(
         "SELECT MiningAreaOreSupply.miningAreaId, MiningAreaOreSupply.oreId, Ore.oreName, \
                 MiningAreaOreSupply.supply, MiningAreaOreSupply.radius \
          FROM MiningAreaOreSupply \
@@ -126,17 +241,7 @@ pub async fn list_mining_queue_page_area_supplies(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_area_id, ore_id, ore_name, supply, radius)| {
-                    MiningQueuePageAreaSupplyRecord {
-                        mining_area_id,
-                        ore_id,
-                        ore_name,
-                        supply,
-                        radius,
-                    }
-                },
-            )
+            .map(MiningQueuePageAreaSupplyRecord::from)
             .collect()
     })
 }
@@ -145,12 +250,12 @@ pub async fn list_mining_queue_page_area_yields(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageAreaYieldRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, String, f64)>(
+    sqlx::query_as::<_, MiningQueuePageAreaYieldRow>(
         "SELECT MiningAreaLifetimeResult.miningAreaId, MiningAreaLifetimeResult.oreId, \
                 Ore.oreName, \
                 CAST(CASE WHEN MiningAreaLifetimeResult.totalContainerSize > 0 \
                           THEN MiningAreaLifetimeResult.totalAmount * 100.0 / MiningAreaLifetimeResult.totalContainerSize \
-                          ELSE 0.0 END AS DOUBLE) \
+                          ELSE 0.0 END AS DOUBLE) AS percentage \
          FROM MiningAreaLifetimeResult \
          INNER JOIN UserMiningArea ON UserMiningArea.miningAreaId = MiningAreaLifetimeResult.miningAreaId \
          INNER JOIN Ore ON Ore.id = MiningAreaLifetimeResult.oreId \
@@ -162,16 +267,7 @@ pub async fn list_mining_queue_page_area_yields(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_area_id, ore_id, ore_name, percentage)| {
-                    MiningQueuePageAreaYieldRecord {
-                        mining_area_id,
-                        ore_id,
-                        ore_name,
-                        percentage,
-                    }
-                },
-            )
+            .map(MiningQueuePageAreaYieldRecord::from)
             .collect()
     })
 }
@@ -180,9 +276,9 @@ pub async fn list_mining_queue_page_items(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<MiningQueuePageItemRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, i64, String, Option<i64>)>(
-        "SELECT MiningQueue.id, MiningQueue.robotId, MiningQueue.miningAreaId, MiningArea.areaName, \
-                MiningQueue.rallyResultId \
+    sqlx::query_as::<_, MiningQueuePageItemRow>(
+        "SELECT MiningQueue.id AS miningQueueId, MiningQueue.robotId, MiningQueue.miningAreaId, \
+                MiningArea.areaName AS areaName, MiningQueue.rallyResultId \
          FROM MiningQueue \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
@@ -195,17 +291,7 @@ pub async fn list_mining_queue_page_items(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_queue_id, robot_id, mining_area_id, area_name, rally_result_id)| {
-                    MiningQueuePageItemRecord {
-                        mining_queue_id,
-                        robot_id,
-                        mining_area_id,
-                        area_name,
-                        rally_result_id,
-                    }
-                },
-            )
+            .map(MiningQueuePageItemRecord::from)
             .collect()
     })
 }

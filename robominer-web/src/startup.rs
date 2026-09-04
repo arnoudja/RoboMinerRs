@@ -76,7 +76,8 @@ pub fn prepare_server_config(
         settings.secure_cookies,
         &settings.host,
         settings.trust_proxy,
-    );
+    )
+    .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
     crate::configure_secure_cookies(secure_cookies);
     crate::configure_session_ttl_secs(session_ttl_secs);
 

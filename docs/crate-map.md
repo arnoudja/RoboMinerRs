@@ -63,10 +63,11 @@ CLI and background rally/mining worker. Command modules mirror web page domains.
 
 | Module | Responsibility |
 | --- | --- |
-| `cli.rs` | Clap entry, global options |
+| `cli/` | Clap entry and per-domain `*Command` enums (`mining`, `rally`, …) |
 | `dispatch/` | Subcommand routing (`shop`, `mining`, `rally`, `user`, …) |
 | `rally/` | Worker loop (`cycle.rs`), single-rally run (`run_single.rs`) |
-| `shop.rs`, `mining.rs`, `robot.rs`, … | Thin command handlers calling db/domain |
+| `shop.rs`, `mining/`, `robot.rs`, … | Thin command handlers calling db/domain |
+| `shutdown.rs` | Shared ctrl-c `ShutdownSignal` for rally/mining workers |
 | `db_outcome.rs` | Map `DbOutcome` to `anyhow` for operators |
 | `database.rs` | Connect wrapper around `robominer_db::connect_from_cli` |
 

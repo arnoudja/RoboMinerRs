@@ -23,25 +23,16 @@ use crate::http::Request;
 /// Client IP for rate limiting / auth logs.
 ///
 /// When `trust_proxy` is true (behind a reverse proxy that sets client headers),
-/// prefers `X-Real-Ip` (proxy-set `$remote_addr`) then the first
-/// `X-Forwarded-For` hop. Preferring Real-IP avoids client-spoofed XFF when the
-/// proxy also sets Real-IP (nginx/Caddy examples overwrite both). Otherwise uses
-/// the peer address injected by the Axum acceptor (`x-robominer-peer`).
+/// uses only `X-Real-Ip` (proxy-set `$remote_addr`). Falling back to
+/// `X-Forwarded-For` is intentionally omitted: misconfigured proxies that
+/// append client-supplied XFF would reintroduce spoofable rate-limit keys.
+/// Otherwise uses the peer address injected by the Axum acceptor
+/// (`x-robominer-peer`).
 pub(crate) fn client_ip(request: &Request, trust_proxy: bool) -> String {
-    if trust_proxy {
-        if let Some(real_ip) = request.headers.get("x-real-ip") {
-            let trimmed = real_ip.trim();
-            if !trimmed.is_empty() {
-                return trimmed.to_string();
-            }
-        }
-        if let Some(forwarded) = request.headers.get("x-forwarded-for")
-            && let Some(first) = forwarded.split(',').next()
-        {
-            let trimmed = first.trim();
-            if !trimmed.is_empty() {
-                return trimmed.to_string();
-            }
+    if trust_proxy && let Some(real_ip) = request.headers.get("x-real-ip") {
+        let trimmed = real_ip.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
         }
     }
     if let Some(peer) = request.headers.get("x-robominer-peer") {
@@ -108,7 +99,6 @@ mod tests {
             ("x-robominer-peer".to_string(), "127.0.0.1".to_string()),
         ]));
         assert_eq!(client_ip(&request, false), "127.0.0.1");
-        // Prefer X-Real-IP (set to $remote_addr by the proxy) over X-Forwarded-For.
         assert_eq!(client_ip(&request, true), "10.0.0.2");
     }
 
@@ -127,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn client_ip_falls_back_through_trusted_proxy_headers() {
+    fn client_ip_with_trust_proxy_ignores_xff_and_uses_peer_without_real_ip() {
         let mut request = request_with_headers(HashMap::from([
             (
                 "x-forwarded-for".to_string(),
@@ -138,7 +128,8 @@ mod tests {
         ]));
         assert_eq!(client_ip(&request, true), "10.0.0.2");
         request.headers.remove("x-real-ip");
-        assert_eq!(client_ip(&request, true), "203.0.113.9");
+        // Spoofable XFF must not become the rate-limit key.
+        assert_eq!(client_ip(&request, true), "127.0.0.1");
         request.headers.remove("x-forwarded-for");
         assert_eq!(client_ip(&request, true), "127.0.0.1");
         request.headers.clear();
