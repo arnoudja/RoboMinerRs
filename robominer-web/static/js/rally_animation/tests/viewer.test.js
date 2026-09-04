@@ -664,6 +664,77 @@ describe('rally animation viewer', () => {
         assert.deepEqual(context.myRallyCpuTimeline[2].vs, { found: { k: 'b', v: 0 } });
     });
 
+    it('carries variables across modern sticky cpu steps that omit vs', () => {
+        const { context } = loadRallyViewer();
+        const payload = validPayload();
+        payload.robots.robot[0].locations = [
+            {
+                x: 0,
+                y: 0,
+                o: 45,
+                A: 0,
+                B: 0,
+                C: 0,
+                DA: 0,
+                DB: 0,
+                DC: 0,
+                // Issuing move: full locals snapshot.
+                cpu: [
+                    {
+                        l: 2,
+                        c: 12,
+                        e: 34,
+                        vs: { found: { k: 'b', v: 0 }, count: { k: 'i', v: 3 } },
+                    },
+                ],
+            },
+            {
+                x: 1,
+                y: 0,
+                o: 45,
+                // Sparsified sticky continuation: span kept, vs omitted (unchanged).
+                cpu: [{ l: 2, c: 12, e: 34 }],
+            },
+            {
+                x: 2,
+                y: 0,
+                o: 45,
+                cpu: [{ l: 2, c: 12, e: 34 }],
+            },
+            {
+                x: 2,
+                y: 0,
+                o: 45,
+                // Explicit empty locals (e.g. after Done restart) must clear carry.
+                cpu: [{ l: 1, c: 1, e: 5, vs: {} }],
+            },
+            {
+                x: 2,
+                y: 0,
+                o: 45,
+                cpu: [{ l: 1, c: 1, e: 5 }],
+            },
+        ];
+        assert.equal(context.applyRallyResultPayload(payload), null);
+        context.rallyRebuildCpuTimeline();
+
+        assert.equal(context.myRallyCpuTimeline.length, 5);
+        assert.deepEqual(context.myRallyCpuTimeline[0].vs, {
+            found: { k: 'b', v: 0 },
+            count: { k: 'i', v: 3 },
+        });
+        assert.deepEqual(context.myRallyCpuTimeline[1].vs, {
+            found: { k: 'b', v: 0 },
+            count: { k: 'i', v: 3 },
+        });
+        assert.deepEqual(context.myRallyCpuTimeline[2].vs, {
+            found: { k: 'b', v: 0 },
+            count: { k: 'i', v: 3 },
+        });
+        assert.deepEqual(context.myRallyCpuTimeline[3].vs, undefined);
+        assert.deepEqual(context.myRallyCpuTimeline[4].vs, undefined);
+    });
+
     it('highlights a token span within a source line', () => {
         const { context, document } = loadRallyViewer();
         document.body.innerHTML = `
