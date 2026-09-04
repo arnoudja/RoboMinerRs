@@ -6,7 +6,8 @@ boundaries and the “where does this rule live?” decision tree.
 ## `robominer-db`
 
 The crate root re-exports symbols for convenience (`robominer_db::enqueue_mining`, etc.). Prefer
-explicit module paths for new APIs.
+explicit module paths for new APIs (`robominer_db::rally::…`, `robominer_db::achievements::…`).
+Do not expand root `pub use module::*` wildcards for new symbols.
 
 **Note:** `robominer-db` holds both persistence and **transactional game rules** (shop economics,
 queue capacity, achievement unlock graphs, claim tax). Domain orchestrates simulation; db owns
@@ -53,9 +54,16 @@ Axum transport shell with a custom HTML router. Page modules follow `mod.rs` + `
 | `routes.rs` | Canonical paths, `AppRoute`, `RoutePolicy` |
 | `page_context.rs` | `PageSession`, `PageLoadError`, HUD render helpers |
 | `csrf/`, `session/`, `rate_limit/` | Security and session management |
+| `html/` | Shared HTML helpers (`EscapedHtml`, layout, wallet strip, `label_value`, …) |
 | `*_page/` | Per-route handlers, mutations, view models, HTML |
 | `static/` | CSS, JS, help HTML fragments |
 | `tests/` | HTTP + DB integration tests |
+
+## `robominer-sim`
+
+Mining physics and rally animation payloads. `build.rs` generates
+`robominer-web/static/js/rally_animation/generated/contract.js` from
+`ANIMATION_PAYLOAD_VERSION` (see [animation-payload.md](animation-payload.md)).
 
 ## `robominer-engine`
 

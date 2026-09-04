@@ -37,6 +37,7 @@ fn create_user_rejection_message(
         (robominer_db::CreateUserRejection::InvalidPassword, Audience::Cli) => {
             "invalid password".into()
         }
+        // Distinct duplicate messages are intentional player UX (account enumeration trade-off).
         (robominer_db::CreateUserRejection::DuplicateUsername, Audience::Player) => {
             "Username already taken, please choose another one".into()
         }
@@ -86,6 +87,7 @@ pub fn update_user_account_rejection_message(
         (robominer_db::UpdateUserAccountRejection::InvalidPassword, Audience::Cli) => {
             "invalid password"
         }
+        // Distinct duplicate messages are intentional player UX (account enumeration trade-off).
         (robominer_db::UpdateUserAccountRejection::DuplicateUsername, Audience::Player) => {
             "That username is already taken"
         }
