@@ -30,5 +30,8 @@ node --test page.test.js
 cd "${ROOT}/robominer-web/static/js/edit_code/tests"
 node --test page.test.js
 
+cd "${ROOT}/robominer-web/static/js/mining_area_atlas/tests"
+node --test page.test.js
+
 cd "${ROOT}/robominer-web/static/js/tests"
 node --test page_scripts.test.js

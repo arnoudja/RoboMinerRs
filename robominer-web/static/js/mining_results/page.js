@@ -65,10 +65,10 @@
         }
         for (var panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
             var panel = panels[panelIndex];
-            var isActive = panel.getAttribute('data-run-id') === String(runId)
+            var panelIsActive = panel.getAttribute('data-run-id') === String(runId)
                 && !panel.classList.contains('mining-results-filter-hidden');
-            panel.classList.toggle('mining-results-detail-panel-active', isActive);
-            panel.hidden = !isActive;
+            panel.classList.toggle('mining-results-detail-panel-active', panelIsActive);
+            panel.hidden = !panelIsActive;
         }
         if (updateUrl) {
             syncMiningResultsUrl();

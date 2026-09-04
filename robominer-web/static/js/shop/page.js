@@ -281,9 +281,9 @@
                 }
             }
         }
-        var form = event.target;
-        if (form.getAttribute('data-robominer-confirmed') === '1') {
-            form.removeAttribute('data-robominer-confirmed');
+        var sellForm = event.target;
+        if (sellForm.getAttribute('data-robominer-confirmed') === '1') {
+            sellForm.removeAttribute('data-robominer-confirmed');
             return;
         }
         event.preventDefault();
@@ -291,11 +291,11 @@
             if (!confirmed) {
                 return;
             }
-            form.setAttribute('data-robominer-confirmed', '1');
-            if (typeof form.requestSubmit === 'function') {
-                form.requestSubmit(event.submitter || undefined);
+            sellForm.setAttribute('data-robominer-confirmed', '1');
+            if (typeof sellForm.requestSubmit === 'function') {
+                sellForm.requestSubmit(event.submitter || undefined);
             } else {
-                form.submit();
+                sellForm.submit();
             }
         });
     }
