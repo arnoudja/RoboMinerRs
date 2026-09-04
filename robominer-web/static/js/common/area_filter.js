@@ -5,7 +5,7 @@
     window.RoboMinerAreaFilterBound = true;
 
     document.addEventListener('change', function(event) {
-        var select = event.target.closest('select[data-area-filter-nav="true"]');
+        const select = event.target.closest('select[data-area-filter-nav="true"]');
         if (!select || !select.value) {
             return;
         }

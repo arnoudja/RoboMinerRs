@@ -1,17 +1,17 @@
 (function(global) {
     function setPanelEnabled(panel, enabled) {
-        var fields = panel.querySelectorAll('input, select, textarea, button');
-        for (var index = 0; index < fields.length; index += 1) {
+        const fields = panel.querySelectorAll('input, select, textarea, button');
+        for (let index = 0; index < fields.length; index += 1) {
             fields[index].disabled = !enabled;
         }
     }
 
     function panelFormSnapshot(panel, skipNames) {
-        var skip = skipNames || [];
-        var snapshot = {};
-        var fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
+        const skip = skipNames || [];
+        const snapshot = {};
+        const fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
+        for (let index = 0; index < fields.length; index += 1) {
+            const field = fields[index];
             if (field.name && skip.indexOf(field.name) === -1) {
                 snapshot[field.name] = field.value;
             }
@@ -20,7 +20,7 @@
     }
 
     function isPanelDirty(panel, skipNames) {
-        var baseline = panel.getAttribute('data-form-baseline');
+        const baseline = panel.getAttribute('data-form-baseline');
         if (!baseline) {
             return false;
         }
@@ -32,15 +32,15 @@
     }
 
     function restorePanelBaseline(panel, skipNames) {
-        var skip = skipNames || [];
-        var baseline = panel.getAttribute('data-form-baseline');
+        const skip = skipNames || [];
+        const baseline = panel.getAttribute('data-form-baseline');
         if (!baseline) {
             return;
         }
-        var snapshot = JSON.parse(baseline);
-        var fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
-        for (var index = 0; index < fields.length; index += 1) {
-            var field = fields[index];
+        const snapshot = JSON.parse(baseline);
+        const fields = panel.querySelectorAll('input[name], select[name], textarea[name]');
+        for (let index = 0; index < fields.length; index += 1) {
+            const field = fields[index];
             if (field.name
                 && skip.indexOf(field.name) === -1
                 && Object.prototype.hasOwnProperty.call(snapshot, field.name)) {

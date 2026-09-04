@@ -1,7 +1,7 @@
 (function(global) {
     function readJson(key, fallback) {
         try {
-            var raw = global.sessionStorage.getItem(key);
+            const raw = global.sessionStorage.getItem(key);
             if (!raw) {
                 return fallback === undefined ? null : fallback;
             }

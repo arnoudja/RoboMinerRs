@@ -5,33 +5,33 @@
  * - robominerAlert(message, cb?) -> cb(true) on dismiss
  */
 (function() {
-    var dialog = document.getElementById('robominerDialog');
-    var title = document.getElementById('robominerDialogTitle');
-    var message = document.getElementById('robominerDialogMessage');
-    var cancelButton = document.getElementById('robominerDialogCancel');
-    var altButton = document.getElementById('robominerDialogAlt');
-    var confirmButton = document.getElementById('robominerDialogConfirm');
-    var backdrop = document.getElementById('robominerDialogBackdrop');
+    const dialog = document.getElementById('robominerDialog');
+    const title = document.getElementById('robominerDialogTitle');
+    const message = document.getElementById('robominerDialogMessage');
+    const cancelButton = document.getElementById('robominerDialogCancel');
+    const altButton = document.getElementById('robominerDialogAlt');
+    const confirmButton = document.getElementById('robominerDialogConfirm');
+    const backdrop = document.getElementById('robominerDialogBackdrop');
     if (!dialog || !title || !message || !cancelButton || !altButton || !confirmButton || !backdrop) {
         return;
     }
 
-    var panel = dialog.querySelector('.robominer-dialog-panel');
+    const panel = dialog.querySelector('.robominer-dialog-panel');
     if (panel && !panel.getAttribute('aria-describedby')) {
         panel.setAttribute('aria-describedby', 'robominerDialogMessage');
     }
 
-    var focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    var pendingCallback = null;
-    var alertMode = false;
-    var choiceMode = false;
-    var lastFocusedElement = null;
+    let pendingCallback = null;
+    let alertMode = false;
+    let choiceMode = false;
+    let lastFocusedElement = null;
 
     function finish(result) {
         dialog.hidden = true;
         document.body.classList.remove('robominer-dialog-open');
-        var callback = pendingCallback;
+        const callback = pendingCallback;
         pendingCallback = null;
         alertMode = false;
         choiceMode = false;
@@ -127,15 +127,15 @@
         if (event.key !== 'Tab' || !panel) {
             return;
         }
-        var focusable = Array.prototype.slice.call(panel.querySelectorAll(focusableSelector))
+        const focusable = Array.prototype.slice.call(panel.querySelectorAll(focusableSelector))
             .filter(function(element) {
                 return !element.hidden && !element.disabled;
             });
         if (focusable.length === 0) {
             return;
         }
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
         if (event.shiftKey && document.activeElement === first) {
             event.preventDefault();
             last.focus();
