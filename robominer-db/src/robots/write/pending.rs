@@ -7,7 +7,7 @@ pub(super) async fn update_pending_robot_config(
     source_code: &str,
     parameters: &RobotParameters,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE PendingRobotChanges \
          SET sourceCode = ?, \
              oreContainerId = ?, \
@@ -30,28 +30,28 @@ pub(super) async fn update_pending_robot_config(
              scanTime = ?, \
              scanDistance = ? \
          WHERE robotId = ?",
+        source_code,
+        request.ore_container_id,
+        request.mining_unit_id,
+        request.battery_id,
+        request.memory_module_id,
+        request.cpu_id,
+        request.engine_id,
+        request.ore_scanner_id,
+        parameters.recharge_time,
+        parameters.max_ore,
+        parameters.mining_speed,
+        parameters.max_turns,
+        parameters.memory_size,
+        parameters.cpu_speed,
+        parameters.forward_speed,
+        parameters.backward_speed,
+        parameters.rotate_speed,
+        parameters.robot_size,
+        parameters.scan_time,
+        parameters.scan_distance,
+        request.robot_id
     )
-    .bind(source_code)
-    .bind(request.ore_container_id)
-    .bind(request.mining_unit_id)
-    .bind(request.battery_id)
-    .bind(request.memory_module_id)
-    .bind(request.cpu_id)
-    .bind(request.engine_id)
-    .bind(request.ore_scanner_id)
-    .bind(parameters.recharge_time)
-    .bind(parameters.max_ore)
-    .bind(parameters.mining_speed)
-    .bind(parameters.max_turns)
-    .bind(parameters.memory_size)
-    .bind(parameters.cpu_speed)
-    .bind(parameters.forward_speed)
-    .bind(parameters.backward_speed)
-    .bind(parameters.rotate_speed)
-    .bind(parameters.robot_size)
-    .bind(parameters.scan_time)
-    .bind(parameters.scan_distance)
-    .bind(request.robot_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -79,7 +79,7 @@ pub(super) async fn insert_pending_robot_config(
     source_code: &str,
     parameters: &RobotParameters,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO PendingRobotChanges \
          (robotId, sourceCode, oreContainerId, miningUnitId, batteryId, memoryModuleId, \
           cpuId, engineId, oreScannerId, oldOreContainerId, oldMiningUnitId, oldBatteryId, \
@@ -87,35 +87,35 @@ pub(super) async fn insert_pending_robot_config(
           miningSpeed, maxTurns, memorySize, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, \
           robotSize, scanTime, scanDistance, changesCommitTime) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+        request.robot_id,
+        source_code,
+        request.ore_container_id,
+        request.mining_unit_id,
+        request.battery_id,
+        request.memory_module_id,
+        request.cpu_id,
+        request.engine_id,
+        request.ore_scanner_id,
+        robot.ore_container_id,
+        robot.mining_unit_id,
+        robot.battery_id,
+        robot.memory_module_id,
+        robot.cpu_id,
+        robot.engine_id,
+        robot.ore_scanner_id,
+        parameters.recharge_time,
+        parameters.max_ore,
+        parameters.mining_speed,
+        parameters.max_turns,
+        parameters.memory_size,
+        parameters.cpu_speed,
+        parameters.forward_speed,
+        parameters.backward_speed,
+        parameters.rotate_speed,
+        parameters.robot_size,
+        parameters.scan_time,
+        parameters.scan_distance
     )
-    .bind(request.robot_id)
-    .bind(source_code)
-    .bind(request.ore_container_id)
-    .bind(request.mining_unit_id)
-    .bind(request.battery_id)
-    .bind(request.memory_module_id)
-    .bind(request.cpu_id)
-    .bind(request.engine_id)
-    .bind(request.ore_scanner_id)
-    .bind(robot.ore_container_id)
-    .bind(robot.mining_unit_id)
-    .bind(robot.battery_id)
-    .bind(robot.memory_module_id)
-    .bind(robot.cpu_id)
-    .bind(robot.engine_id)
-    .bind(robot.ore_scanner_id)
-    .bind(parameters.recharge_time)
-    .bind(parameters.max_ore)
-    .bind(parameters.mining_speed)
-    .bind(parameters.max_turns)
-    .bind(parameters.memory_size)
-    .bind(parameters.cpu_speed)
-    .bind(parameters.forward_speed)
-    .bind(parameters.backward_speed)
-    .bind(parameters.rotate_speed)
-    .bind(parameters.robot_size)
-    .bind(parameters.scan_time)
-    .bind(parameters.scan_distance)
     .execute(&mut **transaction)
     .await?;
 
@@ -147,7 +147,7 @@ pub(super) async fn update_robot_config_immediately(
     source_code: &str,
     parameters: &RobotParameters,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE Robot \
          SET robotName = ?, programSourceId = ?, sourceCode = ?, oreContainerId = ?, \
              miningUnitId = ?, batteryId = ?, memoryModuleId = ?, cpuId = ?, engineId = ?, \
@@ -155,31 +155,31 @@ pub(super) async fn update_robot_config_immediately(
              memorySize = ?, cpuSpeed = ?, forwardSpeed = ?, backwardSpeed = ?, rotateSpeed = ?, \
              robotSize = ?, scanTime = ?, scanDistance = ? \
          WHERE id = ? AND userId = ?",
+        request.robot_name,
+        request.program_source_id,
+        source_code,
+        request.ore_container_id,
+        request.mining_unit_id,
+        request.battery_id,
+        request.memory_module_id,
+        request.cpu_id,
+        request.engine_id,
+        request.ore_scanner_id,
+        parameters.recharge_time,
+        parameters.max_ore,
+        parameters.mining_speed,
+        parameters.max_turns,
+        parameters.memory_size,
+        parameters.cpu_speed,
+        parameters.forward_speed,
+        parameters.backward_speed,
+        parameters.rotate_speed,
+        parameters.robot_size,
+        parameters.scan_time,
+        parameters.scan_distance,
+        request.robot_id,
+        request.user_id
     )
-    .bind(&request.robot_name)
-    .bind(request.program_source_id)
-    .bind(source_code)
-    .bind(request.ore_container_id)
-    .bind(request.mining_unit_id)
-    .bind(request.battery_id)
-    .bind(request.memory_module_id)
-    .bind(request.cpu_id)
-    .bind(request.engine_id)
-    .bind(request.ore_scanner_id)
-    .bind(parameters.recharge_time)
-    .bind(parameters.max_ore)
-    .bind(parameters.mining_speed)
-    .bind(parameters.max_turns)
-    .bind(parameters.memory_size)
-    .bind(parameters.cpu_speed)
-    .bind(parameters.forward_speed)
-    .bind(parameters.backward_speed)
-    .bind(parameters.rotate_speed)
-    .bind(parameters.robot_size)
-    .bind(parameters.scan_time)
-    .bind(parameters.scan_distance)
-    .bind(request.robot_id)
-    .bind(request.user_id)
     .execute(&mut **transaction)
     .await?;
 

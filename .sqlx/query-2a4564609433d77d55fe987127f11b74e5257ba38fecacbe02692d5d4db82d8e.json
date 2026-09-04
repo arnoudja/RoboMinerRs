@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO PendingRobotChanges (robotId, sourceCode, oreContainerId, miningUnitId, batteryId, memoryModuleId, cpuId, engineId, oreScannerId, oldOreContainerId, oldMiningUnitId, oldBatteryId, oldMemoryModuleId, oldCpuId, oldEngineId, oldOreScannerId, rechargeTime, maxOre, miningSpeed, maxTurns, memorySize, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance, changesCommitTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 28
+    },
+    "nullable": []
+  },
+  "hash": "2a4564609433d77d55fe987127f11b74e5257ba38fecacbe02692d5d4db82d8e"
+}

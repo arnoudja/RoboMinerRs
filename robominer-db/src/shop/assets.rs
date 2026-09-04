@@ -187,14 +187,14 @@ pub(crate) async fn remove_user_robot_part_assets(
     robot_part_id: i64,
     count: i32,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE UserRobotPartAsset \
          SET totalOwned = totalOwned - ? \
          WHERE userId = ? AND robotPartId = ?",
+        count,
+        user_id,
+        robot_part_id
     )
-    .bind(count)
-    .bind(user_id)
-    .bind(robot_part_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -205,10 +205,12 @@ pub(crate) async fn delete_zero_owned_robot_part_assets(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     user_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM UserRobotPartAsset WHERE userId = ? AND totalOwned = 0")
-        .bind(user_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "DELETE FROM UserRobotPartAsset WHERE userId = ? AND totalOwned = 0",
+        user_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }

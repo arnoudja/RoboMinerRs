@@ -8,13 +8,60 @@ pub(crate) struct OrePriceCost {
     amount: i32,
 }
 
+#[derive(sqlx::FromRow)]
+struct UserOreAssetStateRow {
+    #[sqlx(rename = "oreId")]
+    ore_id: i64,
+    #[sqlx(rename = "oreName")]
+    ore_name: String,
+    amount: i32,
+    #[sqlx(rename = "maxAllowed")]
+    max_allowed: i32,
+    #[sqlx(rename = "depotMaxAllowed")]
+    depot_max_allowed: i32,
+}
+
+impl From<UserOreAssetStateRow> for UserOreAssetStateRecord {
+    fn from(row: UserOreAssetStateRow) -> Self {
+        Self {
+            ore_id: row.ore_id,
+            ore_name: row.ore_name,
+            amount: row.amount,
+            max_allowed: row.max_allowed,
+            depot_max_allowed: row.depot_max_allowed,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct UserAssetSummaryRow {
+    username: String,
+    #[sqlx(rename = "achievementPoints")]
+    achievement_points: i32,
+    #[sqlx(rename = "miningQueueSize")]
+    mining_queue_size: i32,
+    #[sqlx(rename = "robotCount")]
+    robot_count: i64,
+}
+
+impl From<UserAssetSummaryRow> for UserAssetSummaryRecord {
+    fn from(row: UserAssetSummaryRow) -> Self {
+        Self {
+            username: row.username,
+            achievement_points: row.achievement_points,
+            mining_queue_size: row.mining_queue_size,
+            robot_count: row.robot_count,
+        }
+    }
+}
+
 pub async fn list_user_ore_asset_states(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<Vec<UserOreAssetStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, i32, i32, i32)>(
-        "SELECT UserOreAsset.oreId, Ore.oreName, UserOreAsset.amount, UserOreAsset.maxAllowed, \
-                UserOreAsset.depotMaxAllowed \
+    sqlx::query_as::<_, UserOreAssetStateRow>(
+        "SELECT UserOreAsset.oreId AS oreId, Ore.oreName AS oreName, UserOreAsset.amount AS amount, \
+                UserOreAsset.maxAllowed AS maxAllowed, UserOreAsset.depotMaxAllowed AS depotMaxAllowed \
          FROM UserOreAsset \
          INNER JOIN Ore ON Ore.id = UserOreAsset.oreId \
          WHERE UserOreAsset.userId = ? \
@@ -25,17 +72,7 @@ pub async fn list_user_ore_asset_states(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(ore_id, ore_name, amount, max_allowed, depot_max_allowed)| {
-                    UserOreAssetStateRecord {
-                        ore_id,
-                        ore_name,
-                        amount,
-                        max_allowed,
-                        depot_max_allowed,
-                    }
-                },
-            )
+            .map(UserOreAssetStateRecord::from)
             .collect()
     })
 }
@@ -60,23 +97,17 @@ pub async fn load_user_asset_summary(
     pool: &MySqlPool,
     user_id: i64,
 ) -> Result<UserAssetSummaryRecord, sqlx::Error> {
-    sqlx::query_as::<_, (String, i32, i32, i64)>(
-        "SELECT User.username, User.achievementPoints, GREATEST(User.miningQueueSize, 1), \
-                (SELECT COUNT(*) FROM Robot WHERE Robot.userId = User.id) \
+    sqlx::query_as::<_, UserAssetSummaryRow>(
+        "SELECT User.username AS username, User.achievementPoints AS achievementPoints, \
+                GREATEST(User.miningQueueSize, 1) AS miningQueueSize, \
+                (SELECT COUNT(*) FROM Robot WHERE Robot.userId = User.id) AS robotCount \
          FROM User \
          WHERE User.id = ?",
     )
     .bind(user_id)
     .fetch_one(pool)
     .await
-    .map(
-        |(username, achievement_points, mining_queue_size, robot_count)| UserAssetSummaryRecord {
-            username,
-            achievement_points,
-            mining_queue_size,
-            robot_count,
-        },
-    )
+    .map(UserAssetSummaryRecord::from)
 }
 
 pub(crate) async fn list_ore_price_amounts(
@@ -137,14 +168,14 @@ pub(crate) async fn deduct_ore_costs(
     costs: &[OrePriceCost],
 ) -> Result<(), sqlx::Error> {
     for cost in costs {
-        sqlx::query(
+        sqlx::query!(
             "UPDATE UserOreAsset \
              SET amount = amount - ? \
              WHERE userId = ? AND oreId = ?",
+            cost.amount,
+            user_id,
+            cost.ore_id
         )
-        .bind(cost.amount)
-        .bind(user_id)
-        .bind(cost.ore_id)
         .execute(&mut **transaction)
         .await?;
     }
@@ -254,26 +285,26 @@ async fn refund_ore_costs(
 
         if let Some((amount, max_allowed)) = asset {
             let new_amount = (amount + refund).min(max_allowed);
-            sqlx::query(
+            sqlx::query!(
                 "UPDATE UserOreAsset \
                  SET amount = ? \
                  WHERE userId = ? AND oreId = ?",
+                new_amount,
+                user_id,
+                cost.ore_id
             )
-            .bind(new_amount)
-            .bind(user_id)
-            .bind(cost.ore_id)
             .execute(&mut **transaction)
             .await?;
         } else {
-            sqlx::query(
+            sqlx::query!(
                 "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
                  VALUES (?, ?, LEAST(?, ?), ?)",
+                user_id,
+                cost.ore_id,
+                refund,
+                INITIAL_ORE_WALLET_MAX,
+                INITIAL_ORE_WALLET_MAX
             )
-            .bind(user_id)
-            .bind(cost.ore_id)
-            .bind(refund)
-            .bind(INITIAL_ORE_WALLET_MAX)
-            .bind(INITIAL_ORE_WALLET_MAX)
             .execute(&mut **transaction)
             .await?;
         }

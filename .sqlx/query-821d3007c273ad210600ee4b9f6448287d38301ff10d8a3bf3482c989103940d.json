@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE RobotMiningAreaScore SET score = ?, totalRuns = totalRuns + 1 WHERE robotId = ? AND miningAreaId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "821d3007c273ad210600ee4b9f6448287d38301ff10d8a3bf3482c989103940d"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE PendingRobotChanges SET sourceCode = ? WHERE robotId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8807b427d72c5566df143ff558b3cc1a75ad3fce7f87e7ce35199c5093645960"
+}

@@ -72,12 +72,14 @@ pub async fn apply_verified_program_source_to_idle_robots(
             if robot.has_pending {
                 delete_pending_robot_program_source(&mut transaction, robot.id).await?;
             }
-            sqlx::query("UPDATE Robot SET sourceCode = ? WHERE id = ? AND userId = ?")
-                .bind(&source_code)
-                .bind(robot.id)
-                .bind(user_id)
-                .execute(&mut *transaction)
-                .await?;
+            sqlx::query!(
+                "UPDATE Robot SET sourceCode = ? WHERE id = ? AND userId = ?",
+                source_code,
+                robot.id,
+                user_id
+            )
+            .execute(&mut *transaction)
+            .await?;
             applied_robots += 1;
         }
     }
@@ -106,7 +108,7 @@ async fn insert_pending_program_source_from_robot(
     user_id: i64,
     source_code: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO PendingRobotChanges \
          (robotId, sourceCode, oreContainerId, miningUnitId, batteryId, memoryModuleId, \
           cpuId, engineId, oreScannerId, oldOreContainerId, oldMiningUnitId, oldBatteryId, \
@@ -120,10 +122,10 @@ async fn insert_pending_program_source_from_robot(
                 NULL \
          FROM Robot \
          WHERE id = ? AND userId = ?",
+        source_code,
+        robot_id,
+        user_id
     )
-    .bind(source_code)
-    .bind(robot_id)
-    .bind(user_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -135,11 +137,13 @@ async fn update_pending_program_source(
     robot_id: i64,
     source_code: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE PendingRobotChanges SET sourceCode = ? WHERE robotId = ?")
-        .bind(source_code)
-        .bind(robot_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "UPDATE PendingRobotChanges SET sourceCode = ? WHERE robotId = ?",
+        source_code,
+        robot_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }
@@ -148,10 +152,12 @@ async fn delete_pending_robot_program_source(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     robot_id: i64,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM PendingRobotChanges WHERE robotId = ?")
-        .bind(robot_id)
-        .execute(&mut **transaction)
-        .await?;
+    sqlx::query!(
+        "DELETE FROM PendingRobotChanges WHERE robotId = ?",
+        robot_id
+    )
+    .execute(&mut **transaction)
+    .await?;
 
     Ok(())
 }

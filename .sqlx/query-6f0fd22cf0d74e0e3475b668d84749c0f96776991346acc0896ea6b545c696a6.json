@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, depotAmount) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "6f0fd22cf0d74e0e3475b668d84749c0f96776991346acc0896ea6b545c696a6"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO Robot (userId, robotName, sourceCode, programSourceId, oreContainerId, miningUnitId, batteryId, memoryModuleId, cpuId, engineId, oreScannerId, rechargeTime, maxOre, miningSpeed, maxTurns, memorySize, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, robotSize, scanTime, scanDistance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 23
+    },
+    "nullable": []
+  },
+  "hash": "c2c911de980277cc5e88519417e8eafe8a76cb1b7e480839d91bd1862e3de7ca"
+}

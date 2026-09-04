@@ -41,12 +41,12 @@ pub(super) async fn grant_successor_if_eligible(
     successor_id: i64,
 ) -> Result<(), sqlx::Error> {
     if successor_requirements_met(transaction, user_id, successor_id).await? {
-        sqlx::query(
+        sqlx::query!(
             "INSERT IGNORE INTO UserAchievement (userId, achievementId, stepsClaimed) \
              VALUES (?, ?, 0)",
+            user_id,
+            successor_id
         )
-        .bind(user_id)
-        .bind(successor_id)
         .execute(&mut **transaction)
         .await?;
     }

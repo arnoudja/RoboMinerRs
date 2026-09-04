@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE User SET achievementPoints = achievementPoints + ?, miningQueueSize = miningQueueSize + ? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "bce9337d2247da89381c53c80a3d2e0d7cc837749badb9aab45e974a7ffc5959"
+}

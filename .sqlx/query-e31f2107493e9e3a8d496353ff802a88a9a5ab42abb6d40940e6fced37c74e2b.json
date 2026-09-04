@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE UserOreAsset SET amount = ? WHERE userId = ? AND oreId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "e31f2107493e9e3a8d496353ff802a88a9a5ab42abb6d40940e6fced37c74e2b"
+}

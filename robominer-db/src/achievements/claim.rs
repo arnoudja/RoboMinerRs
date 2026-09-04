@@ -78,35 +78,35 @@ pub(crate) async fn claim_achievement_step_in_transaction(
         return db_reject(ClaimAchievementStepRejection::RequirementsNotMet);
     }
 
-    sqlx::query(
+    sqlx::query!(
         "UPDATE UserAchievement \
          SET stepsClaimed = ? \
          WHERE userId = ? AND achievementId = ?",
+        next_step,
+        request.user_id,
+        request.achievement_id
     )
-    .bind(next_step)
-    .bind(request.user_id)
-    .bind(request.achievement_id)
     .execute(&mut **transaction)
     .await?;
-    sqlx::query(
+    sqlx::query!(
         "UPDATE User \
          SET achievementPoints = achievementPoints + ?, \
              miningQueueSize = miningQueueSize + ? \
          WHERE id = ?",
+        step.achievement_points,
+        step.mining_queue_reward,
+        request.user_id
     )
-    .bind(step.achievement_points)
-    .bind(step.mining_queue_reward)
-    .bind(request.user_id)
     .execute(&mut **transaction)
     .await?;
 
     if let Some(mining_area_id) = step.mining_area_id {
-        sqlx::query(
+        sqlx::query!(
             "INSERT IGNORE INTO UserMiningArea (userId, miningAreaId) \
              VALUES (?, ?)",
+            request.user_id,
+            mining_area_id
         )
-        .bind(request.user_id)
-        .bind(mining_area_id)
         .execute(&mut **transaction)
         .await?;
     }
@@ -242,14 +242,14 @@ async fn increase_user_ore_maximum(
     ore_id: i64,
     max_ore_reward: i32,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) \
          VALUES (?, ?, 0, ?) \
          ON DUPLICATE KEY UPDATE maxAllowed = GREATEST(maxAllowed, VALUES(maxAllowed))",
+        user_id,
+        ore_id,
+        max_ore_reward
     )
-    .bind(user_id)
-    .bind(ore_id)
-    .bind(max_ore_reward)
     .execute(&mut **transaction)
     .await?;
 
@@ -264,16 +264,16 @@ async fn increase_user_depot_maximum(
 ) -> Result<(), sqlx::Error> {
     use crate::INITIAL_ORE_WALLET_MAX;
 
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed, depotMaxAllowed) \
          VALUES (?, ?, 0, ?, ?) \
          ON DUPLICATE KEY UPDATE \
          depotMaxAllowed = GREATEST(depotMaxAllowed, VALUES(depotMaxAllowed))",
+        user_id,
+        ore_id,
+        INITIAL_ORE_WALLET_MAX,
+        max_depot_reward
     )
-    .bind(user_id)
-    .bind(ore_id)
-    .bind(INITIAL_ORE_WALLET_MAX)
-    .bind(max_depot_reward)
     .execute(&mut **transaction)
     .await?;
 

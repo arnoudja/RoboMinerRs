@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed) VALUES (?, ?, LEAST(?, ?), ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "d406cc0a9cd56552c1e01e02f836b743f38683df0bad474c92eb3468cc4a0b5a"
+}

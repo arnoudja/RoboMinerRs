@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT IGNORE INTO UserMiningArea (userId, miningAreaId) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "6e085a732d0944840a88e9dd1fe08268345da6d3367326e191ecdd59604f1349"
+}

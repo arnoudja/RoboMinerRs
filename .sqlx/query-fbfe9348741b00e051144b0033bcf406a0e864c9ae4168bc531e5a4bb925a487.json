@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO RobotMiningAreaScore (robotId, miningAreaId, totalRuns, score) VALUES (?, ?, 1, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "fbfe9348741b00e051144b0033bcf406a0e864c9ae4168bc531e5a4bb925a487"
+}

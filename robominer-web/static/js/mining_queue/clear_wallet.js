@@ -4,10 +4,10 @@
  */
 (function(global) {
     function cloneWallet(config) {
-        var wallet = {};
-        var ores = (config && config.ores) || {};
+        const wallet = {};
+        const ores = (config && config.ores) || {};
         Object.keys(ores).forEach(function(oreId) {
-            var ore = ores[oreId] || {};
+            const ore = ores[oreId] || {};
             wallet[oreId] = {
                 amount: Number(ore.amount) || 0,
                 maxAllowed: Number(ore.maxAllowed) || 0
@@ -17,22 +17,22 @@
     }
 
     function areaCostsFor(config, areaId) {
-        var areaCosts = (config && config.areaCosts) || {};
+        const areaCosts = (config && config.areaCosts) || {};
         return areaCosts[String(areaId)] || [];
     }
 
     function initialWalletMax(config) {
-        var value = config && Number(config.initialOreWalletMax);
+        const value = config && Number(config.initialOreWalletMax);
         return isFinite(value) && value > 0 ? value : 0;
     }
 
     function refundFitsWallet(wallet, costs, initialMax) {
-        var projected = {};
-        for (var index = 0; index < costs.length; index += 1) {
-            var cost = costs[index];
-            var oreId = String(cost.oreId);
-            var refund = Number(cost.amount) || 0;
-            var current = projected[oreId];
+        const projected = {};
+        for (let index = 0; index < costs.length; index += 1) {
+            const cost = costs[index];
+            const oreId = String(cost.oreId);
+            const refund = Number(cost.amount) || 0;
+            let current = projected[oreId];
             if (!current) {
                 if (wallet[oreId]) {
                     current = {
@@ -58,10 +58,10 @@
     }
 
     function applyRefundToWallet(wallet, costs, initialMax) {
-        for (var index = 0; index < costs.length; index += 1) {
-            var cost = costs[index];
-            var oreId = String(cost.oreId);
-            var refund = Number(cost.amount) || 0;
+        for (let index = 0; index < costs.length; index += 1) {
+            const cost = costs[index];
+            const oreId = String(cost.oreId);
+            const refund = Number(cost.amount) || 0;
             if (!wallet[oreId]) {
                 wallet[oreId] = {
                     amount: 0,
@@ -76,10 +76,10 @@
     }
 
     function clearingAllWouldLoseOre(config, areaIds) {
-        var wallet = cloneWallet(config);
-        var initialMax = initialWalletMax(config);
-        for (var index = 0; index < areaIds.length; index += 1) {
-            var costs = areaCostsFor(config, areaIds[index]);
+        const wallet = cloneWallet(config);
+        const initialMax = initialWalletMax(config);
+        for (let index = 0; index < areaIds.length; index += 1) {
+            const costs = areaCostsFor(config, areaIds[index]);
             if (!refundFitsWallet(wallet, costs, initialMax)) {
                 return true;
             }

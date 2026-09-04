@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE Robot INNER JOIN PendingRobotChanges ON PendingRobotChanges.robotId = Robot.id SET Robot.sourceCode = PendingRobotChanges.sourceCode, Robot.oreContainerId = PendingRobotChanges.oreContainerId, Robot.miningUnitId = PendingRobotChanges.miningUnitId, Robot.batteryId = PendingRobotChanges.batteryId, Robot.memoryModuleId = PendingRobotChanges.memoryModuleId, Robot.cpuId = PendingRobotChanges.cpuId, Robot.engineId = PendingRobotChanges.engineId, Robot.oreScannerId = PendingRobotChanges.oreScannerId, Robot.rechargeTime = PendingRobotChanges.rechargeTime, Robot.maxOre = PendingRobotChanges.maxOre, Robot.miningSpeed = PendingRobotChanges.miningSpeed, Robot.maxTurns = PendingRobotChanges.maxTurns, Robot.memorySize = PendingRobotChanges.memorySize, Robot.cpuSpeed = PendingRobotChanges.cpuSpeed, Robot.forwardSpeed = PendingRobotChanges.forwardSpeed, Robot.backwardSpeed = PendingRobotChanges.backwardSpeed, Robot.rotateSpeed = PendingRobotChanges.rotateSpeed, Robot.robotSize = PendingRobotChanges.robotSize, Robot.scanTime = PendingRobotChanges.scanTime, Robot.scanDistance = PendingRobotChanges.scanDistance, PendingRobotChanges.changesCommitTime = TIMESTAMPADD(SECOND, ?, NOW()) WHERE Robot.id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "00fcaddaff50963dcfdbc831f20f4e05f4090d533b6702fe0dd64caa0ba424f6"
+}
