@@ -1,15 +1,15 @@
 (function() {
-    var FRAGMENT_PARAM = 'queue';
-    var REFRESH_DEBOUNCE_MS = 300;
-    var CLAIM_REFRESH_BACKOFF_MS = [1000, 2000, 4000, 8000];
-    var CREDIT_FEEDBACK_MS = 5000;
+    const FRAGMENT_PARAM = 'queue';
+    const REFRESH_DEBOUNCE_MS = 300;
+    const CLAIM_REFRESH_BACKOFF_MS = [1000, 2000, 4000, 8000];
+    const CREDIT_FEEDBACK_MS = 5000;
 
-    var pageRoot = document.querySelector('.mining-queue-page');
-    var STORAGE_KEY = pageRoot
+    const pageRoot = document.querySelector('.mining-queue-page');
+    const STORAGE_KEY = pageRoot
         ? pageRoot.getAttribute('data-area-storage-key') || 'robominer.miningQueue.areaSelections'
         : 'robominer.miningQueue.areaSelections';
 
-    var ctx = {
+    const ctx = {
         pageRoot: pageRoot,
         STORAGE_KEY: STORAGE_KEY,
         FRAGMENT_PARAM: FRAGMENT_PARAM,
@@ -41,10 +41,10 @@
     }
 
     function writeStoredAreaSelections() {
-        var stored = {};
-        var selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
-        for (var index = 0; index < selects.length; index += 1) {
-            var select = selects[index];
+        const stored = {};
+        const selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
+        for (let index = 0; index < selects.length; index += 1) {
+            const select = selects[index];
             if (select.name && select.value) {
                 stored[select.name] = select.value;
             }
@@ -53,9 +53,9 @@
     }
 
     function areaSelectionParamNames() {
-        var names = ['infoMiningAreaId'];
-        var selects = document.querySelectorAll('select[name^="miningArea"]');
-        for (var index = 0; index < selects.length; index += 1) {
+        const names = ['infoMiningAreaId'];
+        const selects = document.querySelectorAll('select[name^="miningArea"]');
+        for (let index = 0; index < selects.length; index += 1) {
             if (selects[index].name) {
                 names.push(selects[index].name);
             }
@@ -68,8 +68,8 @@
     }
 
     function selectHasOption(select, areaId) {
-        var value = String(areaId);
-        for (var optionIndex = 0; optionIndex < select.options.length; optionIndex += 1) {
+        const value = String(areaId);
+        for (let optionIndex = 0; optionIndex < select.options.length; optionIndex += 1) {
             if (select.options[optionIndex].value === value) {
                 return true;
             }
@@ -89,10 +89,10 @@
     }
 
     function collectQueueQueryParams() {
-        var params = {};
-        var selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
-        for (var index = 0; index < selects.length; index += 1) {
-            var select = selects[index];
+        const params = {};
+        const selects = document.querySelectorAll('select[name="infoMiningAreaId"], select[name^="miningArea"]');
+        for (let index = 0; index < selects.length; index += 1) {
+            const select = selects[index];
             if (select.name && select.value) {
                 params[select.name] = select.value;
             }
@@ -101,19 +101,19 @@
     }
 
     function buildFragmentUrl(extraParams) {
-        var params = collectQueueQueryParams();
+        const params = collectQueueQueryParams();
         params.fragment = FRAGMENT_PARAM;
         if (extraParams) {
             Object.keys(extraParams).forEach(function(name) {
                 params[name] = extraParams[name];
             });
         }
-        var query = window.RoboMinerUrlQuery.buildQueryString(params);
+        const query = window.RoboMinerUrlQuery.buildQueryString(params);
         return query ? 'miningQueue?' + query : 'miningQueue?fragment=' + FRAGMENT_PARAM;
     }
 
     function clearTimers() {
-        for (var index = 0; index < ctx.timerIntervals.length; index += 1) {
+        for (let index = 0; index < ctx.timerIntervals.length; index += 1) {
             window.clearInterval(ctx.timerIntervals[index]);
         }
         ctx.timerIntervals = [];
@@ -131,17 +131,17 @@
             writeStoredAreaSelections();
             return;
         }
-        var stored = readStoredAreaSelections();
+        const stored = readStoredAreaSelections();
         if (!stored) {
             return;
         }
-        var changed = false;
+        let changed = false;
         if (ctx.inspectorSelect && applyStoredAreaSelection(ctx.inspectorSelect, stored.infoMiningAreaId)) {
             changed = true;
         }
-        var robotAreaSelects = document.querySelectorAll('select[name^="miningArea"]');
-        for (var restoreIndex = 0; restoreIndex < robotAreaSelects.length; restoreIndex += 1) {
-            var robotSelect = robotAreaSelects[restoreIndex];
+        const robotAreaSelects = document.querySelectorAll('select[name^="miningArea"]');
+        for (let restoreIndex = 0; restoreIndex < robotAreaSelects.length; restoreIndex += 1) {
+            const robotSelect = robotAreaSelects[restoreIndex];
             if (applyStoredAreaSelection(robotSelect, stored[robotSelect.name])) {
                 view.updateRobotEnqueueState(robotSelect);
                 changed = true;
@@ -163,26 +163,26 @@
 
     ctx.init = init;
 
-    var view = window.RoboMinerMiningQueueInstall.view(ctx);
-    var claimPoll = window.RoboMinerMiningQueueInstall.claimPoll(ctx, view);
-    var actions = window.RoboMinerMiningQueueInstall.actions(ctx, view);
+    const view = window.RoboMinerMiningQueueInstall.view(ctx);
+    const claimPoll = window.RoboMinerMiningQueueInstall.claimPoll(ctx, view);
+    const actions = window.RoboMinerMiningQueueInstall.actions(ctx, view);
     ctx.refreshQueue = claimPoll.refreshQueue;
 
     document.addEventListener('change', function(event) {
-        var checkbox = event.target.closest('.mining-queue-item-check');
+        const checkbox = event.target.closest('.mining-queue-item-check');
         if (checkbox) {
-            var checkboxForm = checkbox.closest('.mining-queue-card');
+            const checkboxForm = checkbox.closest('.mining-queue-card');
             if (checkboxForm) {
                 ctx.updateClearButtonLabel(checkboxForm);
             }
             return;
         }
 
-        var robotSelect = event.target.closest('.mining-queue-card select[name^="miningArea"]');
+        const robotSelect = event.target.closest('.mining-queue-card select[name^="miningArea"]');
         if (!robotSelect) {
             return;
         }
-        var areaId = robotSelect.value;
+        const areaId = robotSelect.value;
         view.updateRobotEnqueueState(robotSelect);
         if (ctx.inspectorSelect && areaId) {
             ctx.inspectorSelect.value = areaId;
@@ -193,13 +193,13 @@
     });
 
     document.addEventListener('click', function(event) {
-        var removeButton = event.target.closest('.mining-queue-remove-btn');
+        const removeButton = event.target.closest('.mining-queue-remove-btn');
         if (removeButton) {
             event.preventDefault();
             actions.removeQueuedRun(removeButton);
             return;
         }
-        var clearButton = event.target.closest('.mining-queue-clear-btn');
+        const clearButton = event.target.closest('.mining-queue-clear-btn');
         if (clearButton) {
             event.preventDefault();
             actions.clearQueuedRuns(clearButton);
@@ -207,12 +207,12 @@
     });
 
     document.addEventListener('submit', function(event) {
-        var form = event.target.closest('.mining-queue-card');
+        const form = event.target.closest('.mining-queue-card');
         if (!form || form.tagName !== 'FORM') {
             return;
         }
         event.preventDefault();
-        var formData = new FormData(form);
+        const formData = new FormData(form);
         if (event.submitter && event.submitter.name) {
             formData.set(event.submitter.name, event.submitter.value);
         }

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE UserAchievement SET stepsClaimed = ? WHERE userId = ? AND achievementId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6bc93aa9be9b6d9b83d5519d37a43bb38db625c3cddaf8f49143c3ad824544b6"
+}

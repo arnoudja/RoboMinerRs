@@ -56,6 +56,28 @@ impl From<ActivityRecentRallyRow> for ActivityRecentRallyRecord {
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct ActivityRecentRallyParticipantRow {
+    #[sqlx(rename = "id")]
+    mining_queue_id: i64,
+    #[sqlx(rename = "playerNumber")]
+    player_number: i32,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    username: String,
+}
+
+impl From<ActivityRecentRallyParticipantRow> for ActivityRecentRallyParticipantRecord {
+    fn from(row: ActivityRecentRallyParticipantRow) -> Self {
+        Self {
+            mining_queue_id: row.mining_queue_id,
+            player_number: row.player_number,
+            robot_name: row.robot_name,
+            username: row.username,
+        }
+    }
+}
+
 pub async fn list_activity_recent_users(
     pool: &MySqlPool,
     maximum_users: i64,
@@ -163,8 +185,9 @@ pub async fn list_activity_recent_rally_participants(
     pool: &MySqlPool,
     maximum_rallies: i64,
 ) -> Result<Vec<ActivityRecentRallyParticipantRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i32, String, String)>(
-        "SELECT RecentQueue.id, MiningQueue.playerNumber, Robot.robotName, User.username \
+    sqlx::query_as::<_, ActivityRecentRallyParticipantRow>(
+        "SELECT RecentQueue.id AS id, MiningQueue.playerNumber AS playerNumber, \
+                Robot.robotName AS robotName, User.username AS username \
          FROM (SELECT id, rallyResultId \
                FROM MiningQueue \
                WHERE playerNumber = 0 \
@@ -182,14 +205,7 @@ pub async fn list_activity_recent_rally_participants(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(|(mining_queue_id, player_number, robot_name, username)| {
-                ActivityRecentRallyParticipantRecord {
-                    mining_queue_id,
-                    player_number,
-                    robot_name,
-                    username,
-                }
-            })
+            .map(ActivityRecentRallyParticipantRecord::from)
             .collect()
     })
 }
@@ -204,7 +220,8 @@ pub async fn list_activity_rally_participants_for_queues(
 
     let placeholders = crate::in_placeholders(mining_queue_ids.len());
     let query = format!(
-        "SELECT RecentQueue.id, MiningQueue.playerNumber, Robot.robotName, User.username \
+        "SELECT RecentQueue.id AS id, MiningQueue.playerNumber AS playerNumber, \
+                Robot.robotName AS robotName, User.username AS username \
          FROM MiningQueue RecentQueue \
          INNER JOIN MiningQueue ON MiningQueue.rallyResultId = RecentQueue.rallyResultId \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
@@ -213,21 +230,14 @@ pub async fn list_activity_rally_participants_for_queues(
            AND MiningQueue.playerNumber > 0 \
          ORDER BY RecentQueue.id, MiningQueue.playerNumber"
     );
-    let mut query = sqlx::query_as::<_, (i64, i32, String, String)>(assert_sql_safe(query));
+    let mut query = sqlx::query_as::<_, ActivityRecentRallyParticipantRow>(assert_sql_safe(query));
     for mining_queue_id in mining_queue_ids {
         query = query.bind(mining_queue_id);
     }
 
     query.fetch_all(pool).await.map(|rows| {
         rows.into_iter()
-            .map(|(mining_queue_id, player_number, robot_name, username)| {
-                ActivityRecentRallyParticipantRecord {
-                    mining_queue_id,
-                    player_number,
-                    robot_name,
-                    username,
-                }
-            })
+            .map(ActivityRecentRallyParticipantRecord::from)
             .collect()
     })
 }

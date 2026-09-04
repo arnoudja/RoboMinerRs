@@ -84,6 +84,29 @@ impl From<MiningRallyQueueRow> for MiningRallyQueueRecord {
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct MiningAreaOreSupplyRow {
+    id: i64,
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "oreId")]
+    ore_id: i64,
+    supply: i32,
+    radius: i32,
+}
+
+impl From<MiningAreaOreSupplyRow> for MiningAreaOreSupplyRecord {
+    fn from(row: MiningAreaOreSupplyRow) -> Self {
+        Self {
+            id: row.id,
+            mining_area_id: row.mining_area_id,
+            ore_id: row.ore_id,
+            supply: row.supply,
+            radius: row.radius,
+        }
+    }
+}
+
 /// Keep the first queue row per user, then cap at four participants.
 pub(crate) fn mining_rally_queue_rows(
     rows: Vec<MiningRallyQueueRow>,
@@ -134,7 +157,7 @@ pub async fn list_mining_area_ore_supplies(
     pool: &MySqlPool,
     mining_area_id: i64,
 ) -> Result<Vec<MiningAreaOreSupplyRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, i64, i32, i32)>(
+    sqlx::query_as::<_, MiningAreaOreSupplyRow>(
         "SELECT id, miningAreaId, oreId, supply, radius \
          FROM MiningAreaOreSupply \
          WHERE miningAreaId = ? \
@@ -145,15 +168,7 @@ pub async fn list_mining_area_ore_supplies(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(id, mining_area_id, ore_id, supply, radius)| MiningAreaOreSupplyRecord {
-                    id,
-                    mining_area_id,
-                    ore_id,
-                    supply,
-                    radius,
-                },
-            )
+            .map(MiningAreaOreSupplyRecord::from)
             .collect()
     })
 }

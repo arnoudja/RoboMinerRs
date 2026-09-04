@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT IGNORE INTO UserAchievement (userId, achievementId, stepsClaimed) VALUES (?, ?, 0)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "12879d55ab54338a97b510ef0870457e48469220d7639d8ad43b08606dc339d5"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO User (username, email, password, achievementPoints, miningQueueSize) VALUES (?, ?, ?, 0, 0)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "95b25548ac7a11a2de38345c8a938d05f78724e7d4371d5abe697808cc9d7893"
+}

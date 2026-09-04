@@ -97,12 +97,13 @@ exceeded. Prefer keeping the reverse-proxy limit as defense in depth.
 
 Authenticated **mutation** endpoints (shop buy/sell, mining queue changes, robot
 config apply, edit-code save/delete, achievement claims, account updates) are also
-limited in-app: **30 requests per 60 seconds per user**, keyed by action family
-(`shop`, `mining_queue`, `robot`, `edit_code`, `achievements`, `account`). Over
-the limit returns HTTP `429` with a generic retry message. Proxy rate limits
+limited in-app: **30 requests per 60 seconds per user and action family**
+(`shop`, `mining_queue`, `robot`, `edit_code`, `achievements`, `account`), plus
+**60 requests per 60 seconds per client IP** across all mutation families. Over
+either limit returns HTTP `429` with a generic retry message. Proxy rate limits
 remain defense in depth; tune both layers for your player base.
 
-**Multi-instance note:** in-process limiters (`robominer-web` `rate_limit.rs`)
+**Multi-instance note:** in-process limiters (`robominer-web` `rate_limit/`)
 are per process. Each replica has its own counters, so effective capacity scales
 roughly with replica count. Keep reverse-proxy rate limiting as the shared
 control plane for multi-instance deploys (HSTS remains proxy-owned as well).

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE Robot SET robotName = ?, programSourceId = ?, sourceCode = ?, oreContainerId = ?, miningUnitId = ?, batteryId = ?, memoryModuleId = ?, cpuId = ?, engineId = ?, oreScannerId = ?, rechargeTime = ?, maxOre = ?, miningSpeed = ?, maxTurns = ?, memorySize = ?, cpuSpeed = ?, forwardSpeed = ?, backwardSpeed = ?, rotateSpeed = ?, robotSize = ?, scanTime = ?, scanDistance = ? WHERE id = ? AND userId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 24
+    },
+    "nullable": []
+  },
+  "hash": "cf1fa5b4fa11274f9a978aebd760d63f544ede049bae6dfb6c78730672553ddd"
+}

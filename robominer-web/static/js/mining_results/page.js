@@ -1,14 +1,14 @@
 (function() {
-    var DEFAULT_INITIAL_VISIBLE = 5;
-    var DEFAULT_LOAD_MORE_STEP = 5;
-    var visibleRunCount = DEFAULT_INITIAL_VISIBLE;
+    const DEFAULT_INITIAL_VISIBLE = 5;
+    const DEFAULT_LOAD_MORE_STEP = 5;
+    let visibleRunCount = DEFAULT_INITIAL_VISIBLE;
 
     function collectMiningResultsQueryParams() {
-        var params = {};
-        var robotFilter = document.getElementById('miningResultsRobotFilter');
-        var areaFilter = document.getElementById('miningResultsAreaFilter');
-        var sortFilter = document.getElementById('miningResultsSortFilter');
-        var activePanel = document.querySelector('.mining-results-detail-panel-active:not(.mining-results-filter-hidden)');
+        const params = {};
+        const robotFilter = document.getElementById('miningResultsRobotFilter');
+        const areaFilter = document.getElementById('miningResultsAreaFilter');
+        const sortFilter = document.getElementById('miningResultsSortFilter');
+        const activePanel = document.querySelector('.mining-results-detail-panel-active:not(.mining-results-filter-hidden)');
         if (robotFilter && robotFilter.value) {
             params.robotId = robotFilter.value;
         }
@@ -33,20 +33,20 @@
     }
 
     function initialVisibleRuns() {
-        var container = runCardsContainer();
+        const container = runCardsContainer();
         if (!container) {
             return DEFAULT_INITIAL_VISIBLE;
         }
-        var value = Number(container.getAttribute('data-initial-visible'));
+        const value = Number(container.getAttribute('data-initial-visible'));
         return value > 0 ? value : DEFAULT_INITIAL_VISIBLE;
     }
 
     function loadMoreStep() {
-        var container = runCardsContainer();
+        const container = runCardsContainer();
         if (!container) {
             return DEFAULT_LOAD_MORE_STEP;
         }
-        var value = Number(container.getAttribute('data-load-more-step'));
+        const value = Number(container.getAttribute('data-load-more-step'));
         return value > 0 ? value : DEFAULT_LOAD_MORE_STEP;
     }
 
@@ -54,18 +54,18 @@
         if (updateUrl === undefined) {
             updateUrl = true;
         }
-        var cards = document.querySelectorAll('.mining-results-run-card');
-        var panels = document.querySelectorAll('.mining-results-detail-panel');
-        for (var cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
-            var card = cards[cardIndex];
-            var isActive = card.getAttribute('data-run-id') === String(runId)
+        const cards = document.querySelectorAll('.mining-results-run-card');
+        const panels = document.querySelectorAll('.mining-results-detail-panel');
+        for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+            const card = cards[cardIndex];
+            const isActive = card.getAttribute('data-run-id') === String(runId)
                 && !card.classList.contains('mining-results-filter-hidden')
                 && !card.classList.contains('mining-results-run-card-collapsed');
             card.classList.toggle('mining-results-run-card-active', isActive);
         }
-        for (var panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
-            var panel = panels[panelIndex];
-            var panelIsActive = panel.getAttribute('data-run-id') === String(runId)
+        for (let panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
+            const panel = panels[panelIndex];
+            const panelIsActive = panel.getAttribute('data-run-id') === String(runId)
                 && !panel.classList.contains('mining-results-filter-hidden');
             panel.classList.toggle('mining-results-detail-panel-active', panelIsActive);
             panel.hidden = !panelIsActive;
@@ -87,37 +87,37 @@
     }
 
     function applyMiningResultsSort() {
-        var sortFilter = document.getElementById('miningResultsSortFilter');
-        var sortBy = sortFilter ? sortFilter.value : 'newest';
-        var container = runCardsContainer();
+        const sortFilter = document.getElementById('miningResultsSortFilter');
+        const sortBy = sortFilter ? sortFilter.value : 'newest';
+        const container = runCardsContainer();
         if (container) {
-            var cards = Array.prototype.slice.call(container.querySelectorAll('.mining-results-run-card'));
+            const cards = Array.prototype.slice.call(container.querySelectorAll('.mining-results-run-card'));
             cards.sort(function(left, right) {
                 return compareMiningResultElements(left, right, sortBy);
             });
-            for (var cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+            for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
                 container.appendChild(cards[cardIndex]);
             }
         }
-        var panelContainer = document.querySelector('.mining-results-detail-panels');
+        const panelContainer = document.querySelector('.mining-results-detail-panels');
         if (panelContainer) {
-            var panels = Array.prototype.slice.call(panelContainer.querySelectorAll('.mining-results-detail-panel'));
+            const panels = Array.prototype.slice.call(panelContainer.querySelectorAll('.mining-results-detail-panel'));
             panels.sort(function(left, right) {
                 return compareMiningResultElements(left, right, sortBy);
             });
-            for (var panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
+            for (let panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
                 panelContainer.appendChild(panels[panelIndex]);
             }
         }
     }
 
     function syncReplayReturnLinks() {
-        var query = window.RoboMinerUrlQuery.buildQueryString(collectMiningResultsQueryParams());
-        var links = document.querySelectorAll('.mining-results-replay-link-primary[data-rally-result-id]');
-        for (var linkIndex = 0; linkIndex < links.length; linkIndex += 1) {
-            var link = links[linkIndex];
-            var rallyId = link.getAttribute('data-rally-result-id');
-            var href = 'miningResults?rallyResultId=' + encodeURIComponent(rallyId);
+        const query = window.RoboMinerUrlQuery.buildQueryString(collectMiningResultsQueryParams());
+        const links = document.querySelectorAll('.mining-results-replay-link-primary[data-rally-result-id]');
+        for (let linkIndex = 0; linkIndex < links.length; linkIndex += 1) {
+            const link = links[linkIndex];
+            const rallyId = link.getAttribute('data-rally-result-id');
+            let href = 'miningResults?rallyResultId=' + encodeURIComponent(rallyId);
             if (query) {
                 href += '&returnTo=' + encodeURIComponent(query);
             }
@@ -136,10 +136,10 @@
     }
 
     function matchingRunCards(robotId, areaName) {
-        var cards = document.querySelectorAll('.mining-results-run-card');
-        var matching = [];
-        for (var cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
-            var card = cards[cardIndex];
+        const cards = document.querySelectorAll('.mining-results-run-card');
+        const matching = [];
+        for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+            const card = cards[cardIndex];
             if (matchesMiningResultsFilter(card, robotId, areaName)) {
                 matching.push(card);
             }
@@ -148,43 +148,43 @@
     }
 
     function applyVisibleRunLimit(preferredRunId) {
-        var robotFilter = document.getElementById('miningResultsRobotFilter');
-        var areaFilter = document.getElementById('miningResultsAreaFilter');
-        var robotId = robotFilter ? robotFilter.value : '';
-        var areaName = areaFilter ? areaFilter.value : '';
-        var matching = matchingRunCards(robotId, areaName);
+        const robotFilter = document.getElementById('miningResultsRobotFilter');
+        const areaFilter = document.getElementById('miningResultsAreaFilter');
+        const robotId = robotFilter ? robotFilter.value : '';
+        const areaName = areaFilter ? areaFilter.value : '';
+        const matching = matchingRunCards(robotId, areaName);
         if (preferredRunId) {
-            for (var matchIndex = 0; matchIndex < matching.length; matchIndex += 1) {
+            for (let matchIndex = 0; matchIndex < matching.length; matchIndex += 1) {
                 if (matching[matchIndex].getAttribute('data-run-id') === String(preferredRunId)) {
                     visibleRunCount = Math.max(visibleRunCount, matchIndex + 1);
                     break;
                 }
             }
         }
-        for (var cardIndex = 0; cardIndex < matching.length; cardIndex += 1) {
+        for (let cardIndex = 0; cardIndex < matching.length; cardIndex += 1) {
             matching[cardIndex].classList.toggle(
                 'mining-results-run-card-collapsed',
                 cardIndex >= visibleRunCount
             );
         }
-        var loadMoreWrap = document.getElementById('miningResultsLoadMoreWrap');
+        const loadMoreWrap = document.getElementById('miningResultsLoadMoreWrap');
         if (loadMoreWrap) {
             loadMoreWrap.hidden = matching.length <= visibleRunCount;
         }
     }
 
     function applyMiningResultsFilters(preferredRunId) {
-        var robotFilter = document.getElementById('miningResultsRobotFilter');
-        var areaFilter = document.getElementById('miningResultsAreaFilter');
+        const robotFilter = document.getElementById('miningResultsRobotFilter');
+        const areaFilter = document.getElementById('miningResultsAreaFilter');
         if (!robotFilter || !areaFilter) {
             return;
         }
-        var robotId = robotFilter.value;
-        var areaName = areaFilter.value;
-        var cards = document.querySelectorAll('.mining-results-run-card');
-        var panels = document.querySelectorAll('.mining-results-detail-panel');
-        for (var cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
-            var card = cards[cardIndex];
+        const robotId = robotFilter.value;
+        const areaName = areaFilter.value;
+        const cards = document.querySelectorAll('.mining-results-run-card');
+        const panels = document.querySelectorAll('.mining-results-detail-panel');
+        for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+            const card = cards[cardIndex];
             if (matchesMiningResultsFilter(card, robotId, areaName)) {
                 card.classList.remove('mining-results-filter-hidden');
             } else {
@@ -192,8 +192,8 @@
                 card.classList.add('mining-results-filter-hidden');
             }
         }
-        for (var panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
-            var panel = panels[panelIndex];
+        for (let panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
+            const panel = panels[panelIndex];
             if (matchesMiningResultsFilter(panel, robotId, areaName)) {
                 panel.classList.remove('mining-results-filter-hidden');
             } else {
@@ -203,10 +203,10 @@
             }
         }
         applyVisibleRunLimit(preferredRunId);
-        var firstVisibleRunId = null;
-        var activeRunId = null;
-        for (var visibleIndex = 0; visibleIndex < cards.length; visibleIndex += 1) {
-            var visibleCard = cards[visibleIndex];
+        let firstVisibleRunId = null;
+        let activeRunId = null;
+        for (let visibleIndex = 0; visibleIndex < cards.length; visibleIndex += 1) {
+            const visibleCard = cards[visibleIndex];
             if (visibleCard.classList.contains('mining-results-filter-hidden')
                 || visibleCard.classList.contains('mining-results-run-card-collapsed')) {
                 continue;
@@ -218,11 +218,11 @@
                 activeRunId = visibleCard.getAttribute('data-run-id');
             }
         }
-        var empty = document.getElementById('miningResultsFilterEmpty');
+        const empty = document.getElementById('miningResultsFilterEmpty');
         if (empty) {
             empty.hidden = firstVisibleRunId !== null;
         }
-        var nextRunId = null;
+        let nextRunId = null;
         if (preferredRunId && document.querySelector('.mining-results-run-card[data-run-id="' + preferredRunId + '"]:not(.mining-results-filter-hidden):not(.mining-results-run-card-collapsed)')) {
             nextRunId = preferredRunId;
         } else if (activeRunId && document.querySelector('.mining-results-run-card[data-run-id="' + activeRunId + '"]:not(.mining-results-filter-hidden):not(.mining-results-run-card-collapsed)')) {
@@ -237,15 +237,15 @@
         syncReplayReturnLinks();
     }
 
-    var robotFilter = document.getElementById('miningResultsRobotFilter');
-    var areaFilter = document.getElementById('miningResultsAreaFilter');
-    var sortFilter = document.getElementById('miningResultsSortFilter');
-    var loadMoreButton = document.getElementById('miningResultsLoadMore');
+    const robotFilter = document.getElementById('miningResultsRobotFilter');
+    const areaFilter = document.getElementById('miningResultsAreaFilter');
+    const sortFilter = document.getElementById('miningResultsSortFilter');
+    const loadMoreButton = document.getElementById('miningResultsLoadMore');
     visibleRunCount = initialVisibleRuns();
     if (robotFilter) {
-        var preferredRobotId = window.RoboMinerUrlQuery.getParam('robotId');
+        const preferredRobotId = window.RoboMinerUrlQuery.getParam('robotId');
         if (preferredRobotId) {
-            for (var robotIndex = 0; robotIndex < robotFilter.options.length; robotIndex += 1) {
+            for (let robotIndex = 0; robotIndex < robotFilter.options.length; robotIndex += 1) {
                 if (robotFilter.options[robotIndex].value === preferredRobotId) {
                     robotFilter.value = preferredRobotId;
                     break;
@@ -254,9 +254,9 @@
         }
     }
     if (areaFilter) {
-        var preferredArea = window.RoboMinerUrlQuery.getParam('area');
+        const preferredArea = window.RoboMinerUrlQuery.getParam('area');
         if (preferredArea) {
-            for (var areaIndex = 0; areaIndex < areaFilter.options.length; areaIndex += 1) {
+            for (let areaIndex = 0; areaIndex < areaFilter.options.length; areaIndex += 1) {
                 if (areaFilter.options[areaIndex].value === preferredArea) {
                     areaFilter.value = preferredArea;
                     break;
@@ -265,9 +265,9 @@
         }
     }
     if (sortFilter) {
-        var preferredSort = window.RoboMinerUrlQuery.getParam('sort');
+        const preferredSort = window.RoboMinerUrlQuery.getParam('sort');
         if (preferredSort) {
-            for (var sortIndex = 0; sortIndex < sortFilter.options.length; sortIndex += 1) {
+            for (let sortIndex = 0; sortIndex < sortFilter.options.length; sortIndex += 1) {
                 if (sortFilter.options[sortIndex].value === preferredSort) {
                     sortFilter.value = preferredSort;
                     break;
@@ -303,8 +303,8 @@
         });
     }
 
-    var runCards = document.querySelectorAll('.mining-results-run-card');
-    for (var runIndex = 0; runIndex < runCards.length; runIndex += 1) {
+    const runCards = document.querySelectorAll('.mining-results-run-card');
+    for (let runIndex = 0; runIndex < runCards.length; runIndex += 1) {
         runCards[runIndex].addEventListener('click', function(event) {
             selectMiningResultRun(event.currentTarget.getAttribute('data-run-id'));
         });

@@ -50,23 +50,23 @@ pub async fn create_user(
         return db_reject(CreateUserRejection::DuplicateEmail);
     }
 
-    let user_result = sqlx::query(
+    let user_result = sqlx::query!(
         "INSERT INTO User \
          (username, email, password, achievementPoints, miningQueueSize) \
          VALUES (?, ?, ?, 0, 0)",
+        request.username,
+        request.email,
+        password_hash
     )
-    .bind(&request.username)
-    .bind(&request.email)
-    .bind(password_hash)
     .execute(&mut *transaction)
     .await?;
     let user_id = user_result.last_insert_id() as i64;
 
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO UserAchievement (userId, achievementId, stepsClaimed) \
          VALUES (?, 1, 0)",
+        user_id
     )
-    .bind(user_id)
     .execute(&mut *transaction)
     .await?;
 
@@ -152,24 +152,26 @@ pub async fn update_user_account(
 
     let password_changed = password_hash.is_some();
     if let Some(password_hash) = password_hash {
-        sqlx::query(
+        sqlx::query!(
             "UPDATE User \
              SET username = ?, email = ?, password = ?, sessionVersion = sessionVersion + 1 \
              WHERE id = ?",
+            request.username,
+            request.email,
+            password_hash,
+            request.user_id
         )
-        .bind(&request.username)
-        .bind(&request.email)
-        .bind(password_hash)
-        .bind(request.user_id)
         .execute(&mut *transaction)
         .await?;
     } else {
-        sqlx::query("UPDATE User SET username = ?, email = ? WHERE id = ?")
-            .bind(&request.username)
-            .bind(&request.email)
-            .bind(request.user_id)
-            .execute(&mut *transaction)
-            .await?;
+        sqlx::query!(
+            "UPDATE User SET username = ?, email = ? WHERE id = ?",
+            request.username,
+            request.email,
+            request.user_id
+        )
+        .execute(&mut *transaction)
+        .await?;
     }
 
     let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO UserOreAsset (userId, oreId, amount, maxAllowed, depotMaxAllowed) VALUES (?, ?, 0, ?, ?) ON DUPLICATE KEY UPDATE depotMaxAllowed = GREATEST(depotMaxAllowed, VALUES(depotMaxAllowed))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "2d94c450f7017470cfe9ffcc77a48924107f0e06d16bc1e3104d1c08f5727405"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE PendingRobotChanges SET sourceCode = ?, oreContainerId = ?, miningUnitId = ?, batteryId = ?, memoryModuleId = ?, cpuId = ?, engineId = ?, oreScannerId = ?, rechargeTime = ?, maxOre = ?, miningSpeed = ?, maxTurns = ?, memorySize = ?, cpuSpeed = ?, forwardSpeed = ?, backwardSpeed = ?, rotateSpeed = ?, robotSize = ?, scanTime = ?, scanDistance = ? WHERE robotId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 21
+    },
+    "nullable": []
+  },
+  "hash": "0a2bc7caeed953e3a76304d0e8feca3eea9f88e68355b7887aa52728d1af6779"
+}

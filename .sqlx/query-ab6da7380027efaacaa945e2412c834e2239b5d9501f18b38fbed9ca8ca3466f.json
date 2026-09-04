@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE MiningQueue SET rallyResultId = ?, miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), playerNumber = ?, executedSourceCode = ?, processingLeaseUntil = NULL WHERE id = ? AND miningEndTime IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "ab6da7380027efaacaa945e2412c834e2239b5d9501f18b38fbed9ca8ca3466f"
+}

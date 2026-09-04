@@ -2,14 +2,72 @@ use sqlx::MySqlPool;
 
 use crate::{RallyViewMetadataRecord, RallyViewParticipantRecord, RallyViewStateRecord};
 
+#[derive(sqlx::FromRow)]
+struct RallyViewStateRow {
+    #[sqlx(rename = "resultData")]
+    result_data: String,
+    #[sqlx(rename = "aiRobotName")]
+    ai_robot_name: String,
+    #[sqlx(rename = "aiUsername")]
+    ai_username: String,
+}
+
+impl From<RallyViewStateRow> for RallyViewStateRecord {
+    fn from(row: RallyViewStateRow) -> Self {
+        Self {
+            result_data: row.result_data,
+            ai_robot_name: row.ai_robot_name,
+            ai_username: row.ai_username,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct RallyViewViewerContextRow {
+    #[sqlx(rename = "playerNumber")]
+    player_number: i32,
+    #[sqlx(rename = "robotId")]
+    robot_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    claimed: bool,
+    score: f64,
+    #[sqlx(rename = "totalOreMined")]
+    total_ore_mined: i32,
+    #[sqlx(rename = "totalTax")]
+    total_tax: i32,
+    #[sqlx(rename = "totalReward")]
+    total_reward: i32,
+}
+
+#[derive(sqlx::FromRow)]
+struct RallyViewParticipantRow {
+    #[sqlx(rename = "playerNumber")]
+    player_number: i32,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    username: String,
+}
+
+impl From<RallyViewParticipantRow> for RallyViewParticipantRecord {
+    fn from(row: RallyViewParticipantRow) -> Self {
+        Self {
+            player_number: row.player_number,
+            robot_name: row.robot_name,
+            username: row.username,
+        }
+    }
+}
+
 pub async fn rally_view_state(
     pool: &MySqlPool,
     user_id: i64,
     rally_result_id: i64,
     require_user_result: bool,
 ) -> Result<Option<RallyViewStateRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (String, String, String)>(
-        "SELECT RallyResult.resultData, AiRobot.robotName, 'AI' \
+    sqlx::query_as::<_, RallyViewStateRow>(
+        "SELECT RallyResult.resultData AS resultData, AiRobot.robotName AS aiRobotName, \
+                'AI' AS aiUsername \
          FROM RallyResult \
          INNER JOIN MiningQueue ON MiningQueue.rallyResultId = RallyResult.id \
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
@@ -29,15 +87,7 @@ pub async fn rally_view_state(
     .bind(user_id)
     .fetch_optional(pool)
     .await
-    .map(|row| {
-        row.map(
-            |(result_data, ai_robot_name, ai_username)| RallyViewStateRecord {
-                result_data,
-                ai_robot_name,
-                ai_username,
-            },
-        )
-    })
+    .map(|row| row.map(RallyViewStateRecord::from))
 }
 
 pub async fn rally_view_metadata(
@@ -62,12 +112,14 @@ pub async fn rally_view_metadata(
     };
 
     let viewer_context = if user_id > 0 {
-        sqlx::query_as::<_, (i32, i64, String, bool, f64, i32, i32, i32)>(
-            "SELECT MiningQueue.playerNumber, MiningQueue.robotId, Robot.robotName, \
-                    MiningQueue.claimed, COALESCE(MiningQueue.score, 0.0), \
-                    CAST(COALESCE(SUM(MiningOreResult.amount), 0) AS SIGNED), \
-                    CAST(COALESCE(SUM(COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED), \
+        sqlx::query_as::<_, RallyViewViewerContextRow>(
+            "SELECT MiningQueue.playerNumber AS playerNumber, MiningQueue.robotId AS robotId, \
+                    Robot.robotName AS robotName, MiningQueue.claimed AS claimed, \
+                    COALESCE(MiningQueue.score, 0.0) AS score, \
+                    CAST(COALESCE(SUM(MiningOreResult.amount), 0) AS SIGNED) AS totalOreMined, \
+                    CAST(COALESCE(SUM(COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED) AS totalTax, \
                     CAST(COALESCE(SUM(MiningOreResult.amount - COALESCE(MiningOreResult.tax, 0)), 0) AS SIGNED) \
+                      AS totalReward \
              FROM MiningQueue \
              INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
              LEFT OUTER JOIN MiningOreResult ON MiningOreResult.miningQueueId = MiningQueue.id \
@@ -101,26 +153,16 @@ pub async fn rally_view_metadata(
         viewer_total_tax,
         viewer_total_reward,
         viewer_result_claimed,
-    ) = if let Some((
-        player_number,
-        robot_id,
-        robot_name,
-        claimed,
-        score,
-        total_ore_mined,
-        total_tax,
-        total_reward,
-    )) = viewer_context
-    {
+    ) = if let Some(row) = viewer_context {
         (
-            Some(player_number),
-            Some(robot_id),
-            Some(robot_name),
-            Some(score),
-            Some(total_ore_mined),
-            Some(total_tax),
-            Some(total_reward),
-            claimed,
+            Some(row.player_number),
+            Some(row.robot_id),
+            Some(row.robot_name),
+            Some(row.score),
+            Some(row.total_ore_mined),
+            Some(row.total_tax),
+            Some(row.total_reward),
+            row.claimed,
         )
     } else {
         (None, None, None, None, None, None, None, false)
@@ -144,8 +186,9 @@ pub async fn list_rally_view_participants(
     pool: &MySqlPool,
     rally_result_id: i64,
 ) -> Result<Vec<RallyViewParticipantRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i32, String, String)>(
-        "SELECT MiningQueue.playerNumber, Robot.robotName, User.username \
+    sqlx::query_as::<_, RallyViewParticipantRow>(
+        "SELECT MiningQueue.playerNumber AS playerNumber, Robot.robotName AS robotName, \
+                User.username AS username \
          FROM MiningQueue \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
          INNER JOIN User ON User.id = Robot.userId \
@@ -158,13 +201,7 @@ pub async fn list_rally_view_participants(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(player_number, robot_name, username)| RallyViewParticipantRecord {
-                    player_number,
-                    robot_name,
-                    username,
-                },
-            )
+            .map(RallyViewParticipantRecord::from)
             .collect()
     })
 }

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO UserAchievement (userId, achievementId, stepsClaimed) VALUES (?, 1, 0)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "afe51b4c94ea4a6e88aa0062647ca8618b7664da6ff7489810ff1706cd2ad59c"
+}

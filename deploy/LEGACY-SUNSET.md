@@ -76,3 +76,4 @@ sunset criteria are met.
 7. Leave ore-ordering and conf-file paths until a deliberate migration release
 8. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
 9. App-level HSTS — leave to the reverse proxy; do not emit HSTS on loopback HTTP binds
+10. Mass JS `no-var` — continue page-scoped only (`common/`, `mining_queue/**`, shop/mining_results/robot pages done); defer `rally_animation` / `edit_code` until deliberately scheduled

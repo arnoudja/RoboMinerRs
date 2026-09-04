@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE Robot SET miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), rechargeEndTime = TIMESTAMPADD(SECOND, rechargeTime, TIMESTAMPADD(SECOND, ?, NOW())) WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "556863df00523cc93d665bedb2c8b8c59ee06271c655ea4137016ddd6aa6a619"
+}

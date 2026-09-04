@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM UserRobotPartAsset WHERE userId = ? AND totalOwned = 0",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "603b2350063dd586a43bd5fe1fc04c068616173d62455331ea677f07e61ecedf"
+}

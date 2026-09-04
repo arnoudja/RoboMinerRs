@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE MiningQueue SET processingLeaseUntil = TIMESTAMPADD(SECOND, ?, NOW()) WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "abb4673bd9e92de5f3469ccfde18f87f0ae8233775715b2b1c64dee744a0bc5a"
+}

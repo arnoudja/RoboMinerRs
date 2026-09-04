@@ -15,10 +15,12 @@ pub async fn persist_completed_rally(
     rally: &CompletedRallyRecord,
 ) -> Result<DbOutcome<i64, PersistRallyRejection>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
-    let result = sqlx::query("INSERT INTO RallyResult (resultData) VALUES (?)")
-        .bind(&rally.result_data)
-        .execute(&mut *transaction)
-        .await?;
+    let result = sqlx::query!(
+        "INSERT INTO RallyResult (resultData) VALUES (?)",
+        rally.result_data
+    )
+    .execute(&mut *transaction)
+    .await?;
     let rally_result_id = result.last_insert_id() as i64;
 
     for participant in &rally.participants {
@@ -124,13 +126,13 @@ pub async fn claim_next_mining_rally_queue_for_area(
     }
 
     for row in &queue_rows {
-        sqlx::query(
+        sqlx::query!(
             "UPDATE MiningQueue \
              SET processingLeaseUntil = TIMESTAMPADD(SECOND, ?, NOW()) \
              WHERE id = ?",
+            PROCESSING_LEASE_SECONDS,
+            row.queue.id
         )
-        .bind(PROCESSING_LEASE_SECONDS)
-        .bind(row.queue.id)
         .execute(&mut *transaction)
         .await?;
     }
@@ -192,15 +194,15 @@ async fn update_robot_for_completed_rally(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     participant: &CompletedRallyParticipantRecord,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE Robot \
          SET miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), \
              rechargeEndTime = TIMESTAMPADD(SECOND, rechargeTime, TIMESTAMPADD(SECOND, ?, NOW())) \
          WHERE id = ?",
+        participant.mining_end_seconds_from_now,
+        participant.mining_end_seconds_from_now,
+        participant.robot_id
     )
-    .bind(participant.mining_end_seconds_from_now)
-    .bind(participant.mining_end_seconds_from_now)
-    .bind(participant.robot_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -213,7 +215,7 @@ async fn update_mining_queue_for_completed_rally(
     participant: &CompletedRallyParticipantRecord,
     rally_result_id: i64,
 ) -> Result<bool, sqlx::Error> {
-    let result = sqlx::query(
+    let result = sqlx::query!(
         "UPDATE MiningQueue \
          SET rallyResultId = ?, \
              miningEndTime = TIMESTAMPADD(SECOND, ?, NOW()), \
@@ -222,12 +224,12 @@ async fn update_mining_queue_for_completed_rally(
              processingLeaseUntil = NULL \
          WHERE id = ? \
            AND miningEndTime IS NULL",
+        rally_result_id,
+        participant.mining_end_seconds_from_now,
+        participant.player_number,
+        participant.executed_source_code,
+        participant.mining_queue_id
     )
-    .bind(rally_result_id)
-    .bind(participant.mining_end_seconds_from_now)
-    .bind(participant.player_number)
-    .bind(&participant.executed_source_code)
-    .bind(participant.mining_queue_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -238,7 +240,7 @@ async fn apply_pending_robot_changes(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     participant: &CompletedRallyParticipantRecord,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "UPDATE Robot \
          INNER JOIN PendingRobotChanges \
          ON PendingRobotChanges.robotId = Robot.id \
@@ -264,9 +266,9 @@ async fn apply_pending_robot_changes(
              Robot.scanDistance = PendingRobotChanges.scanDistance, \
              PendingRobotChanges.changesCommitTime = TIMESTAMPADD(SECOND, ?, NOW()) \
          WHERE Robot.id = ?",
+        participant.mining_end_seconds_from_now,
+        participant.robot_id
     )
-    .bind(participant.mining_end_seconds_from_now)
-    .bind(participant.robot_id)
     .execute(&mut **transaction)
     .await?;
 
@@ -278,14 +280,14 @@ async fn insert_mining_ore_result(
     mining_queue_id: i64,
     ore_result: &CompletedRallyOreRecord,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO MiningOreResult (miningQueueId, oreId, amount, depotAmount) \
          VALUES (?, ?, ?, ?)",
+        mining_queue_id,
+        ore_result.ore_id,
+        ore_result.amount,
+        ore_result.depot_amount.clamp(0, ore_result.amount)
     )
-    .bind(mining_queue_id)
-    .bind(ore_result.ore_id)
-    .bind(ore_result.amount)
-    .bind(ore_result.depot_amount.clamp(0, ore_result.amount))
     .execute(&mut **transaction)
     .await?;
 
@@ -297,13 +299,13 @@ async fn insert_robot_action_result(
     mining_queue_id: i64,
     action_result: &CompletedRallyActionRecord,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query!(
         "INSERT INTO RobotActionsDone (miningQueueId, actionType, amount) \
          VALUES (?, ?, ?)",
+        mining_queue_id,
+        action_result.action_type,
+        action_result.amount
     )
-    .bind(mining_queue_id)
-    .bind(action_result.action_type)
-    .bind(action_result.amount)
     .execute(&mut **transaction)
     .await?;
 
@@ -338,24 +340,24 @@ async fn update_robot_mining_area_score(
     );
 
     if previous.is_some() {
-        sqlx::query(
+        sqlx::query!(
             "UPDATE RobotMiningAreaScore \
              SET score = ?, totalRuns = totalRuns + 1 \
              WHERE robotId = ? AND miningAreaId = ?",
+            updated_score,
+            participant.robot_id,
+            participant.mining_area_id
         )
-        .bind(updated_score)
-        .bind(participant.robot_id)
-        .bind(participant.mining_area_id)
         .execute(&mut **transaction)
         .await?;
     } else {
-        sqlx::query(
+        sqlx::query!(
             "INSERT INTO RobotMiningAreaScore (robotId, miningAreaId, totalRuns, score) \
              VALUES (?, ?, 1, ?)",
+            participant.robot_id,
+            participant.mining_area_id,
+            updated_score
         )
-        .bind(participant.robot_id)
-        .bind(participant.mining_area_id)
-        .bind(updated_score)
         .execute(&mut **transaction)
         .await?;
     }

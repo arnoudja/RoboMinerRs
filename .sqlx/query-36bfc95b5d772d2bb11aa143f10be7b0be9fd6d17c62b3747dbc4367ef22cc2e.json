@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO RobotActionsDone (miningQueueId, actionType, amount) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "36bfc95b5d772d2bb11aa143f10be7b0be9fd6d17c62b3747dbc4367ef22cc2e"
+}

@@ -164,41 +164,41 @@ pub(crate) async fn add_default_robot_for_user(
     )
     .await?;
 
-    sqlx::query(
+    let source_code = program_source
+        .source_code
+        .unwrap_or_else(default_program_source_code);
+
+    sqlx::query!(
         "INSERT INTO Robot \
          (userId, robotName, sourceCode, programSourceId, oreContainerId, miningUnitId, \
           batteryId, memoryModuleId, cpuId, engineId, oreScannerId, rechargeTime, maxOre, \
           miningSpeed, maxTurns, memorySize, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, \
           robotSize, scanTime, scanDistance) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        user_id,
+        robot_name,
+        source_code,
+        program_source.id,
+        DEFAULT_PART_IDS[0],
+        DEFAULT_PART_IDS[1],
+        DEFAULT_PART_IDS[2],
+        DEFAULT_PART_IDS[3],
+        DEFAULT_PART_IDS[4],
+        DEFAULT_PART_IDS[5],
+        DEFAULT_PART_IDS[6],
+        parameters.recharge_time,
+        parameters.max_ore,
+        parameters.mining_speed,
+        parameters.max_turns,
+        parameters.memory_size,
+        parameters.cpu_speed,
+        parameters.forward_speed,
+        parameters.backward_speed,
+        parameters.rotate_speed,
+        parameters.robot_size,
+        parameters.scan_time,
+        parameters.scan_distance
     )
-    .bind(user_id)
-    .bind(robot_name)
-    .bind(
-        program_source
-            .source_code
-            .unwrap_or_else(default_program_source_code),
-    )
-    .bind(program_source.id)
-    .bind(DEFAULT_PART_IDS[0])
-    .bind(DEFAULT_PART_IDS[1])
-    .bind(DEFAULT_PART_IDS[2])
-    .bind(DEFAULT_PART_IDS[3])
-    .bind(DEFAULT_PART_IDS[4])
-    .bind(DEFAULT_PART_IDS[5])
-    .bind(DEFAULT_PART_IDS[6])
-    .bind(parameters.recharge_time)
-    .bind(parameters.max_ore)
-    .bind(parameters.mining_speed)
-    .bind(parameters.max_turns)
-    .bind(parameters.memory_size)
-    .bind(parameters.cpu_speed)
-    .bind(parameters.forward_speed)
-    .bind(parameters.backward_speed)
-    .bind(parameters.rotate_speed)
-    .bind(parameters.robot_size)
-    .bind(parameters.scan_time)
-    .bind(parameters.scan_distance)
     .execute(&mut **transaction)
     .await?;
 

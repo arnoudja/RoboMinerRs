@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE UserRobotPartAsset SET totalOwned = totalOwned - ? WHERE userId = ? AND robotPartId = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "0a7bfdf23b41957f2ecf02bd4debdf9ae116f7ac5a31423e47476229ffff743a"
+}

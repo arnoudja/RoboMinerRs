@@ -7,6 +7,77 @@ use crate::{
 
 const LEADERBOARD_VIEWER_AREA_STANDINGS: i64 = 5;
 
+#[derive(sqlx::FromRow)]
+struct LeaderboardMiningAreaScoreRow {
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    username: String,
+    score: f64,
+    #[sqlx(rename = "totalRuns")]
+    total_runs: i32,
+}
+
+impl From<LeaderboardMiningAreaScoreRow> for LeaderboardMiningAreaScoreRecord {
+    fn from(row: LeaderboardMiningAreaScoreRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            robot_name: row.robot_name,
+            username: row.username,
+            score: row.score,
+            total_runs: row.total_runs,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct LeaderboardTopRobotRow {
+    #[sqlx(rename = "id")]
+    robot_id: i64,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    username: String,
+    #[sqlx(rename = "orePerRun")]
+    ore_per_run: f64,
+}
+
+impl From<LeaderboardTopRobotRow> for LeaderboardTopRobotRecord {
+    fn from(row: LeaderboardTopRobotRow) -> Self {
+        Self {
+            robot_id: row.robot_id,
+            robot_name: row.robot_name,
+            username: row.username,
+            ore_per_run: row.ore_per_run,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct LeaderboardViewerAreaStandingRow {
+    #[sqlx(rename = "miningAreaId")]
+    mining_area_id: i64,
+    #[sqlx(rename = "areaName")]
+    area_name: String,
+    #[sqlx(rename = "robotName")]
+    robot_name: String,
+    score: f64,
+    #[sqlx(rename = "areaRank")]
+    rank: i64,
+}
+
+impl From<LeaderboardViewerAreaStandingRow> for LeaderboardViewerAreaStandingRecord {
+    fn from(row: LeaderboardViewerAreaStandingRow) -> Self {
+        Self {
+            mining_area_id: row.mining_area_id,
+            area_name: row.area_name,
+            robot_name: row.robot_name,
+            score: row.score,
+            rank: row.rank,
+        }
+    }
+}
+
 pub async fn list_leaderboard_mining_areas(
     pool: &MySqlPool,
 ) -> Result<Vec<LeaderboardMiningAreaRecord>, sqlx::Error> {
@@ -28,8 +99,9 @@ pub async fn list_leaderboard_mining_area_scores(
     pool: &MySqlPool,
     maximum_results: i64,
 ) -> Result<Vec<LeaderboardMiningAreaScoreRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, String, f64, i32)>(
-        "SELECT Score.miningAreaId, Robot.robotName, User.username, Score.score, Score.totalRuns \
+    sqlx::query_as::<_, LeaderboardMiningAreaScoreRow>(
+        "SELECT Score.miningAreaId AS miningAreaId, Robot.robotName AS robotName, \
+                User.username AS username, Score.score AS score, Score.totalRuns AS totalRuns \
          FROM RobotMiningAreaScore Score \
          INNER JOIN Robot ON Robot.id = Score.robotId \
          INNER JOIN User ON User.id = Robot.userId \
@@ -45,17 +117,7 @@ pub async fn list_leaderboard_mining_area_scores(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(mining_area_id, robot_name, username, score, total_runs)| {
-                    LeaderboardMiningAreaScoreRecord {
-                        mining_area_id,
-                        robot_name,
-                        username,
-                        score,
-                        total_runs,
-                    }
-                },
-            )
+            .map(LeaderboardMiningAreaScoreRecord::from)
             .collect()
     })
 }
@@ -64,8 +126,8 @@ pub async fn list_leaderboard_top_robots(
     pool: &MySqlPool,
     maximum_results: i64,
 ) -> Result<Vec<LeaderboardTopRobotRecord>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, String, String, f64)>(
-        "SELECT Robot.id, Robot.robotName, User.username, \
+    sqlx::query_as::<_, LeaderboardTopRobotRow>(
+        "SELECT Robot.id AS id, Robot.robotName AS robotName, User.username AS username, \
                 CAST(COALESCE(SUM(RobotLifetimeResult.amount), 0) / Robot.totalMiningRuns AS DOUBLE) AS orePerRun \
          FROM Robot \
          INNER JOIN User ON User.id = Robot.userId \
@@ -80,14 +142,7 @@ pub async fn list_leaderboard_top_robots(
     .await
     .map(|rows| {
         rows.into_iter()
-            .map(
-                |(robot_id, robot_name, username, ore_per_run)| LeaderboardTopRobotRecord {
-                    robot_id,
-                    robot_name,
-                    username,
-                    ore_per_run,
-                },
-            )
+            .map(LeaderboardTopRobotRecord::from)
             .collect()
     })
 }
@@ -135,8 +190,9 @@ pub async fn load_leaderboard_viewer_standing(
     .fetch_one(pool)
     .await?;
 
-    let area_rows = sqlx::query_as::<_, (i64, String, String, f64, i64)>(
-        "SELECT Score.miningAreaId, MiningArea.areaName, Robot.robotName, Score.score, \
+    let area_rows = sqlx::query_as::<_, LeaderboardViewerAreaStandingRow>(
+        "SELECT Score.miningAreaId AS miningAreaId, MiningArea.areaName AS areaName, \
+                Robot.robotName AS robotName, Score.score AS score, \
                 (SELECT COUNT(*) + 1 \
                  FROM RobotMiningAreaScore RankScore \
                  WHERE RankScore.miningAreaId = Score.miningAreaId \
@@ -170,15 +226,7 @@ pub async fn load_leaderboard_viewer_standing(
         achievement_rank,
         area_standings: area_rows
             .into_iter()
-            .map(|(mining_area_id, area_name, robot_name, score, rank)| {
-                LeaderboardViewerAreaStandingRecord {
-                    mining_area_id,
-                    area_name,
-                    robot_name,
-                    score,
-                    rank,
-                }
-            })
+            .map(LeaderboardViewerAreaStandingRecord::from)
             .collect(),
     })
 }
