@@ -51,6 +51,17 @@ jobs:
       - name: Audit dependencies
         run: cargo audit
 
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Deny licenses and advisories
+        run: cargo deny check
+
+      - name: Check migration baseline probe sync
+        run: resources/scripts/check-migration-baseline-sync.sh
+
       - uses: ./.github/actions/mysql-test-setup
 
       - name: Check formatting
@@ -82,6 +93,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - uses: taiki-e/install-action@nextest
+
+      - name: Check migration baseline probe sync
+        run: resources/scripts/check-migration-baseline-sync.sh
 
       - name: Install JS lint dependencies
         working-directory: robominer-web

@@ -86,4 +86,51 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn baseline_probe_markers_appear_in_schema_shell_and_create_sql() {
+        // Keep in lockstep with resources/scripts/check-migration-baseline-sync.sh.
+        let schema = include_str!("schema.rs");
+        let shell = include_str!("../../../resources/scripts/migrate-database.sh");
+        let create_sql = include_str!("../../../resources/database/createDatabase.sql");
+
+        let required = [
+            "scanTime",
+            "sessionVersion",
+            "scoreOreTarget",
+            "AIRobot",
+            "depotTaxRate",
+            "MiningOreResult",
+            "depotAmount",
+            "MiningAreaLifetimeResult",
+            "totalRuns",
+            "AchievementStepDepotTotalRequirement",
+            "processingLeaseUntil",
+            "idx_mining_queue_claimable",
+            "RobotLifetimeResult",
+        ];
+        for marker in required {
+            assert!(
+                schema.contains(marker),
+                "schema.rs missing baseline marker {marker}"
+            );
+            assert!(
+                shell.contains(marker),
+                "migrate-database.sh missing baseline marker {marker}"
+            );
+            assert!(
+                create_sql.contains(marker),
+                "createDatabase.sql missing baseline marker {marker}"
+            );
+        }
+
+        assert!(
+            schema.contains("scanSpeed") && shell.contains("scanSpeed"),
+            "scanSpeed absence probe must remain in schema.rs and migrate-database.sh"
+        );
+        assert!(
+            !create_sql.contains(" scanSpeed ") && !create_sql.contains("\tscanSpeed "),
+            "createDatabase.sql must not define legacy scanSpeed column"
+        );
+    }
 }

@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::fmt;
 
 use robominer_program::CompileError;
 use robominer_sim::MAX_ORE_TYPES;
@@ -31,7 +31,8 @@ impl fmt::Display for RobotPartSlot {
 }
 
 /// Opaque persistence failure. Keeps `sqlx` out of the domain error surface.
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("{message}")]
 pub struct DatabaseError {
     message: String,
 }
@@ -44,199 +45,75 @@ impl DatabaseError {
     }
 }
 
-impl fmt::Display for DatabaseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.message)
-    }
-}
-
-impl Error for DatabaseError {}
-
 impl From<sqlx::Error> for DatabaseError {
     fn from(error: sqlx::Error) -> Self {
         Self::new(error.to_string())
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum DomainError {
-    Database(DatabaseError),
+    #[error("database error: {0}")]
+    Database(#[source] DatabaseError),
     /// A `spawn_blocking` join failed (task panicked or was cancelled).
-    BackgroundTask {
-        operation: &'static str,
-    },
-    ReferencedAiRobotMissing {
-        mining_area_id: i64,
-        robot_id: i64,
-    },
+    #[error("background task failed: {operation}")]
+    BackgroundTask { operation: &'static str },
+    #[error("mining area {mining_area_id} references missing AI robot {robot_id}")]
+    ReferencedAiRobotMissing { mining_area_id: i64, robot_id: i64 },
+    #[error("robot {robot_id} references missing {slot} robot part {part_id}")]
     ReferencedRobotPartMissing {
         robot_id: i64,
         slot: RobotPartSlot,
         part_id: i64,
     },
-    ReferencedQueueRobotMissing {
-        mining_queue_id: i64,
-        robot_id: i64,
-    },
-    ReferencedPoolMiningAreaMissing {
-        pool_id: i64,
-        mining_area_id: i64,
-    },
-    ReferencedPoolRobotMissing {
-        pool_item_id: i64,
-        robot_id: i64,
-    },
+    #[error("mining queue item {mining_queue_id} references missing robot {robot_id}")]
+    ReferencedQueueRobotMissing { mining_queue_id: i64, robot_id: i64 },
+    #[error("pool {pool_id} references missing mining area {mining_area_id}")]
+    ReferencedPoolMiningAreaMissing { pool_id: i64, mining_area_id: i64 },
+    #[error("pool item {pool_item_id} references missing robot {robot_id}")]
+    ReferencedPoolRobotMissing { pool_item_id: i64, robot_id: i64 },
+    #[error("robot id {0} does not fit simulator robot ids")]
     RobotIdOutOfRange(i64),
+    #[error("mining area {mining_area_id} has invalid simulator size {size_x}x{size_y}")]
     InvalidMiningAreaSize {
         mining_area_id: i64,
         size_x: i32,
         size_y: i32,
     },
+    #[error(
+        "mining area ore supply {supply_id} has invalid ore_id={ore_id}, supply={supply}, radius={radius}"
+    )]
     InvalidMiningAreaOreSupply {
         supply_id: i64,
         ore_id: i64,
         supply: i32,
         radius: i32,
     },
+    #[error(
+        "mining area {mining_area_id} uses {ore_type_count} ore types, but the simulator supports {max}",
+        max = MAX_ORE_TYPES
+    )]
     TooManyMiningAreaOreTypes {
         mining_area_id: i64,
         ore_type_count: usize,
     },
+    #[error("mining area {mining_area_id} has invalid rally queue size {queue_entries}")]
     InvalidRallyLoadout {
         mining_area_id: i64,
         queue_entries: usize,
     },
-    InvalidPoolLoadout {
-        pool_id: i64,
-        items: usize,
-    },
+    #[error("pool {pool_id} has invalid rally item count {items}")]
+    InvalidPoolLoadout { pool_id: i64, items: usize },
+    #[error("robot {robot_id} program does not compile: {source}")]
     ProgramCompile {
         robot_id: i64,
+        #[source]
         source: CompileError,
     },
-    RallyOutcomeMismatch {
-        mining_area_id: i64,
-    },
-    PoolOutcomeMismatch {
-        pool_id: i64,
-    },
-}
-
-impl fmt::Display for DomainError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Database(error) => write!(f, "database error: {error}"),
-            Self::BackgroundTask { operation } => {
-                write!(f, "background task failed: {operation}")
-            }
-            Self::ReferencedAiRobotMissing {
-                mining_area_id,
-                robot_id,
-            } => write!(
-                f,
-                "mining area {mining_area_id} references missing AI robot {robot_id}"
-            ),
-            Self::ReferencedRobotPartMissing {
-                robot_id,
-                slot,
-                part_id,
-            } => write!(
-                f,
-                "robot {robot_id} references missing {slot} robot part {part_id}"
-            ),
-            Self::ReferencedQueueRobotMissing {
-                mining_queue_id,
-                robot_id,
-            } => write!(
-                f,
-                "mining queue item {mining_queue_id} references missing robot {robot_id}"
-            ),
-            Self::ReferencedPoolMiningAreaMissing {
-                pool_id,
-                mining_area_id,
-            } => write!(
-                f,
-                "pool {pool_id} references missing mining area {mining_area_id}"
-            ),
-            Self::ReferencedPoolRobotMissing {
-                pool_item_id,
-                robot_id,
-            } => write!(
-                f,
-                "pool item {pool_item_id} references missing robot {robot_id}"
-            ),
-            Self::RobotIdOutOfRange(robot_id) => {
-                write!(f, "robot id {robot_id} does not fit simulator robot ids")
-            }
-            Self::InvalidMiningAreaSize {
-                mining_area_id,
-                size_x,
-                size_y,
-            } => write!(
-                f,
-                "mining area {mining_area_id} has invalid simulator size {size_x}x{size_y}"
-            ),
-            Self::InvalidMiningAreaOreSupply {
-                supply_id,
-                ore_id,
-                supply,
-                radius,
-            } => write!(
-                f,
-                "mining area ore supply {supply_id} has invalid ore_id={ore_id}, supply={supply}, radius={radius}"
-            ),
-            Self::TooManyMiningAreaOreTypes {
-                mining_area_id,
-                ore_type_count,
-            } => write!(
-                f,
-                "mining area {mining_area_id} uses {ore_type_count} ore types, but the simulator supports {MAX_ORE_TYPES}"
-            ),
-            Self::InvalidRallyLoadout {
-                mining_area_id,
-                queue_entries,
-            } => write!(
-                f,
-                "mining area {mining_area_id} has invalid rally queue size {queue_entries}"
-            ),
-            Self::InvalidPoolLoadout { pool_id, items } => {
-                write!(f, "pool {pool_id} has invalid rally item count {items}")
-            }
-            Self::ProgramCompile { robot_id, source } => {
-                write!(f, "robot {robot_id} program does not compile: {source}")
-            }
-            Self::RallyOutcomeMismatch { mining_area_id } => write!(
-                f,
-                "rally outcome does not match mining area {mining_area_id} loadout"
-            ),
-            Self::PoolOutcomeMismatch { pool_id } => {
-                write!(f, "pool outcome does not match pool {pool_id} loadout")
-            }
-        }
-    }
-}
-
-impl Error for DomainError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Database(error) => Some(error),
-            Self::BackgroundTask { .. }
-            | Self::ReferencedAiRobotMissing { .. }
-            | Self::ReferencedRobotPartMissing { .. }
-            | Self::ReferencedQueueRobotMissing { .. }
-            | Self::ReferencedPoolMiningAreaMissing { .. }
-            | Self::ReferencedPoolRobotMissing { .. }
-            | Self::RobotIdOutOfRange(_)
-            | Self::InvalidMiningAreaSize { .. }
-            | Self::InvalidMiningAreaOreSupply { .. }
-            | Self::TooManyMiningAreaOreTypes { .. }
-            | Self::InvalidRallyLoadout { .. }
-            | Self::InvalidPoolLoadout { .. }
-            | Self::RallyOutcomeMismatch { .. }
-            | Self::PoolOutcomeMismatch { .. } => None,
-            Self::ProgramCompile { source, .. } => Some(source),
-        }
-    }
+    #[error("rally outcome does not match mining area {mining_area_id} loadout")]
+    RallyOutcomeMismatch { mining_area_id: i64 },
+    #[error("pool outcome does not match pool {pool_id} loadout")]
+    PoolOutcomeMismatch { pool_id: i64 },
 }
 
 impl From<sqlx::Error> for DomainError {

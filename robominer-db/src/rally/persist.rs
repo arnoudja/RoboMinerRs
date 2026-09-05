@@ -65,6 +65,14 @@ pub async fn persist_completed_rally(
 
     transaction.commit().await?;
 
+    let mining_area_id = rally.participants.first().map(|p| p.mining_area_id);
+    tracing::info!(
+        mining_area_id,
+        participants = rally.participants.len(),
+        rally_result_id,
+        "persisted completed rally"
+    );
+
     db_ok(rally_result_id)
 }
 

@@ -1160,6 +1160,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "sqlx",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -1177,6 +1178,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "sqlx",
+ "thiserror",
  "tokio",
 ]
 
@@ -1216,6 +1218,9 @@ dependencies = [
 [[package]]
 name = "robominer-program"
 version = "1.0.2"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "robominer-sim"

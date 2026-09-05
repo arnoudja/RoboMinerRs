@@ -5,6 +5,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+thiserror = { workspace = true }
 robominer-db = { workspace = true }
 robominer-program = { workspace = true }
 robominer-sim = { workspace = true }

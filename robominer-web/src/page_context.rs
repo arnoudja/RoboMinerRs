@@ -84,6 +84,13 @@ impl<'a> PageSession<'a> {
         let Some(pool) = config.database_pool.as_ref() else {
             return Err(Response::service_unavailable(missing_db_message));
         };
+        if csrf_on_post && crate::request_helpers::is_post(request) {
+            tracing::info!(
+                user_id,
+                path = %request.path,
+                "authenticated mutation prologue passed"
+            );
+        }
         Ok(Self { user_id, pool })
     }
 

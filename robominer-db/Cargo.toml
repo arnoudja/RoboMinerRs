@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 build = "build.rs"
 
 [dependencies]
+thiserror = { workspace = true }
 argon2 = { workspace = true }
 password-hash = { workspace = true }
 sqlx = { workspace = true }
