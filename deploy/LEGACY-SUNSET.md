@@ -15,10 +15,8 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
-| Location | `robominer-web/src/session/mod.rs` |
-| Behavior | Tokens missing version field are treated as version `0` |
-| Sunset | After max session TTL, require re-login for all legacy tokens; then reject version `0` |
-| Risk | Active players with long-lived “remember me” cookies would be logged out |
+| Status | **Removed** — session cookies must embed `session_version` |
+| Notes | Unversioned payloads (formerly defaulted to version `0`) are rejected after the remember-me TTL sunset window; explicit `0` remains valid for users whose DB `sessionVersion` is still `0` |
 
 ## Legacy rally `resultData` (JS executable)
 
@@ -69,7 +67,7 @@ sunset criteria are met.
 2. ~~Trustproxy missing Real-IP footgun~~ **Done** (dedicated `proxy-missing-real-ip` key + error log)
 3. ~~Mutation IP co-limit~~ **Done** (60 POSTs / 60s per client IP alongside user+action budgets)
 4. ~~Remove PascalCase redirects~~ **Done** (canonical camelCase only)
-5. Bump minimum session version after TTL window (remember-me max age is 30 days)
+5. ~~Bump minimum session version after TTL window~~ **Done** (unversioned tokens rejected; remember-me max age is 30 days)
 6. `__Host-` cookies only after Secure is mandatory on every deploy path
 7. Leave ore-ordering and conf-file paths until a deliberate migration release
 8. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)

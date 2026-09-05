@@ -164,10 +164,9 @@ fn verify_session_token(token: &str) -> Option<SessionClaims> {
     let user_id = parts.next()?.parse::<i64>().ok()?;
     let expires_at = parts.next()?.parse::<u64>().ok()?;
     let nonce = parts.next()?.parse::<u64>().ok()?;
-    let session_version = match parts.next() {
-        Some(value) => value.parse::<i32>().ok()?,
-        None => 0,
-    };
+    // Session tokens must embed `session_version` (legacy unversioned payloads
+    // are no longer accepted after the remember-me TTL sunset window).
+    let session_version = parts.next()?.parse::<i32>().ok()?;
     if parts.next().is_some() {
         return None;
     }
