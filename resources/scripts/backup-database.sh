@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Create a MySQL/MariaDB dump using credentials from robominer.conf.
+# Create a MySQL/MariaDB dump using credentials from robominer.conf
+# (legacy; soft-deprecated — prefer ROBOMINER_DATABASE_URL / robominer.env in a follow-up).
 #
 # Usage:
 #   resources/scripts/backup-database.sh

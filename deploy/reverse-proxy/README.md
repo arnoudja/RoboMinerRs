@@ -11,20 +11,20 @@ certificates or HTTPS directly.
 | Reverse proxy | `0.0.0.0:443` (public) | TLS termination |
 | `robominer-web` | `127.0.0.1:8080` | Application HTTP |
 
-Set these keys in `/etc/robominer/robominer.conf`:
+Set these in `/etc/robominer/robominer.env` (preferred):
 
-```text
-host 127.0.0.1
-port 8080
-webroot /opt/robominer/static
-sessionsecret <long random secret>
-securecookies 1
-allowsignup 0
-trustproxy 1
+```bash
+HOST=127.0.0.1
+PORT=8080
+ROBOMINER_WEB_ROOT=/opt/robominer/static
+ROBOMINER_SESSION_SECRET=<long random secret>
+ROBOMINER_SECURE_COOKIES=1
+ROBOMINER_ALLOW_SIGNUP=0
+ROBOMINER_TRUST_PROXY=1
 ```
 
-Public self-registration is off by default. Set `allowsignup 1` (or
-`ROBOMINER_ALLOW_SIGNUP=1`) to open sign-up; keep `allowsignup 0` for invite-only.
+Public self-registration is off by default. Set `ROBOMINER_ALLOW_SIGNUP=1`
+(or legacy `allowsignup 1`) to open sign-up; keep it `0` for invite-only.
 
 `trustproxy 1` trusts **only** `X-Real-Ip` for login rate limits and auth
 failure logs (spoofable `X-Forwarded-For` is ignored). Enable only when a

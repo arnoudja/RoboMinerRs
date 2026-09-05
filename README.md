@@ -57,7 +57,7 @@ sudo apt install ./target/debian/robominer_*.deb
 ```
 
 On a Pi, copy the `aarch64` `.deb` from the build output and install the same way.
-If `/etc/robominer/robominer.conf` already exists, the package `postinst` runs
+If `/etc/robominer/robominer.env` (preferred) or legacy `robominer.conf` already exists, the package `postinst` runs
 `migrate apply`, applies `gameData.sql`, and starts the systemd units.
 
 The main binaries are:
@@ -125,9 +125,9 @@ engine. It accepts the database connection in three ways, in this order:
 
 1. Pass `--database-url`.
 2. Set `ROBOMINER_DATABASE_URL`.
-3. Pass `--config`, or read `/etc/robominer/robominer.conf`, then
+3. Pass `--config` (deprecated), or read `/etc/robominer/robominer.conf`, then
   `/etc/robominer/robominer-engine.conf`, then `robominer-engine.conf` beside
-   the binary.
+   the binary. Prefer `ROBOMINER_DATABASE_URL` / `robominer.env` instead.
 
 Example with an explicit database URL:
 
@@ -191,17 +191,18 @@ Run it on the default address, `127.0.0.1:8080`:
 cargo run -p robominer-web
 ```
 
-Or with the shared legacy config file:
+Or with a systemd-style env file already exported:
 
 ```sh
-cargo run -p robominer-web -- --config /etc/robominer/robominer.conf
+set -a && source /etc/robominer/robominer.env && set +a
+cargo run -p robominer-web
 ```
 
 The web host accepts the database connection in this order:
 
 1. Pass `--database-url`.
 2. Set `ROBOMINER_DATABASE_URL`.
-3. Pass `--config` or read `/etc/robominer/robominer.conf`, then
+3. Pass `--config` (deprecated) or read `/etc/robominer/robominer.conf`, then
   `robominer-web.conf` beside the binary.
 
 Override host, port, or static asset root:
@@ -261,7 +262,7 @@ sudo apt install ./target/debian/robominer_*.deb
 Omit `--migrate` only if you will apply schema changes yourself afterward
 (`robominer-engine migrate apply`). The install script prints a reminder when it
 skips that step. The `.deb` `postinst` migrates and reloads `gameData.sql`
-automatically when `/etc/robominer/robominer.conf` is already present.
+automatically when `/etc/robominer/robominer.env` or legacy `robominer.conf` is already present.
 
 For HTTPS, put Caddy or nginx in front of the web host. See
 `deploy/reverse-proxy/README.md` for example configs and
@@ -270,8 +271,8 @@ signup (public registration is off by default; set `allowsignup 1` to open it).
 Bind `robominer-web` to `127.0.0.1`, set `sessionsecret`, and enable
 `securecookies 1` when users reach the site over HTTPS.
 
-See `deploy/systemd/README.md` for the shared `/etc/robominer/robominer.conf`
-format used by both `robominer-web` and `robominer-engine`.
+See `deploy/systemd/README.md` for `/etc/robominer/robominer.env` (preferred)
+and the soft-deprecated `/etc/robominer/robominer.conf` format.
 
 Then open:
 

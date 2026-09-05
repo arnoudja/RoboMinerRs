@@ -9,9 +9,10 @@ Type=simple
 User=robominer
 Group=robominer
 WorkingDirectory=/opt/robominer
+EnvironmentFile=-/etc/robominer/robominer.env
 # Refuse to start when the schema is behind the embedded migrations.
-ExecStartPre=/opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
-ExecStart=/opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf rally rallies --loop --sleep-seconds 5 --persist
+ExecStartPre=/opt/robominer/bin/robominer-engine migrate status --check
+ExecStart=/opt/robominer/bin/robominer-engine rally rallies --loop --sleep-seconds 5 --persist
 Restart=on-failure
 RestartSec=10
 KillSignal=SIGINT

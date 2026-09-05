@@ -32,6 +32,7 @@ pub(crate) struct Cli {
     #[arg(long)]
     pub(crate) database_url: Option<String>,
 
+    /// Deprecated: prefer `ROBOMINER_*` env vars / systemd EnvironmentFile.
     #[arg(long)]
     pub(crate) config: Option<PathBuf>,
 

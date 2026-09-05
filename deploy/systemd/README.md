@@ -3,13 +3,14 @@
 This directory contains systemd unit templates and install scripts for the Rust
 engine and web host.
 
-Both services can use the shared config file `/etc/robominer/robominer.conf`.
-The engine still accepts the legacy path `/etc/robominer/robominer-engine.conf`
-when the shared file is absent.
+**Default config:** `/etc/robominer/robominer.env` via systemd `EnvironmentFile`
+(see [`robominer.env.example`](robominer.env.example)). Packaged units already
+reference that file and do not pass `--config`.
 
-**Preferred going forward:** set configuration via environment variables (or a
-systemd `EnvironmentFile`) and leave `/etc/robominer/robominer.conf` empty or
-absent. See [Env-first migration](#env-first-migration) below.
+The legacy key/value file `/etc/robominer/robominer.conf` still works (env wins
+per key) but is soft-deprecated: loading it logs a startup warning and the
+format will be removed in a major release. See [Env-first config](#env-first-config)
+and `deploy/LEGACY-SUNSET.md`.
 
 ## Install
 
@@ -46,24 +47,26 @@ sudo apt install ./robominer_*.deb
 ```
 
 The package installs binaries under `/opt/robominer`, static assets, systemd
-units, and sysusers. It does **not** create `/etc/robominer/robominer.conf`.
-When that config already exists, `postinst` runs `migrate apply`, applies
-`/usr/share/robominer/gameData.sql`, and starts `robominer-engine` /
-`robominer-web`.
+units, and sysusers. It does **not** create `/etc/robominer/robominer.env`.
+When `robominer.env` or the legacy `robominer.conf` already exists, `postinst`
+runs `migrate apply`, applies `/usr/share/robominer/gameData.sql`, and starts
+`robominer-engine` / `robominer-web`.
 
-Set `ROBOMINER_DB_SERVER`, `ROBOMINER_DB_USER`, `ROBOMINER_DB_PASSWORD`, and
-`ROBOMINER_DB_DATABASE` to create `/etc/robominer/robominer.conf` automatically.
+Set `ROBOMINER_DATABASE_URL` (preferred) or `ROBOMINER_DB_SERVER` /
+`ROBOMINER_DB_USER` / `ROBOMINER_DB_PASSWORD` / `ROBOMINER_DB_DATABASE` so the
+install scripts can create `/etc/robominer/robominer.env` automatically.
 Set `ROBOMINER_SESSION_SECRET` before install to add a web session signing key.
 Pass `--migrate` to apply schema migrations after install (recommended before
 `--enable`). Pass `--enable` to install and start the systemd services.
 Run `deploy/systemd/install-robominer.sh --help` for all options.
 
 The install script does **not** migrate the database unless you pass `--migrate`.
-After a plain install, apply pending schema changes before starting services:
+After a plain install, apply pending schema changes before starting services
+(with `robominer.env` / `EnvironmentFile` already in place):
 
 ```bash
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
+sudo /opt/robominer/bin/robominer-engine migrate apply
+sudo /opt/robominer/bin/robominer-engine migrate status --check
 ```
 
 `migrate status --check` exits non-zero while any embedded migration is still
@@ -86,18 +89,33 @@ Typical first-time install with DB config already set:
 deploy/systemd/install-robominer.sh --migrate --enable
 ```
 
-## Shared config
+## Env-first config
 
-Create `/etc/robominer/robominer.conf` with database keys:
+Create `/etc/robominer/robominer.env` from the example:
 
-```text
-dbserver <host>
-dbuser <user>
-dbpassword <password>
-dbdatabase <database>
+```bash
+sudo install -d -m 0750 -o root -g robominer /etc/robominer
+sudo install -m 0640 -o root -g robominer \
+  deploy/systemd/robominer.env.example /etc/robominer/robominer.env
+# Edit secrets and connection details:
+sudoedit /etc/robominer/robominer.env
 ```
 
-Optional web keys in the same file:
+Stock units already include:
+
+```ini
+EnvironmentFile=-/etc/robominer/robominer.env
+```
+
+Env wins when both env and a leftover legacy conf set the same key. Once env is
+complete, archive or delete `/etc/robominer/robominer.conf` so the startup
+deprecation warning stops. Keep a backup until health checks pass.
+
+### Legacy conf (deprecated)
+
+`/etc/robominer/robominer.conf` (and the engine-only
+`/etc/robominer/robominer-engine.conf`) remain readable for one more major line.
+Loading them emits a warning. Prefer `robominer.env` for new installs.
 
 ```text
 host 127.0.0.1
@@ -133,11 +151,10 @@ sudo install -d -o robominer -g robominer -m 0750 /opt/robominer
 cargo build --release -p robominer-engine
 sudo install -D -m 0755 target/release/robominer-engine /opt/robominer/bin/robominer-engine
 sudo install -d -o root -g robominer -m 0750 /etc/robominer
-sudoedit /etc/robominer/robominer.conf
-sudo chown root:robominer /etc/robominer/robominer.conf
-sudo chmod 0640 /etc/robominer/robominer.conf
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
+sudo install -m 0640 -o root -g robominer deploy/systemd/robominer.env.example /etc/robominer/robominer.env
+sudoedit /etc/robominer/robominer.env
+sudo /opt/robominer/bin/robominer-engine migrate apply
+sudo /opt/robominer/bin/robominer-engine migrate status --check
 sudo install -D -m 0644 deploy/systemd/robominer-engine.service \
   /etc/systemd/system/robominer-engine.service
 sudo systemctl daemon-reload
@@ -168,10 +185,10 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now robominer-web.service
 ```
 
-The web unit runs:
+The web unit runs (with `EnvironmentFile=-/etc/robominer/robominer.env`):
 
 ```bash
-/opt/robominer/bin/robominer-web --config /etc/robominer/robominer.conf
+/opt/robominer/bin/robominer-web
 ```
 
 Put a reverse proxy in front of the web host for TLS on production systems.
@@ -180,11 +197,10 @@ host to `127.0.0.1` and set `securecookies 1` when serving users over HTTPS.
 
 ## Engine operation
 
-The engine unit runs:
+The engine unit runs (with `EnvironmentFile=-/etc/robominer/robominer.env`):
 
 ```bash
 /opt/robominer/bin/robominer-engine \
-  --config /etc/robominer/robominer.conf \
   rally rallies --loop --sleep-seconds 5 --persist
 ```
 
@@ -197,7 +213,6 @@ You can still run claims separately on a second process if you split roles:
 
 ```bash
 /opt/robominer/bin/robominer-engine \
-  --config /etc/robominer/robominer.conf \
   mining claim-all --loop --sleep-seconds 5
 ```
 
@@ -228,7 +243,6 @@ After installing or updating binaries, apply pending migrations before starting
 
 ```bash
 sudo /opt/robominer/bin/robominer-engine \
-  --config /etc/robominer/robominer.conf \
   migrate apply
 ```
 
@@ -247,7 +261,6 @@ Confirm the Rust binary can connect to the production database:
 
 ```bash
 /opt/robominer/bin/robominer-engine \
-  --config /etc/robominer/robominer.conf \
   rally rallies --once
 ```
 
@@ -260,7 +273,6 @@ Run one persisted Rust pass manually before enabling the long-running service:
 
 ```bash
 /opt/robominer/bin/robominer-engine \
-  --config /etc/robominer/robominer.conf \
   rally rallies --once --persist
 ```
 
@@ -293,48 +305,12 @@ sudo systemctl disable robominer-engine.service robominer-web.service
 Restore the previously deployed binaries and config, then restart the services.
 Confirm only one rally worker is active after rollback.
 
-## Env-first migration
+## Leftover drop-ins
 
-Prefer environment variables (or a systemd `EnvironmentFile`) over
-`/etc/robominer/robominer.conf`. Env wins when both are set for the same key.
-The conf file remains supported until a major deprecation (see
-`deploy/LEGACY-SUNSET.md`).
-
-Example file: [`robominer.env.example`](robominer.env.example). On a host:
-
-```bash
-sudo install -d -m 0750 -o root -g robominer /etc/robominer
-sudo install -m 0640 -o root -g robominer \
-  deploy/systemd/robominer.env.example /etc/robominer/robominer.env
-# Edit secrets and connection details:
-sudo nano /etc/robominer/robominer.env
-```
-
-Drop-in override (keep packaged units untouched):
-
-```bash
-sudo mkdir -p /etc/systemd/system/robominer-web.service.d
-sudo tee /etc/systemd/system/robominer-web.service.d/env.conf >/dev/null <<'EOF'
-[Service]
-EnvironmentFile=-/etc/robominer/robominer.env
-# Optional: stop requiring the legacy conf once env is complete
-# ExecStart=
-# ExecStart=/opt/robominer/bin/robominer-web
-EOF
-
-sudo mkdir -p /etc/systemd/system/robominer-engine.service.d
-sudo tee /etc/systemd/system/robominer-engine.service.d/env.conf >/dev/null <<'EOF'
-[Service]
-EnvironmentFile=-/etc/robominer/robominer.env
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart robominer-web.service robominer-engine.service
-```
-
-When `ROBOMINER_DATABASE_URL` (and web session/bind settings) are fully set via
-env, you can remove `--config /etc/robominer/robominer.conf` from `ExecStart`
-and archive or delete the conf file. Keep a backup until health checks pass.
+Older hosts may still have `/etc/systemd/system/robominer-*.service.d/env.conf`
+drop-ins from the earlier migration guide. Those are redundant now that packaged
+units ship `EnvironmentFile=-/etc/robominer/robominer.env`, and can be removed
+after `systemctl daemon-reload`.
 
 ## Notes
 

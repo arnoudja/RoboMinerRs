@@ -4,25 +4,55 @@
 # Usage:
 #   robominer-wait-web-health [/etc/robominer/robominer.conf]
 #
-# Reads host/port from the shared config when present (defaults: 127.0.0.1:8080).
+# Bind address precedence:
+#   1. HOST / PORT (systemd EnvironmentFile / process env)
+#   2. ROBOMINER_WEB_HOST / ROBOMINER_WEB_PORT
+#   3. optional legacy conf path argument (deprecated)
+#   4. defaults 127.0.0.1:8080
+#
 # Intended for systemd ExecStartPost.
 
 set -euo pipefail
 
-CONFIG_FILE="${1:-/etc/robominer/robominer.conf}"
-HOST="${ROBOMINER_WEB_HOST:-127.0.0.1}"
-PORT="${ROBOMINER_WEB_PORT:-8080}"
+CONFIG_FILE="${1:-}"
 ATTEMPTS="${ROBOMINER_HEALTH_ATTEMPTS:-30}"
 SLEEP_SECS="${ROBOMINER_HEALTH_SLEEP_SECS:-1}"
 
-if [[ -f "${CONFIG_FILE}" ]]; then
+if [[ -n "${HOST:-}" ]]; then
+    BIND_HOST="${HOST}"
+elif [[ -n "${ROBOMINER_WEB_HOST:-}" ]]; then
+    BIND_HOST="${ROBOMINER_WEB_HOST}"
+else
+    BIND_HOST=""
+fi
+
+if [[ -n "${PORT:-}" ]]; then
+    BIND_PORT="${PORT}"
+elif [[ -n "${ROBOMINER_WEB_PORT:-}" ]]; then
+    BIND_PORT="${ROBOMINER_WEB_PORT}"
+else
+    BIND_PORT=""
+fi
+
+if [[ -n "${CONFIG_FILE}" && -f "${CONFIG_FILE}" ]]; then
     while read -r key value; do
         case "${key,,}" in
-            host) HOST="${value}" ;;
-            port) PORT="${value}" ;;
+            host)
+                if [[ -z "${BIND_HOST}" ]]; then
+                    BIND_HOST="${value}"
+                fi
+                ;;
+            port)
+                if [[ -z "${BIND_PORT}" ]]; then
+                    BIND_PORT="${value}"
+                fi
+                ;;
         esac
     done < <(awk 'NF && $1 !~ /^#/ { print tolower($1), $2 }' "${CONFIG_FILE}")
 fi
+
+HOST="${BIND_HOST:-127.0.0.1}"
+PORT="${BIND_PORT:-8080}"
 
 probe_health() {
     local response=""

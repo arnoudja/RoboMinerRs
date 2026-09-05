@@ -23,17 +23,19 @@ Never expose `8080`, `3306`, or the engine process directly to the internet.
 
 ## 1. Application config
 
-Edit `/etc/robominer/robominer.conf`:
+Prefer `/etc/robominer/robominer.env` (systemd `EnvironmentFile`):
 
-```text
-host 127.0.0.1
-port 8080
-webroot /opt/robominer/static
-sessionsecret <run: openssl rand -hex 32>
-securecookies 1
-allowsignup 0
-trustproxy 1
+```bash
+HOST=127.0.0.1
+PORT=8080
+ROBOMINER_WEB_ROOT=/opt/robominer/static
+ROBOMINER_SESSION_SECRET=<run: openssl rand -hex 32>
+ROBOMINER_SECURE_COOKIES=1
+ROBOMINER_ALLOW_SIGNUP=0
+ROBOMINER_TRUST_PROXY=1
 ```
+
+Legacy `robominer.conf` key/value form still works but is soft-deprecated.
 
 | Key | Purpose |
 | --- | --- |
@@ -144,7 +146,7 @@ sudo fail2ban-client status robominer-login
   - Migrate role (or one-off migrate runs): also `CREATE, ALTER, INDEX, DROP`
     as needed for embedded migrations
   - Avoid `GRANT ALL` / `%` host wildcards outside local CI
-- Strong password; store only in `/etc/robominer/robominer.conf` (`chmod 0640`)
+- Strong password; store only in `/etc/robominer/robominer.env` (`chmod 0640`)
 - For non-localhost MySQL, require TLS in the URL (`?ssl-mode=REQUIRED` or
   equivalent). Connect **fails** when a remote host URL omits TLS unless
   `ROBOMINER_ALLOW_INSECURE_MYSQL=1` is set (escape hatch for unusual
@@ -153,8 +155,8 @@ sudo fail2ban-client status robominer-login
   script does not migrate unless you pass `--migrate`):
 
 ```bash
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate apply
-sudo /opt/robominer/bin/robominer-engine --config /etc/robominer/robominer.conf migrate status --check
+sudo /opt/robominer/bin/robominer-engine migrate apply
+sudo /opt/robominer/bin/robominer-engine migrate status --check
 # from a checkout: resources/scripts/migrate-database.sh
 # or: cargo run -p robominer-engine -- migrate apply
 ```

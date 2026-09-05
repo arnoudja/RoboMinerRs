@@ -27,20 +27,18 @@ Options:
   --engine-only     Install only robominer-engine.
   --web-only        Install only robominer-web.
   --skip-user       Skip service account creation.
-  --skip-config     Do not create or update /etc/robominer/robominer.conf.
+  --skip-config     Do not create or update /etc/robominer/robominer.env (or legacy .conf).
   --skip-systemd    Install binaries and assets only.
   -h, --help        Show this help.
 
 Environment:
-  Database keys (used when creating the shared config file):
-    ROBOMINER_DB_SERVER
-    ROBOMINER_DB_USER
-    ROBOMINER_DB_PASSWORD
-    ROBOMINER_DB_DATABASE
+  Preferred database config (writes /etc/robominer/robominer.env):
+    ROBOMINER_DATABASE_URL
+    or ROBOMINER_DB_SERVER / ROBOMINER_DB_USER / ROBOMINER_DB_PASSWORD / ROBOMINER_DB_DATABASE
 
-  Web keys (appended to the shared config when missing):
-    ROBOMINER_WEB_HOST
-    ROBOMINER_WEB_PORT
+  Web keys (written into robominer.env when missing):
+    HOST or ROBOMINER_WEB_HOST
+    PORT or ROBOMINER_WEB_PORT
     ROBOMINER_SESSION_SECRET
     ROBOMINER_SECURE_COOKIES
     ROBOMINER_ALLOW_SIGNUP
@@ -49,8 +47,7 @@ Environment:
 
 Examples:
   deploy/systemd/install-robominer.sh
-  ROBOMINER_DB_SERVER=localhost ROBOMINER_DB_USER=robominer \
-    ROBOMINER_DB_PASSWORD=secret ROBOMINER_DB_DATABASE=RoboMiner \
+  ROBOMINER_DATABASE_URL='mysql://robominer:secret@localhost/RoboMiner' \
     ROBOMINER_SESSION_SECRET="$(openssl rand -hex 32)" \
     deploy/systemd/install-robominer.sh --migrate --enable
 EOF
@@ -127,7 +124,7 @@ main() {
     fi
     if [[ "${INSTALL_ENGINE}" == true ]]; then
         echo "Engine preflight dry run:"
-        echo "  ${INSTALL_PREFIX}/bin/robominer-engine --config ${SHARED_CONFIG_FILE} rally rallies --once"
+        echo "  ${INSTALL_PREFIX}/bin/robominer-engine rally rallies --once"
     fi
     if [[ "${INSTALL_WEB}" == true ]]; then
         echo "Web help page:"

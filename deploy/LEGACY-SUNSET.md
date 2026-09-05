@@ -45,10 +45,11 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
+| Status | **Soft-deprecated** — loading the file logs a startup warning; stock units/install prefer `/etc/robominer/robominer.env` |
 | Location | `robominer-web/src/startup.rs`, `robominer-db/src/config.rs` |
-| Behavior | Legacy key/value file merged with environment variables |
-| Sunset | Prefer `EnvironmentFile` / env vars (see `deploy/systemd/robominer.env.example`); deprecate file format in a major release |
-| Risk | Medium for existing Pi/systemd installs — provide migration notes in `deploy/systemd/` |
+| Behavior | Legacy key/value file still merges with environment variables (env wins per key); `--config` still works |
+| Sunset | Remove parser, `--config`, and conf search paths in a **major** release once hosts are on `EnvironmentFile` / env vars (see `deploy/systemd/robominer.env.example`) |
+| Risk | Medium for existing Pi/systemd installs that still ship a leftover `.conf` (warning fires until the file is archived) |
 
 ## `__Host-` cookie prefix (not yet)
 
@@ -67,7 +68,8 @@ sunset criteria are met.
 4. ~~Remove PascalCase redirects~~ **Done** (canonical camelCase only)
 5. ~~Bump minimum session version after TTL window~~ **Done** (unversioned tokens rejected; remember-me max age is 30 days)
 6. `__Host-` cookies only after Secure is mandatory on every deploy path
-7. Leave ore-ordering and conf-file paths until a deliberate migration release
-8. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
-9. App-level HSTS — leave to the reverse proxy; do not emit HSTS on loopback HTTP binds
-10. Mass JS `no-var` — continue page-scoped only (`common/`, `mining_queue/**`, shop/mining_results/robot pages done); defer `rally_animation` / `edit_code` until deliberately scheduled
+7. ~~Soft-deprecate conf-file paths~~ **Done** (warn on load; units/install env-first); hard-remove in a major release
+8. Leave ore-ordering until a deliberate balance review
+9. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
+10. App-level HSTS — leave to the reverse proxy; do not emit HSTS on loopback HTTP binds
+11. Mass JS `no-var` — continue page-scoped only (`common/`, `mining_queue/**`, shop/mining_results/robot pages done); defer `rally_animation` / `edit_code` until deliberately scheduled

@@ -306,6 +306,13 @@ pub fn load_legacy_config(
         other => other,
     })?;
 
+    tracing::warn!(
+        config = %config_path.display(),
+        "legacy key=value config file is deprecated; prefer EnvironmentFile / env vars \
+         (see deploy/systemd/robominer.env.example and deploy/LEGACY-SUNSET.md); \
+         the file format will be removed in a major release"
+    );
+
     Ok((config_path, config))
 }
 
@@ -413,6 +420,30 @@ mod tests {
         );
         assert_eq!(config.host.as_deref(), Some("10.0.0.2"));
         assert_eq!(config.allow_signup.as_deref(), Some("1"));
+
+        let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn load_legacy_config_returns_path_when_file_exists() {
+        let temp_dir =
+            std::env::temp_dir().join(format!("robominer-config-load-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&temp_dir);
+        fs::create_dir_all(&temp_dir).expect("temp dir");
+        let config_path = temp_dir.join("robominer.conf");
+        fs::write(
+            &config_path,
+            "dbserver localhost\n\
+             dbuser robominer\n\
+             dbpassword secret\n\
+             dbdatabase RoboMiner\n",
+        )
+        .expect("write config");
+
+        let (loaded_path, config) =
+            load_legacy_config(Some(config_path.clone()), "robominer-web").expect("load config");
+        assert_eq!(loaded_path, config_path);
+        assert_eq!(config.db_user.as_deref(), Some("robominer"));
 
         let _ = fs::remove_dir_all(temp_dir);
     }

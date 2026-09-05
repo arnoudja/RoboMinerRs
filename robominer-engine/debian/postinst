@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+ENV_FILE=/etc/robominer/robominer.env
 CONFIG_FILE=/etc/robominer/robominer.conf
 ENGINE_BIN=/opt/robominer/bin/robominer-engine
 GAMEDATA_SQL=/usr/share/robominer/gameData.sql
@@ -11,6 +12,19 @@ conf_value() {
     key="$1"
     # Match "key value" lines; ignore comments and blanks.
     sed -n "s/^${key}[[:space:]]\{1,\}//p" "$CONFIG_FILE" | head -n 1
+}
+
+env_value() {
+    key="$1"
+    # shellcheck disable=SC1090
+    if [ -f "$ENV_FILE" ]; then
+        # Extract KEY=value without sourcing (avoids executing arbitrary shell).
+        sed -n "s/^${key}=//p" "$ENV_FILE" | head -n 1
+    fi
+}
+
+config_is_ready() {
+    [ -f "$ENV_FILE" ] || [ -f "$CONFIG_FILE" ] || [ -n "${ROBOMINER_DATABASE_URL:-}" ]
 }
 
 ensure_service_user() {
@@ -28,10 +42,70 @@ ensure_service_user() {
     fi
 }
 
+run_engine() {
+    if [ -f "$ENV_FILE" ]; then
+        # Export env file into a subshell, then run the engine.
+        bash -c '
+            set -euo pipefail
+            set -a
+            # shellcheck disable=SC1090
+            source "$1"
+            set +a
+            shift
+            exec "$@"
+        ' bash "$ENV_FILE" "$ENGINE_BIN" "$@"
+        return
+    fi
+
+    if [ -n "${ROBOMINER_DATABASE_URL:-}" ]; then
+        ROBOMINER_DATABASE_URL="$ROBOMINER_DATABASE_URL" "$ENGINE_BIN" "$@"
+        return
+    fi
+
+    if [ -f "$CONFIG_FILE" ]; then
+        "$ENGINE_BIN" --config "$CONFIG_FILE" "$@"
+        return
+    fi
+
+    echo "RoboMiner: no database config ($ENV_FILE or $CONFIG_FILE)" >&2
+    exit 1
+}
+
+parse_database_url() {
+    # Sets dbserver/dbport/dbuser/dbpassword/dbdatabase from ROBOMINER_DATABASE_URL.
+    url="$1"
+    if command -v python3 >/dev/null 2>&1; then
+        eval "$(python3 - "$url" <<'PY'
+import sys
+from urllib.parse import unquote, urlparse
+u = urlparse(sys.argv[1])
+if u.scheme not in ("mysql", "mysql2"):
+    raise SystemExit("unsupported database URL scheme")
+host = u.hostname or "127.0.0.1"
+port = str(u.port) if u.port else ""
+user = unquote(u.username or "")
+password = unquote(u.password or "")
+database = unquote((u.path or "").lstrip("/"))
+def sh_escape(value: str) -> str:
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+print(f"dbserver={sh_escape(host)}")
+print(f"dbport={sh_escape(port)}")
+print(f"dbuser={sh_escape(user)}")
+print(f"dbpassword={sh_escape(password)}")
+print(f"dbdatabase={sh_escape(database)}")
+PY
+)"
+        return
+    fi
+    echo "RoboMiner: python3 required to parse ROBOMINER_DATABASE_URL for gameData.sql" >&2
+    exit 1
+}
+
 apply_database_updates() {
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "RoboMiner: $CONFIG_FILE not found; skipping migrate/gameData."
-        echo "Create the config, initialize MySQL, then: systemctl start robominer-engine robominer-web"
+    if ! config_is_ready; then
+        echo "RoboMiner: no $ENV_FILE or $CONFIG_FILE; skipping migrate/gameData."
+        echo "Create $ENV_FILE (preferred; see deploy/systemd/robominer.env.example), initialize MySQL,"
+        echo "then: systemctl start robominer-engine robominer-web"
         return 0
     fi
 
@@ -41,16 +115,34 @@ apply_database_updates() {
     fi
 
     echo "RoboMiner: applying schema migrations..."
-    "$ENGINE_BIN" --config "$CONFIG_FILE" migrate apply
-    "$ENGINE_BIN" --config "$CONFIG_FILE" migrate status --check
+    run_engine migrate apply
+    run_engine migrate status --check
 
-    dbserver=$(conf_value dbserver)
-    dbuser=$(conf_value dbuser)
-    dbpassword=$(conf_value dbpassword)
-    dbdatabase=$(conf_value dbdatabase)
+    dbserver=""
+    dbport=""
+    dbuser=""
+    dbpassword=""
+    dbdatabase=""
+
+    if [ -f "$ENV_FILE" ] || [ -n "${ROBOMINER_DATABASE_URL:-}" ]; then
+        database_url="${ROBOMINER_DATABASE_URL:-}"
+        if [ -z "$database_url" ]; then
+            database_url="$(env_value ROBOMINER_DATABASE_URL)"
+        fi
+        if [ -z "$database_url" ]; then
+            echo "RoboMiner: $ENV_FILE is missing ROBOMINER_DATABASE_URL" >&2
+            exit 1
+        fi
+        parse_database_url "$database_url"
+    else
+        dbserver=$(conf_value dbserver)
+        dbuser=$(conf_value dbuser)
+        dbpassword=$(conf_value dbpassword)
+        dbdatabase=$(conf_value dbdatabase)
+    fi
 
     if [ -z "$dbserver" ] || [ -z "$dbuser" ] || [ -z "$dbdatabase" ]; then
-        echo "RoboMiner: $CONFIG_FILE is missing dbserver/dbuser/dbdatabase" >&2
+        echo "RoboMiner: database connection details incomplete for gameData.sql" >&2
         exit 1
     fi
 
@@ -65,15 +157,24 @@ apply_database_updates() {
     fi
 
     echo "RoboMiner: applying gameData.sql..."
-    MYSQL_PWD="$dbpassword" mysql \
-        --protocol=TCP \
-        -h "$dbserver" \
-        -u "$dbuser" \
-        "$dbdatabase" < "$GAMEDATA_SQL"
+    if [ -n "$dbport" ]; then
+        MYSQL_PWD="$dbpassword" mysql \
+            --protocol=TCP \
+            -h "$dbserver" \
+            -P "$dbport" \
+            -u "$dbuser" \
+            "$dbdatabase" < "$GAMEDATA_SQL"
+    else
+        MYSQL_PWD="$dbpassword" mysql \
+            --protocol=TCP \
+            -h "$dbserver" \
+            -u "$dbuser" \
+            "$dbdatabase" < "$GAMEDATA_SQL"
+    fi
 }
 
 start_services_if_configured() {
-    if [ ! -f "$CONFIG_FILE" ]; then
+    if ! config_is_ready; then
         return 0
     fi
     if [ ! -d /run/systemd/system ]; then

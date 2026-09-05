@@ -15,6 +15,7 @@ struct Cli {
     #[arg(long)]
     database_url: Option<String>,
 
+    /// Deprecated: prefer `ROBOMINER_*` env vars / systemd EnvironmentFile.
     #[arg(long)]
     config: Option<PathBuf>,
 }
