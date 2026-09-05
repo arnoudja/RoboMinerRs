@@ -268,7 +268,6 @@ Bind `robominer-web` to `127.0.0.1`, set `sessionsecret`, and enable
 
 See `deploy/systemd/README.md` for `/etc/robominer/robominer.env`.
 Environment variables are listed in [`docs/configuration.md`](docs/configuration.md).
-Report security issues via [`SECURITY.md`](SECURITY.md).
 
 Then open:
 

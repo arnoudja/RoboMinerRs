@@ -6,7 +6,6 @@ Orientation for contributors:
 - [docs/architecture.md](docs/architecture.md) — crate layers and request flows
 - [docs/crate-map.md](docs/crate-map.md) — module ownership in large crates
 - [docs/configuration.md](docs/configuration.md) — environment variable reference
-- [SECURITY.md](SECURITY.md) — vulnerability reporting
 - [AGENTS.md](AGENTS.md) — Cursor Cloud / VM environment caveats
 - Agent automation also follows [`.cursor/rules/`](.cursor/rules/); keep process docs here rather than forking them into PRs
 
@@ -24,7 +23,7 @@ Before opening or updating a PR:
 4. If you change SQL dialect assumptions, note them in the PR description
 5. CI also runs a fast (no-DB) job, line coverage with floor
    `ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93`, `cargo audit`, and `cargo deny`
-   (see `.cargo/audit.toml` and `deny.toml`; report vulns via [SECURITY.md](SECURITY.md))
+   (see `.cargo/audit.toml` and `deny.toml`)
 
 ## Git hooks
 
