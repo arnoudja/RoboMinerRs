@@ -1,5 +1,5 @@
-var panelState = window.RoboMinerPanelState;
-var allowPageUnload = false;
+const panelState = window.RoboMinerPanelState;
+window.allowPageUnload = false;
 
 function setPanelEnabled(panel, enabled) {
     panelState.setPanelEnabled(panel, enabled);
@@ -15,15 +15,15 @@ function capturePanelBaseline(panel) {
 
 function restorePanelBaseline(panel) {
     panelState.restorePanelBaseline(panel);
-    var sourceInput = panel.querySelector('textarea[name="sourceCode"]');
+    const sourceInput = panel.querySelector('textarea[name="sourceCode"]');
     if (sourceInput) {
         syncLineNumbersForTextarea(sourceInput);
     }
 }
 
 function editCodeSaveBlockReason(panel) {
-    var nameInput = panel.querySelector('input[name="sourceName"]');
-    var sourceInput = panel.querySelector('textarea[name="sourceCode"]');
+    const nameInput = panel.querySelector('input[name="sourceName"]');
+    const sourceInput = panel.querySelector('textarea[name="sourceCode"]');
     if (nameInput && !nameInput.value.trim()) {
         return 'Program name may not be empty.';
     }
@@ -37,10 +37,10 @@ function updateEditCodeDirtyState(panel) {
     if (!panel) {
         return;
     }
-    var dirty = isPanelDirty(panel);
-    var savedBadge = panel.querySelector('.edit-code-status-saved');
-    var dirtyBadge = panel.querySelector('.edit-code-status-dirty');
-    var resetButton = panel.querySelector('.edit-code-reset-btn');
+    const dirty = isPanelDirty(panel);
+    const savedBadge = panel.querySelector('.edit-code-status-saved');
+    const dirtyBadge = panel.querySelector('.edit-code-status-dirty');
+    const resetButton = panel.querySelector('.edit-code-reset-btn');
     if (savedBadge) {
         savedBadge.hidden = dirty;
     }
@@ -56,9 +56,9 @@ function updateEditCodeSaveState(panel) {
     if (!panel) {
         return;
     }
-    var reason = editCodeSaveBlockReason(panel);
-    var saveButton = panel.querySelector('.edit-code-btn-primary');
-    var hint = panel.querySelector('.edit-code-save-hint');
+    const reason = editCodeSaveBlockReason(panel);
+    const saveButton = panel.querySelector('.edit-code-btn-primary');
+    const hint = panel.querySelector('.edit-code-save-hint');
     if (saveButton) {
         saveButton.disabled = !!reason;
         if (reason) {
@@ -83,11 +83,11 @@ function updateEditCodeSummaryFromPanel(panel) {
     if (!panel) {
         return;
     }
-    var sourceId = panel.getAttribute('data-source-id');
-    var nameInput = panel.querySelector('input[name="sourceName"]');
-    var summary = document.getElementById('editCodeSummarySelected');
+    const sourceId = panel.getAttribute('data-source-id');
+    const nameInput = panel.querySelector('input[name="sourceName"]');
+    const summary = document.getElementById('editCodeSummarySelected');
     if (summary && nameInput) {
-        var name = nameInput.value.trim();
+        const name = nameInput.value.trim();
         if (sourceId === '-1' && !name) {
             summary.textContent = 'New program';
         } else if (name) {
@@ -101,8 +101,8 @@ function attachEditCodeFieldListeners(panel) {
         return;
     }
     panel.setAttribute('data-field-listeners', 'true');
-    var nameInput = panel.querySelector('input[name="sourceName"]');
-    var sourceInput = panel.querySelector('textarea[name="sourceCode"]');
+    const nameInput = panel.querySelector('input[name="sourceName"]');
+    const sourceInput = panel.querySelector('textarea[name="sourceCode"]');
     if (nameInput) {
         nameInput.addEventListener('input', function() {
             updateEditCodeSaveState(panel);
@@ -121,11 +121,11 @@ function attachEditCodeFieldListeners(panel) {
 }
 
 function confirmEditCodeSave(event) {
-    var panel = event.target.closest('.edit-code-panel');
+    const panel = event.target.closest('.edit-code-panel');
     if (!panel) {
         return;
     }
-    var form = event.target.closest('.edit-code-save-form');
+    const form = event.target.closest('.edit-code-save-form');
     if (!form) {
         return;
     }
@@ -133,15 +133,15 @@ function confirmEditCodeSave(event) {
         form.removeAttribute('data-robominer-confirmed');
         return;
     }
-    var nameInput = panel.querySelector('input[name="sourceName"]');
-    var programName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : 'this program';
+    const nameInput = panel.querySelector('input[name="sourceName"]');
+    const programName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : 'this program';
     event.preventDefault();
     robominerConfirm('Save changes to ' + programName + '?', function(confirmed) {
         if (!confirmed) {
             return;
         }
         allowPageUnload = true;
-        var sourceId = panel.getAttribute('data-source-id');
+        const sourceId = panel.getAttribute('data-source-id');
         // Keep selection on an existing program after save. For New program (id -1), omit
         // the query so the server can select the created source instead of reopening draft.
         if (sourceId && sourceId !== '-1') {
@@ -159,7 +159,7 @@ function confirmEditCodeSave(event) {
 }
 
 function confirmEditCodeDelete(event) {
-    var form = event.target.closest('.edit-code-delete-form');
+    const form = event.target.closest('.edit-code-delete-form');
     if (!form) {
         return;
     }
@@ -168,10 +168,10 @@ function confirmEditCodeDelete(event) {
         return;
     }
     event.preventDefault();
-    var panel = event.target.closest('.edit-code-panel');
-    var programName = 'this program';
+    const panel = event.target.closest('.edit-code-panel');
+    let programName = 'this program';
     if (panel) {
-        var nameInput = panel.querySelector('input[name="sourceName"]');
+        const nameInput = panel.querySelector('input[name="sourceName"]');
         if (nameInput && nameInput.value.trim()) {
             programName = nameInput.value.trim();
         }
@@ -181,7 +181,7 @@ function confirmEditCodeDelete(event) {
             return;
         }
         allowPageUnload = true;
-        var sourceId = panel && panel.getAttribute('data-source-id');
+        const sourceId = panel && panel.getAttribute('data-source-id');
         if (sourceId) {
             form.action = 'editCode?nextProgramSourceId=' + encodeURIComponent(sourceId);
         }

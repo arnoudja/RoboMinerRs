@@ -13,7 +13,7 @@
  * - Clock length is viewer-robot only; peers with fewer locations freeze at their last pose.
  */
 
-var myRallyPlayer = {
+window.myRallyPlayer = {
     scale: 1,
     baseStepTime: 50,
     speed: 1,
@@ -27,9 +27,9 @@ var myRallyPlayer = {
 };
 
 /** @type {RallyCpuTimelineEntry[]|null} */
-var myRallyCpuTimeline = null;
+window.myRallyCpuTimeline = null;
 /** @type {{first:number[], last:number[]}} */
-var myRallyCpuTurnIndex = { first: [], last: [] };
+window.myRallyCpuTurnIndex = { first: [], last: [] };
 
 
 function rallyHasAnimationData()
@@ -38,7 +38,7 @@ function rallyHasAnimationData()
     {
         return false;
     }
-    var robot = rallyViewerRobot();
+    const robot = rallyViewerRobot();
     return !!(robot && robot.locations && robot.locations.length > 0);
 }
 
@@ -55,7 +55,7 @@ function rallyViewerRobot()
     }
     if (typeof myRallyViewerSlot === 'number')
     {
-        for (var i = 0; i < myRobots.robot.length; i++)
+        for (let i = 0; i < myRobots.robot.length; i++)
         {
             if (myRobots.robot[i].robotnr === myRallyViewerSlot)
             {
@@ -81,24 +81,24 @@ function rallyRebuildCpuTimeline()
 {
     myRallyCpuTimeline = null;
     myRallyCpuTurnIndex = { first: [], last: [] };
-    var robot = rallyViewerRobot();
+    const robot = rallyViewerRobot();
     if (!robot || !robot.locations)
     {
         return;
     }
 
-    var timeline = [];
+    const timeline = [];
     /** Last non-empty locals snapshot; omitted `vs` carries this forward. */
-    var lastVs = undefined;
-    for (var m = 0; m < robot.locations.length; m++)
+    let lastVs = undefined;
+    for (let m = 0; m < robot.locations.length; m++)
     {
-        var loc = robot.locations[m];
-        var cpu = loc.cpu;
+        const loc = robot.locations[m];
+        const cpu = loc.cpu;
         if (cpu && cpu.length > 0)
         {
-            for (var i = 0; i < cpu.length; i++)
+            for (let i = 0; i < cpu.length; i++)
             {
-                var resolvedVs = cpu[i].vs;
+                let resolvedVs = cpu[i].vs;
                 if (typeof resolvedVs === 'undefined' || resolvedVs === null)
                 {
                     resolvedVs = lastVs;
@@ -127,7 +127,7 @@ function rallyRebuildCpuTimeline()
         {
             // Legacy sticky `l` only (older payloads without recorded sticky cpu spans).
             // Carry prior same-line c/e/vs so multi-cycle move/rotate stays highlighted.
-            var sticky = {
+            const sticky = {
                 turn: m,
                 l: loc.l,
                 c: undefined,
@@ -135,9 +135,9 @@ function rallyRebuildCpuTimeline()
                 r: undefined,
                 vs: undefined
             };
-            for (var j = timeline.length - 1; j >= 0; j--)
+            for (let j = timeline.length - 1; j >= 0; j--)
             {
-                var prev = timeline[j];
+                const prev = timeline[j];
                 // Only carry columns/vs when this sample has an explicit same-line `l`.
                 // Do not invent a line from prior cycles for sparse dump/ore-only samples.
                 if (typeof sticky.l === 'number' &&
@@ -167,7 +167,7 @@ function rallyRebuildCpuTimeline()
 
 function rallyTotalTurns()
 {
-    var robot = rallyViewerRobot();
+    const robot = rallyViewerRobot();
     if (!robot || !robot.locations)
     {
         return 0;
@@ -205,13 +205,13 @@ function rallyTotalTime()
 
 function rallyTurnAtTime(time)
 {
-    var stepTime = rallyStepTime();
-    var total = rallyTotalTurns();
+    const stepTime = rallyStepTime();
+    const total = rallyTotalTurns();
     if (stepTime <= 0 || total <= 0)
     {
         return 0;
     }
-    var index = Math.floor(time / stepTime);
+    const index = Math.floor(time / stepTime);
     if (index < 0)
     {
         return 0;
@@ -234,7 +234,7 @@ function rallyFirstCpuIndexForTurn(turn)
     {
         return myRallyCpuTurnIndex.first[turn];
     }
-    for (var i = 0; i < myRallyCpuTimeline.length; i++)
+    for (let i = 0; i < myRallyCpuTimeline.length; i++)
     {
         if (myRallyCpuTimeline[i].turn === turn)
         {
@@ -272,10 +272,10 @@ function rallyLastCpuIndexForTurn(turn)
  */
 function rallyHighlightTurn(time)
 {
-    var cycle = rallyTurnAtTime(time);
-    var stepTime = rallyStepTime();
-    var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    var maxCycle = Math.max(0, rallyTotalTurns() - 1);
+    const cycle = rallyTurnAtTime(time);
+    const stepTime = rallyStepTime();
+    const phase = stepTime > 0 ? time - cycle * stepTime : 0;
+    const maxCycle = Math.max(0, rallyTotalTurns() - 1);
     if (phase <= 0 && cycle === 0)
     {
         return 0;
@@ -288,13 +288,13 @@ function rallyCpuIndexAtTime(time)
 {
     if (myRallyPlayer.pausedCpuIndex !== null && !myRallyPlayer.playing)
     {
-        var totalCpu = rallyTotalCpuSteps();
+        const totalCpu = rallyTotalCpuSteps();
         return Math.min(Math.max(0, myRallyPlayer.pausedCpuIndex), Math.max(0, totalCpu - 1));
     }
-    var cycle = rallyTurnAtTime(time);
-    var stepTime = rallyStepTime();
-    var phase = stepTime > 0 ? time - cycle * stepTime : 0;
-    var highlightCycle = rallyHighlightTurn(time);
+    const cycle = rallyTurnAtTime(time);
+    const stepTime = rallyStepTime();
+    const phase = stepTime > 0 ? time - cycle * stepTime : 0;
+    const highlightCycle = rallyHighlightTurn(time);
 
     if (phase <= 0)
     {
@@ -308,7 +308,7 @@ function rallyCpuEntryAtTime(time)
 {
     if (!myRallyCpuTimeline || myRallyCpuTimeline.length === 0)
     {
-        var cycle = rallyTurnAtTime(time);
+        const cycle = rallyTurnAtTime(time);
         return { turn: cycle, l: undefined, c: undefined, e: undefined };
     }
     return myRallyCpuTimeline[rallyCpuIndexAtTime(time)];
@@ -336,14 +336,14 @@ function rallyPoseTimeForRender(time, entry)
     }
     // Paused CPU scrub: CPUs on locations[m] drove the motion animated in [m-1, m).
     // Show the pre-action pose for expression steps; mid-motion for the last (action) step.
-    var turn = entry && typeof entry.turn === 'number' ? entry.turn : 0;
+    const turn = entry && typeof entry.turn === 'number' ? entry.turn : 0;
     if (turn <= 0)
     {
         return 0;
     }
-    var stepTime = rallyStepTime();
-    var segmentStart = (turn - 1) * stepTime;
-    var lastIdx = rallyLastCpuIndexForTurn(turn);
+    const stepTime = rallyStepTime();
+    const segmentStart = (turn - 1) * stepTime;
+    const lastIdx = rallyLastCpuIndexForTurn(turn);
     if (myRallyPlayer.pausedCpuIndex === lastIdx)
     {
         return segmentStart + stepTime * 0.5;
@@ -363,7 +363,7 @@ function rallyEnsureCpuTimeline()
 
 function rallyViewerCpuSpeed()
 {
-    var robot = rallyViewerRobot();
+    const robot = rallyViewerRobot();
     if (!robot || typeof robot.cpuspeed !== 'number' || isNaN(robot.cpuspeed) || robot.cpuspeed <= 0)
     {
         return 0;
@@ -380,10 +380,10 @@ function rallyCpuStepWithinTurn(cpuIndex, turn)
     {
         return 0;
     }
-    var first = rallyFirstCpuIndexForTurn(turn);
-    var last = rallyLastCpuIndexForTurn(turn);
-    var stepsInTurn = Math.max(1, last - first + 1);
-    var step = cpuIndex - first + 1;
+    const first = rallyFirstCpuIndexForTurn(turn);
+    const last = rallyLastCpuIndexForTurn(turn);
+    const stepsInTurn = Math.max(1, last - first + 1);
+    const step = cpuIndex - first + 1;
     if (step < 1)
     {
         return 1;
@@ -399,12 +399,12 @@ function rallyCpuStepWithinTurn(cpuIndex, turn)
 /** Line-only highlight for turn playback; full CPU detail is for arrow-key scrub only. */
 function rallyTurnLevelDebugEntry(turn)
 {
-    var robot = rallyViewerRobot();
+    const robot = rallyViewerRobot();
     if (!robot || !robot.locations || typeof turn !== 'number' || turn < 0 || turn >= robot.locations.length)
     {
         return null;
     }
-    var loc = robot.locations[turn];
+    const loc = robot.locations[turn];
     if (typeof loc.l === 'number')
     {
         return { turn: turn, l: loc.l };
@@ -429,16 +429,16 @@ function rallyEntryForViewerDebug(entry, poseTurn)
 
 function rallyFrameTiming()
 {
-    var time = myRallyPlayer.elapsedMs;
-    var stepTime = rallyStepTime();
-    var totalTime = rallyTotalTime();
+    const time = myRallyPlayer.elapsedMs;
+    const stepTime = rallyStepTime();
+    const totalTime = rallyTotalTime();
 
-    var cpuIndex = rallyCpuIndexAtTime(time);
-    var entry = rallyCpuEntryAtTime(time);
+    const cpuIndex = rallyCpuIndexAtTime(time);
+    const entry = rallyCpuEntryAtTime(time);
     // Transport/ground cycle follows the sprite pose clock (not the highlight sample).
-    var poseTime = rallyPoseTimeForRender(time, entry);
-    var poseTurn = rallyTurnAtTime(poseTime);
-    var totalCycles = rallyTotalTurns();
+    const poseTime = rallyPoseTimeForRender(time, entry);
+    let poseTurn = rallyTurnAtTime(poseTime);
+    const totalCycles = rallyTotalTurns();
     if (totalCycles <= 0)
     {
         poseTurn = 0;
@@ -450,8 +450,8 @@ function rallyFrameTiming()
 
     // While CPU-scrubbed, progress follows poseTime so the bar matches the sprite and
     // Play syncing elapsedMs → poseTime does not jump the fill backward.
-    var progressTime = myRallyPlayer.pausedCpuIndex !== null ? poseTime : time;
-    var completed = totalTime > 0 ? progressTime / totalTime : 0;
+    const progressTime = myRallyPlayer.pausedCpuIndex !== null ? poseTime : time;
+    let completed = totalTime > 0 ? progressTime / totalTime : 0;
     if (completed > 1)
     {
         completed = 1;

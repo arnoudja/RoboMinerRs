@@ -1,20 +1,20 @@
 /** Fill sparse location deltas forward from the previous recorded pose. */
 function updateRobotTo(robotIndex, step)
 {
-    var robot = myRobots.robot[robotIndex];
+    const robot = myRobots.robot[robotIndex];
     if (!robot.locations || robot.locations.length === 0)
     {
         return;
     }
 
-    var target = Math.min(step, robot.locations.length - 1);
-    var filled = typeof robot.updatedTo === 'number' ? robot.updatedTo : 0;
+    const target = Math.min(step, robot.locations.length - 1);
+    const filled = typeof robot.updatedTo === 'number' ? robot.updatedTo : 0;
     if (target <= filled)
     {
         return;
     }
 
-    for (var s = filled + 1; s <= target; s++)
+    for (let s = filled + 1; s <= target; s++)
     {
         fillLocationDeltaFromPrevious(robot.locations[s], robot.locations[s - 1]);
         // Do not fill-forward `s`: productive cycles omit it intentionally.
@@ -126,7 +126,7 @@ function applyRobotActionHighlight(robot, loc1, loc2, t1, dt)
 
 function updateRobotPosition(robotIndex, time, stepTime)
 {
-    var robot = myRobots.robot[robotIndex];
+    const robot = myRobots.robot[robotIndex];
     if (!(stepTime > 0))
     {
         updateRobotTo(robotIndex, 0);
@@ -137,8 +137,8 @@ function updateRobotPosition(robotIndex, time, stepTime)
         return;
     }
 
-    var t1 = Math.floor(time / stepTime);
-    var t2 = t1 + 1;
+    const t1 = Math.floor(time / stepTime);
+    const t2 = t1 + 1;
 
     updateRobotTo(robotIndex, t2);
 
@@ -148,10 +148,10 @@ function updateRobotPosition(robotIndex, time, stepTime)
         return;
     }
 
-    var loc1 = robot.locations[t1];
-    var loc2 = robot.locations[t2];
-    var dt = time % stepTime;
-    var timeFraction = typeof loc2.t !== 'undefined' ? loc2.t : 1.0;
+    const loc1 = robot.locations[t1];
+    const loc2 = robot.locations[t2];
+    const dt = time % stepTime;
+    const timeFraction = typeof loc2.t !== 'undefined' ? loc2.t : 1.0;
 
     if (dt >= stepTime * timeFraction)
     {
@@ -159,7 +159,7 @@ function updateRobotPosition(robotIndex, time, stepTime)
         return;
     }
 
-    var travelTime = stepTime * timeFraction;
+    const travelTime = stepTime * timeFraction;
     applyRobotPoseInterpolated(robot, loc1, loc2, dt, travelTime);
     applyRobotActionHighlight(robot, loc1, loc2, t1, dt);
 }
@@ -172,9 +172,9 @@ function expandAllRobotLocationDeltas()
         return;
     }
 
-    for (var i = 0; i < myRobots.robot.length; i++)
+    for (let i = 0; i < myRobots.robot.length; i++)
     {
-        var robot = myRobots.robot[i];
+        const robot = myRobots.robot[i];
         if (!robot.locations || robot.locations.length === 0)
         {
             continue;

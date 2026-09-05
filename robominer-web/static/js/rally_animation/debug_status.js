@@ -1,4 +1,4 @@
-var RALLY_ACTION_NAMES = {
+const RALLY_ACTION_NAMES = {
     0: 'Scan',
     1: 'Wait',
     2: 'Forward',
@@ -69,8 +69,8 @@ function robotLooksIdle(robot, step)
         return false;
     }
 
-    var previous = robot.locations[step - 1];
-    var current = robot.locations[step];
+    const previous = robot.locations[step - 1];
+    const current = robot.locations[step];
     return previous.x === current.x
         && previous.y === current.y
         && previous.o === current.o
@@ -96,7 +96,7 @@ function robotHasDepot(robot)
 {
     function cap(value)
     {
-        var n = Number(value);
+        const n = Number(value);
         return isNaN(n) ? 0 : n;
     }
     return cap(robot.depotMaxA) > 0 || cap(robot.depotMaxB) > 0 || cap(robot.depotMaxC) > 0;
@@ -110,7 +110,7 @@ function robotTurnsRemaining(robot, step)
         return null;
     }
 
-    var remaining = Math.floor(robot.maxturns) - Math.floor(step);
+    let remaining = Math.floor(robot.maxturns) - Math.floor(step);
     if (remaining < 0)
     {
         remaining = 0;
@@ -121,15 +121,15 @@ function robotTurnsRemaining(robot, step)
 
 function updateRobotDebugPanel(robot, poseTurn, sourceLine)
 {
-    var turnsEl = document.getElementById('robotTurns' + robot.robotnr);
-    var batteryEl = document.getElementById('robotBattery' + robot.robotnr);
-    var batteryFillEl = document.getElementById('robotBatteryFill' + robot.robotnr);
-    var remainingTurns = robotTurnsRemaining(robot, poseTurn);
-    var depleted = remainingTurns === 0;
-    var maxTurns = typeof robot.maxturns === 'number' && !isNaN(robot.maxturns)
+    const turnsEl = document.getElementById('robotTurns' + robot.robotnr);
+    const batteryEl = document.getElementById('robotBattery' + robot.robotnr);
+    const batteryFillEl = document.getElementById('robotBatteryFill' + robot.robotnr);
+    const remainingTurns = robotTurnsRemaining(robot, poseTurn);
+    const depleted = remainingTurns === 0;
+    const maxTurns = typeof robot.maxturns === 'number' && !isNaN(robot.maxturns)
         ? Math.floor(robot.maxturns)
         : 0;
-    var ratio = 0;
+    let ratio = 0;
     if (remainingTurns !== null && maxTurns > 0)
     {
         ratio = remainingTurns / maxTurns;
@@ -173,8 +173,8 @@ function updateRobotDebugPanel(robot, poseTurn, sourceLine)
         }
     }
 
-    var full = robotCargoFull(robot);
-    var depotChartEl = document.getElementById('depotChart' + robot.robotnr);
+    const full = robotCargoFull(robot);
+    const depotChartEl = document.getElementById('depotChart' + robot.robotnr);
     if (depotChartEl)
     {
         if (robotHasDepot(robot))
@@ -187,12 +187,12 @@ function updateRobotDebugPanel(robot, poseTurn, sourceLine)
         }
     }
 
-    var actionEl = document.getElementById('robotAction' + robot.robotnr);
-    var statusLabel = rallyStatusLabel(robot.s);
-    var actionName = rallyActionName(robot.a);
+    const actionEl = document.getElementById('robotAction' + robot.robotnr);
+    const statusLabel = rallyStatusLabel(robot.s);
+    const actionName = rallyActionName(robot.a);
     if (actionEl)
     {
-        var label = null;
+        let label = null;
         if (statusLabel)
         {
             label = statusLabel;
@@ -207,7 +207,7 @@ function updateRobotDebugPanel(robot, poseTurn, sourceLine)
         }
 
         // undefined → peer cards use pose robot.l; null/number → highlight authority.
-        var lineForLabel = typeof sourceLine === 'undefined' ? robot.l : sourceLine;
+        const lineForLabel = typeof sourceLine === 'undefined' ? robot.l : sourceLine;
         if (label && typeof lineForLabel === 'number')
         {
             label += ' · L' + lineForLabel;
@@ -216,7 +216,7 @@ function updateRobotDebugPanel(robot, poseTurn, sourceLine)
         actionEl.textContent = label || '—';
     }
 
-    var card = document.getElementById('rallyPlayer' + robot.robotnr);
+    const card = document.getElementById('rallyPlayer' + robot.robotnr);
     if (card)
     {
         if (robotLooksIdle(robot, poseTurn))

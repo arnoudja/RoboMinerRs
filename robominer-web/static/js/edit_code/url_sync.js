@@ -1,6 +1,6 @@
 function syncEditCodeUrl(sourceId) {
-    var params = { nextProgramSourceId: sourceId };
-    var line = window.RoboMinerUrlQuery.getParam('line');
+    const params = { nextProgramSourceId: sourceId };
+    const line = window.RoboMinerUrlQuery.getParam('line');
     if (line) {
         params.line = line;
     }
@@ -12,11 +12,11 @@ function editCodeUrlSourceId() {
 }
 
 function editCodeUrlLine() {
-    var raw = window.RoboMinerUrlQuery.getParam('line');
+    const raw = window.RoboMinerUrlQuery.getParam('line');
     if (!raw) {
         return null;
     }
-    var line = parseInt(raw, 10);
+    const line = parseInt(raw, 10);
     if (isNaN(line) || line < 1) {
         return null;
     }

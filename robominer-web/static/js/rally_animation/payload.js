@@ -19,7 +19,7 @@ function validateRallyResultPayload(payload)
         return 'This rally replay is missing robot animation data.';
     }
 
-    for (var i = 0; i < payload.robots.robot.length; i++)
+    for (let i = 0; i < payload.robots.robot.length; i++)
     {
         if (!payload.robots.robot[i] || !Array.isArray(payload.robots.robot[i].locations))
         {
@@ -41,7 +41,7 @@ function validateRallyResultPayload(payload)
 
 function showRallyReplayUnavailable(detail)
 {
-    var stage = document.querySelector('.rally-view-stage');
+    const stage = document.querySelector('.rally-view-stage');
     if (!stage)
     {
         return;
@@ -52,15 +52,15 @@ function showRallyReplayUnavailable(detail)
         stage.removeChild(stage.firstChild);
     }
 
-    var wrap = document.createElement('div');
+    const wrap = document.createElement('div');
     wrap.className = 'rally-view-replay-unavailable';
     wrap.setAttribute('role', 'status');
 
-    var title = document.createElement('p');
+    const title = document.createElement('p');
     title.className = 'rally-view-replay-unavailable-title';
     title.textContent = 'Replay unavailable';
 
-    var note = document.createElement('p');
+    const note = document.createElement('p');
     note.className = 'rally-view-replay-unavailable-note';
     note.textContent = detail
         || 'This rally replay payload is missing, corrupt, or uses an unsupported version.';
@@ -73,7 +73,7 @@ function showRallyReplayUnavailable(detail)
 
 function applyRallyResultPayload(payload)
 {
-    var error = validateRallyResultPayload(payload);
+    const error = validateRallyResultPayload(payload);
     if (error)
     {
         return error;

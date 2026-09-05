@@ -1,17 +1,17 @@
-var myRallySourceHighlightLine = null;
+window.myRallySourceHighlightLine = null;
 /** @type {{l?:number,c?:number,e?:number,rKey?:string,rVal?:number,vsKey?:string}|null} */
-var myRallySourceHighlightKey = null;
+window.myRallySourceHighlightKey = null;
 
 
 function rallySourceHighlightKey(line, startCol, endCol, result, variables)
 {
-    var rKey = result && typeof result.k === 'string' ? result.k : '';
-    var rVal = result && typeof result.v === 'number' ? result.v : '';
-    var vsKey = '';
+    const rKey = result && typeof result.k === 'string' ? result.k : '';
+    const rVal = result && typeof result.v === 'number' ? result.v : '';
+    let vsKey = '';
     if (variables && typeof variables === 'object')
     {
         vsKey = Object.keys(variables).sort().map(function(name) {
-            var entry = variables[name];
+            const entry = variables[name];
             return name + ':' + (entry && entry.k) + '=' + (entry && entry.v);
         }).join('|');
     }
@@ -40,13 +40,13 @@ function rallySourceHighlightKeysEqual(a, b)
 
 function updateRallyEditCodeLink(line)
 {
-    var link = document.getElementById('rallyEditCodeLink');
+    const link = document.getElementById('rallyEditCodeLink');
     if (!link)
     {
         return;
     }
 
-    var baseHref = link.getAttribute('data-edit-href');
+    const baseHref = link.getAttribute('data-edit-href');
     if (!baseHref)
     {
         return;
@@ -69,12 +69,12 @@ function clearRallySourceTokenHighlight(lineEl)
     {
         return;
     }
-    var code = lineEl.querySelector('.rally-view-source-text');
+    const code = lineEl.querySelector('.rally-view-source-text');
     if (!code)
     {
         return;
     }
-    var text = code.textContent;
+    const text = code.textContent;
     while (code.firstChild)
     {
         code.removeChild(code.firstChild);
@@ -107,7 +107,7 @@ function formatRallySourceStepResult(result)
     {
         return String(Math.round(result.v));
     }
-    var kind = typeof result.k === 'string' ? result.k : '?';
+    const kind = typeof result.k === 'string' ? result.k : '?';
     return kind + ':' + result.v;
 }
 
@@ -118,7 +118,7 @@ function formatRallySourceStepResult(result)
  */
 function updateRallySourceStepResult(result)
 {
-    var el = document.getElementById('rallySourceStepResult');
+    const el = document.getElementById('rallySourceStepResult');
     if (!el)
     {
         return;
@@ -133,7 +133,7 @@ function updateRallySourceStepResult(result)
  */
 function updateRallySourceVariables(variables)
 {
-    var el = document.getElementById('rallySourceVariables');
+    const el = document.getElementById('rallySourceVariables');
     if (!el)
     {
         return;
@@ -149,23 +149,23 @@ function updateRallySourceVariables(variables)
         return;
     }
 
-    var names = Object.keys(variables).sort();
-    for (var i = 0; i < names.length; i++)
+    const names = Object.keys(variables).sort();
+    for (let i = 0; i < names.length; i++)
     {
-        var name = names[i];
-        var formatted = formatRallySourceStepResult(variables[name]);
+        const name = names[i];
+        const formatted = formatRallySourceStepResult(variables[name]);
         if (!formatted)
         {
             continue;
         }
 
-        var row = document.createElement('tr');
+        const row = document.createElement('tr');
 
-        var nameEl = document.createElement('td');
+        const nameEl = document.createElement('td');
         nameEl.className = 'rally-view-source-var-name';
         nameEl.textContent = name + ':';
 
-        var valueEl = document.createElement('td');
+        const valueEl = document.createElement('td');
         valueEl.className = 'rally-view-source-var-value';
         valueEl.textContent = formatted;
 
@@ -183,7 +183,7 @@ function updateRallySourceVariables(variables)
  */
 function updateRallySourceHighlight(highlight)
 {
-    var sourceCode = document.getElementById('rallySourceCode');
+    const sourceCode = document.getElementById('rallySourceCode');
     if (!sourceCode)
     {
         myRallySourceHighlightKey = null;
@@ -192,12 +192,12 @@ function updateRallySourceHighlight(highlight)
         return;
     }
 
-    var line = typeof highlight === 'number' ? highlight : (highlight && highlight.l);
-    var startCol = typeof highlight === 'object' && highlight ? highlight.c : undefined;
-    var endCol = typeof highlight === 'object' && highlight ? highlight.e : undefined;
-    var result = typeof highlight === 'object' && highlight ? highlight.r : undefined;
-    var variables = typeof highlight === 'object' && highlight ? highlight.vs : undefined;
-    var nextKey = rallySourceHighlightKey(line, startCol, endCol, result, variables);
+    const line = typeof highlight === 'number' ? highlight : (highlight && highlight.l);
+    const startCol = typeof highlight === 'object' && highlight ? highlight.c : undefined;
+    const endCol = typeof highlight === 'object' && highlight ? highlight.e : undefined;
+    const result = typeof highlight === 'object' && highlight ? highlight.r : undefined;
+    const variables = typeof highlight === 'object' && highlight ? highlight.vs : undefined;
+    const nextKey = rallySourceHighlightKey(line, startCol, endCol, result, variables);
     if (rallySourceHighlightKeysEqual(myRallySourceHighlightKey, nextKey))
     {
         return;
@@ -205,7 +205,7 @@ function updateRallySourceHighlight(highlight)
 
     if (myRallySourceHighlightLine !== null)
     {
-        var previous = document.getElementById('rallySourceLine' + myRallySourceHighlightLine);
+        const previous = document.getElementById('rallySourceLine' + myRallySourceHighlightLine);
         if (previous)
         {
             previous.classList.remove('rally-view-source-line-active');
@@ -222,7 +222,7 @@ function updateRallySourceHighlight(highlight)
         return;
     }
 
-    var current = document.getElementById('rallySourceLine' + line);
+    const current = document.getElementById('rallySourceLine' + line);
     if (!current)
     {
         myRallySourceHighlightKey = nextKey;
@@ -234,17 +234,17 @@ function updateRallySourceHighlight(highlight)
     current.classList.add('rally-view-source-line-active');
     myRallySourceHighlightLine = line;
 
-    var code = current.querySelector('.rally-view-source-text');
+    const code = current.querySelector('.rally-view-source-text');
     if (code
         && typeof startCol === 'number'
         && typeof endCol === 'number'
         && startCol >= 1
         && endCol > startCol)
     {
-        var text = code.textContent;
+        const text = code.textContent;
         // Columns are 1-based inclusive start, exclusive end over displayed source.
-        var start = Math.max(0, Math.min(text.length, Math.floor(startCol) - 1));
-        var end = Math.max(start, Math.min(text.length, Math.floor(endCol) - 1));
+        const start = Math.max(0, Math.min(text.length, Math.floor(startCol) - 1));
+        const end = Math.max(start, Math.min(text.length, Math.floor(endCol) - 1));
         if (end > start)
         {
             while (code.firstChild)
@@ -255,7 +255,7 @@ function updateRallySourceHighlight(highlight)
             {
                 code.appendChild(document.createTextNode(text.slice(0, start)));
             }
-            var token = document.createElement('span');
+            const token = document.createElement('span');
             token.className = 'rally-view-source-token-active';
             token.textContent = text.slice(start, end);
             code.appendChild(token);
@@ -275,10 +275,10 @@ function updateRallySourceHighlight(highlight)
 
 function scrollRallySourceLineIntoView(container, lineEl)
 {
-    var containerRect = container.getBoundingClientRect();
-    var lineRect = lineEl.getBoundingClientRect();
-    var above = lineRect.top - containerRect.top;
-    var below = lineRect.bottom - containerRect.bottom;
+    const containerRect = container.getBoundingClientRect();
+    const lineRect = lineEl.getBoundingClientRect();
+    const above = lineRect.top - containerRect.top;
+    const below = lineRect.bottom - containerRect.bottom;
 
     if (above < 0)
     {

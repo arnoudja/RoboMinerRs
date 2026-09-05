@@ -1,7 +1,7 @@
 function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
 {
-    var current = document.getElementById('rallyTurnCurrent');
-    var total = document.getElementById('rallyTurnTotal');
+    const current = document.getElementById('rallyTurnCurrent');
+    const total = document.getElementById('rallyTurnTotal');
     if (current)
     {
         current.textContent = areaTurn;
@@ -11,9 +11,9 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
         total.textContent = Math.max(0, rallyTotalTurns() - 1);
     }
 
-    var cpuCurrent = document.getElementById('rallyCpuCurrent');
-    var cpuTotal = document.getElementById('rallyCpuTotal');
-    var cpuSpeed = rallyViewerCpuSpeed();
+    const cpuCurrent = document.getElementById('rallyCpuCurrent');
+    const cpuTotal = document.getElementById('rallyCpuTotal');
+    const cpuSpeed = rallyViewerCpuSpeed();
     if (cpuTotal)
     {
         cpuTotal.textContent = cpuSpeed > 0 ? String(cpuSpeed) : '—';
@@ -22,7 +22,7 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
     {
         if (cpuSpeed > 0 && rallyCpuScrubActive())
         {
-            var cpuTurn = entry && typeof entry.turn === 'number' ? entry.turn : areaTurn;
+            const cpuTurn = entry && typeof entry.turn === 'number' ? entry.turn : areaTurn;
             cpuCurrent.textContent = String(rallyCpuStepWithinTurn(cpuIndex, cpuTurn));
         }
         else
@@ -30,26 +30,26 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
             cpuCurrent.textContent = '—';
         }
     }
-    var cpuStep = cpuSpeed > 0 && rallyCpuScrubActive()
+    const cpuStep = cpuSpeed > 0 && rallyCpuScrubActive()
         ? rallyCpuStepWithinTurn(
             cpuIndex,
             entry && typeof entry.turn === 'number' ? entry.turn : areaTurn
         )
         : null;
 
-    var fill = document.getElementById('rallyProgressFill');
+    const fill = document.getElementById('rallyProgressFill');
     if (fill)
     {
         fill.style.width = (Math.min(1, Math.max(0, completed)) * 100) + '%';
     }
 
-    var track = document.getElementById('rallyProgressTrack');
+    const track = document.getElementById('rallyProgressTrack');
     if (track)
     {
-        var totalMining = Math.max(0, rallyTotalTurns());
-        var totalCpu = Math.max(0, rallyTotalCpuSteps());
-        var currentCpu = Math.min(totalCpu, Math.max(0, Math.floor(cpuIndex)));
-        var maxMining = Math.max(0, totalMining - 1);
+        const totalMining = Math.max(0, rallyTotalTurns());
+        const totalCpu = Math.max(0, rallyTotalCpuSteps());
+        const currentCpu = Math.min(totalCpu, Math.max(0, Math.floor(cpuIndex)));
+        const maxMining = Math.max(0, totalMining - 1);
         track.setAttribute('aria-valuemin', '0');
         track.setAttribute('aria-valuemax', String(maxMining));
         track.setAttribute('aria-valuenow', String(areaTurn));
@@ -61,7 +61,7 @@ function rallyUpdateTransportUi(completed, cpuIndex, areaTurn, entry)
         );
     }
 
-    var playPause = document.getElementById('rallyPlayPause');
+    const playPause = document.getElementById('rallyPlayPause');
     if (playPause)
     {
         if (myRallyPlayer.playing)
@@ -106,7 +106,7 @@ function rallyIsPlaybackFinished()
 function rallyWithPausedSeek(mutateFn, options)
 {
     options = options || {};
-    var wasPlaying = myRallyPlayer.playing;
+    const wasPlaying = myRallyPlayer.playing;
     rallyStopPlayback();
     mutateFn(wasPlaying);
     myRallyPlayer.finished = rallyIsPlaybackFinished();
@@ -139,7 +139,7 @@ function rallyAnimationLoop(timestamp)
         myRallyPlayer.lastFrameTime = timestamp;
     }
 
-    var delta = timestamp - myRallyPlayer.lastFrameTime;
+    const delta = timestamp - myRallyPlayer.lastFrameTime;
     myRallyPlayer.lastFrameTime = timestamp;
     myRallyPlayer.elapsedMs += delta;
 
@@ -191,7 +191,7 @@ function rallyPlay()
     if (myRallyPlayer.pausedCpuIndex !== null)
     {
         rallyEnsureCpuTimeline();
-        var scrubFrame = rallyFrameTiming();
+        const scrubFrame = rallyFrameTiming();
         myRallyPlayer.elapsedMs = scrubFrame.poseTime;
     }
     myRallyPlayer.pausedCpuIndex = null;
@@ -240,7 +240,7 @@ function rallySeekToRatio(ratio)
 
 function rallySetSpeed(speed)
 {
-    var fraction = 0;
+    let fraction = 0;
     if (rallyHasAnimationData() && rallyTotalTime() > 0)
     {
         fraction = myRallyPlayer.elapsedMs / rallyTotalTime();
@@ -250,10 +250,10 @@ function rallySetSpeed(speed)
         myRallyPlayer.speed = speed;
         myRallyPlayer.elapsedMs = fraction * rallyTotalTime();
 
-        var speedButtons = document.querySelectorAll('.rally-view-speed-button');
-        for (var b = 0; b < speedButtons.length; b++)
+        const speedButtons = document.querySelectorAll('.rally-view-speed-button');
+        for (let b = 0; b < speedButtons.length; b++)
         {
-            var button = speedButtons[b];
+            const button = speedButtons[b];
             if (Number(button.getAttribute('data-speed')) === speed)
             {
                 button.classList.add('rally-view-speed-button-active');
@@ -277,21 +277,21 @@ function rallySeekByCpuSteps(deltaSteps)
     rallyEnsureCpuTimeline();
 
     rallyWithPausedSeek(function() {
-        var totalCpu = rallyTotalCpuSteps();
+        const totalCpu = rallyTotalCpuSteps();
         if (totalCpu <= 0)
         {
             return;
         }
 
-        var currentIndex = myRallyPlayer.pausedCpuIndex;
+        let currentIndex = myRallyPlayer.pausedCpuIndex;
         if (currentIndex === null)
         {
             currentIndex = rallyCpuIndexAtTime(myRallyPlayer.elapsedMs);
         }
-        var targetIndex = Math.min(totalCpu - 1, Math.max(0, currentIndex + deltaSteps));
+        const targetIndex = Math.min(totalCpu - 1, Math.max(0, currentIndex + deltaSteps));
         myRallyPlayer.pausedCpuIndex = targetIndex;
 
-        var entry = myRallyCpuTimeline && myRallyCpuTimeline[targetIndex]
+        const entry = myRallyCpuTimeline && myRallyCpuTimeline[targetIndex]
             ? myRallyCpuTimeline[targetIndex]
             : { turn: targetIndex };
         myRallyPlayer.elapsedMs = (entry.turn || 0) * rallyStepTime();
@@ -308,15 +308,15 @@ function rallySeekByTurns(deltaTurns)
     rallyEnsureCpuTimeline();
 
     rallyWithPausedSeek(function(wasPlaying) {
-        var maxMining = Math.max(0, rallyTotalTurns() - 1);
-        var currentMining = rallyTurnAtTime(myRallyPlayer.elapsedMs);
+        const maxMining = Math.max(0, rallyTotalTurns() - 1);
+        let currentMining = rallyTurnAtTime(myRallyPlayer.elapsedMs);
         if (myRallyPlayer.pausedCpuIndex !== null && myRallyCpuTimeline &&
             myRallyCpuTimeline[myRallyPlayer.pausedCpuIndex])
         {
             currentMining = myRallyCpuTimeline[myRallyPlayer.pausedCpuIndex].turn;
         }
 
-        var targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaTurns));
+        const targetMining = Math.min(maxMining, Math.max(0, currentMining + deltaTurns));
         myRallyPlayer.elapsedMs = targetMining * rallyStepTime();
         // Land on the first CPU step of that turn when scrubbing while paused.
         myRallyPlayer.pausedCpuIndex = wasPlaying

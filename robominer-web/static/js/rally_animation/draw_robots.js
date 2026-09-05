@@ -61,8 +61,8 @@ function depletedRobotColor(robotNr)
 }
 
 
-var RALLY_VIEWER_HIGHLIGHT_PADDING = 4;
-var RALLY_VIEWER_HIGHLIGHT_LINE_WIDTH = 3;
+window.RALLY_VIEWER_HIGHLIGHT_PADDING = 4;
+window.RALLY_VIEWER_HIGHLIGHT_LINE_WIDTH = 3;
 
 
 function robotCenterPixels(robot, scale)
@@ -76,7 +76,7 @@ function robotCenterPixels(robot, scale)
 
 function robotDrawRadiusPixels(robot, scale)
 {
-    var radius = robot.size * scale / 2.0 + 2;
+    let radius = robot.size * scale / 2.0 + 2;
     if (typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot)
     {
         radius += RALLY_VIEWER_HIGHLIGHT_PADDING + RALLY_VIEWER_HIGHLIGHT_LINE_WIDTH + 2;
@@ -87,9 +87,9 @@ function robotDrawRadiusPixels(robot, scale)
 
 function drawRobot(robot, scale, turn)
 {
-    var center = robotCenterPixels(robot, scale);
-    var centerX = center.x;
-    var centerY = center.y;
+    const center = robotCenterPixels(robot, scale);
+    const centerX = center.x;
+    const centerY = center.y;
 
     myRallyContext.beginPath();
     myRallyContext.arc(centerX, centerY, robot.size * scale / 2.0, 0, 2.0 * Math.PI, false);
@@ -108,7 +108,7 @@ function drawRobot(robot, scale, turn)
         myRallyContext.stroke();
     }
 
-    var orientation = robot.o * Math.PI / 180.0;
+    const orientation = robot.o * Math.PI / 180.0;
 
     myRallyContext.beginPath();
     myRallyContext.moveTo(centerX, centerY);
@@ -126,7 +126,7 @@ function depotHomeSquare(robot)
         return null;
     }
 
-    var side = Number(robot.homeSize);
+    let side = Number(robot.homeSize);
     if (isNaN(side) || side < 1)
     {
         side = Math.ceil(Number(robot.size) || 1);
@@ -136,8 +136,8 @@ function depotHomeSquare(robot)
         }
     }
 
-    var homeX = Number(robot.homeX);
-    var homeY = Number(robot.homeY);
+    const homeX = Number(robot.homeX);
+    const homeY = Number(robot.homeY);
     if (!isNaN(homeX) && !isNaN(homeY))
     {
         return { x: homeX, y: homeY, side: side };
@@ -166,7 +166,7 @@ function depotHomeSquare(robot)
 
 function drawDepotHome(robot, scale, step)
 {
-    var home = depotHomeSquare(robot);
+    const home = depotHomeSquare(robot);
     if (!home)
     {
         return;
@@ -175,9 +175,9 @@ function drawDepotHome(robot, scale, step)
     // Redraw opaque ground first so translucent tint never stacks across frames.
     drawGroundAt(step, scale, home.x, home.y, home.x + home.side, home.y + home.side);
 
-    var x = home.x * scale;
-    var y = home.y * scale;
-    var size = home.side * scale;
+    const x = home.x * scale;
+    const y = home.y * scale;
+    const size = home.side * scale;
 
     myRallyContext.fillStyle = robotColorRgba(robot.robotnr, 0.28);
     myRallyContext.fillRect(x, y, size, size);
@@ -191,7 +191,7 @@ function drawDepotHomes(scale, step)
         return;
     }
 
-    for (var i = 0; i < myRobots.robot.length; i++)
+    for (let i = 0; i < myRobots.robot.length; i++)
     {
         drawDepotHome(myRobots.robot[i], scale, step);
     }
@@ -200,23 +200,23 @@ function drawDepotHomes(scale, step)
 
 function eraseRobot(robot, scale, step)
 {
-    var center = robotCenterPixels(robot, scale);
-    var radius = robotDrawRadiusPixels(robot, scale);
-    var orientation = robot.o * Math.PI / 180.0;
-    var lineEndX = center.x + scale * robot.size * Math.cos(orientation) / 2.0;
-    var lineEndY = center.y + scale * robot.size * Math.sin(orientation) / 2.0;
+    const center = robotCenterPixels(robot, scale);
+    const radius = robotDrawRadiusPixels(robot, scale);
+    const orientation = robot.o * Math.PI / 180.0;
+    const lineEndX = center.x + scale * robot.size * Math.cos(orientation) / 2.0;
+    const lineEndY = center.y + scale * robot.size * Math.sin(orientation) / 2.0;
 
-    var minPxX = Math.min(center.x - radius, lineEndX) - 2;
-    var maxPxX = Math.max(center.x + radius, lineEndX) + 2;
-    var minPxY = Math.min(center.y - radius, lineEndY) - 2;
-    var maxPxY = Math.max(center.y + radius, lineEndY) + 2;
+    const minPxX = Math.min(center.x - radius, lineEndX) - 2;
+    const maxPxX = Math.max(center.x + radius, lineEndX) + 2;
+    const minPxY = Math.min(center.y - radius, lineEndY) - 2;
+    const maxPxY = Math.max(center.y + radius, lineEndY) + 2;
 
     myRallyContext.clearRect(minPxX, minPxY, maxPxX - minPxX, maxPxY - minPxY);
 
-    var minX = Math.floor(Math.max(0, minPxX / scale));
-    var minY = Math.floor(Math.max(0, minPxY / scale));
-    var maxX = Math.ceil(Math.min(myGround.sizeX, maxPxX / scale));
-    var maxY = Math.ceil(Math.min(myGround.sizeY, maxPxY / scale));
+    const minX = Math.floor(Math.max(0, minPxX / scale));
+    const minY = Math.floor(Math.max(0, minPxY / scale));
+    let maxX = Math.ceil(Math.min(myGround.sizeX, maxPxX / scale));
+    let maxY = Math.ceil(Math.min(myGround.sizeY, maxPxY / scale));
 
     if (maxX <= minX)
     {
@@ -233,13 +233,13 @@ function eraseRobot(robot, scale, step)
 
 function drawStackedOreBar(context, canvas, robotnr, amountA, amountB, amountC, capacity)
 {
-    var borderWidth = 3;
-    var oreWidth = canvas.width - 2 * borderWidth;
-    var oreHeight = canvas.height - 2 * borderWidth;
-    var maxCapacity = capacity > 0 ? capacity : 1;
-    var oreAHeight = Math.floor(amountA * oreHeight / maxCapacity);
-    var oreBHeight = Math.floor((amountA + amountB) * oreHeight / maxCapacity) - oreAHeight;
-    var oreCHeight = Math.floor((amountA + amountB + amountC) * oreHeight / maxCapacity) - oreAHeight - oreBHeight;
+    const borderWidth = 3;
+    const oreWidth = canvas.width - 2 * borderWidth;
+    const oreHeight = canvas.height - 2 * borderWidth;
+    const maxCapacity = capacity > 0 ? capacity : 1;
+    const oreAHeight = Math.floor(amountA * oreHeight / maxCapacity);
+    const oreBHeight = Math.floor((amountA + amountB) * oreHeight / maxCapacity) - oreAHeight;
+    const oreCHeight = Math.floor((amountA + amountB + amountC) * oreHeight / maxCapacity) - oreAHeight - oreBHeight;
 
     context.beginPath();
     context.rect(0, 0, canvas.width, canvas.height);
@@ -275,11 +275,11 @@ function drawStackedOreBar(context, canvas, robotnr, amountA, amountB, amountC, 
 
 function drawSideBySideDepotBar(context, canvas, robotnr, amounts, capacities)
 {
-    var colors = ['red', 'green', 'blue'];
-    var slots = [];
-    for (var s = 0; s < 3; s++)
+    const colors = ['red', 'green', 'blue'];
+    const slots = [];
+    for (let s = 0; s < 3; s++)
     {
-        var capacity = capacities[s];
+        const capacity = capacities[s];
         if (!(capacity > 0))
         {
             continue;
@@ -291,9 +291,9 @@ function drawSideBySideDepotBar(context, canvas, robotnr, amounts, capacities)
         });
     }
 
-    var borderWidth = 3;
-    var innerWidth = canvas.width - 2 * borderWidth;
-    var innerHeight = canvas.height - 2 * borderWidth;
+    const borderWidth = 3;
+    const innerWidth = canvas.width - 2 * borderWidth;
+    const innerHeight = canvas.height - 2 * borderWidth;
 
     context.beginPath();
     context.rect(0, 0, canvas.width, canvas.height);
@@ -310,20 +310,20 @@ function drawSideBySideDepotBar(context, canvas, robotnr, amounts, capacities)
         return;
     }
 
-    var gap = slots.length > 1 ? 2 : 0;
-    var columnWidth = Math.floor((innerWidth - gap * (slots.length - 1)) / slots.length);
-    var usedWidth = columnWidth * slots.length + gap * (slots.length - 1);
-    var startX = borderWidth + Math.floor((innerWidth - usedWidth) / 2);
+    const gap = slots.length > 1 ? 2 : 0;
+    const columnWidth = Math.floor((innerWidth - gap * (slots.length - 1)) / slots.length);
+    const usedWidth = columnWidth * slots.length + gap * (slots.length - 1);
+    const startX = borderWidth + Math.floor((innerWidth - usedWidth) / 2);
 
-    for (var i = 0; i < slots.length; i++)
+    for (let i = 0; i < slots.length; i++)
     {
-        var slot = slots[i];
-        var fillHeight = Math.floor(slot.amount * innerHeight / slot.capacity);
+        const slot = slots[i];
+        let fillHeight = Math.floor(slot.amount * innerHeight / slot.capacity);
         if (fillHeight > innerHeight)
         {
             fillHeight = innerHeight;
         }
-        var columnX = startX + i * (columnWidth + gap);
+        const columnX = startX + i * (columnWidth + gap);
 
         context.beginPath();
         context.rect(
@@ -340,7 +340,7 @@ function drawSideBySideDepotBar(context, canvas, robotnr, amounts, capacities)
 
 function drawRobotOre(robot)
 {
-    var i = robot.robotnr;
+    const i = robot.robotnr;
     drawStackedOreBar(
         myOreContext[i],
         myOreCanvas[i],
@@ -355,7 +355,7 @@ function drawRobotOre(robot)
 
 function drawRobotDepot(robot)
 {
-    var i = robot.robotnr;
+    const i = robot.robotnr;
     if (!myDepotCanvas[i] || !myDepotContext[i] || !robotHasDepot(robot))
     {
         return;
@@ -363,7 +363,7 @@ function drawRobotDepot(robot)
 
     function amount(value)
     {
-        var n = Number(value);
+        const n = Number(value);
         return isNaN(n) ? 0 : n;
     }
 

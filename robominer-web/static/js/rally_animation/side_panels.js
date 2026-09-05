@@ -1,12 +1,12 @@
-var RALLY_SIDE_PANEL_ORDER_KEY = 'robominer.rallySidePanelOrder';
-var RALLY_SIDE_PANEL_ORDER_PROGRAM = 'program';
-var RALLY_SIDE_PANEL_ORDER_PLAYERS = 'players';
+const RALLY_SIDE_PANEL_ORDER_KEY = 'robominer.rallySidePanelOrder';
+const RALLY_SIDE_PANEL_ORDER_PROGRAM = 'program';
+const RALLY_SIDE_PANEL_ORDER_PLAYERS = 'players';
 
 function rallyReadSidePanelOrder()
 {
     try
     {
-        var stored = window.localStorage.getItem(RALLY_SIDE_PANEL_ORDER_KEY);
+        const stored = window.localStorage.getItem(RALLY_SIDE_PANEL_ORDER_KEY);
         if (stored === RALLY_SIDE_PANEL_ORDER_PROGRAM)
         {
             return RALLY_SIDE_PANEL_ORDER_PROGRAM;
@@ -37,26 +37,26 @@ function rallyWriteSidePanelOrder(order)
 
 function rallyUpdateSidePanelOrderButtons(order)
 {
-    var buttons = document.querySelectorAll('.rally-view-panel-order-button[data-rally-panel]');
-    for (var i = 0; i < buttons.length; i++)
+    const buttons = document.querySelectorAll('.rally-view-panel-order-button[data-rally-panel]');
+    for (let i = 0; i < buttons.length; i++)
     {
-        var button = buttons[i];
-        var panel = button.getAttribute('data-rally-panel');
+        const button = buttons[i];
+        const panel = button.getAttribute('data-rally-panel');
         button.disabled = panel === order;
     }
 }
 
 function rallyApplySidePanelOrder(order)
 {
-    var column = document.querySelector('.rally-view-side-column');
-    var programPanel = document.getElementById('rallyViewProgramPanel');
-    var playersPanel = document.getElementById('rallyViewPlayersPanel');
+    const column = document.querySelector('.rally-view-side-column');
+    const programPanel = document.getElementById('rallyViewProgramPanel');
+    const playersPanel = document.getElementById('rallyViewPlayersPanel');
     if (!column || !programPanel || !playersPanel)
     {
         return;
     }
 
-    var preferred = order || rallyReadSidePanelOrder();
+    let preferred = order || rallyReadSidePanelOrder();
     if (preferred !== RALLY_SIDE_PANEL_ORDER_PROGRAM)
     {
         preferred = RALLY_SIDE_PANEL_ORDER_PLAYERS;
@@ -85,17 +85,17 @@ function rallyBindSidePanelOrder()
     window.__rallySidePanelOrderBound = true;
 
     document.addEventListener('click', function(event) {
-        var target = event.target;
+        const target = event.target;
         if (!target || !target.closest)
         {
             return;
         }
-        var button = target.closest('.rally-view-panel-order-button[data-rally-panel]');
+        const button = target.closest('.rally-view-panel-order-button[data-rally-panel]');
         if (!button || button.disabled)
         {
             return;
         }
-        var panel = button.getAttribute('data-rally-panel');
+        const panel = button.getAttribute('data-rally-panel');
         if (panel !== RALLY_SIDE_PANEL_ORDER_PROGRAM && panel !== RALLY_SIDE_PANEL_ORDER_PLAYERS)
         {
             return;
