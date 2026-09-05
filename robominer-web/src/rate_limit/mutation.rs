@@ -48,6 +48,8 @@ impl MutationRateLimiter {
             Self::prune(window, now);
             !window.is_empty()
         });
+        super::enforce_map_cap(&mut self.by_ip, super::MAX_TRACKED_KEYS);
+        super::enforce_map_cap(&mut self.by_user_action, super::MAX_TRACKED_KEYS);
         self.last_sweep = Some(now);
     }
 
@@ -90,6 +92,8 @@ impl MutationRateLimiter {
         let window = self.by_user_action.entry((user_id, action)).or_default();
         Self::prune(window, now);
         window.push_back(now);
+        super::enforce_map_cap(&mut self.by_ip, super::MAX_TRACKED_KEYS);
+        super::enforce_map_cap(&mut self.by_user_action, super::MAX_TRACKED_KEYS);
     }
 }
 

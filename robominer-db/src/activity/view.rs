@@ -1,3 +1,10 @@
+//! Rally view state for Activity and personal result pages.
+//!
+//! When `require_user_result` is `false`, any caller may load claimed-rally
+//! replay JSON by id (intentional Activity spectator access). When `true`, the
+//! viewer must have a claimed queue row for that rally. Program source lookups
+//! remain owner-scoped regardless.
+
 use sqlx::MySqlPool;
 
 use crate::{RallyViewMetadataRecord, RallyViewParticipantRecord, RallyViewStateRecord};

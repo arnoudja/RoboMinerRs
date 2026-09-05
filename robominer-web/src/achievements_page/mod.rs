@@ -1,4 +1,4 @@
-use crate::{Request, Response, ServerConfig, mutation_i64, session_username};
+use crate::{Request, Response, ServerConfig, mutation_i64};
 
 mod actions;
 mod card;
@@ -31,7 +31,20 @@ pub(super) async fn achievements_page(
     config: &ServerConfig,
     session: crate::page_context::PageSession<'_>,
 ) -> Response {
-    let session_name = session_username(request);
+    // Prefer the DB username for self vs overview. The unsigned
+    // `robominer_username` cookie is display-only and must not drive authz.
+    let session_name = match robominer_db::get_user_by_id(session.pool, session.user_id).await {
+        Ok(Some(user)) => user.username,
+        Ok(None) => {
+            return crate::page_context::page_load_error(
+                "achievements",
+                sqlx::Error::RowNotFound.into(),
+            );
+        }
+        Err(error) => {
+            return crate::page_context::page_load_error("achievements", error.into());
+        }
+    };
     let requested_user = request
         .query
         .get("user")

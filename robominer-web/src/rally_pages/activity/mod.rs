@@ -1,3 +1,9 @@
+//! Activity feed and public rally replay.
+//!
+//! `?rallyResultId=` loads a claimed rally's replay JSON for any caller who can
+//! open Activity (same data already listed in the feed). This is intentional
+//! spectator access. Private program source remains owner-scoped elsewhere.
+
 use super::{
     ACTIVITY_RALLY_MAX_AREAS, ActivityFeedQuery, ActivityPageState, ActivityRallyFilter,
     RallyViewBackLink,
@@ -18,8 +24,13 @@ pub async fn activity_page(
 
     if let Some(rally_result_id) = query_i64(request, "rallyResultId") {
         let feed_query = ActivityFeedQuery::from_request(request);
-        let result =
-            super::view::load_rally_view_state(pool, user_id, rally_result_id, false).await;
+        let result = super::view::load_rally_view_state(
+            pool,
+            user_id,
+            rally_result_id,
+            false, /* require_user_result: public Activity replay */
+        )
+        .await;
 
         if let Ok(Some(state)) = result {
             return Response::html(super::view::render::render_rally_view_page(

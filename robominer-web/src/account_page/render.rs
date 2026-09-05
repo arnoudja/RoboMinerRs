@@ -65,8 +65,8 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         "newpassword",
         "New password",
         "New password, empty to leave unchanged",
-        r#" pattern="^$|.{8,}" autocomplete="new-password""#,
-        Some("At least 8 characters when changing password."),
+        r#" pattern="^$|.{12,}" autocomplete="new-password""#,
+        Some("At least 12 characters when changing password."),
     );
     render_password_field(
         &mut body,
@@ -84,6 +84,15 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
         r#"<p class="account-section-hint">Invalidate signed-in sessions on other browsers and devices. You stay signed in here.</p>"#,
     );
     body.push_str(r#"<form class="account-form" action="account" method="post">"#);
+    render_password_field(
+        &mut body,
+        "currentpassword",
+        "logout-currentpassword",
+        "Current password",
+        "Your current password",
+        r#" required autocomplete="current-password""#,
+        None,
+    );
     body.push_str(
         r#"<button type="submit" class="auth-submit" name="logoutAllDevices" value="1">Log out all devices</button>"#,
     );

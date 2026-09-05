@@ -206,6 +206,69 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
+async fn account_logout_all_devices_rejects_wrong_password() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-logout-all-bad");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+
+    let other_cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
+    let current_cookie =
+        cookie_header(&login_with_credentials(&config, &username, &password).await);
+
+    let mut form = HashMap::new();
+    form.insert(
+        "currentpassword".to_string(),
+        "wrong-password-x".to_string(),
+    );
+    form.insert("logoutAllDevices".to_string(), "1".to_string());
+    let response = route(
+        &post_request("/account", form, Some(&current_cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+    assert_eq!(response.status, 200);
+    assert!(
+        body.contains("Your current password doesn't match"),
+        "expected wrong-password error:\n{body}"
+    );
+
+    let other_after = route(&get_request("/account", Some(&other_cookie)), &config).await;
+    assert_eq!(
+        other_after.status, 200,
+        "other device session must remain valid when logout-all is rejected"
+    );
+
+    let current_after = route(&get_request("/account", Some(&current_cookie)), &config).await;
+    assert_eq!(
+        current_after.status, 200,
+        "current session must remain valid when logout-all is rejected"
+    );
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn account_logout_all_devices_bumps_session_and_keeps_current_cookie() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
@@ -228,6 +291,7 @@ async fn account_logout_all_devices_bumps_session_and_keeps_current_cookie() {
         cookie_header(&login_with_credentials(&config, &username, &password).await);
 
     let mut form = HashMap::new();
+    form.insert("currentpassword".to_string(), password.clone());
     form.insert("logoutAllDevices".to_string(), "1".to_string());
     let response = route(
         &post_request("/account", form, Some(&current_cookie)),
