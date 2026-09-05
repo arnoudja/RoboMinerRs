@@ -3,12 +3,23 @@ mod support;
 
 use std::collections::HashMap;
 
-use robominer_web::test_support::route;
+use robominer_web::test_support::{
+    lock_auth_rate_limiter_for_tests, reset_auth_rate_limiter_for_tests, route,
+};
 use serial_test::serial;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, get_request,
     login_with_credentials, post_request, response_body, server_config, unique_prefix,
 };
+
+/// Coverage (`cargo test`) keeps one process for this binary, so auth attempt
+/// budgets accumulate across tests unless cleared. Nextest often isolates
+/// processes, which is why rust CI can pass while coverage fails.
+fn clear_auth_rate_limits() -> std::sync::MutexGuard<'static, ()> {
+    let guard = lock_auth_rate_limiter_for_tests();
+    reset_auth_rate_limiter_for_tests();
+    guard
+}
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
@@ -18,6 +29,7 @@ async fn account_update_post_persists_profile_changes() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -78,6 +90,7 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -212,6 +225,7 @@ async fn account_logout_all_devices_rejects_wrong_password() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -275,6 +289,7 @@ async fn account_logout_all_devices_bumps_session_and_keeps_current_cookie() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
