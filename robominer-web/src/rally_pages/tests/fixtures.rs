@@ -16,34 +16,12 @@ pub(super) fn sample_activity_state(
     rally_areas: Vec<robominer_db::ActivityRallyAreaOption>,
     has_more_rallies: bool,
 ) -> ActivityPageState {
-    sample_activity_state_with_queue(
-        recent_users,
-        recent_rallies,
-        participants,
-        rally_areas,
-        has_more_rallies,
-        vec![],
-        None,
-    )
-}
-
-pub(super) fn sample_activity_state_with_queue(
-    recent_users: Vec<robominer_db::ActivityRecentUserRecord>,
-    recent_rallies: Vec<robominer_db::ActivityRecentRallyRecord>,
-    participants: Vec<robominer_db::ActivityRecentRallyParticipantRecord>,
-    rally_areas: Vec<robominer_db::ActivityRallyAreaOption>,
-    has_more_rallies: bool,
-    queue_items: Vec<robominer_db::MiningQueuePageItemRecord>,
-    asset_summary: Option<robominer_db::UserAssetSummaryRecord>,
-) -> ActivityPageState {
     ActivityPageState {
         recent_users,
         recent_rallies,
         participants,
         rally_areas,
         has_more_rallies,
-        queue_items,
-        asset_summary,
     }
 }
 

@@ -90,14 +90,6 @@ async fn load_activity_state(
         robominer_db::list_activity_rally_participants_for_queues(pool, &mining_queue_ids).await?;
     let rally_areas =
         robominer_db::list_activity_rally_area_options(pool, ACTIVITY_RALLY_MAX_AREAS).await?;
-    let (queue_items, asset_summary) = if user_id > 0 {
-        (
-            robominer_db::list_mining_queue_page_items(pool, user_id).await?,
-            Some(robominer_db::load_user_asset_summary(pool, user_id).await?),
-        )
-    } else {
-        (Vec::new(), None)
-    };
 
     Ok(ActivityPageState {
         recent_users: robominer_db::list_activity_recent_users(pool, 5).await?,
@@ -105,7 +97,5 @@ async fn load_activity_state(
         participants,
         rally_areas,
         has_more_rallies,
-        queue_items,
-        asset_summary,
     })
 }

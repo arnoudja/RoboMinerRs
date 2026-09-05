@@ -78,48 +78,6 @@
     gap: 12px;
 }
 
-.activity-queue-list {
-    display: grid;
-    gap: 8px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.activity-queue-item {
-    background: rgba(10, 16, 26, 0.85);
-    border: 1px solid rgba(42, 58, 92, 0.85);
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-
-.activity-queue-item-more {
-    color: var(--activity-text-muted);
-    font-size: 0.84rem;
-}
-
-.activity-queue-link {
-    color: #e8f4ff;
-    font-size: 0.88rem;
-    text-decoration: none;
-}
-
-.activity-queue-link:hover {
-    color: #7eeeff;
-}
-
-.activity-queue-manage {
-    color: var(--mq-accent);
-    display: inline-block;
-    font-size: 0.84rem;
-    margin-top: 10px;
-    text-decoration: none;
-}
-
-.activity-queue-manage:hover {
-    color: #7eeeff;
-}
-
 .activity-sidebar-players .activity-section-hint {
     font-size: 0.82rem;
 }

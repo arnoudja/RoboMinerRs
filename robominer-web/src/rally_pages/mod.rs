@@ -3,7 +3,6 @@ use crate::{Request, query_i64};
 pub(super) const ACTIVITY_RALLY_PAGE_SIZE: i64 = 10;
 pub(super) const ACTIVITY_RALLY_MAX_LIMIT: i64 = 50;
 pub(super) const ACTIVITY_RALLY_MAX_AREAS: i64 = 50;
-pub(super) const ACTIVITY_SIDEBAR_QUEUE_PREVIEW: usize = 5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum RallyViewBackLink<'a> {
@@ -122,8 +121,6 @@ pub(super) struct ActivityPageState {
     participants: Vec<robominer_db::ActivityRecentRallyParticipantRecord>,
     rally_areas: Vec<robominer_db::ActivityRallyAreaOption>,
     has_more_rallies: bool,
-    queue_items: Vec<robominer_db::MiningQueuePageItemRecord>,
-    asset_summary: Option<robominer_db::UserAssetSummaryRecord>,
 }
 
 #[derive(Debug)]

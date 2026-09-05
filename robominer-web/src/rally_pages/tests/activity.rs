@@ -9,9 +9,7 @@ use crate::test_support::route;
 use super::super::{
     ACTIVITY_RALLY_PAGE_SIZE, ActivityFeedQuery, ActivityRallyFilter, render_activity_page_at,
 };
-use super::fixtures::{
-    default_activity_feed_query, request, sample_activity_state, sample_activity_state_with_queue,
-};
+use super::fixtures::{default_activity_feed_query, request, sample_activity_state};
 
 #[tokio::test(flavor = "current_thread")]
 async fn activity_requires_database_configuration() {
@@ -321,53 +319,4 @@ fn activity_rendering_shows_area_specific_empty_state() {
     );
 
     assert_html_contains(&html, "No finished rallies in this area yet.");
-}
-
-#[test]
-fn activity_rendering_shows_sidebar_queue_snapshot() {
-    let html = render_activity_page_at(
-        "Player".to_string(),
-        None,
-        &sample_activity_state_with_queue(
-            vec![],
-            vec![],
-            vec![],
-            vec![],
-            false,
-            vec![
-                robominer_db::MiningQueuePageItemRecord {
-                    mining_queue_id: 1,
-                    robot_id: 7,
-                    mining_area_id: 3,
-                    area_name: "Crystal & Cave".to_string(),
-                    rally_result_id: None,
-                },
-                robominer_db::MiningQueuePageItemRecord {
-                    mining_queue_id: 2,
-                    robot_id: 7,
-                    mining_area_id: 4,
-                    area_name: "Dust Bowl".to_string(),
-                    rally_result_id: None,
-                },
-            ],
-            Some(robominer_db::UserAssetSummaryRecord {
-                username: "Player".to_string(),
-                achievement_points: 0,
-                mining_queue_size: 3,
-                robot_count: 1,
-            }),
-        ),
-        0,
-        default_activity_feed_query(),
-    );
-
-    assert_contains_all(
-        &html,
-        &[
-            r#"class="activity-section-title">Your mining queue</h2>"#,
-            "2/3 slots in use",
-            r#"href="miningQueue?robotId=7">Crystal &amp; Cave</a>"#,
-            r#"class="activity-queue-manage" href="miningQueue">Manage queue</a>"#,
-        ],
-    );
 }

@@ -1,4 +1,3 @@
-use super::super::ACTIVITY_SIDEBAR_QUEUE_PREVIEW;
 use crate::html::{EscapedHtml, format_relative_time_millis, format_utc_millis};
 use crate::rally_pages::ActivityPageState;
 
@@ -8,57 +7,8 @@ pub(super) fn render_activity_sidebar(
     now_millis: i64,
 ) {
     body.push_str(r#"<aside class="activity-sidebar" aria-label="Activity sidebar">"#);
-    render_activity_sidebar_queue(body, &state.queue_items, state.asset_summary.as_ref());
     render_activity_sidebar_recent_players(body, &state.recent_users, now_millis);
     body.push_str("</aside>");
-}
-
-fn render_activity_sidebar_queue(
-    body: &mut String,
-    queue_items: &[robominer_db::MiningQueuePageItemRecord],
-    asset_summary: Option<&robominer_db::UserAssetSummaryRecord>,
-) {
-    if queue_items.is_empty() {
-        return;
-    }
-
-    body.push_str(r#"<section class="activity-sidebar-panel">"#);
-    body.push_str(r#"<h2 class="activity-section-title">Your mining queue</h2>"#);
-    if let Some(summary) = asset_summary {
-        body.push_str(&format!(
-            r#"<p class="activity-section-hint">{}</p>"#,
-            EscapedHtml::from(activity_queue_usage_hint(queue_items.len(), summary).as_str()),
-        ));
-    }
-    body.push_str(r#"<ul class="activity-queue-list">"#);
-    for item in queue_items.iter().take(ACTIVITY_SIDEBAR_QUEUE_PREVIEW) {
-        body.push_str(&format!(
-            r#"<li class="activity-queue-item"><a class="activity-queue-link" href="miningQueue?robotId={}">{}</a></li>"#,
-            item.robot_id,
-            EscapedHtml::from(item.area_name.as_str()),
-        ));
-    }
-    if queue_items.len() > ACTIVITY_SIDEBAR_QUEUE_PREVIEW {
-        body.push_str(&format!(
-            r#"<li class="activity-queue-item activity-queue-item-more">+{} more</li>"#,
-            queue_items.len() - ACTIVITY_SIDEBAR_QUEUE_PREVIEW
-        ));
-    }
-    body.push_str("</ul>");
-    body.push_str(r#"<a class="activity-queue-manage" href="miningQueue">Manage queue</a>"#);
-    body.push_str("</section>");
-}
-
-fn activity_queue_usage_hint(
-    queue_count: usize,
-    summary: &robominer_db::UserAssetSummaryRecord,
-) -> String {
-    let capacity = summary.robot_count * i64::from(summary.mining_queue_size);
-    if capacity > 0 {
-        format!("{queue_count}/{capacity} slots in use")
-    } else {
-        format!("{queue_count} runs queued")
-    }
 }
 
 fn render_activity_sidebar_recent_players(
