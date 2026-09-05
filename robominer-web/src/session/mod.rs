@@ -13,14 +13,37 @@ use config::session_ttl_secs;
 
 mod config;
 
-pub(crate) use config::secure_cookie_suffix;
+pub(crate) use config::{secure_cookie_suffix, secure_cookies_enabled};
 
 type HmacSha256 = Hmac<Sha256>;
 
-const SESSION_COOKIE_NAME: &str = "robominer_session";
+/// Unprefixed names (local HTTP when Secure cookies are off).
+pub(crate) const LEGACY_SESSION_COOKIE_NAME: &str = "robominer_session";
+pub(crate) const LEGACY_USERNAME_COOKIE_NAME: &str = "robominer_username";
+/// `__Host-` names used when Secure cookies are on (HTTPS / production).
+pub(crate) const HOST_SESSION_COOKIE_NAME: &str = "__Host-robominer_session";
+pub(crate) const HOST_USERNAME_COOKIE_NAME: &str = "__Host-robominer_username";
 
 static SESSION_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
 static SESSION_NONCE: AtomicU64 = AtomicU64::new(1);
+
+/// Active session cookie name: `__Host-*` when Secure is on, else unprefixed.
+pub(crate) fn session_cookie_name() -> &'static str {
+    if secure_cookies_enabled() {
+        HOST_SESSION_COOKIE_NAME
+    } else {
+        LEGACY_SESSION_COOKIE_NAME
+    }
+}
+
+/// Active username cookie name: `__Host-*` when Secure is on, else unprefixed.
+pub(crate) fn username_cookie_name() -> &'static str {
+    if secure_cookies_enabled() {
+        HOST_USERNAME_COOKIE_NAME
+    } else {
+        LEGACY_USERNAME_COOKIE_NAME
+    }
+}
 
 #[allow(unused_imports)]
 pub use config::{
@@ -64,13 +87,13 @@ pub(crate) fn session_from_request(request: &Request) -> Option<SessionClaims> {
     request
         .headers
         .get("cookie")
-        .and_then(|cookies| cookie_value(cookies, SESSION_COOKIE_NAME))
+        .and_then(|cookies| cookie_value(cookies, session_cookie_name()))
         .and_then(|value| verify_session_token(&value))
 }
 
 #[cfg(any(test, debug_assertions))]
 pub(crate) fn session_from_cookie_header(cookies: &str) -> Option<SessionClaims> {
-    cookie_value(cookies, SESSION_COOKIE_NAME).and_then(|value| verify_session_token(&value))
+    cookie_value(cookies, session_cookie_name()).and_then(|value| verify_session_token(&value))
 }
 
 pub(crate) fn session_set_cookie_header(
@@ -82,7 +105,8 @@ pub(crate) fn session_set_cookie_header(
     let expires_at = session_expiry_timestamp(ttl_secs);
     let token = create_session_token(user_id, expires_at, new_session_nonce(), session_version);
     format!(
-        "{SESSION_COOKIE_NAME}={token}; Max-Age={ttl_secs}; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}={token}; Max-Age={ttl_secs}; Path=/; HttpOnly; SameSite=Lax{}",
+        session_cookie_name(),
         secure_cookie_suffix()
     )
 }
@@ -100,7 +124,8 @@ pub(crate) fn session_cookie_header_for_claims(session: SessionClaims) -> String
         session.session_version,
     );
     format!(
-        "{SESSION_COOKIE_NAME}={token}; Max-Age={max_age}; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}={token}; Max-Age={max_age}; Path=/; HttpOnly; SameSite=Lax{}",
+        session_cookie_name(),
         secure_cookie_suffix()
     )
 }
@@ -109,33 +134,76 @@ pub(crate) fn new_session_nonce() -> u64 {
     SESSION_NONCE.fetch_add(1, Ordering::Relaxed)
 }
 
-pub(crate) fn session_clear_cookie_header() -> String {
+fn clear_cookie_header(name: &str) -> String {
     format!(
-        "{SESSION_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        "{name}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
         secure_cookie_suffix()
     )
 }
 
+pub(crate) fn session_clear_cookie_header() -> String {
+    clear_cookie_header(session_cookie_name())
+}
+
+/// Expire the active session cookie and, when using `__Host-*`, the legacy name too.
+pub(crate) fn session_clear_cookie_headers() -> Vec<String> {
+    let mut headers = vec![session_clear_cookie_header()];
+    if secure_cookies_enabled() {
+        headers.push(clear_cookie_header(LEGACY_SESSION_COOKIE_NAME));
+    }
+    headers
+}
+
 pub(crate) fn username_set_cookie_header(username: &str) -> String {
     format!(
-        "robominer_username={}; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}={}; Path=/; HttpOnly; SameSite=Lax{}",
+        username_cookie_name(),
         cookie_encode(username),
         secure_cookie_suffix()
     )
 }
 
 pub(crate) fn username_clear_cookie_header() -> String {
-    format!(
-        "robominer_username=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
-        secure_cookie_suffix()
-    )
+    clear_cookie_header(username_cookie_name())
+}
+
+/// Expire the active username cookie and, when using `__Host-*`, the legacy name too.
+pub(crate) fn username_clear_cookie_headers() -> Vec<String> {
+    let mut headers = vec![username_clear_cookie_header()];
+    if secure_cookies_enabled() {
+        headers.push(clear_cookie_header(LEGACY_USERNAME_COOKIE_NAME));
+    }
+    headers
+}
+
+/// Extra Set-Cookie clears for legacy unprefixed names after minting `__Host-*` cookies.
+pub(crate) fn legacy_auth_cookie_clear_headers() -> Vec<String> {
+    if !secure_cookies_enabled() {
+        return Vec::new();
+    }
+    vec![
+        clear_cookie_header(LEGACY_SESSION_COOKIE_NAME),
+        clear_cookie_header(LEGACY_USERNAME_COOKIE_NAME),
+    ]
+}
+
+pub(crate) fn with_set_cookies(
+    response: crate::http::Response,
+    cookies: impl IntoIterator<Item = String>,
+) -> crate::http::Response {
+    cookies.into_iter().fold(response, |response, cookie| {
+        response.with_header("Set-Cookie", cookie)
+    })
 }
 
 #[cfg(any(test, debug_assertions))]
 pub(crate) fn format_authenticated_cookie(user_id: i64, username: &str) -> String {
+    // session_set_cookie_header includes attributes; extract the name=value pair for Cookie headers.
+    let set_cookie = session_set_cookie_header(user_id, false, 0);
+    let session_pair = set_cookie.split(';').next().unwrap_or(&set_cookie).trim();
     format!(
-        "{}; robominer_username={}",
-        session_set_cookie_header(user_id, false, 0),
+        "{session_pair}; {}={}",
+        username_cookie_name(),
         cookie_encode(username)
     )
 }

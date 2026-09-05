@@ -175,7 +175,7 @@ update-account --password`, `mining claim-results`, `shop buy`/`sell`,
 | Check | Command / action |
 | --- | --- |
 | TLS works | Browser shows padlock on `https://your-host/login` |
-| Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax`; `robominer_username` is `HttpOnly` |
+| Secure cookie | DevTools → `__Host-robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, no `Domain`; `__Host-robominer_username` is `HttpOnly` |
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
 | Health / migrations | `curl -fsS http://127.0.0.1:8080/health` → `ok` + `migrations=ok` |
 | Signup off (default) | `/login?signup=1` shows no sign-up tab unless `ROBOMINER_ALLOW_SIGNUP=1` |
@@ -199,7 +199,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Control | Notes |
 | --- | --- |
 | CSRF on authenticated mutations | Hidden `csrfToken` bound to session nonce; nonce rotates after each successful POST |
-| CSRF on login/signup | Double-submit cookie `robominer_csrf` |
+| CSRF on login/signup | Double-submit cookie `__Host-robominer_csrf` (when Secure is on) |
 | Body size limit | 1 MiB → HTTP 413 |
 | Request timeouts | 30s |
 | POST-only form mutations | GET cannot drive shop/queue/account writes |

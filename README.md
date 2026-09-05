@@ -231,8 +231,10 @@ Public self-registration is off by default. For local development, set
 `ROBOMINER_ALLOW_SIGNUP=1`; otherwise create
 users with `robominer-engine user create`.
 
-Logged-in users are identified by a signed `robominer_session` cookie minted at
-login. The legacy plain `robominer_user_id` cookie is no longer accepted.
+Logged-in users are identified by a signed session cookie minted at login
+(`__Host-robominer_session` when Secure cookies are on; `robominer_session` for
+local loopback HTTP). The legacy plain `robominer_user_id` cookie is no longer
+accepted.
 
 New users receive Argon2id password hashes. Legacy `sha256:` password hashes are
 no longer accepted.

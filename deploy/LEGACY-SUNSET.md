@@ -48,14 +48,14 @@ sunset criteria are met.
 | Status | **Removed** — configuration is env / `robominer.env` only |
 | Notes | Key/value parser, `--config`, and conf search paths deleted; archive leftover `.conf` files and use `/etc/robominer/robominer.env` (see `deploy/systemd/robominer.env.example`) |
 
-## `__Host-` cookie prefix (not yet)
+## `__Host-` cookie prefix
 
 | Item | Detail |
 | --- | --- |
+| Status | **Done** — when Secure cookies are on, names are `__Host-robominer_session`, `__Host-robominer_username`, `__Host-robominer_csrf` |
 | Location | `robominer-web/src/session/`, `robominer-web/src/csrf/` |
-| Current | Cookies `robominer_session`, `robominer_username`, `robominer_csrf` use `Path=/`, no `Domain`; `Secure` only when `securecookies` is on |
-| Sunset | Rename to `__Host-*` only when every real deploy forces Secure (HTTPS end-to-end). Checklist before flip: (1) `securecookies 1` required in all production env files / docs, (2) no plain-HTTP LAN deploys that still need cookies, (3) clear old cookie names on login/logoff, (4) proxy TLS terminates correctly |
-| Risk | High for LAN/HTTP installs — browsers reject `__Host-` without Secure |
+| Behavior | `__Host-*` only when `securecookies` / `ROBOMINER_SECURE_COOKIES` is on (required for production / trustproxy). Local loopback HTTP keeps unprefixed names. Always `Path=/`, no `Domain`. Login, logoff, and session-clear also expire the legacy unprefixed names so browsers drop leftovers after the HTTPS flip |
+| Notes | Browsers reject `__Host-` without `Secure`; do not enable Secure cookie names on plain-HTTP LAN deploys |
 
 ## Recommended order
 
@@ -64,7 +64,7 @@ sunset criteria are met.
 3. ~~Mutation IP co-limit~~ **Done** (60 POSTs / 60s per client IP alongside user+action budgets)
 4. ~~Remove PascalCase redirects~~ **Done** (canonical camelCase only)
 5. ~~Bump minimum session version after TTL window~~ **Done** (unversioned tokens rejected; remember-me max age is 30 days)
-6. `__Host-` cookies only after Secure is mandatory on every deploy path
+6. ~~`__Host-` cookies only after Secure is mandatory on every deploy path~~ **Done** (`__Host-*` when Secure is on; legacy names cleared on login/logoff)
 7. ~~Soft-deprecate conf-file paths~~ **Done**; ~~hard-remove conf parser / `--config` / search paths~~ **Done** (env / `robominer.env` only)
 8. Leave ore-ordering until a deliberate balance review
 9. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)

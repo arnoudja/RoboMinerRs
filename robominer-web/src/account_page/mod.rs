@@ -71,15 +71,17 @@ fn reissue_session_cookies(
     session_version: i32,
     username: &str,
 ) -> Response {
-    response.headers.retain(|(name, value)| {
-        !(*name == "Set-Cookie" && value.starts_with("robominer_session="))
-    });
+    let session_prefix = format!("{}=", session::session_cookie_name());
     response
+        .headers
+        .retain(|(name, value)| !(*name == "Set-Cookie" && value.starts_with(&session_prefix)));
+    let response = response
         .with_header(
             "Set-Cookie",
             session::session_set_cookie_header(user_id, false, session_version),
         )
-        .with_header("Set-Cookie", session::username_set_cookie_header(username))
+        .with_header("Set-Cookie", session::username_set_cookie_header(username));
+    session::with_set_cookies(response, session::legacy_auth_cookie_clear_headers())
 }
 
 fn account_rate_limit_key(user_id: i64) -> String {

@@ -155,8 +155,12 @@ pub(super) fn session_ttl_secs(persistent: bool) -> u64 {
     }
 }
 
+pub(crate) fn secure_cookies_enabled() -> bool {
+    SECURE_COOKIES.load(Ordering::Relaxed)
+}
+
 pub(crate) fn secure_cookie_suffix() -> &'static str {
-    if SECURE_COOKIES.load(Ordering::Relaxed) {
+    if secure_cookies_enabled() {
         "; Secure"
     } else {
         ""

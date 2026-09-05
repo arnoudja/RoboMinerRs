@@ -91,8 +91,9 @@ Caddy obtains Let's Encrypt certificates automatically for public hostnames.
    ```
 
 2. Open `https://robominer.example.com/login` in a browser.
-3. After logging in, inspect the `robominer_session` cookie in browser devtools.
-   It should include `HttpOnly`, `SameSite=Lax`, and `Secure` when
+3. After logging in, inspect the session cookie in browser devtools
+   (`__Host-robominer_session` when Secure cookies are on). It should include
+   `HttpOnly`, `SameSite=Lax`, `Path=/`, no `Domain`, and `Secure` when
    `securecookies 1` is set.
 
 ## Notes

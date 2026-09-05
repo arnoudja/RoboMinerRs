@@ -2,12 +2,15 @@ use std::collections::HashMap;
 use std::sync::Once;
 
 use super::{
-    DEFAULT_SESSION_TTL_SECS, SESSION_COOKIE_NAME, create_session_token_for_tests,
-    format_authenticated_cookie, is_local_bind_host, resolve_session_secret,
-    resolve_session_ttl_secs, session_clear_cookie_header, session_set_cookie_header,
-    user_id_from_request, verify_session_token,
+    DEFAULT_SESSION_TTL_SECS, HOST_SESSION_COOKIE_NAME, HOST_USERNAME_COOKIE_NAME,
+    LEGACY_SESSION_COOKIE_NAME, LEGACY_USERNAME_COOKIE_NAME, create_session_token_for_tests,
+    format_authenticated_cookie, is_local_bind_host, legacy_auth_cookie_clear_headers,
+    resolve_session_secret, resolve_session_ttl_secs, session_clear_cookie_header,
+    session_clear_cookie_headers, session_cookie_name, session_set_cookie_header,
+    user_id_from_request, username_cookie_name, verify_session_token,
 };
 use crate::Request;
+use serial_test::serial;
 
 fn ensure_test_session_secret() {
     static INIT: Once = Once::new();
@@ -142,6 +145,7 @@ fn expired_session_token_is_rejected() {
 }
 
 #[test]
+#[serial]
 fn user_id_from_request_uses_signed_session_cookie() {
     ensure_test_session_secret();
     let cookie = session_set_cookie_header(77, false, 0);
@@ -180,6 +184,7 @@ fn resolve_session_ttl_secs_rejects_invalid_values() {
 }
 
 #[test]
+#[serial]
 fn session_set_cookie_header_uses_configured_max_age() {
     ensure_test_session_secret();
     super::configure_session_ttl_secs(3_600);
@@ -189,15 +194,18 @@ fn session_set_cookie_header_uses_configured_max_age() {
 }
 
 #[test]
+#[serial]
 fn session_set_cookie_header_uses_default_max_age_matching_token_ttl() {
     ensure_test_session_secret();
+    super::configure_secure_cookies(false);
     super::configure_session_ttl_secs(DEFAULT_SESSION_TTL_SECS);
     let cookie = session_set_cookie_header(77, false, 0);
-    assert!(cookie.starts_with("robominer_session="));
+    assert!(cookie.starts_with(&format!("{LEGACY_SESSION_COOKIE_NAME}=")));
     assert!(cookie.contains("; Max-Age=86400;"));
 }
 
 #[test]
+#[serial]
 fn persistent_session_set_cookie_header_uses_longer_max_age() {
     ensure_test_session_secret();
     let cookie = session_set_cookie_header(77, true, 0);
@@ -222,12 +230,13 @@ fn user_id_from_request_ignores_legacy_user_id_cookie() {
 }
 
 #[test]
+#[serial]
 fn authenticated_cookie_helper_sets_session_and_username() {
     ensure_test_session_secret();
     let cookie = format_authenticated_cookie(42, "Player");
 
-    assert!(cookie.contains(&format!("{SESSION_COOKIE_NAME}=")));
-    assert!(cookie.contains("robominer_username=Player"));
+    assert!(cookie.contains(&format!("{}=", session_cookie_name())));
+    assert!(cookie.contains(&format!("{}=Player", username_cookie_name())));
     assert_eq!(
         user_id_from_request(&request_with_cookie(&cookie)),
         Some(42)
@@ -235,17 +244,52 @@ fn authenticated_cookie_helper_sets_session_and_username() {
 }
 
 #[test]
+#[serial]
 fn session_clear_cookie_expires_session() {
-    assert!(session_clear_cookie_header().starts_with("robominer_session=; Max-Age=0;"));
+    ensure_test_session_secret();
+    // Global Secure flag is shared across parallel tests; accept either active name.
+    let header = session_clear_cookie_header();
+    assert!(
+        header.starts_with(&format!("{LEGACY_SESSION_COOKIE_NAME}=; Max-Age=0;"))
+            || header.starts_with(&format!("{HOST_SESSION_COOKIE_NAME}=; Max-Age=0;")),
+        "unexpected clear cookie header: {header}"
+    );
+    assert!(header.contains("Path=/"));
 }
 
 #[test]
-fn secure_cookie_suffix_is_applied_when_enabled() {
+#[serial]
+fn secure_cookies_use_host_prefix_and_clear_legacy_names() {
     super::configure_session_secret("secure-cookie-test-secret-32chars!!")
         .expect("configure secret");
     super::configure_secure_cookies(true);
 
-    let cookie = session_set_cookie_header(42, false, 0);
+    assert_eq!(session_cookie_name(), HOST_SESSION_COOKIE_NAME);
+    assert_eq!(username_cookie_name(), HOST_USERNAME_COOKIE_NAME);
 
+    let cookie = session_set_cookie_header(42, false, 0);
+    assert!(cookie.starts_with(&format!("{HOST_SESSION_COOKIE_NAME}=")));
     assert!(cookie.ends_with("; Secure"));
+    assert!(cookie.contains("Path=/"));
+    assert!(!cookie.to_ascii_lowercase().contains("domain="));
+
+    let clears = session_clear_cookie_headers();
+    assert!(
+        clears
+            .iter()
+            .any(|header| header.starts_with(&format!("{HOST_SESSION_COOKIE_NAME}=; Max-Age=0;")))
+    );
+    assert!(clears.iter().any(|header| {
+        header.starts_with(&format!("{LEGACY_SESSION_COOKIE_NAME}=; Max-Age=0;"))
+    }));
+
+    let legacy_clears = legacy_auth_cookie_clear_headers();
+    assert!(legacy_clears.iter().any(|header| {
+        header.starts_with(&format!("{LEGACY_SESSION_COOKIE_NAME}=; Max-Age=0;"))
+    }));
+    assert!(legacy_clears.iter().any(|header| {
+        header.starts_with(&format!("{LEGACY_USERNAME_COOKIE_NAME}=; Max-Age=0;"))
+    }));
+
+    super::configure_secure_cookies(false);
 }

@@ -1,6 +1,6 @@
 use crate::Request;
 use crate::Response;
-use crate::session::{self, session_clear_cookie_header};
+use crate::session::{self, session_cookie_name};
 
 /// How to treat the request session after checking `User.sessionVersion`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -50,7 +50,7 @@ pub(super) async fn strip_stale_session_cookie(
         SessionStrip::InvalidatePermanently | SessionStrip::TreatAsAnonymous
     ) && let Some(cookies) = request.headers.get_mut("cookie")
     {
-        *cookies = strip_named_cookie(cookies, "robominer_session");
+        *cookies = strip_named_cookie(cookies, session_cookie_name());
     }
     action
 }
@@ -75,14 +75,13 @@ fn strip_named_cookie(cookies: &str, name: &str) -> String {
 }
 
 pub(super) fn clear_stale_session_cookies(response: Response) -> Response {
-    response
-        .with_header("Set-Cookie", session_clear_cookie_header())
+    let response = session::with_set_cookies(response, session::session_clear_cookie_headers())
         .with_header(
             "Set-Cookie",
             format!(
                 "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
                 session::secure_cookie_suffix()
             ),
-        )
-        .with_header("Set-Cookie", session::username_clear_cookie_header())
+        );
+    session::with_set_cookies(response, session::username_clear_cookie_headers())
 }
