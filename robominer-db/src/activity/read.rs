@@ -38,6 +38,7 @@ struct ActivityRecentRallyRow {
     #[sqlx(rename = "robotName")]
     robot_name: String,
     username: String,
+    score: f64,
     #[sqlx(rename = "miningEndTimeMillis")]
     mining_end_time_millis: i64,
 }
@@ -51,6 +52,7 @@ impl From<ActivityRecentRallyRow> for ActivityRecentRallyRecord {
             mining_area_name: row.mining_area_name,
             robot_name: row.robot_name,
             username: row.username,
+            score: row.score,
             mining_end_time_millis: row.mining_end_time_millis,
         }
     }
@@ -65,6 +67,7 @@ struct ActivityRecentRallyParticipantRow {
     #[sqlx(rename = "robotName")]
     robot_name: String,
     username: String,
+    score: f64,
 }
 
 impl From<ActivityRecentRallyParticipantRow> for ActivityRecentRallyParticipantRecord {
@@ -74,6 +77,7 @@ impl From<ActivityRecentRallyParticipantRow> for ActivityRecentRallyParticipantR
             player_number: row.player_number,
             robot_name: row.robot_name,
             username: row.username,
+            score: row.score,
         }
     }
 }
@@ -119,6 +123,7 @@ pub async fn list_activity_recent_rally_feed(
     let rows = sqlx::query_as::<_, ActivityRecentRallyRow>(
         "SELECT MiningQueue.id, MiningQueue.rallyResultId, MiningArea.id AS miningAreaId, \
                 MiningArea.areaName, Robot.robotName, User.username, \
+                COALESCE(MiningQueue.score, 0.0) AS score, \
                 CAST(UNIX_TIMESTAMP(MiningQueue.miningEndTime) * 1000 AS SIGNED) \
                   AS miningEndTimeMillis \
          FROM MiningQueue \
@@ -187,7 +192,8 @@ pub async fn list_activity_recent_rally_participants(
 ) -> Result<Vec<ActivityRecentRallyParticipantRecord>, sqlx::Error> {
     sqlx::query_as::<_, ActivityRecentRallyParticipantRow>(
         "SELECT RecentQueue.id AS id, MiningQueue.playerNumber AS playerNumber, \
-                Robot.robotName AS robotName, User.username AS username \
+                Robot.robotName AS robotName, User.username AS username, \
+                COALESCE(MiningQueue.score, 0.0) AS score \
          FROM (SELECT id, rallyResultId \
                FROM MiningQueue \
                WHERE playerNumber = 0 \
@@ -221,7 +227,8 @@ pub async fn list_activity_rally_participants_for_queues(
     let placeholders = crate::in_placeholders(mining_queue_ids.len());
     let query = format!(
         "SELECT RecentQueue.id AS id, MiningQueue.playerNumber AS playerNumber, \
-                Robot.robotName AS robotName, User.username AS username \
+                Robot.robotName AS robotName, User.username AS username, \
+                COALESCE(MiningQueue.score, 0.0) AS score \
          FROM MiningQueue RecentQueue \
          INNER JOIN MiningQueue ON MiningQueue.rallyResultId = RecentQueue.rallyResultId \
          INNER JOIN Robot ON Robot.id = MiningQueue.robotId \

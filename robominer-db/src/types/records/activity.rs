@@ -5,7 +5,7 @@ pub struct ActivityRecentUserRecord {
     pub last_login_time_millis: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ActivityRecentRallyRecord {
     pub mining_queue_id: i64,
     pub rally_result_id: Option<i64>,
@@ -13,6 +13,7 @@ pub struct ActivityRecentRallyRecord {
     pub mining_area_name: String,
     pub robot_name: String,
     pub username: String,
+    pub score: f64,
     pub mining_end_time_millis: i64,
 }
 
@@ -22,12 +23,13 @@ pub struct ActivityRallyAreaOption {
     pub area_name: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ActivityRecentRallyParticipantRecord {
     pub mining_queue_id: i64,
     pub player_number: i32,
     pub robot_name: String,
     pub username: String,
+    pub score: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

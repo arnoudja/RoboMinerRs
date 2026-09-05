@@ -377,13 +377,13 @@
 }
 
 .activity-rally-participant-name {
-    align-items: center;
+    align-items: baseline;
     color: #e8f4ff;
     display: inline-flex;
     flex-wrap: wrap;
     font-size: 0.88rem;
     font-weight: bold;
-    gap: 6px;
+    gap: 6px 8px;
 }
 
 .activity-rally-participant-self {
@@ -409,6 +409,13 @@
     color: var(--activity-text-muted);
     font-size: 0.82rem;
     grid-column: 2;
+}
+
+.activity-rally-participant-score {
+    color: var(--activity-text-muted);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: normal;
 }
 
 .activity-rally-actions {

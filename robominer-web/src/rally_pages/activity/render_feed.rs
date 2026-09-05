@@ -164,8 +164,13 @@ fn activity_player_count_label(participant_count: usize) -> String {
 fn rally_participants_for_card(
     rally: &robominer_db::ActivityRecentRallyRecord,
     participant_map: &HashMap<i64, Vec<&robominer_db::ActivityRecentRallyParticipantRecord>>,
-) -> Vec<(i32, String, String)> {
-    let mut rally_participants = vec![(0_i32, rally.robot_name.clone(), rally.username.clone())];
+) -> Vec<(i32, String, String, f64)> {
+    let mut rally_participants = vec![(
+        0_i32,
+        rally.robot_name.clone(),
+        rally.username.clone(),
+        rally.score,
+    )];
     if let Some(other_participants) = participant_map.get(&rally.mining_queue_id) {
         for participant in other_participants {
             if participant.player_number > 0 {
@@ -173,6 +178,7 @@ fn rally_participants_for_card(
                     participant.player_number,
                     participant.robot_name.clone(),
                     participant.username.clone(),
+                    participant.score,
                 ));
             }
         }
@@ -183,11 +189,11 @@ fn rally_participants_for_card(
 
 fn viewer_participated_in_rally(
     viewer_username: &str,
-    rally_participants: &[(i32, String, String)],
+    rally_participants: &[(i32, String, String, f64)],
 ) -> bool {
     rally_participants
         .iter()
-        .any(|(_, _, username)| username == viewer_username)
+        .any(|(_, _, username, _)| username == viewer_username)
 }
 
 fn render_activity_rally_card(
@@ -257,7 +263,7 @@ fn render_activity_rally_card(
     body.push_str("</div></header>");
     body.push_str(r#"<ul class="activity-rally-participants">"#);
 
-    for (player_number, robot_name, username) in rally_participants {
+    for (player_number, robot_name, username, score) in rally_participants {
         let Ok(index) = usize::try_from(player_number) else {
             continue;
         };
@@ -275,9 +281,10 @@ fn render_activity_rally_card(
             ""
         };
         body.push_str(&format!(
-            r#"<li class="{participant_class}"><span class="activity-rally-participant-color" aria-hidden="true"></span><span class="activity-rally-participant-name">{}{}</span><span class="activity-rally-participant-robot">{}</span></li>"#,
+            r#"<li class="{participant_class}"><span class="activity-rally-participant-color" aria-hidden="true"></span><span class="activity-rally-participant-name">{}{}<span class="activity-rally-participant-score" title="Rally score">{:.1}</span></span><span class="activity-rally-participant-robot">{}</span></li>"#,
             EscapedHtml::from(username.as_str()),
             you_badge,
+            score,
             EscapedHtml::from(robot_name.as_str()),
         ));
     }

@@ -28,8 +28,8 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
         &pool,
         sqlx::query(
             "INSERT INTO MiningQueue \
-             (miningAreaId, robotId, rallyResultId, playerNumber, miningEndTime) \
-             VALUES (?, ?, ?, 0, TIMESTAMPADD(SECOND, -10, NOW()))",
+             (miningAreaId, robotId, rallyResultId, playerNumber, score, miningEndTime) \
+             VALUES (?, ?, ?, 0, 42.5, TIMESTAMPADD(SECOND, -10, NOW()))",
         )
         .bind(fixture.mining_area_id)
         .bind(fixture.robot_id)
@@ -79,6 +79,7 @@ async fn list_activity_recent_rally_feed_filters_by_user_and_area() {
             .expect("area-filtered rally feed should load");
     assert_eq!(area_rallies.len(), 1);
     assert_eq!(area_rallies[0].mining_queue_id, player_zero_queue_id);
+    assert_eq!(area_rallies[0].score, 42.5);
 
     // AI opponents live in AIRobot and are not MiningQueue rows; only other players appear here.
     let participants = list_activity_rally_participants_for_queues(&pool, &[player_zero_queue_id])
