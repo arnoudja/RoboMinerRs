@@ -140,7 +140,8 @@ async fn load_account_page_state(
                 email = submitted_email;
             }
             if message.is_some()
-                && let Some(updated_user) = robominer_db::users::get_user_by_id(pool, user_id).await?
+                && let Some(updated_user) =
+                    robominer_db::users::get_user_by_id(pool, user_id).await?
             {
                 username = updated_user.username;
                 email = updated_user.email;

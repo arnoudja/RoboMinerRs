@@ -86,8 +86,8 @@ pub(super) fn render_account_page(hud: Option<&str>, state: &AccountPageState) -
     body.push_str(r#"<form class="account-form" action="account" method="post">"#);
     render_password_field(
         &mut body,
-        "currentpassword",
         "logout-currentpassword",
+        "currentpassword",
         "Current password",
         "Your current password",
         r#" required autocomplete="current-password""#,

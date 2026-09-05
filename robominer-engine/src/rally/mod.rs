@@ -1,3 +1,11 @@
+//! Rally simulation and the background `rally rallies` worker loop.
+//!
+//! - `run` / `pool` — one-shot or bounded pool simulations (optional persist).
+//! - `rallies` — poll claimable mining runs, simulate, optionally persist; with
+//!   `--persist` also claims finished runs into wallets between cycles.
+//!
+//! Prefer `robominer-engine rally …` over calling these modules from other crates.
+
 mod cycle;
 mod print;
 mod run_single;

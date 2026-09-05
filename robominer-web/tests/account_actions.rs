@@ -241,7 +241,7 @@ async fn account_logout_all_devices_rejects_wrong_password() {
     let body = response_body(&response);
     assert_eq!(response.status, 200);
     assert!(
-        body.contains("Your current password doesn't match"),
+        body.contains("Your current password doesn&#39;t match"),
         "expected wrong-password error:\n{body}"
     );
 

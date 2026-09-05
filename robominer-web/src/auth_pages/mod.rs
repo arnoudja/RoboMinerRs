@@ -22,7 +22,8 @@ pub(super) async fn logoff_page(request: &Request, config: &ServerConfig) -> Res
                 return response;
             }
             if let Some(pool) = config.database_pool.as_ref()
-                && let Err(error) = robominer_db::users::bump_user_session_version(pool, user_id).await
+                && let Err(error) =
+                    robominer_db::users::bump_user_session_version(pool, user_id).await
             {
                 tracing::error!(%error, user_id, "failed to bump session version on logoff");
                 return crate::page_context::page_load_error(
