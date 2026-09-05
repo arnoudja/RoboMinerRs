@@ -46,8 +46,7 @@ pub(super) async fn logoff_page(request: &Request, config: &ServerConfig) -> Res
 }
 
 fn logoff_response_clearing_cookies() -> Response {
-    logoff_html_response()
-        .with_header("Set-Cookie", session::session_clear_cookie_header())
+    let response = logoff_html_response()
         .with_header(
             "Set-Cookie",
             format!(
@@ -55,12 +54,10 @@ fn logoff_response_clearing_cookies() -> Response {
                 session::secure_cookie_suffix()
             ),
         )
-        .with_header("Set-Cookie", session::username_clear_cookie_header())
-        .with_header("Set-Cookie", process::remember_clear_cookie_header())
-        .with_header(
-            "Set-Cookie",
-            crate::csrf::anonymous_csrf_clear_cookie_header(),
-        )
+        .with_header("Set-Cookie", process::remember_clear_cookie_header());
+    let response = session::with_set_cookies(response, session::session_clear_cookie_headers());
+    let response = session::with_set_cookies(response, session::username_clear_cookie_headers());
+    session::with_set_cookies(response, crate::csrf::anonymous_csrf_clear_cookie_headers())
 }
 
 fn logoff_html_response() -> Response {

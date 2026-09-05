@@ -5,10 +5,20 @@ use crate::request_helpers::is_post;
 use crate::session::{self, SessionClaims, cookie_value};
 
 pub(crate) const CSRF_FIELD_NAME: &str = "csrfToken";
-pub(crate) const ANON_CSRF_COOKIE_NAME: &str = "robominer_csrf";
+pub(crate) const LEGACY_ANON_CSRF_COOKIE_NAME: &str = "robominer_csrf";
+pub(crate) const HOST_ANON_CSRF_COOKIE_NAME: &str = "__Host-robominer_csrf";
 const ANON_CSRF_COOKIE_MAX_AGE_SECS: u64 = 60 * 60;
 
 static ANON_CSRF_COUNTER: AtomicU64 = AtomicU64::new(1);
+
+/// Active anonymous CSRF cookie name: `__Host-*` when Secure is on, else unprefixed.
+pub(crate) fn anon_csrf_cookie_name() -> &'static str {
+    if session::secure_cookies_enabled() {
+        HOST_ANON_CSRF_COOKIE_NAME
+    } else {
+        LEGACY_ANON_CSRF_COOKIE_NAME
+    }
+}
 
 /// CSRF token bound to a session nonce (rotates when the session nonce changes).
 pub fn csrf_token_for_session(user_id: i64, nonce: u64) -> String {
@@ -84,8 +94,18 @@ pub(crate) fn html_with_csrf(request: &Request, user_id: i64, html: String) -> R
 /// Mint or reuse a double-submit CSRF cookie for anonymous login/signup pages.
 pub(crate) fn html_with_anonymous_csrf(request: &Request, html: String) -> Response {
     let token = anonymous_csrf_token_for_response(request);
-    Response::html(crate::html::inject_csrf_tokens(&html, &token))
-        .with_header("Set-Cookie", anonymous_csrf_cookie_header(&token))
+    let mut response = Response::html(crate::html::inject_csrf_tokens(&html, &token))
+        .with_header("Set-Cookie", anonymous_csrf_cookie_header(&token));
+    if session::secure_cookies_enabled() {
+        response = response.with_header(
+            "Set-Cookie",
+            format!(
+                "{LEGACY_ANON_CSRF_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+                session::secure_cookie_suffix()
+            ),
+        );
+    }
+    response
 }
 
 pub(crate) fn anonymous_csrf_token_for_response(request: &Request) -> String {
@@ -105,23 +125,37 @@ pub(crate) fn new_anonymous_csrf_token() -> String {
 
 pub(crate) fn anonymous_csrf_cookie_header(token: &str) -> String {
     format!(
-        "{ANON_CSRF_COOKIE_NAME}={token}; Max-Age={ANON_CSRF_COOKIE_MAX_AGE_SECS}; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}={token}; Max-Age={ANON_CSRF_COOKIE_MAX_AGE_SECS}; Path=/; HttpOnly; SameSite=Lax{}",
+        anon_csrf_cookie_name(),
         session::secure_cookie_suffix()
     )
 }
 
 pub(crate) fn anonymous_csrf_clear_cookie_header() -> String {
     format!(
-        "{ANON_CSRF_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        anon_csrf_cookie_name(),
         session::secure_cookie_suffix()
     )
+}
+
+/// Expire the active anon CSRF cookie and, when using `__Host-*`, the legacy name too.
+pub(crate) fn anonymous_csrf_clear_cookie_headers() -> Vec<String> {
+    let mut headers = vec![anonymous_csrf_clear_cookie_header()];
+    if session::secure_cookies_enabled() {
+        headers.push(format!(
+            "{LEGACY_ANON_CSRF_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+            session::secure_cookie_suffix()
+        ));
+    }
+    headers
 }
 
 pub(crate) fn anonymous_csrf_cookie(request: &Request) -> Option<String> {
     request
         .headers
         .get("cookie")
-        .and_then(|cookies| cookie_value(cookies, ANON_CSRF_COOKIE_NAME))
+        .and_then(|cookies| cookie_value(cookies, anon_csrf_cookie_name()))
 }
 
 pub(crate) fn valid_anonymous_csrf(request: &Request) -> bool {

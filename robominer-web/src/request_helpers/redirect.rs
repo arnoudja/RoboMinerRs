@@ -92,7 +92,7 @@ pub(crate) fn session_username(request: &Request) -> String {
     request
         .headers
         .get("cookie")
-        .and_then(|cookies| session::cookie_value(cookies, "robominer_username"))
+        .and_then(|cookies| session::cookie_value(cookies, session::username_cookie_name()))
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| "Player".to_string())
 }

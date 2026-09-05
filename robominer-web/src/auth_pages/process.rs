@@ -204,6 +204,11 @@ pub(super) fn auth_redirect_response(
             session::session_set_cookie_header(user_id, persistent_session, session_version),
         )
         .with_header("Set-Cookie", session::username_set_cookie_header(username));
+    response = session::with_set_cookies(response, session::legacy_auth_cookie_clear_headers());
+    if session::secure_cookies_enabled() {
+        response =
+            session::with_set_cookies(response, crate::csrf::anonymous_csrf_clear_cookie_headers());
+    }
     if let Some(cookie) = remember_cookie {
         response = response.with_header("Set-Cookie", cookie);
     }

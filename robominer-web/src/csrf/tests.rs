@@ -2,12 +2,13 @@ use std::collections::HashMap;
 use std::sync::Once;
 
 use super::{
-    ANON_CSRF_COOKIE_NAME, CSRF_FIELD_NAME, csrf_token_for_session, csrf_token_from_cookie,
+    CSRF_FIELD_NAME, anon_csrf_cookie_name, csrf_token_for_session, csrf_token_from_cookie,
     html_with_anonymous_csrf, html_with_csrf, new_anonymous_csrf_token,
     reject_invalid_anonymous_csrf, reject_invalid_csrf, valid_anonymous_csrf, valid_csrf_token,
 };
 use crate::Request;
 use crate::session::{self, session_from_cookie_header};
+use serial_test::serial;
 
 fn ensure_secret() {
     static INIT: Once = Once::new();
@@ -42,6 +43,7 @@ fn request(method: &str, form: HashMap<String, String>, cookie: Option<&str>) ->
 }
 
 #[test]
+#[serial]
 fn csrf_token_is_bound_to_session_nonce() {
     ensure_secret();
     let cookie_a = authenticated_cookie(7);
@@ -66,6 +68,7 @@ fn csrf_token_is_bound_to_session_nonce() {
 }
 
 #[test]
+#[serial]
 fn valid_csrf_token_accepts_matching_post_form_value() {
     let cookie = authenticated_cookie(42);
     let token = csrf_token_from_cookie(&cookie).expect("token");
@@ -75,6 +78,7 @@ fn valid_csrf_token_accepts_matching_post_form_value() {
 }
 
 #[test]
+#[serial]
 fn valid_csrf_token_rejects_missing_wrong_or_mismatched_session() {
     let cookie = authenticated_cookie(42);
     assert!(!valid_csrf_token(
@@ -102,6 +106,7 @@ fn valid_csrf_token_rejects_missing_wrong_or_mismatched_session() {
 }
 
 #[test]
+#[serial]
 fn html_with_csrf_rotates_session_nonce_after_post() {
     let cookie = authenticated_cookie(9);
     let before = session_from_cookie_header(&cookie).expect("session");
@@ -128,6 +133,7 @@ fn html_with_csrf_rotates_session_nonce_after_post() {
 }
 
 #[test]
+#[serial]
 fn html_with_csrf_keeps_nonce_on_get() {
     let cookie = authenticated_cookie(9);
     let before = session_from_cookie_header(&cookie).expect("session");
@@ -149,10 +155,11 @@ fn html_with_csrf_keeps_nonce_on_get() {
 }
 
 #[test]
+#[serial]
 fn anonymous_double_submit_csrf_requires_matching_cookie_and_form() {
     ensure_secret();
     let token = new_anonymous_csrf_token();
-    let cookie = format!("{ANON_CSRF_COOKIE_NAME}={token}");
+    let cookie = format!("{}={token}", anon_csrf_cookie_name());
     let mut form = HashMap::new();
     form.insert(CSRF_FIELD_NAME.to_string(), token.clone());
     assert!(valid_anonymous_csrf(&request(
@@ -167,6 +174,7 @@ fn anonymous_double_submit_csrf_requires_matching_cookie_and_form() {
 }
 
 #[test]
+#[serial]
 fn html_with_anonymous_csrf_sets_cookie_and_injects_form_field() {
     ensure_secret();
     let html = r#"<!DOCTYPE html><html><head></head><body><form method="post" action="Login"></form></body></html>"#;
@@ -178,6 +186,32 @@ fn html_with_anonymous_csrf_sets_cookie_and_injects_form_field() {
             .headers
             .iter()
             .any(|(name, value)| *name == "Set-Cookie"
-                && value.starts_with(&format!("{ANON_CSRF_COOKIE_NAME}=")))
+                && value.starts_with(&format!("{}=", anon_csrf_cookie_name())))
     );
+}
+
+#[test]
+#[serial]
+fn secure_anonymous_csrf_uses_host_prefix_and_clears_legacy_name() {
+    ensure_secret();
+    session::configure_secure_cookies(true);
+    let html = r#"<!DOCTYPE html><html><head></head><body><form method="post" action="Login"></form></body></html>"#;
+    let response = html_with_anonymous_csrf(&request("GET", HashMap::new(), None), html.into());
+    let set_cookies: Vec<_> = response
+        .headers
+        .iter()
+        .filter(|(name, _)| *name == "Set-Cookie")
+        .map(|(_, value)| value.as_str())
+        .collect();
+    assert!(
+        set_cookies
+            .iter()
+            .any(|value| value.starts_with("__Host-robominer_csrf=") && value.contains("Secure"))
+    );
+    assert!(
+        set_cookies
+            .iter()
+            .any(|value| value.starts_with("robominer_csrf=; Max-Age=0;"))
+    );
+    session::configure_secure_cookies(false);
 }
