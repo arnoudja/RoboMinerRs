@@ -222,7 +222,7 @@
         if (empty) {
             empty.hidden = firstVisibleRunId !== null;
         }
-        let nextRunId = null;
+        let nextRunId;
         if (preferredRunId && document.querySelector('.mining-results-run-card[data-run-id="' + preferredRunId + '"]:not(.mining-results-filter-hidden):not(.mining-results-run-card-collapsed)')) {
             nextRunId = preferredRunId;
         } else if (activeRunId && document.querySelector('.mining-results-run-card[data-run-id="' + activeRunId + '"]:not(.mining-results-filter-hidden):not(.mining-results-run-card-collapsed)')) {

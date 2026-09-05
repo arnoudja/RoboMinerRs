@@ -58,7 +58,7 @@
         }
     }
 
-    let rallyPayloadError = null;
+    let rallyPayloadError;
     try {
         const rallyResultDataEl = document.getElementById('rally-result-data');
         if (!rallyResultDataEl) {
