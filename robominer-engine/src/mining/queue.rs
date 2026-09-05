@@ -9,7 +9,7 @@ pub(crate) async fn enqueue_mining(
 ) -> Result<()> {
     let robot_id = request.robot_id;
     let mining_area_id = request.mining_area_id;
-    let outcome = robominer_db::enqueue_mining(pool, request)
+    let outcome = robominer_db::mining_queue::enqueue_mining(pool, request)
         .await
         .context("failed to enqueue mining run")?;
     crate::db_outcome::finish_db_outcome(

@@ -28,7 +28,7 @@ pub(crate) async fn claim_all_ready_results(
     };
 
     for user_id in user_ids {
-        let result = robominer_db::claim_user_results(pool, user_id)
+        let result = robominer_db::rally::claim_user_results(pool, user_id)
             .await
             .with_context(|| format!("failed to claim mining results for user {user_id}"))?;
         if result.claimed_queues > 0 {
@@ -127,7 +127,7 @@ pub(crate) fn validate_run_claim_all_options(options: &RunClaimAllOptions) -> Re
 }
 
 pub(crate) async fn claim_results(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {
-    let result = robominer_db::claim_user_results(pool, user_id)
+    let result = robominer_db::rally::claim_user_results(pool, user_id)
         .await
         .with_context(|| format!("failed to claim mining results for user {user_id}"))?;
 

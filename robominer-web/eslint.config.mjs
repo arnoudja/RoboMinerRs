@@ -6,9 +6,8 @@ import globals from "globals";
  *
  * `no-undef` / `no-unused-vars` stay off: scripts share globals across <script>
  * tags without modules. `prefer-const` is on; `no-var` is enforced for
- * `static/js/common/**`, `static/js/mining_queue/**`, and the shop /
- * mining_results / robot page IIFEs, and stays off elsewhere so remaining
- * IIFEs are not a mass rewrite.
+ * page-scoped IIFEs (`common/`, `mining_queue/**`, shop/mining_results/robot,
+ * `rally_animation/**`, `edit_code/**`). Generated contract JS is ignored.
  */
 export default [
   {
@@ -16,6 +15,7 @@ export default [
       "node_modules/**",
       "static/js/**/tests/**",
       "static/js/common/tests/**",
+      "static/js/**/generated/**",
     ],
   },
   {
@@ -60,6 +60,18 @@ export default [
       "static/js/mining_results/page.js",
       "static/js/robot/page.js",
     ],
+    rules: {
+      "no-var": "error",
+    },
+  },
+  {
+    files: ["static/js/rally_animation/**/*.js"],
+    rules: {
+      "no-var": "error",
+    },
+  },
+  {
+    files: ["static/js/edit_code/**/*.js"],
     rules: {
       "no-var": "error",
     },

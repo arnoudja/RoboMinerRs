@@ -3,12 +3,23 @@ mod support;
 
 use std::collections::HashMap;
 
-use robominer_web::test_support::route;
+use robominer_web::test_support::{
+    lock_auth_rate_limiter_for_tests, reset_auth_rate_limiter_for_tests, route,
+};
 use serial_test::serial;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, get_request,
     login_with_credentials, post_request, response_body, server_config, unique_prefix,
 };
+
+/// Coverage (`cargo test`) keeps one process for this binary, so auth attempt
+/// budgets accumulate across tests unless cleared. Nextest often isolates
+/// processes, which is why rust CI can pass while coverage fails.
+fn clear_auth_rate_limits() -> std::sync::MutexGuard<'static, ()> {
+    let guard = lock_auth_rate_limiter_for_tests();
+    reset_auth_rate_limiter_for_tests();
+    guard
+}
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
@@ -18,6 +29,7 @@ async fn account_update_post_persists_profile_changes() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -78,6 +90,7 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -206,12 +219,77 @@ async fn account_password_change_persists_and_invalidates_other_sessions() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[serial]
+async fn account_logout_all_devices_rejects_wrong_password() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-logout-all-bad");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let config = server_config(pool.clone());
+
+    let other_cookie = cookie_header(&login_with_credentials(&config, &username, &password).await);
+    let current_cookie =
+        cookie_header(&login_with_credentials(&config, &username, &password).await);
+
+    let mut form = HashMap::new();
+    form.insert(
+        "currentpassword".to_string(),
+        "wrong-password-x".to_string(),
+    );
+    form.insert("logoutAllDevices".to_string(), "1".to_string());
+    let response = route(
+        &post_request("/account", form, Some(&current_cookie)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+    assert_eq!(response.status, 200);
+    assert!(
+        body.contains("Your current password doesn&#39;t match"),
+        "expected wrong-password error:\n{body}"
+    );
+
+    let other_after = route(&get_request("/account", Some(&other_cookie)), &config).await;
+    assert_eq!(
+        other_after.status, 200,
+        "other device session must remain valid when logout-all is rejected"
+    );
+
+    let current_after = route(&get_request("/account", Some(&current_cookie)), &config).await;
+    assert_eq!(
+        current_after.status, 200,
+        "current session must remain valid when logout-all is rejected"
+    );
+
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
 async fn account_logout_all_devices_bumps_session_and_keeps_current_cookie() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;
     };
 
     ensure_session_configured();
+    let _auth_rate_limit = clear_auth_rate_limits();
 
     let pool = robominer_db::connect(&database_url)
         .await
@@ -228,6 +306,7 @@ async fn account_logout_all_devices_bumps_session_and_keeps_current_cookie() {
         cookie_header(&login_with_credentials(&config, &username, &password).await);
 
     let mut form = HashMap::new();
+    form.insert("currentpassword".to_string(), password.clone());
     form.insert("logoutAllDevices".to_string(), "1".to_string());
     let response = route(
         &post_request("/account", form, Some(&current_cookie)),

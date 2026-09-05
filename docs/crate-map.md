@@ -5,9 +5,11 @@ boundaries and the “where does this rule live?” decision tree.
 
 ## `robominer-db`
 
-The crate root re-exports symbols for convenience (`robominer_db::enqueue_mining`, etc.). Prefer
-explicit module paths for new APIs (`robominer_db::rally::…`, `robominer_db::achievements::…`).
-Do not expand root `pub use module::*` wildcards for new symbols.
+The crate root re-exports symbols for compatibility (`robominer_db::enqueue_mining`, etc.). Prefer
+`robominer_db::module::…` paths for new APIs and when touching hot production call sites
+(`robominer_db::rally::…`, `robominer_db::users::…`, `robominer_db::shop::…`, …).
+**No new root wildcards** — do not add another `pub use module::*` at the crate root; existing
+ones stay for compatibility.
 
 **Note:** `robominer-db` holds both persistence and **transactional game rules** (shop economics,
 queue capacity, achievement unlock graphs, claim tax). Domain orchestrates simulation; db owns

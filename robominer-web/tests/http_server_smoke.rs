@@ -29,9 +29,34 @@ fn spawn_server() -> (String, thread::JoinHandle<()>) {
         )
         .expect("serve");
     });
-    // Give the runtime a moment to accept.
-    thread::sleep(Duration::from_millis(50));
-    (format!("{addr}"), handle)
+    let addr = format!("{addr}");
+    wait_until_health_ready(&addr);
+    (addr, handle)
+}
+
+/// Poll `GET /health` until the listener accepts and the handler responds.
+fn wait_until_health_ready(addr: &str) {
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    let mut last_error = String::from("no attempts yet");
+    while std::time::Instant::now() < deadline {
+        match TcpStream::connect(addr) {
+            Ok(_) => {
+                let response = raw_http_exchange(
+                    addr,
+                    "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
+                );
+                if response.starts_with("HTTP/1.1 200") {
+                    return;
+                }
+                last_error = format!("unexpected /health response: {response}");
+            }
+            Err(error) => {
+                last_error = format!("connect: {error}");
+            }
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
+    panic!("server did not become ready within timeout ({last_error})");
 }
 
 fn raw_http_exchange(addr: &str, request: &str) -> String {

@@ -53,12 +53,12 @@ pub(super) fn valid_email(email: &str) -> bool {
 }
 
 pub(super) fn valid_password(password: &str) -> bool {
-    (8..=128).contains(&password.len())
+    (12..=128).contains(&password.len())
 }
 
 /// Passwords accepted into Argon2 verify / timing-burn paths.
 ///
-/// Create/update still require [`valid_password`] (8..=128). Login/account
+/// Create/update still require [`valid_password`] (12..=128). Login/account
 /// verify rejects empty and oversize inputs before hashing so a 1 MiB body
 /// cannot turn Argon2 into a cheap CPU DoS.
 pub(super) fn password_eligible_for_verify(password: &str) -> bool {
@@ -109,8 +109,10 @@ mod tests {
     }
 
     #[test]
-    fn valid_password_requires_at_least_eight_and_at_most_128_characters() {
-        assert!(valid_password("12345678"));
+    fn valid_password_requires_at_least_twelve_and_at_most_128_characters() {
+        assert!(!valid_password("12345678"));
+        assert!(!valid_password("12345678901"));
+        assert!(valid_password("123456789012"));
         assert!(!valid_password("short"));
         assert!(valid_password(&"a".repeat(128)));
         assert!(!valid_password(&"a".repeat(129)));

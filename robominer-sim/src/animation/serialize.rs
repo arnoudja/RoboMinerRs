@@ -1,254 +1,13 @@
 use std::collections::BTreeMap;
 
-use crate::MAX_ORE_TYPES;
 use crate::animation_payload::{
-    AnimationCpuStep, AnimationCpuStepResult, AnimationCpuStepResultKind, AnimationGround,
-    AnimationGroundChange, AnimationGroundPosition, AnimationLocation, AnimationOreType,
-    AnimationPayload, AnimationRobot, AnimationRobots,
+    AnimationCpuStep, AnimationGround, AnimationGroundChange, AnimationGroundPosition,
+    AnimationLocation, AnimationOreType, AnimationRobot, AnimationRobots,
 };
 use crate::ground::Ground;
-use crate::position::Position;
 use crate::robot::Robot;
 
-/// Current on-disk / wire format for rally animation payloads stored in
-/// `RallyResult.resultData`. Older executable JavaScript rows (`var myRobots = …`)
-/// are no longer played by the web viewer.
-///
-/// Version 2 adds optional per-turn `cpu` arrays of instruction spans,
-/// typed step results (`r`), and locals snapshots (`vs`).
-pub const ANIMATION_PAYLOAD_VERSION: u32 = 2;
-
-pub struct OreAnimationData {
-    pub ore_id: i64,
-    pub max_amount: i32,
-}
-
-/// One program CPU instruction within a turn (for replay stepping/highlight).
-#[derive(Clone, Debug, PartialEq)]
-pub struct RecordedCpuStep {
-    pub line: u16,
-    pub start_col: u16,
-    pub end_col: u16,
-    pub result: Option<robominer_program::CpuStepResult>,
-    pub variables: BTreeMap<String, robominer_program::CpuStepResult>,
-}
-
-impl RecordedCpuStep {
-    pub fn from_span(span: robominer_program::SourceSpan) -> Option<Self> {
-        if !span.is_known() {
-            return None;
-        }
-        Some(Self {
-            line: span.line,
-            start_col: span.start_col,
-            end_col: span.end_col,
-            result: None,
-            variables: BTreeMap::new(),
-        })
-    }
-
-    /// True when this step has a token column range (matches [`SourceSpan::has_columns`]).
-    pub fn has_columns(&self) -> bool {
-        self.line != 0 && self.start_col > 0 && self.end_col > self.start_col
-    }
-
-    pub fn with_result(mut self, result: Option<robominer_program::CpuStepResult>) -> Self {
-        self.result = result;
-        self
-    }
-
-    pub fn with_variables(
-        mut self,
-        variables: BTreeMap<String, robominer_program::CpuStepResult>,
-    ) -> Self {
-        self.variables = variables;
-        self
-    }
-}
-
-fn animation_cpu_step_result(result: robominer_program::CpuStepResult) -> AnimationCpuStepResult {
-    AnimationCpuStepResult {
-        k: AnimationCpuStepResultKind::from(result.kind()),
-        v: result.wire_f64(),
-    }
-}
-
-impl From<RecordedCpuStep> for AnimationCpuStep {
-    fn from(step: RecordedCpuStep) -> Self {
-        let has_columns = step.has_columns();
-        let mut entry = AnimationCpuStep {
-            l: step.line,
-            c: None,
-            e: None,
-            r: step.result.map(animation_cpu_step_result),
-            vs: if step.variables.is_empty() {
-                None
-            } else {
-                Some(
-                    step.variables
-                        .into_iter()
-                        .map(|(name, result)| (name, animation_cpu_step_result(result)))
-                        .collect(),
-                )
-            },
-        };
-        if has_columns {
-            entry.c = Some(step.start_col);
-            entry.e = Some(step.end_col);
-        }
-        entry
-    }
-}
-
-/// Compact per-cycle status for stuck/idle diagnosis in the replay viewer.
-/// Omitted from JSON when the robot is making normal progress.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RobotCycleStatus {
-    /// Individual battery / max_turns exhausted; no action this cycle.
-    Battery,
-    /// Waiting while a scan completes (paired with action index 0).
-    Scan,
-    /// CPU budget exhausted before an action was chosen.
-    Cpu,
-    /// `move(0)` / `rotate(0)` (or epsilon-equivalent) mapped to Wait.
-    Zero,
-    /// Non-zero motion requested but collapsed to Wait — no speed chunk could be issued
-    /// (e.g. zero engine speed). Wire status remains `"motion"` for replay compatibility.
-    NoChunk,
-    /// Requested move ended at the start pose due to map bounds.
-    Wall,
-    /// Requested move ended at the start pose due to another robot.
-    Robot,
-    /// Explicit or residual Wait with no more specific cause.
-    Wait,
-}
-
-impl RobotCycleStatus {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Battery => "battery",
-            Self::Scan => "scan",
-            Self::Cpu => "cpu",
-            Self::Zero => "zero",
-            Self::NoChunk => "motion",
-            Self::Wall => "wall",
-            Self::Robot => "robot",
-            Self::Wait => "wait",
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct RobotAnimationStep {
-    position: Position,
-    ore: [i32; MAX_ORE_TYPES],
-    depot: [i32; MAX_ORE_TYPES],
-    time_fraction: f64,
-    /// Optional action index for this cycle (`RobotAction::action_index`, or 0 for scan).
-    /// Absent on the initial step and on legacy replays.
-    action_index: Option<u8>,
-    /// Optional 1-based source line when this cycle has no CPU micro-steps (sticky highlight).
-    /// Serialized as `l`; omitted when `cpu_steps` is non-empty.
-    source_line: Option<u16>,
-    /// Optional stuck/idle reason for this cycle.
-    status: Option<RobotCycleStatus>,
-    /// Program CPU micro-steps for this cycle; serialized as `cpu` when non-empty.
-    cpu_steps: Vec<RecordedCpuStep>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct GroundAnimationStep {
-    time: i32,
-    ore: [i32; MAX_ORE_TYPES],
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub(crate) struct AnimationRecorder {
-    robot_steps: Vec<Vec<RobotAnimationStep>>,
-    ground_changes: BTreeMap<(usize, usize), Vec<GroundAnimationStep>>,
-}
-
-impl AnimationRecorder {
-    pub(crate) fn new(robot_count: usize) -> Self {
-        Self {
-            robot_steps: vec![Vec::new(); robot_count],
-            ground_changes: BTreeMap::new(),
-        }
-    }
-
-    pub(crate) fn record_initial_ground(&mut self, ground: &Ground) {
-        for x in 0..ground.size_x() {
-            for y in 0..ground.size_y() {
-                let ore = *ground.at(x, y).ore();
-                if ore.iter().any(|amount| *amount > 0) {
-                    self.record_ground_change(x, y, 0, ore);
-                }
-            }
-        }
-    }
-
-    pub(crate) fn record_ground_change(
-        &mut self,
-        x: usize,
-        y: usize,
-        time: i32,
-        ore: [i32; MAX_ORE_TYPES],
-    ) {
-        self.ground_changes
-            .entry((x, y))
-            .or_default()
-            .push(GroundAnimationStep { time, ore });
-    }
-
-    pub(crate) fn record_robot_step(
-        &mut self,
-        robot_index: usize,
-        robot: &Robot,
-        action_index: Option<u8>,
-        source_line: Option<u16>,
-        status: Option<RobotCycleStatus>,
-        cpu_steps: Vec<RecordedCpuStep>,
-    ) {
-        self.robot_steps[robot_index].push(RobotAnimationStep {
-            position: robot.position(),
-            ore: *robot.ore(),
-            depot: *robot.depot(),
-            time_fraction: robot.time_fraction,
-            action_index,
-            source_line,
-            status,
-            cpu_steps,
-        });
-    }
-
-    pub(crate) fn into_animation_payload(
-        self,
-        ground: &Ground,
-        robots: &[Robot],
-        ore_data: &[OreAnimationData],
-    ) -> AnimationPayload {
-        let mut payload = AnimationPayload {
-            v: ANIMATION_PAYLOAD_VERSION,
-            robots: robots_animation(&self.robot_steps, robots, ground.size_x(), ground.size_y()),
-            ground: ground_animation(ground, &self.ground_changes),
-            ore_types: ore_animation(ore_data),
-        };
-        // Omit unchanged cpu[].vs up front so long Etaxy-class rallies stay under the
-        // persist budget without dropping all locals via strip_cpu_locals.
-        crate::animation_payload::sparsify_cpu_locals(&mut payload);
-        payload
-    }
-
-    pub(crate) fn into_animation_data(
-        self,
-        ground: &Ground,
-        robots: &[Robot],
-        ore_data: &[OreAnimationData],
-    ) -> String {
-        self.into_animation_payload(ground, robots, ore_data)
-            .to_embedded_json()
-    }
-}
+use super::types::{GroundAnimationStep, OreAnimationData, RobotAnimationStep};
 
 /// Axis-aligned square on the map corner where this robot slot spawns.
 /// Side length is `ceil(robot_size)` cells, anchored at the map corner.
@@ -270,7 +29,7 @@ fn depot_home_square(
     (x, y, side)
 }
 
-fn robots_animation(
+pub(super) fn robots_animation(
     robot_steps: &[Vec<RobotAnimationStep>],
     robots: &[Robot],
     size_x: usize,
@@ -438,7 +197,7 @@ fn robot_locations(steps: &[RobotAnimationStep], record_depot: bool) -> Vec<Anim
     values
 }
 
-fn ground_animation(
+pub(super) fn ground_animation(
     ground: &Ground,
     ground_changes: &BTreeMap<(usize, usize), Vec<GroundAnimationStep>>,
 ) -> AnimationGround {
@@ -484,7 +243,7 @@ fn ground_change_array(changes: &[GroundAnimationStep]) -> Vec<AnimationGroundCh
     values
 }
 
-fn ore_animation(ore_data: &[OreAnimationData]) -> BTreeMap<String, AnimationOreType> {
+pub(super) fn ore_animation(ore_data: &[OreAnimationData]) -> BTreeMap<String, AnimationOreType> {
     let mut object = BTreeMap::new();
 
     for (index, ore) in ore_data.iter().enumerate() {
@@ -515,7 +274,9 @@ pub fn is_legacy_javascript_result_data(result_data: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{AnimationPayload, is_legacy_javascript_result_data};
+    use crate::AnimationPayload;
+
+    use super::is_legacy_javascript_result_data;
 
     #[test]
     fn detects_legacy_javascript_payloads() {

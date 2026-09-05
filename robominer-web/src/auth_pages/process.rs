@@ -52,7 +52,7 @@ pub(super) async fn process_login_request(
         .into_result()
         {
             Ok(verified) => {
-                let username = robominer_db::get_user_by_id(pool, verified.user_id)
+                let username = robominer_db::users::get_user_by_id(pool, verified.user_id)
                     .await?
                     .map(|user| user.username)
                     .unwrap_or_else(|| login_name.clone());

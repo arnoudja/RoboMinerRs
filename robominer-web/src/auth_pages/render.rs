@@ -199,8 +199,8 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
         "newpassword",
         "Password",
         "Choose a password",
-        r#" required pattern=".{8,}" autocomplete="new-password""#,
-        Some("At least 8 characters."),
+        r#" required pattern=".{12,}" autocomplete="new-password""#,
+        Some("At least 12 characters."),
     );
     render_password_field(
         body,

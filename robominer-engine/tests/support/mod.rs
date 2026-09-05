@@ -1,14 +1,32 @@
-#![allow(dead_code, unused_imports)]
+//! Shared helpers for `robominer-engine` CLI integration tests.
+//!
+//! Each `tests/*.rs` binary compiles this module; `dead_code` covers helpers only
+//! exercised by sibling binaries.
+
+#![allow(dead_code)]
 
 use std::process::{Command, Output};
 
-pub use robominer_test_support::{
-    cleanup_claimed_queue_fixture, cleanup_created_user, insert_ai_robot,
-    insert_claimed_mining_queue, insert_cli_robot as insert_robot, insert_mining_queue,
-    insert_row_id, insert_user_with_credentials, unique_prefix,
-};
+use robominer_test_support::{insert_user_with_credentials, unique_prefix};
 use sqlx::MySqlPool;
+
+#[allow(unused_imports)] // trait in scope via `use support::*` for `.try_get`
 pub use sqlx::Row;
+
+/// DB/fixture helpers still imported through `use support::*` in test binaries.
+#[allow(unused_imports)]
+pub use robominer_test_support::{
+    AchievementCliFixture as TestAchievementFixture,
+    CancelMiningQueueFixture as TestCancelMiningQueueFixture,
+    ClaimResultsFixture as TestClaimResultsFixture,
+    EnqueueMiningFixture as TestEnqueueMiningFixture, PoolFixture as TestPoolFixture,
+    ProgramSourceFixture as TestProgramSourceFixture, RallyFixture as TestRallyFixture,
+    RobotConfigFixture as TestRobotConfigFixture, ShopFixture as TestShopFixture,
+    cleanup_claimed_queue_fixture, cleanup_created_user, ensure_default_robot_parts,
+    insert_ai_robot, insert_claimed_mining_queue, insert_cli_robot as insert_robot,
+    insert_robot_config_part, insert_row_id, insert_user_robot_part_asset,
+    parse_created_program_source_id,
+};
 
 pub fn run_engine(args: &[String]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_robominer-engine"))
@@ -67,6 +85,3 @@ pub async fn insert_test_user(
 ) -> i64 {
     insert_user_with_credentials(pool, username, email, password_hash).await
 }
-
-mod fixtures;
-pub use fixtures::*;

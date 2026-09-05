@@ -257,3 +257,66 @@ async fn achievements_claim_rejected_shows_unable_banner() {
 
     fixture.cleanup(&pool, true).await;
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn achievements_own_user_query_without_username_cookie_still_loads_claimable_page() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let prefix = unique_prefix("rust-web-ach-nocookie");
+    let username = format!("{prefix}-user");
+    let password = "test-password-1".to_string();
+    let user_id =
+        create_user_via_engine(&username, &format!("{prefix}@example.invalid"), &password);
+    let fixture = AchievementScenario::attach_to_user(&pool, &prefix, user_id).await;
+    let config = server_config(pool.clone());
+
+    let login_response = login_with_credentials(&config, &username, &password).await;
+    let cookie = cookie_header(&login_response);
+    // Drop unsigned username cookies so self-detection cannot use them.
+    let session_only = cookie
+        .split(';')
+        .map(str::trim)
+        .filter(|part| {
+            let name = part.split_once('=').map(|(n, _)| n.trim()).unwrap_or("");
+            name != "robominer_username" && name != "__Host-robominer_username"
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    assert!(
+        !session_only.contains("robominer_username="),
+        "username cookie must be stripped for this regression:\n{session_only}"
+    );
+
+    let mut query = HashMap::new();
+    query.insert("user".to_string(), username.clone());
+    let response = route(
+        &get_request_query("/achievements", query, Some(&session_only)),
+        &config,
+    )
+    .await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "{body}");
+    assert!(
+        !body.contains("achievements-page-overview"),
+        "own username query must not open overview when username cookie is absent:\n{body}"
+    );
+    assert!(
+        body.contains(r#"class="achievements-page""#),
+        "expected self achievements page chrome:\n{body}"
+    );
+    assert!(
+        body.contains("Ready to claim") || body.contains("achievement-claim-badge"),
+        "expected claimable self achievements content:\n{body}"
+    );
+
+    fixture.cleanup(&pool, true).await;
+}

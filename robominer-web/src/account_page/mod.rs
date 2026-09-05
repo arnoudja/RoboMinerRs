@@ -10,7 +10,7 @@ mod render;
 #[cfg(test)]
 mod tests;
 
-use actions::{apply_account_mutations, is_account_update_post};
+use actions::{apply_account_mutations, is_account_update_post, is_logout_all_devices_post};
 
 #[derive(Debug)]
 pub(super) struct AccountPageState {
@@ -27,7 +27,7 @@ pub(super) async fn account_page(
     config: &ServerConfig,
     session: crate::page_context::PageSession<'_>,
 ) -> Response {
-    if is_account_update_post(request) {
+    if is_account_update_post(request) || is_logout_all_devices_post(request) {
         let ip = client_ip(request, config.trust_proxy);
         let account_key = account_rate_limit_key(session.user_id);
         if auth_attempt_is_rate_limited(&ip, &account_key) {
@@ -93,7 +93,7 @@ async fn load_account_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<AccountPageState, crate::page_context::PageLoadError> {
-    let Some(current_user) = robominer_db::get_user_by_id(pool, user_id).await? else {
+    let Some(current_user) = robominer_db::users::get_user_by_id(pool, user_id).await? else {
         return Ok(AccountPageState {
             username: String::new(),
             email: String::new(),
@@ -140,7 +140,8 @@ async fn load_account_page_state(
                 email = submitted_email;
             }
             if message.is_some()
-                && let Some(updated_user) = robominer_db::get_user_by_id(pool, user_id).await?
+                && let Some(updated_user) =
+                    robominer_db::users::get_user_by_id(pool, user_id).await?
             {
                 username = updated_user.username;
                 email = updated_user.email;

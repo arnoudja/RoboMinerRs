@@ -25,8 +25,17 @@ pub(super) async fn apply_account_mutations(
     password_verified: bool,
 ) -> Result<Option<AccountMutationResult>, crate::page_context::PageLoadError> {
     if is_logout_all_devices_post(request) {
+        if !password_verified {
+            return Ok(Some(AccountMutationResult {
+                message: None,
+                error_message: Some("Your current password doesn't match".to_string()),
+                reissue_session_version: None,
+                submitted_username: None,
+                submitted_email: None,
+            }));
+        }
         return Ok(Some(
-            match robominer_db::bump_user_session_version(pool, user_id).await? {
+            match robominer_db::users::bump_user_session_version(pool, user_id).await? {
                 Some(session_version) => AccountMutationResult {
                     message: Some("Signed out of all other devices".to_string()),
                     error_message: None,

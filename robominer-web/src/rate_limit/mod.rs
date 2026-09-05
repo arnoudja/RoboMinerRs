@@ -3,6 +3,34 @@
 mod auth;
 mod mutation;
 
+use std::collections::{HashMap, VecDeque};
+use std::time::Instant;
+
+/// Soft ceiling on distinct keys retained per in-process rate-limit map.
+///
+/// Process-local limiters are best-effort (no shared store). Under scanning,
+/// unique IPs/logins can accumulate until windows expire; this drops the
+/// coldest keys (oldest front timestamp) once a map grows past the cap.
+pub(super) const MAX_TRACKED_KEYS: usize = 4096;
+
+pub(super) fn enforce_map_cap<K: Eq + std::hash::Hash + Clone>(
+    map: &mut HashMap<K, VecDeque<Instant>>,
+    max_keys: usize,
+) {
+    if map.len() <= max_keys {
+        return;
+    }
+    let overflow = map.len() - max_keys;
+    let mut coldest: Vec<(K, Instant)> = map
+        .iter()
+        .filter_map(|(key, window)| window.front().map(|instant| (key.clone(), *instant)))
+        .collect();
+    coldest.sort_by_key(|(_, instant)| *instant);
+    for (key, _) in coldest.into_iter().take(overflow) {
+        map.remove(&key);
+    }
+}
+
 #[cfg(any(test, debug_assertions))]
 pub(crate) use auth::lock_auth_rate_limiter_for_tests;
 #[cfg(any(test, debug_assertions))]
@@ -239,5 +267,34 @@ mod tests {
         assert_eq!(mutation_action_family("/miningQueue"), "mining_queue");
         assert_eq!(mutation_action_family("/editCode"), "edit_code");
         assert_eq!(mutation_action_family("/unknown"), "other");
+    }
+
+    #[test]
+    fn enforce_map_cap_evicts_coldest_keys() {
+        use std::collections::{HashMap, VecDeque};
+        use std::time::{Duration, Instant};
+
+        let base = Instant::now();
+        let mut map: HashMap<String, VecDeque<Instant>> = HashMap::new();
+        for index in 0..10 {
+            let mut window = VecDeque::new();
+            window.push_back(base + Duration::from_secs(index));
+            map.insert(format!("ip-{index}"), window);
+        }
+        enforce_map_cap(&mut map, 4);
+        assert_eq!(map.len(), 4);
+        // Coldest keys (0..5) should be gone; newest remain.
+        for index in 0..6 {
+            assert!(
+                !map.contains_key(&format!("ip-{index}")),
+                "expected cold key ip-{index} evicted"
+            );
+        }
+        for index in 6..10 {
+            assert!(
+                map.contains_key(&format!("ip-{index}")),
+                "expected warm key ip-{index} retained"
+            );
+        }
     }
 }

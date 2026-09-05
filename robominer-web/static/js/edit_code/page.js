@@ -1,9 +1,9 @@
 (function() {
-    var pageRoot = document.querySelector('.edit-code-page');
-    var STORAGE_KEY = pageRoot
+    const pageRoot = document.querySelector('.edit-code-page');
+    const STORAGE_KEY = pageRoot
         ? pageRoot.getAttribute('data-selection-storage-key') || 'robominer.editCode.selectedProgramSourceId'
         : 'robominer.editCode.selectedProgramSourceId';
-    var preferStoredSelection = pageRoot
+    const preferStoredSelection = pageRoot
         && pageRoot.getAttribute('data-prefer-stored-selection') === 'true';
 
     function panelExists(sourceId) {
@@ -12,7 +12,7 @@
     }
 
     function readStoredProgramSourceId() {
-        var stored = window.RoboMinerSessionStore.readJson(STORAGE_KEY);
+        const stored = window.RoboMinerSessionStore.readJson(STORAGE_KEY);
         if (stored == null) {
             return null;
         }
@@ -33,11 +33,11 @@
     }
 
     function updateEditCodeSummary(sourceId) {
-        var summary = document.getElementById('editCodeSummarySelected');
-        var linkedSummary = document.getElementById('editCodeSummaryLinkedRobots');
-        var card = document.querySelector('.edit-code-program-card[data-source-id="' + sourceId + '"]');
+        const summary = document.getElementById('editCodeSummarySelected');
+        const linkedSummary = document.getElementById('editCodeSummaryLinkedRobots');
+        const card = document.querySelector('.edit-code-program-card[data-source-id="' + sourceId + '"]');
         if (summary && card) {
-            var cardName = card.querySelector('.edit-code-program-name');
+            const cardName = card.querySelector('.edit-code-program-name');
             if (cardName) {
                 summary.textContent = cardName.textContent;
             }
@@ -51,9 +51,9 @@
         if (!panel) {
             return;
         }
-        var sourceId = panel.getAttribute('data-source-id');
-        var nextInput = panel.querySelector('input[name="nextProgramSourceId"]');
-        var programInput = panel.querySelector('input[name="programSourceId"]');
+        const sourceId = panel.getAttribute('data-source-id');
+        const nextInput = panel.querySelector('input[name="nextProgramSourceId"]');
+        const programInput = panel.querySelector('input[name="programSourceId"]');
         if (nextInput && sourceId) {
             nextInput.value = sourceId;
         }
@@ -66,19 +66,19 @@
         if (updateUrl === undefined) {
             updateUrl = true;
         }
-        var cards = document.querySelectorAll('.edit-code-program-card');
-        var panels = document.querySelectorAll('.edit-code-panel');
-        for (var cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
-            var card = cards[cardIndex];
+        const cards = document.querySelectorAll('.edit-code-program-card');
+        const panels = document.querySelectorAll('.edit-code-panel');
+        for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+            const card = cards[cardIndex];
             if (card.getAttribute('data-source-id') === sourceId) {
                 card.classList.add('edit-code-program-card-active');
             } else {
                 card.classList.remove('edit-code-program-card-active');
             }
         }
-        for (var index = 0; index < panels.length; index += 1) {
-            var panel = panels[index];
-            var isActive = panel.getAttribute('data-source-id') === sourceId;
+        for (let index = 0; index < panels.length; index += 1) {
+            const panel = panels[index];
+            const isActive = panel.getAttribute('data-source-id') === sourceId;
             panel.classList.toggle('edit-code-panel-active', isActive);
             panel.hidden = !isActive;
             setPanelEnabled(panel, isActive);
@@ -98,12 +98,12 @@
         }
     }
 
-    var preferredSourceId = editCodeUrlSourceId();
-    var preferredLine = editCodeUrlLine();
-    var preferredExists = preferredSourceId
+    const preferredSourceId = editCodeUrlSourceId();
+    const preferredLine = editCodeUrlLine();
+    const preferredExists = preferredSourceId
         && preferredSourceId !== '-1'
         && panelExists(preferredSourceId);
-    var storedSourceId = readStoredProgramSourceId();
+    const storedSourceId = readStoredProgramSourceId();
     if (preferredExists) {
         selectProgramSource(preferredSourceId, false);
     } else if (preferStoredSelection && panelExists(storedSourceId)) {
@@ -111,31 +111,31 @@
     } else {
         // Honor server-rendered selection (e.g. after creating a program) instead of
         // blindly picking the first card or reopening the New program draft from URL -1.
-        var activeCard = document.querySelector('.edit-code-program-card-active');
-        var fallbackCard = activeCard || document.querySelector('.edit-code-program-card');
+        const activeCard = document.querySelector('.edit-code-program-card-active');
+        const fallbackCard = activeCard || document.querySelector('.edit-code-program-card');
         if (fallbackCard) {
-            var fallbackId = fallbackCard.getAttribute('data-source-id');
-            var syncUrl = preferredSourceId === '-1' && fallbackId && fallbackId !== '-1';
+            const fallbackId = fallbackCard.getAttribute('data-source-id');
+            const syncUrl = preferredSourceId === '-1' && fallbackId && fallbackId !== '-1';
             selectProgramSource(fallbackId, syncUrl);
         }
     }
     if (preferredLine) {
-        var activePanel = document.querySelector('.edit-code-panel-active');
+        const activePanel = document.querySelector('.edit-code-panel-active');
         if (activePanel) {
             focusSourceLine(activePanel, preferredLine);
         }
     }
 
-    var programCards = document.querySelectorAll('.edit-code-program-card');
-    for (var programIndex = 0; programIndex < programCards.length; programIndex += 1) {
+    const programCards = document.querySelectorAll('.edit-code-program-card');
+    for (let programIndex = 0; programIndex < programCards.length; programIndex += 1) {
         programCards[programIndex].addEventListener('click', function(event) {
-            var sourceId = event.currentTarget.getAttribute('data-source-id');
-            var activePanel = document.querySelector('.edit-code-panel-active');
+            const sourceId = event.currentTarget.getAttribute('data-source-id');
+            const activePanel = document.querySelector('.edit-code-panel-active');
             if (activePanel
                 && activePanel.getAttribute('data-source-id') !== sourceId
                 && isPanelDirty(activePanel)) {
-                var nameInput = activePanel.querySelector('input[name="sourceName"]');
-                var programName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : 'this program';
+                const nameInput = activePanel.querySelector('input[name="sourceName"]');
+                const programName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : 'this program';
                 robominerConfirm('Discard unsaved changes to ' + programName + '?', function(confirmed) {
                     if (!confirmed) {
                         return;
@@ -151,10 +151,10 @@
         });
     }
 
-    var resetButtons = document.querySelectorAll('.edit-code-reset-btn');
-    for (var resetIndex = 0; resetIndex < resetButtons.length; resetIndex += 1) {
+    const resetButtons = document.querySelectorAll('.edit-code-reset-btn');
+    for (let resetIndex = 0; resetIndex < resetButtons.length; resetIndex += 1) {
         resetButtons[resetIndex].addEventListener('click', function(event) {
-            var panel = event.target.closest('.edit-code-panel');
+            const panel = event.target.closest('.edit-code-panel');
             if (!panel) {
                 return;
             }
@@ -168,8 +168,8 @@
         if (allowPageUnload) {
             return;
         }
-        var panels = document.querySelectorAll('.edit-code-panel');
-        for (var unloadIndex = 0; unloadIndex < panels.length; unloadIndex += 1) {
+        const panels = document.querySelectorAll('.edit-code-panel');
+        for (let unloadIndex = 0; unloadIndex < panels.length; unloadIndex += 1) {
             if (isPanelDirty(panels[unloadIndex])) {
                 event.preventDefault();
                 event.returnValue = '';
@@ -178,13 +178,13 @@
         }
     });
 
-    var saveForms = document.querySelectorAll('.edit-code-save-form');
-    for (var saveIndex = 0; saveIndex < saveForms.length; saveIndex += 1) {
+    const saveForms = document.querySelectorAll('.edit-code-save-form');
+    for (let saveIndex = 0; saveIndex < saveForms.length; saveIndex += 1) {
         saveForms[saveIndex].addEventListener('submit', confirmEditCodeSave);
     }
 
-    var deleteForms = document.querySelectorAll('.edit-code-delete-form');
-    for (var deleteIndex = 0; deleteIndex < deleteForms.length; deleteIndex += 1) {
+    const deleteForms = document.querySelectorAll('.edit-code-delete-form');
+    for (let deleteIndex = 0; deleteIndex < deleteForms.length; deleteIndex += 1) {
         deleteForms[deleteIndex].addEventListener('submit', confirmEditCodeDelete);
     }
 })();

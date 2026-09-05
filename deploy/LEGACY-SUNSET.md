@@ -69,4 +69,4 @@ sunset criteria are met.
 8. Leave ore-ordering until a deliberate balance review
 9. Distributed / shared rate-limit store — only when running multiple web replicas (proxy limits remain the shared control plane today)
 10. App-level HSTS — leave to the reverse proxy; do not emit HSTS on loopback HTTP binds
-11. Mass JS `no-var` — continue page-scoped only (`common/`, `mining_queue/**`, shop/mining_results/robot pages done); defer `rally_animation` / `edit_code` until deliberately scheduled
+11. ~~Mass JS `no-var`~~ **Done** for page-scoped IIFEs (`common/`, `mining_queue/**`, shop/mining_results/robot, `rally_animation/**`, `edit_code/**`; generated `rally_animation/generated/` left alone)

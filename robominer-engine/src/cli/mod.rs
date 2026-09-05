@@ -1,3 +1,9 @@
+//! Clap surface for the engine binary: global `--database-url` plus subcommands.
+//!
+//! Operators: `robominer-engine <command> --help` lists mining queue, shop, robot,
+//! program, user, achievement, rally worker, migrate, leaderboard, and assets
+//! verbs. Parsing only — see `dispatch` for side effects.
+
 use clap::{Parser, Subcommand};
 
 mod achievement;

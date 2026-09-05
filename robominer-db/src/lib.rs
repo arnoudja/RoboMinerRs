@@ -5,11 +5,12 @@
 //! Loadouts, simulation/verify façades, and rejection copy live in
 //! `robominer-domain`. See `CONTRIBUTING.md` and `docs/architecture.md`.
 //!
-//! Public surface is intentionally flat (`pub use module::*`) so call sites can
-//! use `robominer_db::enqueue_mining` without deep paths. Prefer adding new
-//! exports through the owning module's `pub use` rather than new wildcards.
-//! Prefer `robominer_db::module::…` paths for new APIs; do not expand root
-//! wildcards for new symbols.
+//! Public surface stays flat for compatibility (`pub use module::*` →
+//! `robominer_db::enqueue_mining`). **No new root wildcards** — do not add
+//! another `pub use some_module::*` at this crate root. Prefer
+//! `robominer_db::module::…` for new APIs and when updating hot call sites;
+//! export new symbols from the owning module only (existing root re-exports
+//! stay).
 
 pub use sqlx::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;

@@ -224,3 +224,12 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 - [deploy/reverse-proxy/README.md](reverse-proxy/README.md) — TLS setup
 - [deploy/systemd/README.md](systemd/README.md) — service install
 - [README.md](../README.md) — build, test, run
+
+
+## Activity rally replay (intentional)
+
+Authenticated (or PublicRead) Activity may open any claimed rally via
+`?rallyResultId=`. Replay JSON is considered public spectator data—the feed
+already lists those results. Participant program source is still loaded only for
+the owning user. Do not treat public rally ids as a confidentiality boundary for
+replay payloads.

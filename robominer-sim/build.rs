@@ -6,12 +6,12 @@ use std::path::Path;
 
 fn main() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let animation_rs = manifest_dir.join("src/animation.rs");
-    println!("cargo:rerun-if-changed={}", animation_rs.display());
+    let animation_types = manifest_dir.join("src/animation/types.rs");
+    println!("cargo:rerun-if-changed={}", animation_types.display());
 
-    let source = fs::read_to_string(&animation_rs).expect("read animation.rs");
+    let source = fs::read_to_string(&animation_types).expect("read animation/types.rs");
     let current_version = parse_u32_const(&source, "ANIMATION_PAYLOAD_VERSION")
-        .expect("ANIMATION_PAYLOAD_VERSION in animation.rs");
+        .expect("ANIMATION_PAYLOAD_VERSION in animation/types.rs");
     let legacy_version = parse_u32_const(&source, "LEGACY_ANIMATION_PAYLOAD_VERSION").unwrap_or(1);
 
     let contract_js = format!(

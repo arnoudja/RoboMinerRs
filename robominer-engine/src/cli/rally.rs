@@ -1,3 +1,5 @@
+//! `rally` subcommands: single run, pool, and the long-running `rallies` worker.
+
 use clap::Subcommand;
 use std::path::PathBuf;
 

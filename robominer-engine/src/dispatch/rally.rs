@@ -1,3 +1,5 @@
+//! Dispatch `rally run|pool|rallies` after validating options and opening the DB pool.
+
 use anyhow::Result;
 
 use crate::cli::RallyCommand;

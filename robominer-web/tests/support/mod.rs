@@ -1,4 +1,9 @@
-#![allow(dead_code, unused_imports)]
+//! Shared helpers for `robominer-web` integration tests.
+//!
+//! Each `tests/*.rs` binary compiles this module; `dead_code` covers helpers only
+//! exercised by sibling binaries.
+
+#![allow(dead_code)]
 
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -30,6 +35,7 @@ pub fn server_config(pool: MySqlPool) -> ServerConfig {
     }
 }
 
+#[allow(unused_imports)] // re-exported for sibling test binaries
 pub use robominer_test_support::unique_prefix;
 
 pub fn get_request(path: &str, cookie: Option<&str>) -> Request {

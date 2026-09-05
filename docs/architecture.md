@@ -77,10 +77,18 @@ Each `AppRoute` in `robominer-web/src/routes.rs` declares a `RoutePolicy`: `Publ
 (`router/route_policy.rs`) enforces policy before page handlers run and passes `PageSession`
 to protected handlers.
 
+### Activity public replay
+
+`/activity?rallyResultId=` is `PublicRead` (or the authenticated Activity
+surface) and loads claimed-rally replay JSON with `require_user_result: false`.
+That spectator access is intentional: the same results already appear in the
+Activity feed. Private program source for a participant remains owner-scoped.
+
+
 ## Rate limiting
 
 Auth and mutation rate limiters in `robominer-web/src/rate_limit/` are in-memory and
-process-local. They assume a single web instance (matching the systemd deployment in
+process-local. In-process maps also drop the coldest keys once a map exceeds a soft ceiling so scanners cannot grow memory without bound. They assume a single web instance (matching the systemd deployment in
 `deploy/systemd/`). Scaling to multiple web processes would require an external store
 (for example Redis) — that is a separate scaling initiative, not the current default.
 

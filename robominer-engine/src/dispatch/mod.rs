@@ -1,3 +1,8 @@
+//! Command dispatch: connect to MySQL when needed and run the matched CLI verb.
+//!
+//! Each `dispatch_*` maps a `cli::*Command` onto domain/db helpers (or the rally
+//! worker). Destructive cross-account ops require `--i-understand`.
+
 use anyhow::{Result, ensure};
 
 mod achievement;

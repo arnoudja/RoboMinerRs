@@ -1,16 +1,16 @@
 function rallyPaintRobots(scale, poseTurn, poseTime, stepTime, entry)
 {
-    for (var i = 0; i < myRobots.robot.length; i++)
+    for (let i = 0; i < myRobots.robot.length; i++)
     {
-        var robot = myRobots.robot[i];
+        const robot = myRobots.robot[i];
         updateRobotPosition(i, poseTime, stepTime);
         drawRobot(robot, scale, poseTurn);
         drawRobotOre(robot);
         drawRobotDepot(robot);
-        var isViewer = typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot;
-        var debugEntry = isViewer ? rallyEntryForViewerDebug(entry, poseTurn) : entry;
+        const isViewer = typeof myRallyViewerSlot === 'number' && robot.robotnr === myRallyViewerSlot;
+        const debugEntry = isViewer ? rallyEntryForViewerDebug(entry, poseTurn) : entry;
         // Viewer panel line follows CPU-timeline highlight; peers keep pose `robot.l`.
-        var sourceLine = isViewer
+        const sourceLine = isViewer
             ? (debugEntry && typeof debugEntry.l === 'number' ? debugEntry.l : null)
             : undefined;
         updateRobotDebugPanel(robot, poseTurn, sourceLine);
@@ -22,7 +22,7 @@ function rallyPaintRobots(scale, poseTurn, poseTime, stepTime, entry)
 function rallyPrepareFrame()
 {
     rallyEnsureCpuTimeline();
-    var frame = rallyFrameTiming();
+    const frame = rallyFrameTiming();
     rallyUpdateTransportUi(frame.completed, frame.cpuIndex, frame.poseTurn, frame.entry);
     return frame;
 }
@@ -35,9 +35,9 @@ function renderRallyFrame()
         return;
     }
 
-    var frame = rallyPrepareFrame();
-    var scale = myRallyPlayer.scale;
-    for (var i = 0; i < myRobots.robot.length; i++)
+    const frame = rallyPrepareFrame();
+    const scale = myRallyPlayer.scale;
+    for (let i = 0; i < myRobots.robot.length; i++)
     {
         eraseRobot(myRobots.robot[i], scale, frame.poseTurn);
     }
@@ -54,8 +54,8 @@ function redrawRallyScene()
         return;
     }
 
-    var frame = rallyPrepareFrame();
-    var scale = myRallyPlayer.scale;
+    const frame = rallyPrepareFrame();
+    const scale = myRallyPlayer.scale;
     drawFullGroundAt(frame.poseTurn, scale);
     drawDepotHomes(scale, frame.poseTurn);
     rallyPaintRobots(scale, frame.poseTurn, frame.poseTime, frame.stepTime, frame.entry);
@@ -70,8 +70,8 @@ function runanimation()
         return;
     }
 
-    var scaleX = 600 / myGround.sizeX;
-    var scaleY = 600 / myGround.sizeY;
+    const scaleX = 600 / myGround.sizeX;
+    const scaleY = 600 / myGround.sizeY;
 
     myRallyPlayer.scale = scaleX < scaleY ? scaleX : scaleY;
     myRallyPlayer.elapsedMs = 0;
@@ -82,7 +82,7 @@ function runanimation()
     myRallySourceHighlightKey = null;
     myRallySourceHighlightLine = null;
 
-    for (var i = 0; i < myRobots.robot.length; i++)
+    for (let i = 0; i < myRobots.robot.length; i++)
     {
         myRobots.robot[i].updatedTo = 0;
     }

@@ -7,7 +7,7 @@ pub(crate) async fn buy_robot_part(
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
     let user_id = request.user_id;
-    let outcome = robominer_db::buy_robot_part(pool, request)
+    let outcome = robominer_db::shop::buy_robot_part(pool, request)
         .await
         .context("failed to buy robot part")?;
     finish_db_outcome(
@@ -35,7 +35,7 @@ pub(crate) async fn sell_robot_part(
     request: robominer_db::RobotPartTransactionRequest,
 ) -> Result<()> {
     let user_id = request.user_id;
-    let outcome = robominer_db::sell_robot_part(pool, request)
+    let outcome = robominer_db::shop::sell_robot_part(pool, request)
         .await
         .context("failed to sell robot part")?;
     finish_db_outcome(

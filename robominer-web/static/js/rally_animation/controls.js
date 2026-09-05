@@ -5,7 +5,7 @@ function rallyIsTypingTarget(target)
         return false;
     }
 
-    var tag = target.tagName.toLowerCase();
+    const tag = target.tagName.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select')
     {
         return true;
@@ -37,14 +37,14 @@ function rallyBindKeyboardControls()
             return;
         }
 
-        var key = event.key;
+        const key = event.key;
         if (key === ' ' || key === 'Spacebar')
         {
             // Let focused control buttons keep native Space activation, but treat
             // the seek slider as play/pause (keyboard click coords are unreliable).
-            var onControl = event.target && event.target.closest
+            const onControl = event.target && event.target.closest
                 && event.target.closest('button, a, [role="button"]');
-            var onSeekSlider = event.target && event.target.id === 'rallyProgressTrack';
+            const onSeekSlider = event.target && event.target.id === 'rallyProgressTrack';
             if (onControl && !onSeekSlider)
             {
                 return;
@@ -106,7 +106,7 @@ function rallyBindTransportControls()
     }
     window.__rallyTransportBound = true;
 
-    var playPause = document.getElementById('rallyPlayPause');
+    const playPause = document.getElementById('rallyPlayPause');
     if (playPause)
     {
         playPause.addEventListener('click', function() {
@@ -114,17 +114,17 @@ function rallyBindTransportControls()
         });
     }
 
-    var restart = document.getElementById('rallyRestart');
+    const restart = document.getElementById('rallyRestart');
     if (restart)
     {
         restart.addEventListener('click', rallyRestart);
     }
 
-    var speedButtons = document.querySelectorAll('.rally-view-speed-button');
-    for (var i = 0; i < speedButtons.length; i++)
+    const speedButtons = document.querySelectorAll('.rally-view-speed-button');
+    for (let i = 0; i < speedButtons.length; i++)
     {
         speedButtons[i].addEventListener('click', function(event) {
-            var speed = Number(event.currentTarget.getAttribute('data-speed'));
+            const speed = Number(event.currentTarget.getAttribute('data-speed'));
             if (speed > 0)
             {
                 rallySetSpeed(speed);
@@ -132,7 +132,7 @@ function rallyBindTransportControls()
         });
     }
 
-    var track = document.getElementById('rallyProgressTrack');
+    const track = document.getElementById('rallyProgressTrack');
     if (track)
     {
         track.addEventListener('click', function(event) {
@@ -141,7 +141,7 @@ function rallyBindTransportControls()
             {
                 return;
             }
-            var rect = track.getBoundingClientRect();
+            const rect = track.getBoundingClientRect();
             if (rect.width <= 0)
             {
                 return;

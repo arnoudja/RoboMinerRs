@@ -255,7 +255,7 @@ add `actions.rs` when POST branches appear; add `view_model.rs` when DB→view m
 | Help content | `robominer-web/static/help/*.html` | Guide bodies loaded with `include_str!`; rendering in `help_pages/` |
 | HTTP + DB integration | `robominer-web/tests/*.rs` | POST/GET through `route()` with real MySQL |
 | Engine CLI integration | `robominer-engine/tests/*_db_cli.rs` | Subprocess `robominer-engine` against MySQL |
-| DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations.rs`, `db_users.rs`, `db_rally.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_mining_queue.rs`, `db_robots.rs`, `db_achievements.rs`, `db_migrate.rs`, `claim_golden.rs`) |
+| DB mutations | `robominer-db/tests/` | Direct SQL helpers without CLI or HTTP (`db_mutations_*.rs`, `db_users.rs`, `db_rally_*.rs`, `db_activity.rs`, `db_pool.rs`, `db_program_sources.rs`, `db_mining_areas.rs`, `db_mining_queue.rs`, `db_robots.rs`, `db_achievements.rs`, `db_migrate.rs`, `claim_golden.rs`) |
 | Domain goldens | `robominer-domain/tests/*_golden.rs` | Deterministic simulation fixtures |
 | Rally animation JS | `robominer-web/static/js/rally_animation/tests/` | Headless Node tests of viewer payload/draw helpers |
 | Shared fixtures | `robominer-test-support/` | SQL setup reused by web and engine tests; composable `Scenario::user_with_robot_and_wallet()` wraps common user+robot+wallet setup |
@@ -280,14 +280,14 @@ matching `*_db_cli.rs` binary.
 | `/robot` | `robot_page/tests/` | `robot_apply.rs` | `robot_config_db_cli.rs`, `claim_robot_config_db_cli.rs` | Apply config (wallet claim is engine-side) |
 | `/robotStats` | `robot_stats_page/tests.rs` | `read_model_pages.rs` | — | No dedicated engine CLI |
 | `/shop` | `shop_page/tests/` | `shop_actions.rs` | `shop_db_cli.rs` | Buy/sell parts |
-| `/miningQueue` | `mining_queue_page/tests/` | `mining_queue_actions.rs` | `mining_queue_db_cli.rs`, `mining_queue_read_model_db_cli.rs` | Enqueue, fill, cancel + read model |
+| `/miningQueue` | `mining_queue_page/tests/` | `mining_queue_actions_*.rs` | `mining_queue_db_cli.rs`, `mining_queue_read_model_db_cli.rs` | Enqueue, fill, cancel + read model |
 | `/miningResults` | `mining_results_page/tests/` | `read_model_pages.rs` | `mining_area_read_model_db_cli.rs` | Rally replay also via `?rallyResultId=` |
 | `/leaderboard` | `leaderboard_page/tests/` | `read_model_pages.rs` | `leaderboard_read_model_db_cli.rs` | |
 | `/miningAreaOverview` | `mining_area_overview_page/tests.rs` | `read_model_pages.rs` | `mining_area_overview_read_model_db_cli.rs` | |
 | `/activity` | `rally_pages/tests/` | `read_model_pages.rs` | `activity_read_model_db_cli.rs`, `rally_read_model_db_cli.rs` | Activity feed + rally replay UI; JS viewer in `rally_animation/tests/` |
 | `/help*` | `help_pages/tests.rs`, `help_pages/render.rs` | — | — | Routes + content/rendering in `help_pages/`; bodies in `static/help/`; smoke hits `/help` |
 | `/health` | — | `health.rs` | — | DB ping + migration readiness |
-| Rally worker / wallet claim | — | `web_db_smoke` (indirect) | `rally_db_cli.rs`, `pool_db_cli.rs`, `claim_robot_config_db_cli.rs` | `rally rallies --persist` runs a wallet claim pass; standalone `mining claim-all` |
+| Rally worker / wallet claim | — | `web_db_smoke` (indirect) | `rally_db_cli_*.rs`, `pool_db_cli.rs`, `claim_robot_config_db_cli.rs` | `rally rallies --persist` runs a wallet claim pass; standalone `mining claim-all` |
 | Program compile | `robominer-program` unit | — | `verify_source_cli.rs` | No DB |
 | Migrate CLI | — | — | `migrate_db_cli.rs` | Schema migrations |
 | Simulation goldens | — | — | — | `robominer-domain/tests/rally_golden.rs`, `pool_golden.rs` |
@@ -312,9 +312,10 @@ domain, sim, or program.**
 | `robominer-domain` | Loadout assembly, rally/pool run + persist façades, program create/update with verify, player/CLI rejection strings |
 | `robominer-web` / `robominer-engine` | HTTP/CLI presentation, routing, formatting beyond shared rejection strings |
 
-Prefer `robominer_db::module::…` paths for **new** APIs; do not expand root
-`pub use module::*` wildcards for new symbols (existing flat re-exports stay for
-compatibility). See [docs/crate-map.md](docs/crate-map.md).
+Prefer `robominer_db::module::…` paths for **new** APIs and when updating hot
+production call sites; **no new root wildcards** (`pub use module::*` at the
+crate root). Existing flat re-exports stay for compatibility. See
+[docs/crate-map.md](docs/crate-map.md).
 
 ### Schema changes
 

@@ -44,6 +44,8 @@ impl AuthRateLimiter {
             Self::prune(window, now);
             !window.is_empty()
         });
+        super::enforce_map_cap(&mut self.by_ip, super::MAX_TRACKED_KEYS);
+        super::enforce_map_cap(&mut self.by_login, super::MAX_TRACKED_KEYS);
         self.last_sweep = Some(now);
     }
 
@@ -79,11 +81,14 @@ impl AuthRateLimiter {
         ip_window.push_back(now);
 
         if login_key.is_empty() {
+            super::enforce_map_cap(&mut self.by_ip, super::MAX_TRACKED_KEYS);
             return;
         }
         let login_window = self.by_login.entry(login_key.to_string()).or_default();
         Self::prune(login_window, now);
         login_window.push_back(now);
+        super::enforce_map_cap(&mut self.by_ip, super::MAX_TRACKED_KEYS);
+        super::enforce_map_cap(&mut self.by_login, super::MAX_TRACKED_KEYS);
     }
 }
 

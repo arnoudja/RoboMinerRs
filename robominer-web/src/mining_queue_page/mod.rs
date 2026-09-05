@@ -101,7 +101,7 @@ async fn load_mining_queue_page_state(
                         .get("submitType")
                         .is_some_and(|value| value == "fill");
                     if let robominer_db::DbOutcome::Rejected(rejection) =
-                        robominer_db::enqueue_mining(
+                        robominer_db::mining_queue::enqueue_mining(
                             pool,
                             robominer_db::EnqueueMiningRequest {
                                 user_id,
