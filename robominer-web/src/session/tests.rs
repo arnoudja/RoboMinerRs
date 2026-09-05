@@ -113,6 +113,20 @@ fn session_token_embeds_and_verifies_session_version() {
 }
 
 #[test]
+fn session_token_without_version_field_is_rejected() {
+    ensure_test_session_secret();
+    // Legacy shape: userId.expiresAt.nonce.signature (no session_version).
+    let payload = format!("{}.{}.{}", 42, u64::MAX / 2, 9);
+    let signature = super::sign_payload(&payload);
+    let legacy_token = format!("{payload}.{signature}");
+    assert_eq!(
+        verify_session_token(&legacy_token),
+        None,
+        "unversioned session tokens must be rejected after sunset"
+    );
+}
+
+#[test]
 fn tampered_session_token_is_rejected() {
     ensure_test_session_secret();
     let token = create_session_token_for_tests(42);
