@@ -47,7 +47,7 @@ pub(crate) async fn update_user_account(
 }
 
 pub(crate) async fn account_state(pool: &robominer_db::MySqlPool, user_id: i64) -> Result<()> {
-    let user = robominer_db::get_user_by_id(pool, user_id)
+    let user = robominer_db::users::get_user_by_id(pool, user_id)
         .await
         .context("failed to load account state")?
         .ok_or_else(|| anyhow!("unknown user"))?;

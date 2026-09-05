@@ -35,7 +35,7 @@ pub(super) async fn apply_account_mutations(
             }));
         }
         return Ok(Some(
-            match robominer_db::bump_user_session_version(pool, user_id).await? {
+            match robominer_db::users::bump_user_session_version(pool, user_id).await? {
                 Some(session_version) => AccountMutationResult {
                     message: Some("Signed out of all other devices".to_string()),
                     error_message: None,

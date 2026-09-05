@@ -6,7 +6,7 @@ pub(crate) async fn claim_achievement_step(
     pool: &robominer_db::MySqlPool,
     request: robominer_db::ClaimAchievementStepRequest,
 ) -> Result<()> {
-    let outcome = robominer_db::claim_achievement_step(pool, request)
+    let outcome = robominer_db::achievements::claim_achievement_step(pool, request)
         .await
         .context("failed to claim achievement step")?;
     finish_db_outcome(

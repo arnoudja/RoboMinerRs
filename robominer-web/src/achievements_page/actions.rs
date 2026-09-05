@@ -5,7 +5,7 @@ pub(super) async fn claim_achievement(
     user_id: i64,
     achievement_id: i64,
 ) -> Result<Option<String>, crate::page_context::PageLoadError> {
-    match robominer_db::claim_achievement_step(
+    match robominer_db::achievements::claim_achievement_step(
         pool,
         robominer_db::ClaimAchievementStepRequest {
             user_id,

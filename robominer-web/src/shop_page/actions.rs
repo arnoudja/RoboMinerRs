@@ -9,7 +9,7 @@ pub(super) async fn apply_shop_mutations(
 ) -> Result<Option<String>, crate::page_context::PageLoadError> {
     if let Some(robot_part_id) = buy_part_id {
         return Ok(Some(
-            match robominer_db::buy_robot_part(
+            match robominer_db::shop::buy_robot_part(
                 pool,
                 robominer_db::RobotPartTransactionRequest {
                     user_id,
@@ -51,7 +51,7 @@ pub(super) async fn apply_shop_mutations(
 
     if let Some(robot_part_id) = sell_part_id {
         return Ok(Some(
-            match robominer_db::sell_robot_part(
+            match robominer_db::shop::sell_robot_part(
                 pool,
                 robominer_db::RobotPartTransactionRequest {
                     user_id,
