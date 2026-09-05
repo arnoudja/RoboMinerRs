@@ -1,0 +1,6 @@
+# cargo-audit configuration.
+# Prefer fixing or upgrading over ignores. If an ignore is required, add an
+# [[ignores]] entry with id + reason, and link a tracking issue/PR.
+
+[advisories]
+ignore = []
