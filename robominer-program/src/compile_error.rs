@@ -1,7 +1,7 @@
-use std::error::Error;
-use std::fmt::{self, Display};
+use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+#[error("{message}")]
 pub struct CompileError {
     message: String,
 }
@@ -13,11 +13,3 @@ impl CompileError {
         }
     }
 }
-
-impl Display for CompileError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.message)
-    }
-}
-
-impl Error for CompileError {}

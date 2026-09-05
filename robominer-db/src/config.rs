@@ -3,60 +3,32 @@
 //! Primary entry points: [`connect_from_cli`], [`resolve_database_url`].
 
 use std::env;
-use std::fmt;
+
+use thiserror::Error;
 
 use crate::MySqlPool;
 use crate::connect_with_max_connections;
 use crate::resolve_max_connections;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConfigError {
+    #[error("database URL not set; pass --database-url or set ROBOMINER_DATABASE_URL")]
     MissingDatabaseUrl,
 }
 
-impl fmt::Display for ConfigError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::MissingDatabaseUrl => write!(
-                f,
-                "database URL not set; pass --database-url or set ROBOMINER_DATABASE_URL"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for ConfigError {}
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConnectError {
-    Config(ConfigError),
+    #[error(transparent)]
+    Config(#[from] ConfigError),
+    #[error("{0}")]
     MaxConnections(String),
+    #[error(transparent)]
     Sqlx(sqlx::Error),
-}
-
-impl fmt::Display for ConnectError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Config(error) => write!(f, "{error}"),
-            Self::MaxConnections(message) => write!(f, "{message}"),
-            Self::Sqlx(error) => write!(f, "{error}"),
-        }
-    }
-}
-
-impl std::error::Error for ConnectError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Config(error) => Some(error),
-            Self::MaxConnections(_) => None,
-            Self::Sqlx(error) => Some(error),
-        }
-    }
 }
 
 /// Connect to MySQL using CLI/env resolution shared by binaries.
 pub async fn connect_from_cli(database_url: Option<String>) -> Result<MySqlPool, ConnectError> {
-    let database_url = resolve_database_url(database_url).map_err(ConnectError::Config)?;
+    let database_url = resolve_database_url(database_url)?;
 
     let max_connections =
         resolve_max_connections(env::var("ROBOMINER_DB_MAX_CONNECTIONS").ok().as_deref())
