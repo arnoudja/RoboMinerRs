@@ -103,20 +103,12 @@ pub fn configure_session_ttl_secs(ttl_secs: u64) {
 pub fn resolve_session_ttl_secs(
     env_secs: Option<&str>,
     env_hours: Option<&str>,
-    config_secs: Option<&str>,
-    config_hours: Option<&str>,
 ) -> Result<u64, String> {
     if let Some(value) = env_secs {
         return parse_session_ttl_secs(value, "ROBOMINER_SESSION_TTL_SECS");
     }
     if let Some(value) = env_hours {
         return parse_session_ttl_hours(value, "ROBOMINER_SESSION_TTL_HOURS");
-    }
-    if let Some(value) = config_secs {
-        return parse_session_ttl_secs(value, "sessionttlsecs");
-    }
-    if let Some(value) = config_hours {
-        return parse_session_ttl_hours(value, "sessionttlhours");
     }
     Ok(DEFAULT_SESSION_TTL_SECS)
 }

@@ -35,19 +35,15 @@ ROBOMINER_ALLOW_SIGNUP=0
 ROBOMINER_TRUST_PROXY=1
 ```
 
-Legacy `robominer.conf` key/value form still works but is soft-deprecated.
+Use `/etc/robominer/robominer.env` only; the legacy `robominer.conf` key/value file is removed.
 
-| Key | Purpose |
+| Variable | Purpose |
 | --- | --- |
-| `host 127.0.0.1` | Web binds loopback only; proxy handles public traffic |
-| `sessionsecret` | Signs session cookies; required and must be ≥32 characters (or set `allowinsecuredevsecret 1` / `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
-| `securecookies 1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** on loopback so local HTTP keeps working. **Required** for non-loopback binds (`host 0.0.0.0`, etc.) and when `trustproxy 1` is set (startup fails otherwise) |
-| `allowsignup 0` | Public self-registration off (default when unset); set `1` to open signup |
-| `trustproxy 1` | Trust only `X-Real-Ip` for login rate limits and auth logs (proxy must set it to `$remote_addr`). Refused at startup unless `host` is loopback; also requires `securecookies 1`. If Real-IP is missing/blank, the app uses the dedicated key `proxy-missing-real-ip` (not the loopback peer) and logs an error so a misconfigured proxy does not share one bucket across all clients |
-
-Environment overrides: `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES=1`,
-`ROBOMINER_ALLOW_SIGNUP=1`, `ROBOMINER_TRUST_PROXY=1`,
-`ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1`.
+| `HOST=127.0.0.1` | Web binds loopback only; proxy handles public traffic |
+| `ROBOMINER_SESSION_SECRET` | Signs session cookies; required and must be ≥32 characters (or set `ROBOMINER_ALLOW_INSECURE_DEV_SECRET=1` for local loopback only) |
+| `ROBOMINER_SECURE_COOKIES=1` | `Secure` flag on cookies (required for HTTPS). Defaults **off** on loopback so local HTTP keeps working. **Required** for non-loopback binds (`HOST=0.0.0.0`, etc.) and when `ROBOMINER_TRUST_PROXY=1` is set (startup fails otherwise) |
+| `ROBOMINER_ALLOW_SIGNUP=0` | Public self-registration off (default when unset); set `1` to open signup |
+| `ROBOMINER_TRUST_PROXY=1` | Trust only `X-Real-Ip` for login rate limits and auth logs (proxy must set it to `$remote_addr`). Refused at startup unless `HOST` is loopback; also requires `ROBOMINER_SECURE_COOKIES=1`. If Real-IP is missing/blank, the app uses the dedicated key `proxy-missing-real-ip` (not the loopback peer) and logs an error so a misconfigured proxy does not share one bucket across all clients |
 
 Create accounts while signup is disabled:
 
@@ -182,7 +178,7 @@ update-account --password`, `mining claim-results`, `shop buy`/`sell`,
 | Secure cookie | DevTools → `robominer_session` has `Secure`, `HttpOnly`, `SameSite=Lax`; `robominer_username` is `HttpOnly` |
 | Loopback bind | `ss -ltnp \| grep 8080` → `127.0.0.1` |
 | Health / migrations | `curl -fsS http://127.0.0.1:8080/health` → `ok` + `migrations=ok` |
-| Signup off (default) | `/login?signup=1` shows no sign-up tab unless `allowsignup 1` |
+| Signup off (default) | `/login?signup=1` shows no sign-up tab unless `ROBOMINER_ALLOW_SIGNUP=1` |
 | Security headers | `curl -I /login` includes `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy` |
 | CSP | `Content-Security-Policy` includes `form-action 'self'` and `connect-src 'self'` (same-origin forms + mining-queue `fetch`) |
 | Engine private | No listening HTTP port for `robominer-engine` |
@@ -217,7 +213,7 @@ These are **not** fully solved. Accept the risk or plan follow-up work:
 | Failed-login logging | Stable `auth_failure …` lines for fail2ban |
 | Axum concurrency cap | In-flight request semaphore |
 | Schema migrations | `SchemaMigration` + `migrate` / `migrate-database.sh` |
-| Signup off by default | Set `allowsignup 1` / `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
+| Signup off by default | Set `ROBOMINER_ALLOW_SIGNUP=1` to open registration |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` on all responses |
 | Content-Security-Policy | `default-src`/`script-src`/`style-src` `'self'`; `img-src 'self' data:`; `object-src 'none'`; `base-uri`/`frame-ancestors`/`form-action`/`connect-src` `'self'`. No inline scripts; JSON islands use `type="application/json"`. Page CSS is external; progress bars use `<progress>` without inline styles (`style-src` has no `'unsafe-inline'`) |
 | Email validation | Local + domain with TLD on signup / account update |

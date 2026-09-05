@@ -173,19 +173,9 @@ pub fn init_default_tracing() {
         .init();
 }
 
-/// Resolve pool size from env (`ROBOMINER_DB_MAX_CONNECTIONS`) or config (`dbmaxconnections`).
-pub fn resolve_max_connections(
-    env_value: Option<&str>,
-    config_value: Option<&str>,
-) -> Result<u32, String> {
-    let raw = env_value
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .or_else(|| {
-            config_value
-                .map(str::trim)
-                .filter(|value| !value.is_empty())
-        });
+/// Resolve pool size from env (`ROBOMINER_DB_MAX_CONNECTIONS`).
+pub fn resolve_max_connections(env_value: Option<&str>) -> Result<u32, String> {
+    let raw = env_value.map(str::trim).filter(|value| !value.is_empty());
     let Some(raw) = raw else {
         return Ok(DEFAULT_MAX_CONNECTIONS);
     };
@@ -209,29 +199,22 @@ mod tests {
     };
 
     #[test]
-    fn resolve_max_connections_defaults_and_prefers_env() {
+    fn resolve_max_connections_defaults_and_reads_env() {
         assert_eq!(
-            resolve_max_connections(None, None).expect("default"),
+            resolve_max_connections(None).expect("default"),
             DEFAULT_MAX_CONNECTIONS
         );
+        assert_eq!(resolve_max_connections(Some("20")).expect("env"), 20);
         assert_eq!(
-            resolve_max_connections(None, Some("12")).expect("config"),
-            12
-        );
-        assert_eq!(
-            resolve_max_connections(Some("20"), Some("12")).expect("env wins"),
-            20
+            resolve_max_connections(Some("")).expect("empty env uses default"),
+            DEFAULT_MAX_CONNECTIONS
         );
     }
 
     #[test]
     fn resolve_max_connections_rejects_invalid_values() {
-        assert!(resolve_max_connections(Some("0"), None).is_err());
-        assert!(resolve_max_connections(Some("abc"), None).is_err());
-        assert_eq!(
-            resolve_max_connections(Some(""), Some("8")).expect("empty env falls back"),
-            8
-        );
+        assert!(resolve_max_connections(Some("0")).is_err());
+        assert!(resolve_max_connections(Some("abc")).is_err());
     }
 
     #[test]

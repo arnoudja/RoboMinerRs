@@ -2,17 +2,10 @@
 set -e
 
 ENV_FILE=/etc/robominer/robominer.env
-CONFIG_FILE=/etc/robominer/robominer.conf
 ENGINE_BIN=/opt/robominer/bin/robominer-engine
 GAMEDATA_SQL=/usr/share/robominer/gameData.sql
 SYSUSERS_FILE=/usr/lib/sysusers.d/robominer.conf
 INSTALL_PREFIX=/opt/robominer
-
-conf_value() {
-    key="$1"
-    # Match "key value" lines; ignore comments and blanks.
-    sed -n "s/^${key}[[:space:]]\{1,\}//p" "$CONFIG_FILE" | head -n 1
-}
 
 env_value() {
     key="$1"
@@ -24,7 +17,7 @@ env_value() {
 }
 
 config_is_ready() {
-    [ -f "$ENV_FILE" ] || [ -f "$CONFIG_FILE" ] || [ -n "${ROBOMINER_DATABASE_URL:-}" ]
+    [ -f "$ENV_FILE" ] || [ -n "${ROBOMINER_DATABASE_URL:-}" ]
 }
 
 ensure_service_user() {
@@ -62,12 +55,7 @@ run_engine() {
         return
     fi
 
-    if [ -f "$CONFIG_FILE" ]; then
-        "$ENGINE_BIN" --config "$CONFIG_FILE" "$@"
-        return
-    fi
-
-    echo "RoboMiner: no database config ($ENV_FILE or $CONFIG_FILE)" >&2
+    echo "RoboMiner: no database config ($ENV_FILE or ROBOMINER_DATABASE_URL)" >&2
     exit 1
 }
 
@@ -103,8 +91,8 @@ PY
 
 apply_database_updates() {
     if ! config_is_ready; then
-        echo "RoboMiner: no $ENV_FILE or $CONFIG_FILE; skipping migrate/gameData."
-        echo "Create $ENV_FILE (preferred; see deploy/systemd/robominer.env.example), initialize MySQL,"
+        echo "RoboMiner: no $ENV_FILE; skipping migrate/gameData."
+        echo "Create $ENV_FILE (see deploy/systemd/robominer.env.example), initialize MySQL,"
         echo "then: systemctl start robominer-engine robominer-web"
         return 0
     fi
@@ -124,22 +112,15 @@ apply_database_updates() {
     dbpassword=""
     dbdatabase=""
 
-    if [ -f "$ENV_FILE" ] || [ -n "${ROBOMINER_DATABASE_URL:-}" ]; then
-        database_url="${ROBOMINER_DATABASE_URL:-}"
-        if [ -z "$database_url" ]; then
-            database_url="$(env_value ROBOMINER_DATABASE_URL)"
-        fi
-        if [ -z "$database_url" ]; then
-            echo "RoboMiner: $ENV_FILE is missing ROBOMINER_DATABASE_URL" >&2
-            exit 1
-        fi
-        parse_database_url "$database_url"
-    else
-        dbserver=$(conf_value dbserver)
-        dbuser=$(conf_value dbuser)
-        dbpassword=$(conf_value dbpassword)
-        dbdatabase=$(conf_value dbdatabase)
+    database_url="${ROBOMINER_DATABASE_URL:-}"
+    if [ -z "$database_url" ]; then
+        database_url="$(env_value ROBOMINER_DATABASE_URL)"
     fi
+    if [ -z "$database_url" ]; then
+        echo "RoboMiner: $ENV_FILE is missing ROBOMINER_DATABASE_URL" >&2
+        exit 1
+    fi
+    parse_database_url "$database_url"
 
     if [ -z "$dbserver" ] || [ -z "$dbuser" ] || [ -z "$dbdatabase" ]; then
         echo "RoboMiner: database connection details incomplete for gameData.sql" >&2

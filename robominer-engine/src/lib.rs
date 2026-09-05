@@ -31,25 +31,20 @@ pub async fn run() -> Result<()> {
 
     let Cli {
         database_url,
-        config,
         command,
     } = cli;
 
     match command {
-        Command::Mining(cmd) => dispatch::dispatch_mining(database_url, config, cmd).await,
-        Command::Activity(cmd) => dispatch::dispatch_activity(database_url, config, cmd).await,
-        Command::Shop(cmd) => dispatch::dispatch_shop(database_url, config, cmd).await,
-        Command::Robot(cmd) => dispatch::dispatch_robot(database_url, config, cmd).await,
-        Command::Program(cmd) => dispatch::dispatch_program(database_url, config, cmd).await,
-        Command::User(cmd) => dispatch::dispatch_user(database_url, config, cmd).await,
-        Command::Achievement(cmd) => {
-            dispatch::dispatch_achievement(database_url, config, cmd).await
-        }
-        Command::Rally(cmd) => dispatch::dispatch_rally(database_url, config, cmd).await,
-        Command::Migrate(cmd) => dispatch::dispatch_migrate(database_url, config, cmd).await,
-        Command::Leaderboard(cmd) => {
-            dispatch::dispatch_leaderboard(database_url, config, cmd).await
-        }
-        Command::Assets(cmd) => dispatch::dispatch_assets(database_url, config, cmd).await,
+        Command::Mining(cmd) => dispatch::dispatch_mining(database_url, cmd).await,
+        Command::Activity(cmd) => dispatch::dispatch_activity(database_url, cmd).await,
+        Command::Shop(cmd) => dispatch::dispatch_shop(database_url, cmd).await,
+        Command::Robot(cmd) => dispatch::dispatch_robot(database_url, cmd).await,
+        Command::Program(cmd) => dispatch::dispatch_program(database_url, cmd).await,
+        Command::User(cmd) => dispatch::dispatch_user(database_url, cmd).await,
+        Command::Achievement(cmd) => dispatch::dispatch_achievement(database_url, cmd).await,
+        Command::Rally(cmd) => dispatch::dispatch_rally(database_url, cmd).await,
+        Command::Migrate(cmd) => dispatch::dispatch_migrate(database_url, cmd).await,
+        Command::Leaderboard(cmd) => dispatch::dispatch_leaderboard(database_url, cmd).await,
+        Command::Assets(cmd) => dispatch::dispatch_assets(database_url, cmd).await,
     }
 }

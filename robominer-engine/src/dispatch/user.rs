@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::{Result, ensure};
 
 use super::{ensure_destructive_confirmed, ensure_positive_user_id};
@@ -11,13 +9,12 @@ use crate::user::{
 
 pub(crate) async fn dispatch_user(
     database_url: Option<String>,
-    config: Option<PathBuf>,
     command: UserCommand,
 ) -> Result<()> {
     match command {
         UserCommand::AccountState { user_id } => {
             ensure_positive_user_id(user_id)?;
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             account_state(&pool, user_id).await
         }
         UserCommand::Create {
@@ -28,7 +25,7 @@ pub(crate) async fn dispatch_user(
             ensure!(!username.is_empty(), "--username must not be empty");
             ensure!(!email.is_empty(), "--email must not be empty");
             ensure!(!password.is_empty(), "--password must not be empty");
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             create_user(
                 &pool,
                 robominer_db::CreateUserRequest {
@@ -53,7 +50,7 @@ pub(crate) async fn dispatch_user(
                 ensure!(!password.is_empty(), "--password must not be empty");
                 ensure_destructive_confirmed(i_understand, "user update-account --password")?;
             }
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             update_user_account(
                 &pool,
                 robominer_db::UpdateUserAccountRequest {
@@ -71,7 +68,7 @@ pub(crate) async fn dispatch_user(
         } => {
             ensure!(!login_name.is_empty(), "--login-name must not be empty");
             ensure!(!password.is_empty(), "--password must not be empty");
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             verify_login(
                 &pool,
                 robominer_db::VerifyLoginRequest {
@@ -84,7 +81,7 @@ pub(crate) async fn dispatch_user(
         UserCommand::VerifyPassword { user_id, password } => {
             ensure_positive_user_id(user_id)?;
             ensure!(!password.is_empty(), "--password must not be empty");
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             verify_user_password(
                 &pool,
                 robominer_db::VerifyUserPasswordRequest { user_id, password },

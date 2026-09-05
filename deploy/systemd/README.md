@@ -5,11 +5,10 @@ engine and web host.
 
 **Default config:** `/etc/robominer/robominer.env` via systemd `EnvironmentFile`
 (see [`robominer.env.example`](robominer.env.example)). Packaged units already
-reference that file and do not pass `--config`.
+reference that file only (no key/value conf file).
 
-The legacy key/value file `/etc/robominer/robominer.conf` still works (env wins
-per key) but is soft-deprecated: loading it logs a startup warning and the
-format will be removed in a major release. See [Env-first config](#env-first-config)
+Configuration is env / `robominer.env` only. The legacy key/value
+`/etc/robominer/robominer.conf` file is removed. See [Env-first config](#env-first-config)
 and `deploy/LEGACY-SUNSET.md`.
 
 ## Install
@@ -48,7 +47,7 @@ sudo apt install ./robominer_*.deb
 
 The package installs binaries under `/opt/robominer`, static assets, systemd
 units, and sysusers. It does **not** create `/etc/robominer/robominer.env`.
-When `robominer.env` or the legacy `robominer.conf` already exists, `postinst`
+When `robominer.env` already exists, `postinst`
 runs `migrate apply`, applies `/usr/share/robominer/gameData.sql`, and starts
 `robominer-engine` / `robominer-web`.
 
@@ -107,31 +106,11 @@ Stock units already include:
 EnvironmentFile=-/etc/robominer/robominer.env
 ```
 
-Env wins when both env and a leftover legacy conf set the same key. Once env is
-complete, archive or delete `/etc/robominer/robominer.conf` so the startup
-deprecation warning stops. Keep a backup until health checks pass.
-
-### Legacy conf (deprecated)
-
-`/etc/robominer/robominer.conf` (and the engine-only
-`/etc/robominer/robominer-engine.conf`) remain readable for one more major line.
-Loading them emits a warning. Prefer `robominer.env` for new installs.
-
-```text
-host 127.0.0.1
-port 8080
-webroot /opt/robominer/static
-sessionsecret <random secret>
-securecookies 1
-allowsignup 0
-trustproxy 1
-```
-
-Public sign-up is off by default; set `allowsignup 1` to open it. See
+Public sign-up is off by default; set `ROBOMINER_ALLOW_SIGNUP=1` to open it. See
 [INTERNET-HARDENING.md](../INTERNET-HARDENING.md) for the full public-deployment
 checklist.
 
-Environment variables still override config values for local development:
+Environment variables for local development:
 
 - `ROBOMINER_DATABASE_URL` or `--database-url`
 - `HOST`, `PORT`, `ROBOMINER_WEB_ROOT`, `ROBOMINER_SESSION_SECRET`, `ROBOMINER_SECURE_COOKIES`, `ROBOMINER_ALLOW_SIGNUP`, `ROBOMINER_TRUST_PROXY`

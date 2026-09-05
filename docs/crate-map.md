@@ -19,7 +19,7 @@ invariants that must stay inside a SQL transaction.
 | `activity/` | Activity feed read models | `list_activity_recent_rally_feed` |
 | `app_shell/` | Shared navigation/shell data | `load_app_shell` |
 | `catalog/` | Ores, part types, shop catalog | `list_ores`, `list_shop_robot_part_catalog`, `part_type_id` |
-| `config.rs` | Legacy config and CLI DB URL resolution | `connect_from_cli`, `resolve_database_url` |
+| `config.rs` | CLI/env DB URL resolution | `connect_from_cli`, `resolve_database_url` |
 | `leaderboard/` | Leaderboard snapshots | area/player/robot leaderboard reads |
 | `migrate/` | Schema migration runner | `run_embedded_migrations`, `migration_status` |
 | `mining_areas/` | Area metadata and costs | area overview reads |

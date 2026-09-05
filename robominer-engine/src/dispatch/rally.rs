@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 
 use crate::cli::RallyCommand;
@@ -11,7 +9,6 @@ use crate::rally::{
 
 pub(crate) async fn dispatch_rally(
     database_url: Option<String>,
-    config: Option<PathBuf>,
     command: RallyCommand,
 ) -> Result<()> {
     match command {
@@ -29,7 +26,7 @@ pub(crate) async fn dispatch_rally(
                 quiet_when_empty: false,
             };
 
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             run_rally(&pool, options).await.map(|_| ())
         }
         RallyCommand::Pool {
@@ -48,7 +45,7 @@ pub(crate) async fn dispatch_rally(
             };
             validate_run_pool_options(&options)?;
 
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             run_pool(&pool, options).await.map(|_| ())
         }
         RallyCommand::Rallies {
@@ -67,7 +64,7 @@ pub(crate) async fn dispatch_rally(
             };
             validate_run_rallies_options(&options)?;
 
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             run_rallies(&pool, options).await
         }
     }
