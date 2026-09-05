@@ -14,7 +14,7 @@ ignore = []
 
 [licenses]
 version = 2
-unused = "allow"
+unused-allowed-license = "allow"
 confidence-threshold = 0.8
 allow = [
     "MIT",
