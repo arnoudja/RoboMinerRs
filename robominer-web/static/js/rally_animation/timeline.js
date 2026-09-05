@@ -6,7 +6,9 @@
  *   animated during clock segment [m-1, m).
  * - cpu[].c/e are 1-based half-open [c, e) source columns; omit when unknown.
  * - Emit either sticky l or non-empty cpu per location, not both.
- * - vs is a full locals snapshot (not a delta). r is omitted while an action is still awaiting.
+ * - vs is a full locals snapshot when present. Omitted `vs` means unchanged from the prior
+ *   CPU step (viewer carries forward); explicit `vs:{}` clears locals (e.g. after Done).
+ * - r is omitted while an action is still awaiting.
  * - frame.poseTurn is the pose clock (sprite/ground); entry.turn is the highlight sample.
  * - Clock length is viewer-robot only; peers with fewer locations freeze at their last pose.
  */
@@ -86,6 +88,8 @@ function rallyRebuildCpuTimeline()
     }
 
     var timeline = [];
+    /** Last non-empty locals snapshot; omitted `vs` carries this forward. */
+    var lastVs = undefined;
     for (var m = 0; m < robot.locations.length; m++)
     {
         var loc = robot.locations[m];
@@ -94,6 +98,20 @@ function rallyRebuildCpuTimeline()
         {
             for (var i = 0; i < cpu.length; i++)
             {
+                var resolvedVs = cpu[i].vs;
+                if (typeof resolvedVs === 'undefined' || resolvedVs === null)
+                {
+                    resolvedVs = lastVs;
+                }
+                else if (typeof resolvedVs !== 'object' || Object.keys(resolvedVs).length === 0)
+                {
+                    resolvedVs = undefined;
+                    lastVs = undefined;
+                }
+                else
+                {
+                    lastVs = resolvedVs;
+                }
                 rallyRecordCpuTurnIndex(m, timeline.length);
                 timeline.push({
                     turn: m,
@@ -101,7 +119,7 @@ function rallyRebuildCpuTimeline()
                     c: cpu[i].c,
                     e: cpu[i].e,
                     r: cpu[i].r,
-                    vs: cpu[i].vs
+                    vs: resolvedVs
                 });
             }
         }
@@ -132,6 +150,12 @@ function rallyRebuildCpuTimeline()
                     sticky.vs = prev.vs;
                     break;
                 }
+            }
+            // Keep lastVs in sync when legacy sticky carried a snapshot; do not invent
+            // vs on sparse samples that failed the same-line carry match.
+            if (typeof sticky.vs !== 'undefined')
+            {
+                lastVs = sticky.vs;
             }
             rallyRecordCpuTurnIndex(m, timeline.length);
             timeline.push(sticky);

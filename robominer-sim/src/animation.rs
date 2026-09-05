@@ -227,12 +227,16 @@ impl AnimationRecorder {
         robots: &[Robot],
         ore_data: &[OreAnimationData],
     ) -> AnimationPayload {
-        AnimationPayload {
+        let mut payload = AnimationPayload {
             v: ANIMATION_PAYLOAD_VERSION,
             robots: robots_animation(&self.robot_steps, robots, ground.size_x(), ground.size_y()),
             ground: ground_animation(ground, &self.ground_changes),
             ore_types: ore_animation(ore_data),
-        }
+        };
+        // Omit unchanged cpu[].vs up front so long Etaxy-class rallies stay under the
+        // persist budget without dropping all locals via strip_cpu_locals.
+        crate::animation_payload::sparsify_cpu_locals(&mut payload);
+        payload
     }
 
     pub(crate) fn into_animation_data(

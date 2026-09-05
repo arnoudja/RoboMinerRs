@@ -38,7 +38,7 @@ Rust serializes rally replay data in [`robominer-sim/src/animation_payload.rs`](
 | `a` | number | Action index (wait, scan, move, mine, …). |
 | `l` | number | Source line highlight when no `cpu` spans are recorded. |
 | `s` | string | Stuck/status label (`wait`, `scan`, `wall`, …). |
-| `cpu` | array | v2: instruction micro-steps with spans, results, and locals. |
+| `cpu` | array | v2: instruction micro-steps with spans, results, and locals. `vs` may be omitted when unchanged from the previous step (viewer carries forward); `vs:{}` clears locals. |
 | `A`, `B`, … / `DA`, … | number | On-robot and depot ore counts per slot. |
 
 ## CI checks

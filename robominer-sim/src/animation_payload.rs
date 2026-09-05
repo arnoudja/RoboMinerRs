@@ -99,7 +99,9 @@ pub struct AnimationRobot {
 /// - `c`/`e`: 1-based half-open `[c, e)` source columns; omit when unknown.
 /// - `r`: typed return `{k,v}` when the micro-step completed a value; omit while awaiting
 ///   physics (issued `move`/`rotate`) or on sticky continuation steps.
-/// - `vs`: full visible-locals snapshot (not a delta); omit when empty.
+/// - `vs`: visible-locals snapshot. Omit when empty **or** unchanged from the previous
+///   CPU step on the same robot (viewer carries forward). Emit `vs:{}` to clear after a
+///   non-empty snapshot (e.g. program Done restart).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct AnimationLocation {
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -143,6 +145,7 @@ pub struct AnimationCpuStep {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub r: Option<AnimationCpuStepResult>,
     /// Visible locals at this micro-step (name → typed `{k,v}`).
+    /// Omit when empty or unchanged from the previous step; `Some({})` clears carry.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub vs: Option<BTreeMap<String, AnimationCpuStepResult>>,
 }
@@ -215,6 +218,12 @@ pub const MAX_PERSISTED_RESULT_DATA_BYTES: usize = 12 * 1024 * 1024;
 /// Shrink animation JSON until it fits `max_bytes`, preferring motion replay over
 /// CPU-debug fidelity. Oversized payloads otherwise fail persist and leave mining
 /// runs unclaimable.
+///
+/// Shrink ladder:
+/// 1. Sparsify unchanged `cpu[].vs` (viewer carries forward; `vs:{}` clears)
+/// 2. Strip all remaining locals
+/// 3. Strip CPU micro-steps (line-only fallback)
+/// 4. Clear motion detail / minimal stub
 pub fn fit_result_data_for_persist(result_data: &str, max_bytes: usize) -> String {
     if result_data.len() <= max_bytes {
         return result_data.to_string();
@@ -223,6 +232,12 @@ pub fn fit_result_data_for_persist(result_data: &str, max_bytes: usize) -> Strin
     let Ok(mut payload) = AnimationPayload::parse(result_data) else {
         return minimal_persist_stub(0, 0).to_embedded_json_capped(max_bytes);
     };
+
+    sparsify_cpu_locals(&mut payload);
+    let sparsified = payload.to_embedded_json();
+    if sparsified.len() <= max_bytes {
+        return sparsified;
+    }
 
     strip_cpu_locals(&mut payload);
     let stripped_locals = payload.to_embedded_json();
@@ -258,6 +273,39 @@ impl AnimationPayload {
                 stub.to_string()
             } else {
                 String::new()
+            }
+        }
+    }
+}
+
+/// Delta-compress `cpu[].vs` within each robot:
+/// - omit when equal to the previous emitted snapshot (viewer carries forward)
+/// - emit `Some({})` when locals become empty after a non-empty snapshot (clear carry)
+/// - leave leading empty/`None` as `None` (nothing to clear)
+pub(crate) fn sparsify_cpu_locals(payload: &mut AnimationPayload) {
+    for robot in &mut payload.robots.robot {
+        let mut last_vs: Option<BTreeMap<String, AnimationCpuStepResult>> = None;
+        for location in &mut robot.locations {
+            if let Some(cpu) = location.cpu.as_mut() {
+                for step in cpu {
+                    match step.vs.take() {
+                        None => {
+                            if last_vs.as_ref().is_some_and(|vs| !vs.is_empty()) {
+                                step.vs = Some(BTreeMap::new());
+                                last_vs = Some(BTreeMap::new());
+                            }
+                        }
+                        Some(vs) => {
+                            if last_vs.as_ref() == Some(&vs) {
+                                // Unchanged — omit; viewer keeps prior snapshot.
+                                step.vs = None;
+                            } else {
+                                last_vs = Some(vs.clone());
+                                step.vs = Some(vs);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -418,6 +466,194 @@ mod tests {
         let original = sample_payload_with_cpu(2, 1);
         let fitted = fit_result_data_for_persist(&original, MAX_PERSISTED_RESULT_DATA_BYTES);
         assert_eq!(fitted, original);
+    }
+
+    #[test]
+    fn fit_result_data_sparsifies_unchanged_locals_before_stripping() {
+        // Sticky multi-cycle motion repeats the same locals snapshot; sparsify should
+        // omit unchanged `vs` and keep the first keyframe instead of stripping all.
+        let mut vs = BTreeMap::new();
+        vs.insert(
+            "found".to_string(),
+            AnimationCpuStepResult {
+                k: AnimationCpuStepResultKind::Bool,
+                v: 0.0,
+            },
+        );
+        let sticky_step = AnimationCpuStep {
+            l: 2,
+            c: Some(12),
+            e: Some(34),
+            r: None,
+            vs: Some(vs),
+        };
+        let locations: Vec<AnimationLocation> = (0..40)
+            .map(|turn| AnimationLocation {
+                x: Some(turn as f64),
+                y: Some(0.0),
+                o: Some(90),
+                cpu: Some(vec![sticky_step.clone()]),
+                ..AnimationLocation::default()
+            })
+            .collect();
+        let original = AnimationPayload {
+            v: ANIMATION_PAYLOAD_VERSION,
+            robots: AnimationRobots {
+                robot: vec![AnimationRobot {
+                    robotnr: 0,
+                    x: 0.0,
+                    y: 0.0,
+                    o: 0,
+                    ore_a: 0,
+                    ore_b: 0,
+                    ore_c: 0,
+                    size: 1.0,
+                    maxore: 100,
+                    maxturns: locations.len() as i32,
+                    cpuspeed: 72,
+                    depot_max_a: None,
+                    depot_max_b: None,
+                    depot_max_c: None,
+                    depot_a: None,
+                    depot_b: None,
+                    depot_c: None,
+                    home_x: None,
+                    home_y: None,
+                    home_size: None,
+                    locations,
+                }],
+            },
+            ground: AnimationGround {
+                size_x: 10,
+                size_y: 10,
+                positions: Vec::new(),
+            },
+            ore_types: BTreeMap::new(),
+        }
+        .to_embedded_json();
+
+        assert!(
+            original.len() > 2_000,
+            "fixture should be oversized for a tight budget, got {}",
+            original.len()
+        );
+
+        // Budget just under full payload: sparsify must fit without total strip.
+        let fitted = fit_result_data_for_persist(&original, original.len() - 1);
+        assert!(
+            fitted.len() <= original.len() - 1,
+            "sparsified payload must fit under budget, got {} vs {}",
+            fitted.len(),
+            original.len() - 1
+        );
+        assert!(
+            fitted.len() < original.len(),
+            "sparsify should shrink repeated sticky locals"
+        );
+
+        let payload = AnimationPayload::parse(&fitted).expect("fitted JSON must parse");
+        let robot = &payload.robots.robot[0];
+        let first_vs = robot.locations[0]
+            .cpu
+            .as_ref()
+            .and_then(|cpu| cpu.first())
+            .and_then(|step| step.vs.as_ref());
+        assert!(
+            first_vs.is_some_and(|vs| vs.contains_key("found")),
+            "first keyframe locals must remain after sparsify: {fitted}"
+        );
+        let omitted_later = robot.locations.iter().skip(1).any(|location| {
+            location
+                .cpu
+                .as_ref()
+                .and_then(|cpu| cpu.first())
+                .is_some_and(|step| step.vs.is_none())
+        });
+        assert!(
+            omitted_later,
+            "unchanged sticky locals should be omitted after sparsify: {fitted}"
+        );
+    }
+
+    #[test]
+    fn sparsify_cpu_locals_emits_empty_object_to_clear_carry() {
+        let mut vs = BTreeMap::new();
+        vs.insert(
+            "x".to_string(),
+            AnimationCpuStepResult {
+                k: AnimationCpuStepResultKind::Int,
+                v: 1.0,
+            },
+        );
+        let mut payload = AnimationPayload {
+            v: ANIMATION_PAYLOAD_VERSION,
+            robots: AnimationRobots {
+                robot: vec![AnimationRobot {
+                    robotnr: 0,
+                    x: 0.0,
+                    y: 0.0,
+                    o: 0,
+                    ore_a: 0,
+                    ore_b: 0,
+                    ore_c: 0,
+                    size: 1.0,
+                    maxore: 100,
+                    maxturns: 2,
+                    cpuspeed: 4,
+                    depot_max_a: None,
+                    depot_max_b: None,
+                    depot_max_c: None,
+                    depot_a: None,
+                    depot_b: None,
+                    depot_c: None,
+                    home_x: None,
+                    home_y: None,
+                    home_size: None,
+                    locations: vec![
+                        AnimationLocation {
+                            cpu: Some(vec![AnimationCpuStep {
+                                l: 1,
+                                c: Some(1),
+                                e: Some(2),
+                                r: None,
+                                vs: Some(vs),
+                            }]),
+                            ..AnimationLocation::default()
+                        },
+                        AnimationLocation {
+                            // Empty locals (omit on wire today) after a prior snapshot.
+                            cpu: Some(vec![AnimationCpuStep {
+                                l: 1,
+                                c: Some(1),
+                                e: Some(2),
+                                r: None,
+                                vs: None,
+                            }]),
+                            ..AnimationLocation::default()
+                        },
+                    ],
+                }],
+            },
+            ground: AnimationGround {
+                size_x: 2,
+                size_y: 2,
+                positions: Vec::new(),
+            },
+            ore_types: BTreeMap::new(),
+        };
+
+        sparsify_cpu_locals(&mut payload);
+
+        let clear = payload.robots.robot[0].locations[1]
+            .cpu
+            .as_ref()
+            .expect("cpu")
+            .first()
+            .expect("step")
+            .vs
+            .as_ref()
+            .expect("empty locals after non-empty must be explicit vs:{{}}");
+        assert!(clear.is_empty(), "clear sentinel must be an empty map");
     }
 
     #[test]
