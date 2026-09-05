@@ -22,10 +22,8 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
-| Location | `robominer-web/src/rally_pages/view/payload.rs` |
-| Behavior | Old rows are refused for replay; new runs store versioned JSON (`{"v":2,…}`) |
-| Sunset | Document-only unless historical replay is required; optional DB migration to purge |
-| Risk | Low — replay already unavailable for legacy rows |
+| Status | **Removed** — replay refuses executable rows; new runs store versioned JSON only |
+| Notes | Refusal remains in `robominer-web` classifier/viewer; historical JS rows may still exist in DB; optional purge deferred |
 
 ## Legacy ore slot ordering
 
