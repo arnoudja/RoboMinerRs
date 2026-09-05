@@ -1,7 +1,6 @@
-//! HTTP routing: session gate, legacy redirects, and page dispatch.
+//! HTTP routing: session gate and page dispatch.
 
 mod dispatch;
-mod redirect;
 mod route_policy;
 mod session_gate;
 
@@ -13,7 +12,6 @@ use std::borrow::Cow;
 use crate::Request;
 use crate::{Response, ServerConfig, health};
 
-use redirect::canonical_path_redirect;
 use session_gate::{SessionStrip, clear_stale_session_cookies, strip_stale_session_cookie};
 
 async fn root_redirect(request: &Request) -> Response {
@@ -25,14 +23,8 @@ async fn root_redirect(request: &Request) -> Response {
 }
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
-    if matches!(request.path.as_str(), "/health" | "/Health")
-        && matches!(request.method.as_str(), "GET" | "HEAD")
-    {
+    if request.path == "/health" && matches!(request.method.as_str(), "GET" | "HEAD") {
         return health::health_response(config).await;
-    }
-
-    if let Some(response) = canonical_path_redirect(request) {
-        return response;
     }
 
     let (session_strip, effective_request) = match config.database_pool.as_ref() {
