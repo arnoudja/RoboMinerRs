@@ -7,7 +7,6 @@ use crate::session::format_authenticated_cookie;
 use crate::static_files::static_file_path;
 use crate::{Request, Response, ServerConfig};
 
-use super::redirect::canonicalize_path;
 use super::route;
 use super::session_gate::{SessionStrip, session_strip_for_version_lookup};
 
@@ -241,18 +240,8 @@ fn static_paths_cannot_escape_web_root() {
     assert!(static_file_path("/css/../robominer.css", Path::new("robominer-web/static")).is_none());
 }
 
-#[test]
-fn canonicalize_path_lowercases_leading_letter_only() {
-    assert_eq!(canonicalize_path("/Shop").as_deref(), Some("/shop"));
-    assert_eq!(
-        canonicalize_path("/MiningQueue").as_deref(),
-        Some("/miningQueue")
-    );
-    assert_eq!(canonicalize_path("/shop"), None);
-}
-
 #[tokio::test(flavor = "current_thread")]
-async fn legacy_pascal_case_paths_redirect_to_canonical_routes() {
+async fn pascal_case_paths_are_not_served_or_redirected() {
     let config = ServerConfig {
         static_root: PathBuf::from("robominer-web/static"),
         database_pool: None,
@@ -261,82 +250,41 @@ async fn legacy_pascal_case_paths_redirect_to_canonical_routes() {
     };
 
     let cases = [
-        ("/Shop", "/shop"),
-        ("/MiningQueue", "/miningQueue"),
-        ("/EditCode", "/editCode"),
-        ("/Account", "/account"),
-        ("/Robot", "/robot"),
-        ("/Achievements", "/achievements"),
+        "/Shop",
+        "/MiningQueue",
+        "/EditCode",
+        "/Account",
+        "/Robot",
+        "/Achievements",
+        "/Login",
+        "/Health",
     ];
-    for (legacy, canonical) in cases {
+    for legacy in cases {
         let response = route(&request(legacy), &config).await;
-        assert_eq!(response.status, 302, "{legacy} should redirect");
-        assert!(
-            response
-                .headers
-                .iter()
-                .any(|(name, value)| *name == "Location" && value == canonical),
-            "{legacy} should redirect to {canonical}, got {:?}",
-            response.headers
-        );
-    }
-
-    let mut with_query = request("/MiningQueue");
-    with_query
-        .query
-        .insert("fragment".to_string(), "queue".to_string());
-    with_query.query.insert("info".to_string(), "1".to_string());
-    let response = route(&with_query, &config).await;
-    assert_eq!(response.status, 302);
-    let location = response
-        .headers
-        .iter()
-        .find(|(name, _)| *name == "Location")
-        .map(|(_, value)| value.as_str())
-        .expect("Location header");
-    assert!(
-        location.starts_with("/miningQueue?"),
-        "query redirect should keep canonical path: {location}"
-    );
-    assert!(
-        location.contains("fragment=queue") && location.contains("info=1"),
-        "query string should be preserved: {location}"
-    );
-}
-
-#[tokio::test(flavor = "current_thread")]
-async fn legacy_pascal_case_post_requests_are_not_redirected() {
-    let config = ServerConfig {
-        static_root: PathBuf::from("robominer-web/static"),
-        database_pool: None,
-        allow_signup: true,
-        trust_proxy: false,
-    };
-
-    for (path, forbidden_location) in [("/Login", "/login"), ("/Shop", "/shop")] {
-        let mut request = request(path);
-        request.method = "POST".to_string();
-        request
-            .form
-            .insert("loginName".to_string(), "player".to_string());
-        request
-            .form
-            .insert("password".to_string(), "secret".to_string());
-
-        let response = route(&request, &config).await;
-        let location = response
-            .headers
-            .iter()
-            .find(|(name, _)| *name == "Location")
-            .map(|(_, value)| value.as_str());
         assert_ne!(
-            location,
-            Some(forbidden_location),
-            "POST {path} must not canonical-redirect to {forbidden_location} (got status {}, location {:?})",
-            response.status,
-            location
+            response.status, 302,
+            "{legacy} must not redirect after PascalCase sunset"
+        );
+        assert_eq!(
+            response.status, 404,
+            "{legacy} should 404 after PascalCase sunset, got {}",
+            response.status
         );
     }
+
+    let mut post_login = request("/Login");
+    post_login.method = "POST".to_string();
+    post_login
+        .form
+        .insert("loginName".to_string(), "player".to_string());
+    post_login
+        .form
+        .insert("password".to_string(), "secret".to_string());
+    let response = route(&post_login, &config).await;
+    assert_eq!(
+        response.status, 404,
+        "POST /Login should 404 after PascalCase sunset"
+    );
 }
 
 #[tokio::test(flavor = "current_thread")]

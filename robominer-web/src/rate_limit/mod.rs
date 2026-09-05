@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn mutation_action_family_maps_known_paths() {
         assert_eq!(mutation_action_family("/shop"), "shop");
-        assert_eq!(mutation_action_family("/MiningQueue"), "mining_queue");
+        assert_eq!(mutation_action_family("/miningQueue"), "mining_queue");
         assert_eq!(mutation_action_family("/editCode"), "edit_code");
         assert_eq!(mutation_action_family("/unknown"), "other");
     }
