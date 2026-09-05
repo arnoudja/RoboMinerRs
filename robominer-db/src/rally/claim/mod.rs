@@ -64,6 +64,13 @@ async fn claim_user_results_once(
     let ore_rewards = load_claimed_ore_rewards(&mut transaction, ore_rewards).await?;
     transaction.commit().await?;
 
+    tracing::info!(
+        user_id,
+        claimed_queues,
+        ore_types = ore_rewards.len(),
+        "claimed mining wallet results"
+    );
+
     Ok(ClaimedUserResults {
         claimed_queues,
         ore_rewards,
