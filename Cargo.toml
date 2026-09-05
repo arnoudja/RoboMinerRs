@@ -18,7 +18,7 @@ version = "1.0.2"
 anyhow = "1.0.104"
 argon2 = { version = "0.5.3", features = ["std"] }
 # Unifies with argon2's password-hash so SaltString::generate(OsRng) works.
-password-hash = { version = "0.5", features = ["alloc", "rand_core", "getrandom"] }
+password-hash = { version = "0.6", features = ["alloc", "rand_core", "getrandom"] }
 axum = "0.8.9"
 clap = { version = "4.6.6", features = ["derive"] }
 hmac = "0.13.0"
