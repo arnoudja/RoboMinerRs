@@ -54,10 +54,8 @@ pub fn configure_session_ttl_secs(ttl_secs: u64) {
 pub fn resolve_session_ttl_secs(
     env_secs: Option<&str>,
     env_hours: Option<&str>,
-    config_secs: Option<&str>,
-    config_hours: Option<&str>,
 ) -> Result<u64, String> {
-    session::resolve_session_ttl_secs(env_secs, env_hours, config_secs, config_hours)
+    session::resolve_session_ttl_secs(env_secs, env_hours)
 }
 pub fn resolve_session_secret(
     configured: Option<&str>,

@@ -27,7 +27,7 @@ Options:
   --engine-only     Install only robominer-engine.
   --web-only        Install only robominer-web.
   --skip-user       Skip service account creation.
-  --skip-config     Do not create or update /etc/robominer/robominer.env (or legacy .conf).
+  --skip-config     Do not create or update /etc/robominer/robominer.env.
   --skip-systemd    Install binaries and assets only.
   -h, --help        Show this help.
 

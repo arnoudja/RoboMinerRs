@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::{Result, ensure};
 
 use super::ensure_positive_user_id;
@@ -14,12 +12,11 @@ use crate::verify::{
 
 pub(crate) async fn dispatch_program(
     database_url: Option<String>,
-    config: Option<PathBuf>,
     command: ProgramCommand,
 ) -> Result<()> {
     match command {
         ProgramCommand::Verify { program_source_id } => {
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             verify_program(&pool, program_source_id).await
         }
         ProgramCommand::VerifySource { source_file } => verify_source_file(&source_file),
@@ -58,7 +55,7 @@ pub(crate) async fn dispatch_program(
             source_code,
         } => {
             ensure_positive_user_id(user_id)?;
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             create_program_source(
                 &pool,
                 robominer_db::CreateProgramSourceRequest {
@@ -80,7 +77,7 @@ pub(crate) async fn dispatch_program(
                 program_source_id > 0,
                 "--program-source-id must be greater than zero"
             );
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             update_program_source(
                 &pool,
                 robominer_db::ProgramSourceWriteRequest {
@@ -101,12 +98,12 @@ pub(crate) async fn dispatch_program(
                 program_source_id > 0,
                 "--program-source-id must be greater than zero"
             );
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             delete_program_source(&pool, user_id, program_source_id).await
         }
         ProgramCommand::SourceStates { user_id } => {
             ensure_positive_user_id(user_id)?;
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             program_source_states(&pool, user_id).await
         }
     }

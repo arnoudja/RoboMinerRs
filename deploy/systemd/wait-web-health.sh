@@ -2,19 +2,17 @@
 # Wait until robominer-web answers 200 on GET /health (loopback readiness).
 #
 # Usage:
-#   robominer-wait-web-health [/etc/robominer/robominer.conf]
+#   robominer-wait-web-health
 #
 # Bind address precedence:
 #   1. HOST / PORT (systemd EnvironmentFile / process env)
 #   2. ROBOMINER_WEB_HOST / ROBOMINER_WEB_PORT
-#   3. optional legacy conf path argument (deprecated)
-#   4. defaults 127.0.0.1:8080
+#   3. defaults 127.0.0.1:8080
 #
 # Intended for systemd ExecStartPost.
 
 set -euo pipefail
 
-CONFIG_FILE="${1:-}"
 ATTEMPTS="${ROBOMINER_HEALTH_ATTEMPTS:-30}"
 SLEEP_SECS="${ROBOMINER_HEALTH_SLEEP_SECS:-1}"
 
@@ -32,23 +30,6 @@ elif [[ -n "${ROBOMINER_WEB_PORT:-}" ]]; then
     BIND_PORT="${ROBOMINER_WEB_PORT}"
 else
     BIND_PORT=""
-fi
-
-if [[ -n "${CONFIG_FILE}" && -f "${CONFIG_FILE}" ]]; then
-    while read -r key value; do
-        case "${key,,}" in
-            host)
-                if [[ -z "${BIND_HOST}" ]]; then
-                    BIND_HOST="${value}"
-                fi
-                ;;
-            port)
-                if [[ -z "${BIND_PORT}" ]]; then
-                    BIND_PORT="${value}"
-                fi
-                ;;
-        esac
-    done < <(awk 'NF && $1 !~ /^#/ { print tolower($1), $2 }' "${CONFIG_FILE}")
 fi
 
 HOST="${BIND_HOST:-127.0.0.1}"

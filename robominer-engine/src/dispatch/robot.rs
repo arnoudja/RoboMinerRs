@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use anyhow::{Result, ensure};
 
 use super::ensure_positive_user_id;
@@ -9,13 +7,12 @@ use crate::robot::{robot_config_states, update_robot_config};
 
 pub(crate) async fn dispatch_robot(
     database_url: Option<String>,
-    config: Option<PathBuf>,
     command: RobotCommand,
 ) -> Result<()> {
     match command {
         RobotCommand::ConfigStates { user_id } => {
             ensure_positive_user_id(user_id)?;
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             robot_config_states(&pool, user_id).await
         }
         RobotCommand::UpdateConfig {
@@ -56,7 +53,7 @@ pub(crate) async fn dispatch_robot(
                 ore_scanner_id > 0,
                 "--ore-scanner-id must be greater than zero"
             );
-            let pool = connect_database(database_url, config).await?;
+            let pool = connect_database(database_url).await?;
             update_robot_config(
                 &pool,
                 robominer_db::UpdateRobotConfigRequest {

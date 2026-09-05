@@ -31,14 +31,10 @@ use robominer_program::{ExecutableProgram, compile_executable_source};
 
 pub async fn run() -> Result<()> {
     let cli = Cli::parse();
-    let pool = robominer_db::connect_from_cli(
-        cli.database_url.clone(),
-        cli.config.clone(),
-        "robominer-optimize",
-    )
-    .await
-    .map_err(|error| anyhow!(error))
-    .context("failed to connect to database")?;
+    let pool = robominer_db::connect_from_cli(cli.database_url.clone())
+        .await
+        .map_err(|error| anyhow!(error))
+        .context("failed to connect to database")?;
 
     let catalog = PartCatalog::load(&pool, cli.max_tier_id)
         .await

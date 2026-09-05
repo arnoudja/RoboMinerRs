@@ -8,9 +8,6 @@ pub struct Cli {
     #[arg(long)]
     pub database_url: Option<String>,
 
-    #[arg(long)]
-    pub config: Option<PathBuf>,
-
     /// Comma-separated mining area ids
     #[arg(long, value_delimiter = ',', default_value = "1001,1002")]
     pub areas: Vec<i64>,

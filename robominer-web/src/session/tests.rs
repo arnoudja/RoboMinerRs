@@ -153,29 +153,29 @@ fn user_id_from_request_uses_signed_session_cookie() {
 #[test]
 fn resolve_session_ttl_secs_defaults_to_twenty_four_hours() {
     assert_eq!(
-        resolve_session_ttl_secs(None, None, None, None).expect("default ttl"),
+        resolve_session_ttl_secs(None, None).expect("default ttl"),
         DEFAULT_SESSION_TTL_SECS
     );
 }
 
 #[test]
-fn resolve_session_ttl_secs_prefers_env_over_config() {
+fn resolve_session_ttl_secs_reads_env() {
     assert_eq!(
-        resolve_session_ttl_secs(None, Some("48"), Some("3600"), None).expect("env hours"),
+        resolve_session_ttl_secs(None, Some("48")).expect("env hours"),
         48 * 60 * 60
     );
     assert_eq!(
-        resolve_session_ttl_secs(Some("7200"), None, None, Some("12")).expect("env secs"),
+        resolve_session_ttl_secs(Some("7200"), None).expect("env secs"),
         7200
     );
 }
 
 #[test]
 fn resolve_session_ttl_secs_rejects_invalid_values() {
-    assert!(resolve_session_ttl_secs(Some("0"), None, None, None).is_err());
-    assert!(resolve_session_ttl_secs(None, Some("abc"), None, None).is_err());
+    assert!(resolve_session_ttl_secs(Some("0"), None).is_err());
+    assert!(resolve_session_ttl_secs(None, Some("abc")).is_err());
     let over_max = (super::MAX_SESSION_TTL_SECS + 1).to_string();
-    let error = resolve_session_ttl_secs(Some(&over_max), None, None, None).unwrap_err();
+    let error = resolve_session_ttl_secs(Some(&over_max), None).unwrap_err();
     assert!(error.contains("30 days"));
 }
 

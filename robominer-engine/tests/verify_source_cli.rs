@@ -53,8 +53,6 @@ fn output_text(output: &Output) -> (String, String) {
 fn verify_source_accepts_valid_program_without_database_config() {
     let source = TempSource::new("valid", "move(1);\nmine();\n");
     let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
         "program",
         "verify-source",
         source
@@ -131,8 +129,6 @@ fn verify_source_fails_when_file_cannot_be_read() {
 fn simulate_source_runs_valid_program_without_database_config() {
     let source = TempSource::new("simulate-valid", "move(1.4142135623730951); mine();\n");
     let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
         "program",
         "simulate-source",
         "--turns",
@@ -304,14 +300,7 @@ fn run_pool_help_documents_dry_run_and_persist_mode() {
 
 #[test]
 fn run_pool_rejects_non_positive_pool_id_before_database_config() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "pool",
-        "--pool-id",
-        "0",
-    ]);
+    let output = run_engine(&["rally", "pool", "--pool-id", "0"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
@@ -327,15 +316,7 @@ fn run_pool_rejects_non_positive_pool_id_before_database_config() {
 
 #[test]
 fn run_pool_until_complete_requires_persist() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "pool",
-        "--pool-id",
-        "1",
-        "--until-complete",
-    ]);
+    let output = run_engine(&["rally", "pool", "--pool-id", "1", "--until-complete"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
@@ -352,8 +333,6 @@ fn run_pool_until_complete_requires_persist() {
 #[test]
 fn run_pool_rejects_zero_max_rallies() {
     let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
         "rally",
         "pool",
         "--pool-id",
@@ -378,12 +357,7 @@ fn run_pool_rejects_zero_max_rallies() {
 
 #[test]
 fn run_rallies_requires_once_or_loop() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "rallies",
-    ]);
+    let output = run_engine(&["rally", "rallies"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
@@ -399,14 +373,7 @@ fn run_rallies_requires_once_or_loop() {
 
 #[test]
 fn run_rallies_rejects_once_and_loop_together() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "rallies",
-        "--once",
-        "--loop",
-    ]);
+    let output = run_engine(&["rally", "rallies", "--once", "--loop"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
@@ -422,13 +389,7 @@ fn run_rallies_rejects_once_and_loop_together() {
 
 #[test]
 fn run_rallies_loop_requires_persist() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "rallies",
-        "--loop",
-    ]);
+    let output = run_engine(&["rally", "rallies", "--loop"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(
@@ -444,15 +405,7 @@ fn run_rallies_loop_requires_persist() {
 
 #[test]
 fn run_rallies_rejects_zero_sleep_seconds() {
-    let output = run_engine(&[
-        "--config",
-        "/tmp/robominer-engine-config-that-should-not-be-read.conf",
-        "rally",
-        "rallies",
-        "--once",
-        "--sleep-seconds",
-        "0",
-    ]);
+    let output = run_engine(&["rally", "rallies", "--once", "--sleep-seconds", "0"]);
     let (stdout, stderr) = output_text(&output);
 
     assert!(

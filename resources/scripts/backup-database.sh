@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
-# Create a MySQL/MariaDB dump using credentials from robominer.conf
-# (legacy; soft-deprecated — prefer ROBOMINER_DATABASE_URL / robominer.env in a follow-up).
+# Create a MySQL/MariaDB dump using ROBOMINER_DATABASE_URL or /etc/robominer/robominer.env.
 #
 # Usage:
 #   resources/scripts/backup-database.sh
 #   resources/scripts/backup-database.sh /path/to/backup.sql.gz
-#   resources/scripts/backup-database.sh --config /etc/robominer/robominer.conf
-#   resources/scripts/backup-database.sh --config ./robominer.conf ./backups/RoboMiner.sql
+#   ROBOMINER_DATABASE_URL='mysql://user:pass@host/db' resources/scripts/backup-database.sh
+#   resources/scripts/backup-database.sh --env-file /etc/robominer/robominer.env
 #
 # Defaults:
-#   config: /etc/robominer/robominer.conf
+#   env-file: /etc/robominer/robominer.env (used when ROBOMINER_DATABASE_URL is unset)
 #   output: ./robominer-<database>-<UTC-timestamp>.sql.gz (gzip unless output ends in .sql)
 
 set -euo pipefail
 
-CONFIG_FILE="/etc/robominer/robominer.conf"
+ENV_FILE="/etc/robominer/robominer.env"
 OUTPUT=""
 
 usage() {
@@ -23,8 +22,12 @@ Usage:
   resources/scripts/backup-database.sh [options] [output-file]
 
 Options:
-  --config PATH   Path to robominer.conf (default: /etc/robominer/robominer.conf)
-  -h, --help      Show this help
+  --env-file PATH   Path to robominer.env (default: /etc/robominer/robominer.env)
+  -h, --help        Show this help
+
+Database URL resolution:
+  1. ROBOMINER_DATABASE_URL in the process environment
+  2. ROBOMINER_DATABASE_URL from --env-file / robominer.env
 
 If output-file is omitted, writes a timestamped .sql.gz in the current directory.
 If output-file ends with .sql, the dump is left uncompressed; otherwise it is gzipped
@@ -34,9 +37,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --config)
-            [[ $# -ge 2 ]] || { echo "--config requires a path" >&2; exit 1; }
-            CONFIG_FILE="$2"
+        --env-file)
+            [[ $# -ge 2 ]] || { echo "--env-file requires a path" >&2; exit 1; }
+            ENV_FILE="$2"
             shift 2
             ;;
         -h | --help)
@@ -77,29 +80,63 @@ require_command() {
     fi
 }
 
-conf_value() {
+env_file_value() {
     local key="$1"
-    # Match "key value" lines; ignore comments and blanks.
-    sed -n "s/^${key}[[:space:]]\{1,\}//p" "${CONFIG_FILE}" | head -n 1
+    [[ -f "${ENV_FILE}" ]] || return 0
+    sed -n "s/^${key}=//p" "${ENV_FILE}" | head -n 1
+}
+
+parse_database_url() {
+    local url="$1"
+    require_command python3
+    eval "$(
+        python3 - "$url" <<'PY'
+import sys
+from urllib.parse import unquote, urlparse
+
+u = urlparse(sys.argv[1])
+if u.scheme not in ("mysql", "mysql2"):
+    raise SystemExit("unsupported database URL scheme")
+host = u.hostname or "127.0.0.1"
+port = str(u.port) if u.port else ""
+user = unquote(u.username or "")
+password = unquote(u.password or "")
+database = unquote((u.path or "").lstrip("/"))
+
+def sh_escape(value: str) -> str:
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+
+print(f"DB_SERVER={sh_escape(host)}")
+print(f"DB_PORT={sh_escape(port)}")
+print(f"DB_USER={sh_escape(user)}")
+print(f"DB_PASSWORD={sh_escape(password)}")
+print(f"DB_DATABASE={sh_escape(database)}")
+PY
+    )"
 }
 
 require_command mysqldump
 require_command gzip
-require_command sed
 require_command date
 
-if [[ ! -f "${CONFIG_FILE}" ]]; then
-    echo "Config file not found: ${CONFIG_FILE}" >&2
+DATABASE_URL="${ROBOMINER_DATABASE_URL:-}"
+if [[ -z "${DATABASE_URL}" ]]; then
+    DATABASE_URL="$(env_file_value ROBOMINER_DATABASE_URL)"
+fi
+if [[ -z "${DATABASE_URL}" ]]; then
+    echo "ROBOMINER_DATABASE_URL is not set (process env or ${ENV_FILE})." >&2
     exit 1
 fi
 
-DB_SERVER="$(conf_value dbserver)"
-DB_USER="$(conf_value dbuser)"
-DB_PASSWORD="$(conf_value dbpassword)"
-DB_DATABASE="$(conf_value dbdatabase)"
+DB_SERVER=""
+DB_PORT=""
+DB_USER=""
+DB_PASSWORD=""
+DB_DATABASE=""
+parse_database_url "${DATABASE_URL}"
 
 if [[ -z "${DB_SERVER}" || -z "${DB_USER}" || -z "${DB_DATABASE}" ]]; then
-    echo "Config ${CONFIG_FILE} must define dbserver, dbuser, and dbdatabase" >&2
+    echo "ROBOMINER_DATABASE_URL must include host, user, and database" >&2
     exit 1
 fi
 
@@ -117,7 +154,7 @@ fi
 OUTPUT_DIR="$(dirname -- "${OUTPUT}")"
 mkdir -p "${OUTPUT_DIR}"
 
-echo "Backing up database '${DB_DATABASE}' from ${DB_SERVER} using ${CONFIG_FILE}"
+echo "Backing up database '${DB_DATABASE}' from ${DB_SERVER}"
 echo "Writing ${OUTPUT}"
 
 # Password via env so it never appears on the process command line.
@@ -134,6 +171,9 @@ dump_args=(
     --default-character-set=utf8mb4
     "${DB_DATABASE}"
 )
+if [[ -n "${DB_PORT}" ]]; then
+    dump_args+=(-P "${DB_PORT}")
+fi
 
 if [[ "${COMPRESS}" == true ]]; then
     mysqldump "${dump_args[@]}" | gzip -c > "${OUTPUT}"
