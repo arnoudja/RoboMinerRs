@@ -8,10 +8,8 @@ sunset criteria are met.
 
 | Item | Detail |
 | --- | --- |
-| Location | `robominer-web/src/router/` (`canonical_path_redirect`) |
-| Behavior | GET/HEAD `/Shop` → `/shop`, etc.; POST stays on legacy path for CSRF |
-| Sunset | Log redirect hits in production; remove redirects after zero use for 3+ months |
-| Risk | Old bookmarks and external links break if removed prematurely |
+| Status | **Removed** — canonical camelCase paths only (`/shop`, `/miningQueue`, …) |
+| Notes | Redirect middleware, PascalCase route aliases, and `/Health` alias deleted after sunset (zero production use) |
 
 ## Session tokens without `session_version`
 
@@ -70,7 +68,7 @@ sunset criteria are met.
 1. ~~Tighten open-redirect and session rules~~ **Done** (`returnTo` whitelist, CSRF logoff, Secure+trustproxy, session secret floor, TTL cap)
 2. ~~Trustproxy missing Real-IP footgun~~ **Done** (dedicated `proxy-missing-real-ip` key + error log)
 3. ~~Mutation IP co-limit~~ **Done** (60 POSTs / 60s per client IP alongside user+action budgets)
-4. Remove PascalCase redirects when analytics show zero use
+4. ~~Remove PascalCase redirects~~ **Done** (canonical camelCase only)
 5. Bump minimum session version after TTL window (remember-me max age is 30 days)
 6. `__Host-` cookies only after Secure is mandatory on every deploy path
 7. Leave ore-ordering and conf-file paths until a deliberate migration release

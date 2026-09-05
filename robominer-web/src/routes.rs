@@ -1,4 +1,4 @@
-//! Canonical app route paths, camelCase / PascalCase alias matching, and auth policy.
+//! Canonical app route paths, optional legacy HTML aliases, and auth policy.
 
 /// Access policy enforced by the router before page handlers run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -104,30 +104,6 @@ impl AppRoute {
         }
     }
 
-    /// Absolute PascalCase alias (`/MiningQueue`).
-    pub const fn pascal_path(self) -> &'static str {
-        match self {
-            Self::Achievements => "/Achievements",
-            Self::Account => "/Account",
-            Self::Activity => "/Activity",
-            Self::EditCode => "/EditCode",
-            Self::Help => "/Help",
-            Self::HelpTutorial => "/HelpTutorial",
-            Self::HelpProgramTips => "/HelpProgramTips",
-            Self::HelpRobotProgram => "/HelpRobotProgram",
-            Self::HelpMechanics => "/HelpMechanics",
-            Self::Leaderboard => "/Leaderboard",
-            Self::Login => "/Login",
-            Self::Logoff => "/Logoff",
-            Self::MiningQueue => "/MiningQueue",
-            Self::MiningResults => "/MiningResults",
-            Self::MiningAreaOverview => "/MiningAreaOverview",
-            Self::Robot => "/Robot",
-            Self::RobotStats => "/RobotStats",
-            Self::Shop => "/Shop",
-        }
-    }
-
     /// Extra absolute path aliases (legacy HTML filenames).
     pub const fn extra_aliases(self) -> &'static [&'static str] {
         match self {
@@ -139,18 +115,13 @@ impl AppRoute {
         }
     }
 
-    /// True when `path` is the canonical path, PascalCase alias, or an extra alias.
+    /// True when `path` is the canonical path or an extra alias.
     pub fn matches(self, path: &str) -> bool {
-        path == self.path() || path == self.pascal_path() || self.extra_aliases().contains(&path)
+        path == self.path() || self.extra_aliases().contains(&path)
     }
 
     pub fn from_path(path: &str) -> Option<Self> {
         Self::ALL.iter().copied().find(|route| route.matches(path))
-    }
-
-    /// Canonical absolute path when `path` matches this route under any alias.
-    pub fn canonicalize(path: &str) -> Option<&'static str> {
-        Self::from_path(path).map(Self::path)
     }
 
     /// Auth and CSRF policy for this route (see [`RoutePolicy`]).
@@ -181,38 +152,57 @@ mod tests {
     use super::AppRoute;
 
     #[test]
-    fn each_route_path_and_aliases_canonicalize() {
+    fn each_route_path_and_aliases_resolve() {
         for route in AppRoute::ALL {
             assert_eq!(
-                AppRoute::canonicalize(route.path()),
-                Some(route.path()),
+                AppRoute::from_path(route.path()),
+                Some(*route),
                 "canonical path should resolve for {:?}",
-                route
-            );
-            assert_eq!(
-                AppRoute::canonicalize(route.pascal_path()),
-                Some(route.path()),
-                "PascalCase alias should resolve for {:?}",
                 route
             );
             for alias in route.extra_aliases() {
                 assert_eq!(
-                    AppRoute::canonicalize(alias),
-                    Some(route.path()),
+                    AppRoute::from_path(alias),
+                    Some(*route),
                     "extra alias {alias} should resolve for {:?}",
                     route
                 );
             }
             assert!(route.matches(route.path()));
-            assert!(route.matches(route.pascal_path()));
             assert_eq!(format!("/{}", route.href()), route.path());
         }
     }
 
     #[test]
-    fn unknown_paths_do_not_canonicalize() {
-        assert_eq!(AppRoute::canonicalize("/notARealPage"), None);
-        assert_eq!(AppRoute::canonicalize("/"), None);
+    fn pascal_case_paths_are_not_aliases() {
+        for route in AppRoute::ALL {
+            let href = route.href();
+            let Some(first) = href.chars().next() else {
+                continue;
+            };
+            let pascal = format!(
+                "/{}{}",
+                first.to_ascii_uppercase(),
+                href.chars().skip(1).collect::<String>()
+            );
+            assert_ne!(pascal, route.path());
+            assert!(
+                !route.matches(&pascal),
+                "{pascal} must not match {:?}",
+                route
+            );
+            assert_eq!(
+                AppRoute::from_path(&pascal),
+                None,
+                "{pascal} must not resolve"
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_paths_do_not_resolve() {
+        assert_eq!(AppRoute::from_path("/notARealPage"), None);
+        assert_eq!(AppRoute::from_path("/"), None);
     }
 
     #[test]
