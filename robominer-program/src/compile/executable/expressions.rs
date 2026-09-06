@@ -10,6 +10,7 @@ use super::actions::{
 };
 use super::builtins::{parse_builtin_property_expression, reject_builtin_property_mutation};
 use super::expect_declared_variable;
+use super::functions::parse_call_arguments;
 
 pub(super) fn parse_executable_expression(
     input: &mut CompileInput,
@@ -235,6 +236,13 @@ fn parse_single_expression_kind(
     let name = input.use_next_word_any();
     if !name.is_empty() {
         if variable_operator == VariableOperator::None {
+            // Task 2: recognize calls to already-registered functions. Full call
+            // expression parsing / forward refs land in Task 3.
+            if input.peek() == Some('(') && input.functions.contains_key(&name) {
+                let args = parse_call_arguments(input)?;
+                return Ok(Some(ExecutableExpressionKind::Call { name, args }));
+            }
+
             if input.eat_sequence("++") {
                 variable_operator = VariableOperator::PostIncrement;
             } else if input.eat_sequence("--") {

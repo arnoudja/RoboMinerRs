@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::types::{CompileError, Operator, SourceSpan, ValueType};
+use crate::types::{CompileError, ExecutableFunction, Operator, SourceSpan, ValueType};
 
 pub(super) fn expect_empty_call(input: &mut CompileInput) -> Result<(), CompileError> {
     if !input.eat_char('(', false) || !input.eat_char(')', false) {
@@ -84,6 +84,12 @@ pub(super) struct CompileInput {
     pub(super) next_word: String,
     pub(super) current_line: usize,
     pub(super) variables: VariableStorage,
+    /// When true, top-level `fn` / `T name(` forms are accepted as function definitions.
+    pub(super) allow_function_defs: bool,
+    /// When true, `return` statements are legal.
+    pub(super) in_function_body: bool,
+    /// Function registry filled during parse (moved into [`ExecutableProgram`] at the end).
+    pub(super) functions: BTreeMap<String, ExecutableFunction>,
     unterminated_block_comment_line: Option<usize>,
 }
 
@@ -181,6 +187,9 @@ impl CompileInput {
             next_word: String::new(),
             current_line: 1,
             variables: VariableStorage::default(),
+            allow_function_defs: false,
+            in_function_body: false,
+            functions: BTreeMap::new(),
             unterminated_block_comment_line: None,
         };
         input.extract_next_word();
@@ -403,7 +412,7 @@ fn clamp_u16(value: usize) -> u16 {
 
 #[derive(Debug, Clone)]
 struct Variable {
-    _value_type: ValueType,
+    value_type: ValueType,
     is_const: bool,
 }
 
@@ -423,7 +432,7 @@ impl VariableStorage {
         self.variables.entry(self.scope_depth).or_default().insert(
             name,
             Variable {
-                _value_type: value_type,
+                value_type,
                 is_const,
             },
         );
@@ -439,6 +448,14 @@ impl VariableStorage {
         self.variables
             .values()
             .any(|scope| scope.contains_key(name))
+    }
+
+    pub(super) fn value_type(&self, name: &str) -> Option<ValueType> {
+        self.variables
+            .values()
+            .filter_map(|scope| scope.get(name))
+            .next_back()
+            .map(|variable| variable.value_type)
     }
 
     pub(super) fn is_const(&self, name: &str) -> bool {

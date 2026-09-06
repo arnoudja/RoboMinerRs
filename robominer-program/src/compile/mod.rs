@@ -5,6 +5,7 @@ mod executable;
 mod fixtures;
 mod input;
 mod program_size;
+mod reserved;
 
 use executable::parse_executable_program;
 use program_size::program_instruction_size;

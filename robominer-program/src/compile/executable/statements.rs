@@ -1,6 +1,6 @@
 use crate::types::{
     CompileError, ExecutableExpression, ExecutableExpressionKind, ExecutableStatement,
-    ExecutableStatementKind, Operator, SourceSpan, ValueType, VariableOperator,
+    ExecutableStatementKind, Operator, SourceSpan, VariableOperator,
 };
 
 use super::super::input::{CompileInput, SourceMark, expect_char};
@@ -8,12 +8,20 @@ use super::actions::parse_executable_action_statement;
 use super::builtins::{BuiltinObject, parse_builtin_property_statement};
 use super::expect_declared_variable;
 use super::expressions::parse_executable_expression;
+use super::functions::{
+    parse_optional_value_type, parse_typed_name_function, try_parse_fn_keyword_definition,
+};
 
 pub(super) fn parse_executable_sequence(
     input: &mut CompileInput,
 ) -> Result<ExecutableStatement, CompileError> {
     let mark = input.mark_pos();
     expect_char(input, '{', "'{' expected")?;
+
+    // Only the outermost program sequence may define functions; capture then clear so
+    // nested blocks (and recursive sequence calls) reject nested defs.
+    let allow_function_defs = input.allow_function_defs;
+    input.allow_function_defs = false;
 
     let outer_scope = input.variables.scope_depth;
     input.variables.set_scope_depth(outer_scope + 1);
@@ -31,17 +39,39 @@ pub(super) fn parse_executable_sequence(
             )));
         }
 
+        input.allow_function_defs = allow_function_defs;
+        if let Some(_terminated) = try_parse_fn_keyword_definition(input)? {
+            input.allow_function_defs = false;
+            input.eat_char(';', true);
+            previous_terminated = true;
+            continue;
+        }
+
         if input.peek() == Some('{') {
+            input.allow_function_defs = false;
             statements.push(parse_executable_sequence(input)?);
             input.eat_char(';', true);
             previous_terminated = true;
         } else {
-            let (statement, terminated) = parse_executable_statement(input)?;
-            statements.push(statement);
-            previous_terminated = input.eat_char(';', true) || terminated;
+            match parse_executable_statement(input)? {
+                StatementParse::FunctionDef => {
+                    input.allow_function_defs = false;
+                    input.eat_char(';', true);
+                    previous_terminated = true;
+                }
+                StatementParse::Statement {
+                    statement,
+                    terminated,
+                } => {
+                    input.allow_function_defs = false;
+                    statements.push(statement);
+                    previous_terminated = input.eat_char(';', true) || terminated;
+                }
+            }
         }
     }
 
+    input.allow_function_defs = false;
     expect_char(input, '}', "'}' expected")?;
     input.variables.set_scope_depth(outer_scope);
 
@@ -51,13 +81,54 @@ pub(super) fn parse_executable_sequence(
     ))
 }
 
-fn parse_executable_statement(
-    input: &mut CompileInput,
-) -> Result<(ExecutableStatement, bool), CompileError> {
+enum StatementParse {
+    FunctionDef,
+    Statement {
+        statement: ExecutableStatement,
+        terminated: bool,
+    },
+}
+
+fn parse_executable_statement(input: &mut CompileInput) -> Result<StatementParse, CompileError> {
     let mark = input.mark_pos();
 
-    if let Some(statement) = parse_executable_variable_statement(input, mark)? {
-        return Ok((statement, false));
+    if !input.allow_function_defs && input.get_next_word() == "fn" {
+        return Err(CompileError::new(format!(
+            "Syntax error at line {}. Nested function definitions are not allowed",
+            input.current_line
+        )));
+    }
+
+    if input.use_next_word("return") {
+        if !input.in_function_body {
+            return Err(CompileError::new(format!(
+                "Error at line {}: 'return' is only allowed inside a function",
+                input.current_line
+            )));
+        }
+        let value = if matches!(input.peek(), Some(';' | '}')) {
+            None
+        } else {
+            parse_executable_expression(input)?
+        };
+        return Ok(StatementParse::Statement {
+            statement: ExecutableStatement::at(
+                input.span_from(mark),
+                ExecutableStatementKind::Return(value),
+            ),
+            terminated: false,
+        });
+    }
+
+    match parse_executable_variable_statement(input, mark)? {
+        VariableParse::FunctionDef => return Ok(StatementParse::FunctionDef),
+        VariableParse::Statement(statement) => {
+            return Ok(StatementParse::Statement {
+                statement,
+                terminated: false,
+            });
+        }
+        VariableParse::NotVariable => {}
     }
 
     if input.use_next_word("while") {
@@ -76,8 +147,8 @@ fn parse_executable_statement(
             Some(Box::new(parse_executable_item(input)?))
         };
 
-        return Ok((
-            ExecutableStatement::at(
+        return Ok(StatementParse::Statement {
+            statement: ExecutableStatement::at(
                 input.span_from(mark),
                 ExecutableStatementKind::While {
                     condition,
@@ -85,8 +156,8 @@ fn parse_executable_statement(
                     is_do_while: false,
                 },
             ),
-            true,
-        ));
+            terminated: true,
+        });
     }
 
     if input.use_next_word("do") {
@@ -116,8 +187,8 @@ fn parse_executable_statement(
         expect_char(input, ')', "')' expected")?;
         let terminated = input.eat_char(';', false);
 
-        return Ok((
-            ExecutableStatement::at(
+        return Ok(StatementParse::Statement {
+            statement: ExecutableStatement::at(
                 input.span_from(mark),
                 ExecutableStatementKind::While {
                     condition,
@@ -126,7 +197,7 @@ fn parse_executable_statement(
                 },
             ),
             terminated,
-        ));
+        });
     }
 
     if input.use_next_word("if") {
@@ -146,8 +217,8 @@ fn parse_executable_statement(
             false_body = Some(Box::new(parse_executable_item(input)?));
         }
 
-        return Ok((
-            ExecutableStatement::at(
+        return Ok(StatementParse::Statement {
+            statement: ExecutableStatement::at(
                 input.span_from(mark),
                 ExecutableStatementKind::If {
                     condition,
@@ -155,11 +226,14 @@ fn parse_executable_statement(
                     false_body,
                 },
             ),
-            true,
-        ));
+            terminated: true,
+        });
     }
 
-    Ok((parse_executable_expression_statement(input, mark)?, false))
+    Ok(StatementParse::Statement {
+        statement: parse_executable_expression_statement(input, mark)?,
+        terminated: false,
+    })
 }
 
 fn parse_executable_expression_statement(
@@ -191,36 +265,63 @@ fn parse_executable_item(input: &mut CompileInput) -> Result<ExecutableStatement
     if input.peek() == Some('{') {
         parse_executable_sequence(input)
     } else {
-        let (statement, terminated) = parse_executable_statement(input)?;
-        if !terminated {
-            expect_char(input, ';', "';' expected")?;
+        match parse_executable_statement(input)? {
+            StatementParse::FunctionDef => Err(CompileError::new(format!(
+                "Syntax error at line {}. Nested function definitions are not allowed",
+                input.current_line
+            ))),
+            StatementParse::Statement {
+                statement,
+                terminated,
+            } => {
+                if !terminated {
+                    expect_char(input, ';', "';' expected")?;
+                }
+                Ok(statement)
+            }
         }
-        Ok(statement)
     }
+}
+
+enum VariableParse {
+    NotVariable,
+    FunctionDef,
+    Statement(ExecutableStatement),
 }
 
 fn parse_executable_variable_statement(
     input: &mut CompileInput,
     mark: SourceMark,
-) -> Result<Option<ExecutableStatement>, CompileError> {
+) -> Result<VariableParse, CompileError> {
     let is_const = input.use_next_word("const");
 
-    let value_type = if input.use_next_word("int") {
-        Some(ValueType::Int)
-    } else if input.use_next_word("double") || input.use_next_word("float") {
-        Some(ValueType::Double)
-    } else if input.use_next_word("bool") {
-        Some(ValueType::Bool)
-    } else {
-        None
-    };
+    let value_type = parse_optional_value_type(input);
 
     if let Some(value_type) = value_type {
+        if input.get_next_word() == "fn" {
+            return Err(CompileError::new(format!(
+                "Syntax error at line {}. Unexpected 'fn' after type; use 'fn T name' or 'T name'",
+                input.current_line
+            )));
+        }
+
         let name = input.use_next_word_any();
         if name.is_empty() {
             return Err(CompileError::new(format!(
                 "Syntax error at line {}. Identifier expected",
                 input.current_line
+            )));
+        }
+
+        if input.allow_function_defs && !is_const && input.peek() == Some('(') {
+            parse_typed_name_function(input, name, value_type)?;
+            return Ok(VariableParse::FunctionDef);
+        }
+
+        if input.functions.contains_key(&name) {
+            return Err(CompileError::new(format!(
+                "Error at line {}: variable name '{}' conflicts with a function",
+                input.current_line, name
             )));
         }
 
@@ -249,7 +350,7 @@ fn parse_executable_variable_statement(
 
         input.variables.declare(name.clone(), value_type, is_const);
 
-        return Ok(Some(ExecutableStatement::at(
+        return Ok(VariableParse::Statement(ExecutableStatement::at(
             input.span_from(mark),
             ExecutableStatementKind::Declare {
                 name,
@@ -281,7 +382,7 @@ fn parse_executable_variable_statement(
                 input.current_line
             )));
         }
-        return Ok(None);
+        return Ok(VariableParse::NotVariable);
     }
 
     // Covers the leading `++`/`--` too, so it doubles as the span of the name reference.
@@ -289,7 +390,7 @@ fn parse_executable_variable_statement(
 
     if variable_operator != VariableOperator::None {
         expect_declared_variable(input, &name)?;
-        return Ok(Some(ExecutableStatement::at(
+        return Ok(VariableParse::Statement(ExecutableStatement::at(
             name_span,
             ExecutableStatementKind::Expression(ExecutableExpression::new(
                 name_span,
@@ -302,11 +403,23 @@ fn parse_executable_variable_statement(
     }
 
     if input.eat_sequence("+=") {
-        return parse_compound_assignment(input, mark, name, name_span, Operator::Addition);
+        return Ok(VariableParse::Statement(parse_compound_assignment(
+            input,
+            mark,
+            name,
+            name_span,
+            Operator::Addition,
+        )?));
     }
 
     if input.eat_sequence("-=") {
-        return parse_compound_assignment(input, mark, name, name_span, Operator::Subtraction);
+        return Ok(VariableParse::Statement(parse_compound_assignment(
+            input,
+            mark,
+            name,
+            name_span,
+            Operator::Subtraction,
+        )?));
     }
 
     if input.eat_char('=', false) {
@@ -323,7 +436,7 @@ fn parse_executable_variable_statement(
                 input.current_line
             ))
         })?;
-        return Ok(Some(ExecutableStatement::at(
+        return Ok(VariableParse::Statement(ExecutableStatement::at(
             input.span_from(mark),
             ExecutableStatementKind::Assign { name, value },
         )));
@@ -332,7 +445,7 @@ fn parse_executable_variable_statement(
     if input.eat_sequence("++") {
         expect_declared_variable(input, &name)?;
         let span = input.span_from(mark);
-        return Ok(Some(ExecutableStatement::at(
+        return Ok(VariableParse::Statement(ExecutableStatement::at(
             span,
             ExecutableStatementKind::Expression(ExecutableExpression::new(
                 span,
@@ -347,7 +460,7 @@ fn parse_executable_variable_statement(
     if input.eat_sequence("--") {
         expect_declared_variable(input, &name)?;
         let span = input.span_from(mark);
-        return Ok(Some(ExecutableStatement::at(
+        return Ok(VariableParse::Statement(ExecutableStatement::at(
             span,
             ExecutableStatementKind::Expression(ExecutableExpression::new(
                 span,
@@ -362,11 +475,13 @@ fn parse_executable_variable_statement(
     if let Some(object) = BuiltinObject::from_word(&name)
         && input.peek() == Some('.')
     {
-        return Ok(Some(parse_builtin_property_statement(input, mark, object)?));
+        return Ok(VariableParse::Statement(parse_builtin_property_statement(
+            input, mark, object,
+        )?));
     }
 
     input.return_next_word(name);
-    Ok(None)
+    Ok(VariableParse::NotVariable)
 }
 
 fn parse_compound_assignment(
@@ -375,7 +490,7 @@ fn parse_compound_assignment(
     name: String,
     name_span: SourceSpan,
     operator: Operator,
-) -> Result<Option<ExecutableStatement>, CompileError> {
+) -> Result<ExecutableStatement, CompileError> {
     expect_declared_variable(input, &name)?;
     if input.variables.is_const(&name) {
         return Err(CompileError::new(format!(
@@ -390,7 +505,7 @@ fn parse_compound_assignment(
         ))
     })?;
     let span = input.span_from(mark);
-    Ok(Some(ExecutableStatement::at(
+    Ok(ExecutableStatement::at(
         span,
         ExecutableStatementKind::Assign {
             name: name.clone(),
@@ -406,5 +521,5 @@ fn parse_compound_assignment(
                 },
             ),
         },
-    )))
+    ))
 }
