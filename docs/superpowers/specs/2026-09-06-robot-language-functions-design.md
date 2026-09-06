@@ -196,7 +196,7 @@ frames today.
 Today `ProgramStep::Fault` in `robominer-sim` halts the robot without restarting
 (`Wait` forever for that program). Change that so **Fault restarts like Done**:
 
-- Reset the runner from the compiled program (`program.runner()` or equivalent).
+- Reset the runner with the same path as `Done` (`program.runner()`).
 - Clear pending action handshake / motion as needed for a clean restart.
 - Apply the same CPU-budget charge used on `Done` so fault loops cannot spin
   forever.
@@ -209,9 +209,8 @@ Call-depth overflow uses this path; other invariant faults do too.
 
 - Function bodies and `Call` / `Return` nodes count toward program size like
   other AST nodes.
-- Unparse emits each function definition and the main body in a stable order
-  (prefer preserving original top-level order when easy; otherwise definitions
-  first, then main statements).
+- Unparse emits all function definitions first (name-sorted, matching
+  `BTreeMap` iteration), then the main `statements` list.
 - Update `ast_visit` / GP walkers to visit `functions` so size and transforms do
   not ignore them. No new mutation operators in this change.
 
