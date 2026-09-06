@@ -239,6 +239,7 @@ fn pending_pin_keeps_line_only_issuer_over_columned_reseed() {
         ],
         actions: vec![],
         requires_runtime: true,
+        functions: Default::default(),
     };
 
     let mut spec = RobotSpec::test_robot();
