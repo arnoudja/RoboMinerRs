@@ -5,21 +5,6 @@ pub(super) fn leaderboard_activity_area_href(area_id: i64) -> String {
     format!("activity?areaId={area_id}")
 }
 
-pub(super) fn render_leaderboard_section_actions(body: &mut String, links: &[(&str, &str)]) {
-    body.push_str(r#"<p class="leaderboard-section-actions">"#);
-    for (index, (href, label)) in links.iter().enumerate() {
-        if index > 0 {
-            body.push_str(" · ");
-        }
-        body.push_str(&format!(
-            r#"<a class="leaderboard-section-action" href="{}">{}</a>"#,
-            html_attr(href),
-            EscapedHtml::from(*label),
-        ));
-    }
-    body.push_str("</p>");
-}
-
 pub(super) fn render_leaderboard_load_more(body: &mut String, query: LeaderboardQuery) {
     if query.limit >= LEADERBOARD_MAX_LIMIT {
         return;

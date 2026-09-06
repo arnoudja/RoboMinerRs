@@ -4,7 +4,6 @@ use super::render::render_leaderboard_area_filter;
 use super::render_shared::{
     leaderboard_activity_area_href, leaderboard_rank_cell_class, leaderboard_row_classes,
     render_leaderboard_empty_state, render_leaderboard_load_more, render_leaderboard_owner_cell,
-    render_leaderboard_section_actions,
 };
 use super::render_sidebar::render_leaderboard_climb_hint;
 use crate::html::EscapedHtml;
@@ -58,16 +57,6 @@ pub(super) fn render_leaderboard_area_section(
         r#"<p class="leaderboard-section-hint">Best recorded score per robot in this area.</p>"#,
     );
     render_leaderboard_area_filter(body, query, ranked_areas);
-    render_leaderboard_section_actions(
-        body,
-        &[
-            (
-                &leaderboard_activity_area_href(area_id),
-                "View area rallies",
-            ),
-            ("miningQueue", "Queue a run"),
-        ],
-    );
     render_leaderboard_area_score_table(body, &rows, area_id, viewer_username);
     if has_more {
         render_leaderboard_load_more(body, query);

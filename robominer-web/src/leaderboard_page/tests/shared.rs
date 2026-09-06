@@ -90,10 +90,17 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
     assert_contains_all(
         &html,
         &[
-            r#"href="activity?areaId=1">View area rallies</a>"#,
             r#"href="leaderboard?tab=areas&amp;areaId=1&amp;limit=20">Load more entries</a>"#,
             r#"title="Smoothed running score for this robot in this mining area.""#,
         ],
+    );
+    assert!(
+        !html.contains(r#"href="activity?areaId=1">View area rallies</a>"#),
+        "populated areas section should not show a View area rallies action link",
+    );
+    assert!(
+        !html.contains(r#"href="miningQueue">Queue a run</a>"#),
+        "populated areas section should not show a Queue a run action link",
     );
 
     let robots_html = render_leaderboard_page(
@@ -123,10 +130,17 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
     assert_contains_all(
         &robots_html,
         &[
-            r#"href="miningResults">View mining results</a>"#,
             r#"href="leaderboard?tab=robots&amp;limit=20">Load more entries</a>"#,
             r#"title="Lifetime ore gathered divided by total mining runs.""#,
         ],
+    );
+    assert!(
+        !robots_html.contains(r#"href="miningResults">View mining results</a>"#),
+        "populated robots section should not show a View mining results action link",
+    );
+    assert!(
+        !robots_html.contains(r#"href="miningQueue">Queue more runs</a>"#),
+        "populated robots section should not show a Queue more runs action link",
     );
 
     let players_html = render_leaderboard_page(
@@ -155,8 +169,11 @@ fn leaderboard_rendering_shows_load_more_cross_links_and_metric_hints() {
         &players_html,
         &[
             r#"href="achievements?user=Champion">Champion</a>"#,
-            r#"href="achievements">View achievements</a>"#,
             r#"title="Total achievement points claimed across all tracks.""#,
         ],
+    );
+    assert!(
+        !players_html.contains(r#"href="achievements">View achievements</a>"#),
+        "populated players section should not show a View achievements action link",
     );
 }

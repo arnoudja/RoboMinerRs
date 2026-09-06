@@ -268,12 +268,6 @@
     margin: 0 0 12px;
 }
 
-.leaderboard-section-actions {
-    color: var(--lb-text-muted);
-    font-size: 0.86rem;
-    margin: 0 0 12px;
-}
-
 .leaderboard-section-action,
 .leaderboard-row-link,
 .leaderboard-standing-link {

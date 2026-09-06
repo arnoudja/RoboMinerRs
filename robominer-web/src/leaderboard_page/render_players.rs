@@ -3,7 +3,6 @@ use super::LeaderboardTab;
 use super::render_shared::{
     leaderboard_rank_cell_class, leaderboard_row_classes, render_leaderboard_empty_state,
     render_leaderboard_load_more, render_leaderboard_player_cell,
-    render_leaderboard_section_actions,
 };
 use super::render_sidebar::render_leaderboard_climb_hint;
 
@@ -17,7 +16,6 @@ pub(super) fn render_leaderboard_top_players_section(
     body.push_str(r#"<section class="leaderboard-panel">"#);
     body.push_str(r#"<h2 class="leaderboard-section-title">Top players</h2>"#);
     body.push_str(r#"<p class="leaderboard-section-hint">Most achievement points earned.</p>"#);
-    render_leaderboard_section_actions(body, &[("achievements", "View achievements")]);
     if top_users.is_empty() {
         render_leaderboard_empty_state(
             body,
