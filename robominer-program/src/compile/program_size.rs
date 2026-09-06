@@ -4,7 +4,13 @@ use crate::types::{
 };
 
 pub(super) fn program_instruction_size(program: &ExecutableProgram) -> usize {
-    sequence_size(&program.statements)
+    let main = sequence_size(&program.statements);
+    let functions = program
+        .functions
+        .values()
+        .map(|function| sequence_size(&function.body))
+        .sum::<usize>();
+    main + functions
 }
 
 fn sequence_size(statements: &[ExecutableStatement]) -> usize {
@@ -42,6 +48,9 @@ fn statement_size(statement: &ExecutableStatement) -> usize {
         } => {
             1 + expression_size(condition)
                 + body.as_ref().map(|body| statement_size(body)).unwrap_or(0)
+        }
+        ExecutableStatementKind::Return(expr) => {
+            1 + expr.as_ref().map(expression_size).unwrap_or(0)
         }
     }
 }
@@ -96,6 +105,9 @@ fn expression_size(expression: &ExecutableExpression) -> usize {
         | ExecutableExpressionKind::Rotate(expression)
         | ExecutableExpressionKind::Dump(expression) => 1 + expression_size(expression),
         ExecutableExpressionKind::Action(action) => action_expression_size(action),
+        ExecutableExpressionKind::Call { args, .. } => {
+            1 + args.iter().map(expression_size).sum::<usize>()
+        }
     }
 }
 

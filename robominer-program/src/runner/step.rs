@@ -95,6 +95,10 @@ impl ExecutableRunner {
                 body,
                 is_do_while,
             } => self.step_while_statement(source_span, condition, body, is_do_while),
+            ExecutableStatementKind::Return(_) => {
+                self.advance_current_statement();
+                StepOutcome::Fault
+            }
         }
     }
 

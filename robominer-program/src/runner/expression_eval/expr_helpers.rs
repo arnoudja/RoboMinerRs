@@ -52,6 +52,7 @@ impl ExecutableExpression {
             | ExecutableExpressionKind::Variable(_)
             | ExecutableExpressionKind::VariableUpdate { .. }
             | ExecutableExpressionKind::Time => None,
+            ExecutableExpressionKind::Call { .. } => None,
         }
     }
 }

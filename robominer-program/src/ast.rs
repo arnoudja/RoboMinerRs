@@ -1,10 +1,26 @@
 use crate::compile_error::CompileError;
+use std::collections::BTreeMap;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FunctionParam {
+    pub name: String,
+    pub value_type: Option<ValueType>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExecutableFunction {
+    pub name: String,
+    pub return_type: ValueType,
+    pub params: Vec<FunctionParam>,
+    pub body: Vec<ExecutableStatement>,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutableProgram {
     pub statements: Vec<ExecutableStatement>,
     pub actions: Vec<ExecutableAction>,
     pub requires_runtime: bool,
+    pub functions: BTreeMap<String, ExecutableFunction>,
 }
 
 impl ExecutableProgram {
@@ -131,6 +147,7 @@ pub enum ExecutableStatementKind {
         body: Option<Box<ExecutableStatement>>,
         is_do_while: bool,
     },
+    Return(Option<ExecutableExpression>),
 }
 
 impl ExecutableStatement {
@@ -156,6 +173,7 @@ impl ExecutableStatement {
             | ExecutableStatementKind::Assign { .. }
             | ExecutableStatementKind::Expression(_) => true,
             ExecutableStatementKind::If { .. } | ExecutableStatementKind::While { .. } => true,
+            ExecutableStatementKind::Return(expr) => expr.is_some(),
         }
     }
 }
@@ -224,6 +242,10 @@ pub enum ExecutableExpressionKind {
     Rotate(Box<ExecutableExpression>),
     Dump(Box<ExecutableExpression>),
     Action(ExecutableAction),
+    Call {
+        name: String,
+        args: Vec<ExecutableExpression>,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

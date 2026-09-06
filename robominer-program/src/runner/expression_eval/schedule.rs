@@ -163,5 +163,11 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::Action(action) => {
             push(work, ExpressionWork::PushAction(*action));
         }
+        ExecutableExpressionKind::Call { args, .. } => {
+            for arg in args {
+                schedule_expression(work, arg);
+            }
+            push(work, ExpressionWork::PushInt(0));
+        }
     }
 }

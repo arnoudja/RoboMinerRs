@@ -1,4 +1,5 @@
 mod compile;
+mod compile_functions;
 mod cpu_step_result;
 mod helpers;
 mod pose;

@@ -7,6 +7,8 @@ use crate::types::{
     CompileError, ExecutableAction, ExecutableProgram, ExecutableStatement, ExecutableStatementKind,
 };
 
+use std::collections::BTreeMap;
+
 use super::input::CompileInput;
 
 use statements::parse_executable_sequence;
@@ -39,7 +41,8 @@ fn collect_static_actions(statements: &[ExecutableStatement], actions: &mut Vec<
             }
             ExecutableStatementKind::Declare { .. }
             | ExecutableStatementKind::Assign { .. }
-            | ExecutableStatementKind::Expression(_) => {}
+            | ExecutableStatementKind::Expression(_)
+            | ExecutableStatementKind::Return(_) => {}
             ExecutableStatementKind::If { .. } | ExecutableStatementKind::While { .. } => {}
         }
     }
@@ -64,5 +67,6 @@ pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram
         statements,
         actions,
         requires_runtime,
+        functions: BTreeMap::new(),
     })
 }

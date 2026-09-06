@@ -1,19 +1,52 @@
 use crate::types::{
     ExecutableAction, ExecutableActionExpression, ExecutableExpression, ExecutableExpressionKind,
-    ExecutableProgram, ExecutableStatement, ExecutableStatementKind, Operator, ValueType,
-    VariableOperator,
+    ExecutableFunction, ExecutableProgram, ExecutableStatement, ExecutableStatementKind, Operator,
+    ValueType, VariableOperator,
 };
 
 /// Emit Edit-code-legal source for an executable program AST.
 pub fn unparse_program(program: &ExecutableProgram) -> String {
     let mut out = String::new();
+    for function in program.functions.values() {
+        if !out.is_empty() {
+            out.push('\n');
+        }
+        unparse_function(function, &mut out);
+    }
     for (index, statement) in program.statements.iter().enumerate() {
-        if index > 0 {
+        if !out.is_empty() || index > 0 {
             out.push('\n');
         }
         unparse_statement(statement, &mut out);
     }
     out
+}
+
+fn unparse_function(function: &ExecutableFunction, out: &mut String) {
+    out.push_str("fn ");
+    out.push_str(&function.name);
+    out.push('(');
+    for (index, param) in function.params.iter().enumerate() {
+        if index > 0 {
+            out.push_str(", ");
+        }
+        if let Some(value_type) = param.value_type {
+            out.push_str(match value_type {
+                ValueType::Int => "int ",
+                ValueType::Double => "double ",
+                ValueType::Bool => "bool ",
+            });
+        }
+        out.push_str(&param.name);
+    }
+    out.push_str(") { ");
+    for (index, statement) in function.body.iter().enumerate() {
+        if index > 0 {
+            out.push(' ');
+        }
+        unparse_statement(statement, out);
+    }
+    out.push_str(" }");
 }
 
 fn unparse_statement(statement: &ExecutableStatement, out: &mut String) {
@@ -108,6 +141,15 @@ fn unparse_statement(statement: &ExecutableStatement, out: &mut String) {
                     None => out.push(';'),
                 }
             }
+        }
+        ExecutableStatementKind::Return(None) => {
+            out.push_str("return");
+            out.push(';');
+        }
+        ExecutableStatementKind::Return(Some(expr)) => {
+            out.push_str("return ");
+            unparse_expression(expr, out, 0);
+            out.push(';');
         }
     }
 }
@@ -320,6 +362,17 @@ fn unparse_expression(expression: &ExecutableExpression, out: &mut String, paren
             out.push(')');
         }
         ExecutableExpressionKind::Action(action) => unparse_action(action, out),
+        ExecutableExpressionKind::Call { name, args } => {
+            out.push_str(name);
+            out.push('(');
+            for (index, arg) in args.iter().enumerate() {
+                if index > 0 {
+                    out.push_str(", ");
+                }
+                unparse_expression(arg, out, 0);
+            }
+            out.push(')');
+        }
     }
 }
 

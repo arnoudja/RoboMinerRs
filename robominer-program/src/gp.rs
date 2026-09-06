@@ -120,6 +120,9 @@ fn count_numbers_in_statement(statement: &ExecutableStatement) -> usize {
                     .map(|body| count_numbers_in_statement(body))
                     .unwrap_or(0)
         }
+        ExecutableStatementKind::Return(expr) => {
+            expr.as_ref().map(count_numbers_in_expression).unwrap_or(0)
+        }
     }
 }
 
@@ -146,6 +149,9 @@ fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
         ExecutableExpressionKind::Action(ExecutableAction::Move(_))
         | ExecutableExpressionKind::Action(ExecutableAction::Rotate(_))
         | ExecutableExpressionKind::Action(ExecutableAction::StartScan(_)) => 1,
+        ExecutableExpressionKind::Call { args, .. } => {
+            args.iter().map(count_numbers_in_expression).sum()
+        }
         _ => 0,
     }
 }
@@ -228,6 +234,9 @@ fn apply_number_jitter_in_statement(
                     apply_number_jitter_in_statement(body, counter, target, rng)
                 })
         }
+        ExecutableStatementKind::Return(expr) => expr
+            .as_mut()
+            .is_some_and(|expr| apply_number_jitter_in_expression(expr, counter, target, rng)),
     }
 }
 
@@ -288,6 +297,14 @@ fn apply_number_jitter_in_expression(
                 *counter += 1;
                 false
             }
+        }
+        ExecutableExpressionKind::Call { args, .. } => {
+            for arg in args {
+                if apply_number_jitter_in_expression(arg, counter, target, rng) {
+                    return true;
+                }
+            }
+            false
         }
         _ => false,
     }
