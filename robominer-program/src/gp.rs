@@ -1,4 +1,6 @@
-use crate::ast_visit::{count_statements, set_statement_at, take_statement_at};
+use crate::ast_visit::{
+    count_program_statements, set_program_statement_at, take_program_statement_at,
+};
 use crate::compile::compile_executable_source;
 use crate::types::{
     CompileError, ExecutableAction, ExecutableExpression, ExecutableExpressionKind,
@@ -19,18 +21,18 @@ pub fn crossover_programs(
 ) -> Option<(ExecutableProgram, ExecutableProgram)> {
     let mut left_child = left.clone();
     let mut right_child = right.clone();
-    let left_count = count_statements(&left_child.statements);
-    let right_count = count_statements(&right_child.statements);
+    let left_count = count_program_statements(&left_child);
+    let right_count = count_program_statements(&right_child);
     if left_count == 0 || right_count == 0 {
         return None;
     }
 
     let left_index = rng.gen_range(0, left_count);
     let right_index = rng.gen_range(0, right_count);
-    let left_stmt = take_statement_at(&mut left_child.statements, left_index)?;
-    let right_stmt = take_statement_at(&mut right_child.statements, right_index)?;
-    set_statement_at(&mut left_child.statements, left_index, right_stmt)?;
-    set_statement_at(&mut right_child.statements, right_index, left_stmt)?;
+    let left_stmt = take_program_statement_at(&mut left_child, left_index)?;
+    let right_stmt = take_program_statement_at(&mut right_child, right_index)?;
+    set_program_statement_at(&mut left_child, left_index, right_stmt)?;
+    set_program_statement_at(&mut right_child, right_index, left_stmt)?;
 
     let left_ok = recompile_program(&left_child).ok()?;
     let right_ok = recompile_program(&right_child).ok()?;
@@ -40,26 +42,26 @@ pub fn crossover_programs(
 /// Apply a small random mutation and recompile; returns the original on failure.
 pub fn mutate_program(program: &ExecutableProgram, rng: &mut impl RngLike) -> ExecutableProgram {
     let mut candidate = program.clone();
-    let count = count_statements(&candidate.statements);
+    let count = count_program_statements(&candidate);
     if count == 0 {
         return program.clone();
     }
 
     match rng.gen_range(0, 4) {
         0 => {
-            jitter_a_number(&mut candidate.statements, rng);
+            jitter_a_number_in_program(&mut candidate, rng);
         }
         1 => {
             let index = rng.gen_range(0, count);
             let replacement = random_leaf_statement(rng);
-            let _ = set_statement_at(&mut candidate.statements, index, replacement);
+            let _ = set_program_statement_at(&mut candidate, index, replacement);
         }
         2 => {
             let index = rng.gen_range(0, count);
-            if let Some(stmt) = take_statement_at(&mut candidate.statements, index) {
+            if let Some(stmt) = take_program_statement_at(&mut candidate, index) {
                 let mut wrapped = stmt;
                 wrap_in_while_mine(&mut wrapped);
-                let _ = set_statement_at(&mut candidate.statements, index, wrapped);
+                let _ = set_program_statement_at(&mut candidate, index, wrapped);
             }
         }
         _ => {
@@ -156,14 +158,24 @@ fn count_numbers_in_expression(expression: &ExecutableExpression) -> usize {
     }
 }
 
-fn jitter_a_number(statements: &mut [ExecutableStatement], rng: &mut impl RngLike) {
-    let total = count_numbers(statements);
+fn jitter_a_number_in_program(program: &mut ExecutableProgram, rng: &mut impl RngLike) {
+    let mut total = count_numbers(&program.statements);
+    for function in program.functions.values() {
+        total += count_numbers(&function.body);
+    }
     if total == 0 {
         return;
     }
     let target = rng.gen_range(0, total);
     let mut counter = 0usize;
-    apply_number_jitter(statements, &mut counter, target, rng);
+    if apply_number_jitter(&mut program.statements, &mut counter, target, rng) {
+        return;
+    }
+    for function in program.functions.values_mut() {
+        if apply_number_jitter(&mut function.body, &mut counter, target, rng) {
+            return;
+        }
+    }
 }
 
 fn apply_number_jitter(

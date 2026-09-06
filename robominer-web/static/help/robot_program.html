@@ -399,6 +399,37 @@
                 </tr>
             </table></div>
             <p class="helptext">The difference with 'while' is that the statements are executed at least once.</p>
+            <h2 id="functions">Functions</h2>
+            <p class="helptext">You can define reusable functions at the top level of a program (not inside if, while, nested blocks, or other functions). Function definitions may appear before or after the main statements in source; they are always part of the same program.</p>
+            <div class="help-table-wrap"><table class="helptable">
+                <tr>
+                    <td class="helptable">Syntax:</td>
+                    <td class="helptable">fn name(&lt;params&gt;) { &lt;statements&gt; }<br>
+                        fn &lt;type&gt; name(&lt;params&gt;) { &lt;statements&gt; }<br>
+                        &lt;type&gt; name(&lt;params&gt;) { &lt;statements&gt; }</td>
+                    <td class="helptable">All three forms declare a function. The type may be int, double (float is an alias), or bool. The form int fn name(...) is not allowed.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Parameters:</td>
+                    <td class="helptable">name<br>
+                        &lt;type&gt; name</td>
+                    <td class="helptable">Comma-separated. Untyped parameters take the argument's runtime type each call. Typed parameters coerce the argument on entry. Parameters are passed by value.</td>
+                </tr>
+                <tr>
+                    <td class="helptable">Return:</td>
+                    <td class="helptable">return &lt;expr&gt;;<br>
+                        return;</td>
+                    <td class="helptable">Valued return exits with that result. Bare return and falling off the end of the body both yield int 0. With an explicit return type, values are coerced to that type. With an omitted return type, all valued returns must share one concrete type; otherwise the return type is int.</td>
+                </tr>
+            </table></div>
+            <p class="helptext">Call a function as an expression: name(arg0, arg1, ...). The number of arguments must match the parameter list.</p>
+            <p class="helptext">Inside a function, parameters and locals follow normal block scope. All top-level program variables are readable and writable, including ones declared later in the source than the function.</p>
+            <p class="helptext">Function names share a namespace with top-level variables and must not reuse reserved words (fn, return, if, else, while, do, const, int, double, float, bool, true, false), actions or queries (move, rotate, mine, dump, dumpA, dumpB, dumpC, scan, time, ore, oreDistance, oreType), math helpers (abs, sqrt, sin, cos, tan, min, max), or the objects robot and area.</p>
+            <p class="helptext">Functions may call each other and may recurse. Nested call depth is limited to 256; exceeding that faults the program, which then restarts like a normal completion.</p>
+            <h3>Example</h3>
+            <p class="helptext">fn int step() { return 1; }<br>
+                move(step());<br>
+            </p>
             <h2 id="expressions">Expressions</h2>
             <h3>Numeric expressions</h3>
             <div class="help-table-wrap"><table class="helptable">

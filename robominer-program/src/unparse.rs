@@ -24,6 +24,11 @@ pub fn unparse_program(program: &ExecutableProgram) -> String {
 
 fn unparse_function(function: &ExecutableFunction, out: &mut String) {
     out.push_str("fn ");
+    out.push_str(match function.return_type {
+        ValueType::Int => "int ",
+        ValueType::Double => "double ",
+        ValueType::Bool => "bool ",
+    });
     out.push_str(&function.name);
     out.push('(');
     for (index, param) in function.params.iter().enumerate() {

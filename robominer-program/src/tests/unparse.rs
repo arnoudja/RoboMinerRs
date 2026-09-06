@@ -4,6 +4,33 @@ use crate::{
 };
 
 #[test]
+fn unparse_emits_functions_before_main() {
+    let source = "fn int f() { return 1; } move(f());";
+    let program = compile_executable_source(source).expect("compile");
+    let text = unparse_program(&program);
+    let f_pos = text
+        .find("fn int f")
+        .or_else(|| text.find("int f"))
+        .expect("function in unparse");
+    let m_pos = text.find("move").expect("move in unparse");
+    assert!(
+        f_pos < m_pos,
+        "functions must unparse before main statements: {text}"
+    );
+    compile_executable_source(&text).expect("unparsed program must recompile");
+}
+
+#[test]
+fn program_size_includes_function_bodies() {
+    let main_only = compile_source("move(1);").expect("main size");
+    let with_function = compile_source("fn int f() { return 1; } move(f());").expect("fn size");
+    assert!(
+        with_function > main_only,
+        "function body must increase program size: main={main_only} with_fn={with_function}"
+    );
+}
+
+#[test]
 fn unparse_round_trip_preserves_compiled_size_for_fixtures() {
     for fixture in compatibility_fixtures()
         .iter()
