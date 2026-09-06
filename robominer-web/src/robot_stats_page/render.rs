@@ -1,6 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::html::{EscapedHtml, format_relative_time_millis, format_utc_millis, html_attr, layout};
+use crate::html::{
+    EscapedHtml, format_relative_or_local_absolute_html, layout, local_time_title_attrs,
+};
 use crate::robot_stats_page::RobotStatsPageState;
 use crate::static_assets::PageStylesheet;
 
@@ -137,9 +139,8 @@ fn render_recent_runs_section(
         body.push_str(r#"<th scope="col">Replay</th>"#);
         body.push_str("</tr></thead><tbody>");
         for run in recent_runs {
-            let ended_relative =
-                format_relative_time_millis(run.mining_end_time_millis, now_millis);
-            let ended_absolute = format_utc_millis(run.mining_end_time_millis);
+            let ended_label =
+                format_relative_or_local_absolute_html(run.mining_end_time_millis, now_millis);
             body.push_str("<tr>");
             body.push_str(&format!(
                 r#"<td>{}</td>"#,
@@ -162,10 +163,9 @@ fn render_recent_runs_section(
                 run.total_reward
             ));
             body.push_str(&format!(
-                r#"<td><time datetime="{}" title="{}">{}</time></td>"#,
-                html_attr(&ended_absolute),
-                html_attr(&ended_absolute),
-                EscapedHtml::from(ended_relative.as_str())
+                r#"<td{}>{}</td>"#,
+                local_time_title_attrs(run.mining_end_time_millis),
+                ended_label,
             ));
             if let Some(rally_result_id) = run.rally_result_id {
                 body.push_str(&format!(

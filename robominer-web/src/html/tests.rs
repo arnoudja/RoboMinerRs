@@ -1,7 +1,5 @@
-use super::{
-    assert_contains_all, assert_html_not_contains, format_relative_time_millis, inject_csrf_tokens,
-    layout,
-};
+use super::format::format_relative_time_millis;
+use super::{assert_contains_all, assert_html_not_contains, inject_csrf_tokens, layout};
 use crate::app_shell::render_app_shell_hud;
 use crate::static_assets::PageStylesheet;
 use robominer_db::{AppShellHudRecord, UserOreAssetStateRecord};
@@ -86,6 +84,7 @@ fn app_shell_header_marks_active_page_and_includes_atlas() {
             r#"id="robominerDialogAlt""#,
             r#"aria-describedby="robominerDialogMessage""#,
             r#"src="js/common/app_dialog.js?v="#,
+            r#"src="js/common/local_time.js?v="#,
         ],
     );
     for absent in ["menuitemselected", r#"nav class="logoff""#] {

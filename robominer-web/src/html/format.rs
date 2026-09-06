@@ -56,15 +56,92 @@ pub(crate) fn optional_title_attr(reason: Option<&str>) -> String {
 }
 
 pub(crate) fn format_utc_millis(millis: i64) -> String {
+    let parts = utc_civil_parts(millis);
+    format!(
+        "{year:04}-{month:02}-{day:02} {hour:02}:{minute:02}:{second:02} UTC",
+        year = parts.year,
+        month = parts.month,
+        day = parts.day,
+        hour = parts.hour,
+        minute = parts.minute,
+        second = parts.second,
+    )
+}
+
+/// ISO-8601 UTC instant for `<time datetime>` / `data-local-time-*` attributes.
+pub(crate) fn format_iso_utc_millis(millis: i64) -> String {
+    let parts = utc_civil_parts(millis);
+    format!(
+        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{millis_of_second:03}Z",
+        year = parts.year,
+        month = parts.month,
+        day = parts.day,
+        hour = parts.hour,
+        minute = parts.minute,
+        second = parts.second,
+        millis_of_second = parts.millis_of_second,
+    )
+}
+
+/// Visible absolute timestamp: UTC fallback text, localized by `local_time.js`.
+pub(crate) fn local_absolute_time_html(millis: i64) -> String {
+    let iso = format_iso_utc_millis(millis);
+    let utc = format_utc_millis(millis);
+    format!(
+        r#"<time datetime="{}" data-local-time>{}</time>"#,
+        html_attr(&iso),
+        EscapedHtml::from(utc.as_str()),
+    )
+}
+
+/// ` title="…" data-local-time-title="…"` so JS can rewrite the tooltip to local time.
+pub(crate) fn local_time_title_attrs(millis: i64) -> String {
+    format!(
+        r#" title="{}" data-local-time-title="{}""#,
+        html_attr(&format_utc_millis(millis)),
+        html_attr(&format_iso_utc_millis(millis)),
+    )
+}
+
+/// Relative label, or a localizable absolute `<time>` when relative falls back to UTC.
+pub(crate) fn format_relative_or_local_absolute_html(event_millis: i64, now_millis: i64) -> String {
+    let relative = format_relative_time_millis(event_millis, now_millis);
+    let utc = format_utc_millis(event_millis);
+    if relative == utc {
+        local_absolute_time_html(event_millis)
+    } else {
+        EscapedHtml::from(relative.as_str()).to_string()
+    }
+}
+
+struct UtcCivilParts {
+    year: i64,
+    month: i64,
+    day: i64,
+    hour: i64,
+    minute: i64,
+    second: i64,
+    millis_of_second: i64,
+}
+
+fn utc_civil_parts(millis: i64) -> UtcCivilParts {
     let seconds = millis.div_euclid(1000);
+    let millis_of_second = millis.rem_euclid(1000);
     let days = seconds.div_euclid(86_400);
     let seconds_of_day = seconds.rem_euclid(86_400);
     let (year, month, day) = civil_from_days(days);
     let hour = seconds_of_day / 3_600;
     let minute = (seconds_of_day % 3_600) / 60;
     let second = seconds_of_day % 60;
-
-    format!("{year:04}-{month:02}-{day:02} {hour:02}:{minute:02}:{second:02} UTC")
+    UtcCivilParts {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        millis_of_second,
+    }
 }
 
 pub(crate) fn format_relative_time_millis(event_millis: i64, now_millis: i64) -> String {
@@ -154,5 +231,33 @@ mod tests {
     fn escaped_html_escapes_untrusted_input_on_display() {
         let escaped = EscapedHtml::from_untrusted(r#"A <b> "&'"#);
         assert_eq!(escaped.to_string(), "A &lt;b&gt; &quot;&amp;&#39;");
+    }
+
+    #[test]
+    fn iso_and_local_absolute_html_use_utc_instant() {
+        assert_eq!(format_iso_utc_millis(0), "1970-01-01T00:00:00.000Z");
+        assert_eq!(format_iso_utc_millis(1_001), "1970-01-01T00:00:01.001Z");
+        assert_eq!(
+            local_absolute_time_html(0),
+            r#"<time datetime="1970-01-01T00:00:00.000Z" data-local-time>1970-01-01 00:00:00 UTC</time>"#
+        );
+        assert_eq!(
+            local_time_title_attrs(0),
+            r#" title="1970-01-01 00:00:00 UTC" data-local-time-title="1970-01-01T00:00:00.000Z""#
+        );
+    }
+
+    #[test]
+    fn relative_or_local_absolute_keeps_relative_and_wraps_fallback() {
+        let now = 3_600_000;
+        assert_eq!(
+            format_relative_or_local_absolute_html(now - 3_600_000, now),
+            "1 hour ago"
+        );
+        let old_now = 86_400_000_i64 * 400;
+        assert_eq!(
+            format_relative_or_local_absolute_html(0, old_now),
+            local_absolute_time_html(0)
+        );
     }
 }

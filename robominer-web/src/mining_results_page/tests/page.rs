@@ -125,8 +125,8 @@ fn mining_results_rendering_escapes_fields() {
             "50.0%",
             "33.3%",
             "16.7%",
-            "1970-01-01 00:00:00 UTC",
-            "1970-01-01 00:00:01 UTC",
+            r#"datetime="1970-01-01T00:00:00.000Z" data-local-time>1970-01-01 00:00:00 UTC</time>"#,
+            r#"datetime="1970-01-01T00:00:01.000Z" data-local-time>1970-01-01 00:00:01 UTC</time>"#,
         ],
     );
     for absent in [

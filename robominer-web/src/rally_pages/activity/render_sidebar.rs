@@ -1,4 +1,4 @@
-use crate::html::{EscapedHtml, format_relative_time_millis, format_utc_millis};
+use crate::html::{EscapedHtml, format_relative_or_local_absolute_html, local_time_title_attrs};
 use crate::rally_pages::ActivityPageState;
 
 pub(super) fn render_activity_sidebar(
@@ -29,13 +29,11 @@ fn render_activity_sidebar_recent_players(
     body.push_str(r#"<p class="activity-section-hint">Players active most recently.</p>"#);
     body.push_str(r#"<ul class="activity-player-list">"#);
     for user in recent_users {
-        let login_relative = format_relative_time_millis(user.last_login_time_millis, now_millis);
-        let login_absolute = format_utc_millis(user.last_login_time_millis);
         body.push_str(&format!(
-            r#"<li class="activity-player-item"><span class="activity-player-name">{}</span><span class="activity-player-login" title="{}">{}</span></li>"#,
+            r#"<li class="activity-player-item"><span class="activity-player-name">{}</span><span class="activity-player-login"{}>{}</span></li>"#,
             EscapedHtml::from(user.username.as_str()),
-            EscapedHtml::from(login_absolute.as_str()),
-            EscapedHtml::from(login_relative.as_str()),
+            local_time_title_attrs(user.last_login_time_millis),
+            format_relative_or_local_absolute_html(user.last_login_time_millis, now_millis),
         ));
     }
     body.push_str("</ul></section>");

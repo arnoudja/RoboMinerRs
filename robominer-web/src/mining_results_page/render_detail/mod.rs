@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{EscapedHtml, format_utc_millis, html_attr};
+use crate::html::{EscapedHtml, html_attr, local_absolute_time_html};
 use crate::mining_results_page::MiningResultsPageState;
 
 mod breakdown;
@@ -80,7 +80,7 @@ fn render_mining_result_detail_panel(
         r#"<div><h2 class="mining-results-detail-title">{}</h2><p class="mining-results-detail-subtitle">{} · Ended {} · Score {:.1}</p></div>"#,
         EscapedHtml::from(result.mining_area_name.as_str()),
         EscapedHtml::from(robot_name),
-        EscapedHtml::from(format_utc_millis(result.mining_end_time_millis)),
+        local_absolute_time_html(result.mining_end_time_millis),
         result.score
     ));
     body.push_str(&render_mining_result_replay_action(result));
