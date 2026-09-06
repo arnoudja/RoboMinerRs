@@ -75,9 +75,10 @@ pub enum ProgramStep {
     Cpu,
     Action(ExecutableAction),
     Done,
-    /// Internal runner invariant failed (stack underflow, missing frame, etc.).
-    /// Callers must halt this runner without restarting it, so a corrupted or
-    /// buggy executable cannot livelock the simulation.
+    /// Recoverable runner fault (e.g. call-depth overflow) or an internal
+    /// invariant failure. Callers must restart the program the same way as
+    /// [`Self::Done`] (fresh runner, clear sticky state, charge CPU budget) so
+    /// a faulting executable cannot livelock the simulation.
     Fault,
 }
 

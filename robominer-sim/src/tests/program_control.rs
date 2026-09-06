@@ -361,3 +361,43 @@ fn compiled_program_reads_area_properties() {
 
     assert_eq!(simulation.robot(0).position().orientation, 135);
 }
+
+#[test]
+fn program_fault_restarts_like_done() {
+    // Infinite recursion → Fault at depth 256; after restart, should Fault again but keep
+    // simulating. Mirror empty-program Done budgeting: high cpu_speed must stay finite and
+    // exhaust the CPU budget (status "cpu") rather than halt forever as Wait.
+    let program = robominer_program::compile_executable_source(
+        "fn int rec(int n) { return rec(n); } move(rec(1));",
+    )
+    .expect("compile");
+
+    let mut spec = RobotSpec::test_robot();
+    spec.max_turns = 5;
+    spec.cpu_speed = 10_000;
+
+    let mut simulation = Simulation::new(
+        Ground::new(5, 5),
+        5,
+        vec![ScriptedRobot::from_executable_program(spec, &program)],
+    );
+    let data = simulation.run_with_animation(&[]);
+    let payload: serde_json::Value =
+        serde_json::from_str(&data).expect("faulting program animation should finish");
+    let locations = payload["robots"]["robot"][0]["locations"]
+        .as_array()
+        .expect("robot locations");
+    assert_eq!(
+        locations.len(),
+        6,
+        "Fault must charge CPU like Done so recursion cannot livelock: {data}"
+    );
+    assert!(
+        data.contains(r#""s":"cpu""#),
+        "Fault restart should exhaust CPU budget (status cpu), not halt as wait: {data}"
+    );
+    // Recursion never issues move/mine/rotate — only Wait while burning CPU on Fault restarts.
+    assert_eq!(simulation.robot(0).actions_done()[2], 0);
+    assert_eq!(simulation.robot(0).actions_done()[4], 0);
+    assert_eq!(simulation.robot(0).actions_done()[6], 0);
+}

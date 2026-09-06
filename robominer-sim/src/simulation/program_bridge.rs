@@ -235,16 +235,20 @@ impl Simulation {
                     cpu_used += 1;
                 }
                 ProgramStep::Fault => {
-                    // Halt without restarting: a corrupted/buggy executable must not livelock.
-                    if let ActionSource::Program { runner, .. } =
-                        &mut self.action_sources[robot_index]
-                    {
-                        runner.clear_pending_action_handshake();
-                    }
+                    let ActionSource::Program {
+                        program, runner, ..
+                    } = &mut self.action_sources[robot_index]
+                    else {
+                        unreachable!("ActionSource::Program checked above");
+                    };
+                    **runner = program.runner();
                     self.action_results[robot_index] = None;
-                    self.action_result_expected[robot_index] = false;
-                    self.pending_sim_motion_chunks[robot_index] = None;
-                    return (RobotAction::Wait, Some(RobotCycleStatus::Wait), cpu_steps);
+                    // Restart clears sticky highlight seed so stale lines cannot rematch.
+                    self.last_cpu_highlight[robot_index] = None;
+                    // Ignore pre-Fault recorded steps when reseeding after this CPU loop.
+                    self.cpu_highlight_seed_floor[robot_index] = cpu_steps.len();
+                    // Faulting programs restart immediately; charge budget so we cannot spin forever.
+                    cpu_used += 1;
                 }
                 ProgramStep::Action(ExecutableAction::StartScan(direction)) => {
                     // StartScan returns scan_time synchronously on issue (unlike move/mine).
