@@ -108,7 +108,7 @@ pub(super) fn login_database_error_response(error: crate::page_context::PageLoad
 
 mod process;
 mod render;
-mod signup_pow;
+pub(crate) mod signup_pow;
 
 #[cfg(test)]
 mod tests;

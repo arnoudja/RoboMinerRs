@@ -16,6 +16,22 @@ pub(crate) fn verify_solution(challenge: &str, nonce: &str) -> bool {
     leading_zero_bits(&digest) >= POW_DIFFICULTY_BITS
 }
 
+/// Brute-force a nonce for tests / tooling. Panics if the search bound is exceeded.
+pub(crate) fn solve_challenge(challenge: &str) -> String {
+    let mut nonce = 0u64;
+    loop {
+        let candidate = nonce.to_string();
+        if verify_solution(challenge, &candidate) {
+            return candidate;
+        }
+        nonce += 1;
+        assert!(
+            nonce < 1_000_000,
+            "signup PoW search exceeded bound for challenge"
+        );
+    }
+}
+
 fn leading_zero_bits(digest: &[u8]) -> u32 {
     let mut bits = 0u32;
     for byte in digest {

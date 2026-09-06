@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 mod support;
 
-use robominer_web::test_support::route;
+use robominer_web::test_support::{SIGNUP_POW_NONCE_FIELD, route, solve_signup_pow};
 use serial_test::serial;
 use support::{
     cookie_header, create_user_via_engine, ensure_session_configured, login_with_credentials,
@@ -90,7 +90,8 @@ async fn signup_post_redirects_to_welcome_with_session_cookie() {
     form.insert("email".to_string(), email.clone());
     form.insert("newpassword".to_string(), password.clone());
     form.insert("confirmpassword".to_string(), password.clone());
-    form.insert("csrfToken".to_string(), token);
+    form.insert("csrfToken".to_string(), token.clone());
+    form.insert(SIGNUP_POW_NONCE_FIELD.to_string(), solve_signup_pow(&token));
 
     let response = route(&post_request("/login", form, Some(&csrf_cookie)), &config).await;
 

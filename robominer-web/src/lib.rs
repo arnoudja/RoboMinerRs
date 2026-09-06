@@ -171,4 +171,10 @@ pub mod test_support {
     pub fn record_auth_attempt(ip: &str, login_name: &str) {
         crate::rate_limit::record_auth_attempt(ip, login_name);
     }
+
+    pub fn solve_signup_pow(challenge: &str) -> String {
+        crate::auth_pages::signup_pow::solve_challenge(challenge)
+    }
+
+    pub const SIGNUP_POW_NONCE_FIELD: &str = crate::auth_pages::signup_pow::POW_NONCE_FIELD;
 }
