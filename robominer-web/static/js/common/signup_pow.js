@@ -1,12 +1,12 @@
 'use strict';
 
 (function() {
-    var form = document.getElementById('signupForm');
+    const form = document.getElementById('signupForm');
     if (!form || !window.crypto || !window.crypto.subtle) {
         return;
     }
 
-    var difficultyBits = parseInt(form.getAttribute('data-pow-difficulty-bits') || '16', 10);
+    let difficultyBits = parseInt(form.getAttribute('data-pow-difficulty-bits') || '16', 10);
     if (!Number.isFinite(difficultyBits) || difficultyBits < 1) {
         difficultyBits = 16;
     }
@@ -18,9 +18,9 @@
     }
 
     function leadingZeroBits(hexDigest) {
-        var bits = 0;
-        for (var i = 0; i < hexDigest.length; i++) {
-            var nibble = parseInt(hexDigest.charAt(i), 16);
+        let bits = 0;
+        for (let i = 0; i < hexDigest.length; i++) {
+            const nibble = parseInt(hexDigest.charAt(i), 16);
             if (nibble === 0) {
                 bits += 4;
                 continue;
@@ -44,18 +44,18 @@
             return;
         }
         event.preventDefault();
-        var csrf = form.querySelector('input[name="csrfToken"]');
-        var nonceInput = form.querySelector('input[name="signupPowNonce"]');
+        const csrf = form.querySelector('input[name="csrfToken"]');
+        const nonceInput = form.querySelector('input[name="signupPowNonce"]');
         if (!csrf || !nonceInput) {
             form.submit();
             return;
         }
-        var challenge = csrf.value;
-        var nonce = 0;
+        const challenge = csrf.value;
+        let nonce = 0;
 
         function step() {
-            var candidate = String(nonce);
-            var payload = new TextEncoder().encode(challenge + ':' + candidate);
+            const candidate = String(nonce);
+            const payload = new TextEncoder().encode(challenge + ':' + candidate);
             return window.crypto.subtle.digest('SHA-256', payload).then(function(digest) {
                 if (leadingZeroBits(hex(digest)) >= difficultyBits) {
                     nonceInput.value = candidate;
