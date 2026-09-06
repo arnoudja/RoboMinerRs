@@ -47,15 +47,14 @@ pub(super) async fn logoff_page(request: &Request, config: &ServerConfig) -> Res
 }
 
 fn logoff_response_clearing_cookies() -> Response {
-    let response = logoff_html_response()
-        .with_header(
-            "Set-Cookie",
-            format!(
-                "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
-                session::secure_cookie_suffix()
-            ),
-        )
-        .with_header("Set-Cookie", process::remember_clear_cookie_header());
+    let response = logoff_html_response().with_header(
+        "Set-Cookie",
+        format!(
+            "robominer_user_id=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+            session::secure_cookie_suffix()
+        ),
+    );
+    let response = session::with_set_cookies(response, process::remember_clear_cookie_headers());
     let response = session::with_set_cookies(response, session::session_clear_cookie_headers());
     let response = session::with_set_cookies(response, session::username_clear_cookie_headers());
     session::with_set_cookies(response, crate::csrf::anonymous_csrf_clear_cookie_headers())
@@ -109,6 +108,7 @@ pub(super) fn login_database_error_response(error: crate::page_context::PageLoad
 
 mod process;
 mod render;
+mod signup_pow;
 
 #[cfg(test)]
 mod tests;
