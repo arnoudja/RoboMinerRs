@@ -57,7 +57,7 @@
             return;
         }
         updateOreSortVisibility();
-        var sortBy = sortSelect.value || 'total';
+        var sortBy = sortSelect.value || 'level';
         var oreId = oreSelect ? oreSelect.value : '';
         var rows = Array.prototype.slice.call(tbody.querySelectorAll('.mining-area-atlas-row'));
         rows.sort(function(left, right) {

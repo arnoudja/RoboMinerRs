@@ -103,11 +103,11 @@ function createAtlasSandbox(urlSearch) {
     const historyCalls = [];
     const sortSelect = createElement({
         id: 'miningAreaAtlasSort',
-        value: 'total',
+        value: 'level',
         options: [
-            { value: 'total' },
-            { value: 'name' },
             { value: 'level' },
+            { value: 'name' },
+            { value: 'total' },
             { value: 'ore' },
         ],
     });
@@ -197,24 +197,29 @@ function rowNames(tbody) {
 }
 
 describe('mining area atlas page', () => {
-    it('sorts by total yield descending by default', () => {
+    it('sorts by area level descending by default', () => {
         const sandbox = createAtlasSandbox('');
+        assert.equal(sandbox.sortSelect.value, 'level');
         assert.deepEqual(rowNames(sandbox.tbody), ['Alpha', 'Beta', 'Zeta']);
+        assert.deepEqual(
+            sandbox.tbody.children.map((row) => row.getAttribute('data-area-id')),
+            ['3', '2', '1']
+        );
         assert.equal(sandbox.oreField.hidden, true);
     });
 
-    it('sorts by name and level', () => {
+    it('sorts by name and total yield', () => {
         const sandbox = createAtlasSandbox('');
         sandbox.sortSelect.value = 'name';
         sandbox.sortSelect.dispatchEvent('change');
         assert.deepEqual(rowNames(sandbox.tbody), ['Alpha', 'Beta', 'Zeta']);
 
-        sandbox.sortSelect.value = 'level';
+        sandbox.sortSelect.value = 'total';
         sandbox.sortSelect.dispatchEvent('change');
         assert.deepEqual(rowNames(sandbox.tbody), ['Alpha', 'Beta', 'Zeta']);
         assert.deepEqual(
-            sandbox.tbody.children.map((row) => row.getAttribute('data-area-id')),
-            ['3', '2', '1']
+            sandbox.tbody.children.map((row) => row.getAttribute('data-total-yield')),
+            ['40', '20', '10']
         );
     });
 

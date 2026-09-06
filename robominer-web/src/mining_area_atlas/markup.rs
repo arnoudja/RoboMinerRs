@@ -107,7 +107,7 @@ fn render_mining_area_atlas_controls(
     body.push_str(r#"<section class="mining-area-atlas-controls" aria-label="Atlas filters">"#);
     body.push_str(r#"<div class="mining-area-atlas-control-form">"#);
     body.push_str(
-        r#"<label class="mining-area-atlas-control-label" for="miningAreaAtlasSort">Sort <select id="miningAreaAtlasSort" class="tableitem mining-area-atlas-control-select"><option value="total" selected>Highest total yield</option><option value="ore">Highest ore yield</option><option value="name">Area name</option><option value="level">Area level</option></select></label>"#,
+        r#"<label class="mining-area-atlas-control-label" for="miningAreaAtlasSort">Sort <select id="miningAreaAtlasSort" class="tableitem mining-area-atlas-control-select"><option value="level" selected>Area level</option><option value="name">Area name</option><option value="total">Highest total yield</option><option value="ore">Highest ore yield</option></select></label>"#,
     );
     body.push_str(
         r#"<label class="mining-area-atlas-control-label" id="miningAreaAtlasOreField" for="miningAreaAtlasOreSort" hidden>Ore <select id="miningAreaAtlasOreSort" class="tableitem mining-area-atlas-control-select">"#,
