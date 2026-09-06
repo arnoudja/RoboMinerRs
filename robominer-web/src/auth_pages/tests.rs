@@ -172,15 +172,33 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
             r#"id="loginForm" class="auth-form" action="login" method="post" hidden="hidden""#,
             r#"name="loginName" value="user@example.com""#,
             r#"name="remember" value="remember" checked"#,
-            r#"id="signupForm" class="auth-form" action="login" method="post">"#,
+            r#"id="signupForm" class="auth-form" action="login" method="post" data-pow-difficulty-bits="16">"#,
             r#"name="newusername" pattern="[A-Za-z0-9]{3,30}" value="New&lt;User&gt;""#,
             r#"name="email" value="new&amp;user@example.com""#,
             r#"<p class="auth-banner-error">Signup &lt;failed&gt;</p>"#,
             r#"class="auth-password-toggle""#,
             r#"src="js/common/password_toggle.js?v="#,
+            // Signup PoW must be an external script: CSP is script-src 'self' (no 'unsafe-inline').
+            r#"src="js/common/signup_pow.js?v="#,
         ],
     );
     assert_html_not_contains(&html, "Latest news");
+    assert_html_not_contains(&html, "window.crypto.subtle");
+}
+
+#[test]
+fn login_rendering_omits_signup_pow_script_when_signup_disabled() {
+    let html = render_login_page(&LoginPageState {
+        login_name: String::new(),
+        new_username: String::new(),
+        email: String::new(),
+        error_message: None,
+        show_signup: false,
+        allow_signup: false,
+        return_to: None,
+    });
+
+    assert_html_not_contains(&html, r#"src="js/common/signup_pow.js?v="#);
 }
 
 #[test]
@@ -220,7 +238,7 @@ fn login_rendering_shows_login_form_by_default() {
         &html,
         &[
             r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
-            r#"id="signupForm" class="auth-form" action="login" method="post" hidden="hidden""#,
+            r#"id="signupForm" class="auth-form" action="login" method="post" data-pow-difficulty-bits="16" hidden="hidden""#,
             r#"class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#,
         ],
     );
@@ -264,7 +282,7 @@ fn login_rendering_hides_signup_when_disabled() {
         &html,
         &[
             r#"id="loginmenuitem" class="auth-tab auth-tab-active""#,
-            r#"id="signupForm" class="auth-form" action="login" method="post" hidden="hidden""#,
+            r#"id="signupForm" class="auth-form" action="login" method="post" data-pow-difficulty-bits="16" hidden="hidden""#,
         ],
     );
     for absent in [r#"id="signupmenuitem""#, "Sign up</a> for free"] {

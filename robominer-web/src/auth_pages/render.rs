@@ -167,7 +167,8 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
     };
 
     body.push_str(&format!(
-        r#"<form id="signupForm" class="auth-form" action="login" method="post"{hidden}>"#,
+        r#"<form id="signupForm" class="auth-form" action="login" method="post" data-pow-difficulty-bits="{}"{hidden}>"#,
+        super::signup_pow::POW_DIFFICULTY_BITS,
     ));
     body.push_str(r#"<h1 class="auth-form-title">Create account</h1>"#);
     body.push_str(

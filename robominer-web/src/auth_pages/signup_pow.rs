@@ -2,11 +2,15 @@
 
 use sha2::{Digest, Sha256};
 
+use crate::static_assets::script_src_tag;
+
 pub(crate) const POW_NONCE_FIELD: &str = "signupPowNonce";
 
 /// Leading zero bits required in SHA-256(challenge || ":" || nonce).
 /// 16 bits is a light interactive cost (~65k hashes average).
 pub(crate) const POW_DIFFICULTY_BITS: u32 = 16;
+
+const SIGNUP_POW_JS: &str = include_str!("../../static/js/common/signup_pow.js");
 
 pub(crate) fn verify_solution(challenge: &str, nonce: &str) -> bool {
     if challenge.is_empty() || nonce.is_empty() || nonce.len() > 64 {
@@ -46,66 +50,14 @@ fn leading_zero_bits(digest: &[u8]) -> u32 {
     bits
 }
 
-/// Inline script: solves PoW against the anonymous CSRF token before submit.
+/// External script tag for the signup PoW solver (CSP `script-src 'self'`).
 pub(crate) fn signup_pow_script() -> String {
-    format!(
-        r#"<script>
-(function () {{
-  var form = document.getElementById("signupForm");
-  if (!form || !window.crypto || !window.crypto.subtle) {{ return; }}
-  var difficultyBits = {POW_DIFFICULTY_BITS};
-  function hex(buffer) {{
-    return Array.from(new Uint8Array(buffer)).map(function (b) {{
-      return b.toString(16).padStart(2, "0");
-    }}).join("");
-  }}
-  function leadingZeroBits(hexDigest) {{
-    var bits = 0;
-    for (var i = 0; i < hexDigest.length; i++) {{
-      var nibble = parseInt(hexDigest.charAt(i), 16);
-      if (nibble === 0) {{ bits += 4; continue; }}
-      if (nibble < 2) return bits + 3;
-      if (nibble < 4) return bits + 2;
-      if (nibble < 8) return bits + 1;
-      return bits;
-    }}
-    return bits;
-  }}
-  form.addEventListener("submit", function (event) {{
-    if (form.dataset.powReady === "1") {{ return; }}
-    event.preventDefault();
-    var csrf = form.querySelector('input[name="csrfToken"]');
-    var nonceInput = form.querySelector('input[name="{POW_NONCE_FIELD}"]');
-    if (!csrf || !nonceInput) {{ form.submit(); return; }}
-    var challenge = csrf.value;
-    var nonce = 0;
-    function step() {{
-      var candidate = String(nonce);
-      var payload = new TextEncoder().encode(challenge + ":" + candidate);
-      return window.crypto.subtle.digest("SHA-256", payload).then(function (digest) {{
-        if (leadingZeroBits(hex(digest)) >= difficultyBits) {{
-          nonceInput.value = candidate;
-          form.dataset.powReady = "1";
-          if (typeof form.requestSubmit === "function") {{ form.requestSubmit(); }}
-          else {{ form.submit(); }}
-          return;
-        }}
-        nonce += 1;
-        return step();
-      }});
-    }}
-    step().catch(function () {{ form.submit(); }});
-  }});
-}})();
-</script>"#,
-        POW_DIFFICULTY_BITS = POW_DIFFICULTY_BITS,
-        POW_NONCE_FIELD = POW_NONCE_FIELD,
-    )
+    script_src_tag("js/common/signup_pow.js", SIGNUP_POW_JS)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{POW_DIFFICULTY_BITS, leading_zero_bits, verify_solution};
+    use super::{POW_DIFFICULTY_BITS, SIGNUP_POW_JS, leading_zero_bits, verify_solution};
     use sha2::{Digest, Sha256};
 
     #[test]
@@ -123,5 +75,13 @@ mod tests {
         };
         assert!(verify_solution(challenge, &solution));
         assert!(!verify_solution(challenge, "0"));
+    }
+
+    #[test]
+    fn static_script_defaults_match_server_difficulty() {
+        assert!(
+            SIGNUP_POW_JS.contains(&format!("|| '{POW_DIFFICULTY_BITS}'")),
+            "signup_pow.js default difficulty must stay in sync with POW_DIFFICULTY_BITS"
+        );
     }
 }
