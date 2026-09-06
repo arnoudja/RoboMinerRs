@@ -101,6 +101,10 @@ pub(super) struct CompileInput {
     pub(super) functions: BTreeMap<String, ExecutableFunction>,
     /// Names registered by the signature scan whose bodies are not filled yet.
     pub(super) pending_function_bodies: BTreeSet<String>,
+    /// Top-level variable names pre-registered during the signature scan so function
+    /// bodies can resolve globals declared later in source. Cleared as real declares
+    /// are parsed so duplicate `int x; int x;` still errors.
+    pub(super) preloaded_top_level_vars: BTreeSet<String>,
     unterminated_block_comment_line: Option<usize>,
 }
 
@@ -229,6 +233,7 @@ impl CompileInput {
             in_function_body: false,
             functions: BTreeMap::new(),
             pending_function_bodies: BTreeSet::new(),
+            preloaded_top_level_vars: BTreeSet::new(),
             unterminated_block_comment_line: None,
         };
         input.extract_next_word();

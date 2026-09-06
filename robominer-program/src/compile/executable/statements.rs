@@ -325,7 +325,9 @@ fn parse_executable_variable_statement(
             )));
         }
 
-        if input.variables.exists_at_current_level(&name) {
+        if input.variables.exists_at_current_level(&name)
+            && !input.preloaded_top_level_vars.remove(&name)
+        {
             return Err(CompileError::new(format!(
                 "Duplicate variable declaration at line {}: {}",
                 input.current_line, name

@@ -1,4 +1,4 @@
-use super::super::ExecutableRunner;
+use super::super::{ExecutableRunner, StepOutcome};
 use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::PendingProgramMotion;
 use crate::types::*;
@@ -26,6 +26,8 @@ pub(crate) enum ExpressionResume {
     DynamicMove,
     DynamicRotate,
     DynamicDump,
+    /// Finish a `return <expr>;` inside a user function.
+    Return,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -153,6 +155,20 @@ impl ExecutableRunner {
                 ExpressionComplete::Step(ProgramStep::Action(ExecutableAction::Dump(
                     value.as_i64() as i32,
                 )))
+            }
+            ExpressionResume::Return => {
+                let Some(return_type) = self.current_function_return_type() else {
+                    return ExpressionComplete::Fault;
+                };
+                match self.complete_function_return(value.coerce_to(return_type)) {
+                    StepOutcome::Continue => ExpressionComplete::Continue,
+                    StepOutcome::Fault => ExpressionComplete::Fault,
+                    StepOutcome::Cpu => ExpressionComplete::Continue,
+                    StepOutcome::Done => ExpressionComplete::Step(ProgramStep::Done),
+                    StepOutcome::Action(action) => {
+                        ExpressionComplete::Step(ProgramStep::Action(action))
+                    }
+                }
             }
         }
     }

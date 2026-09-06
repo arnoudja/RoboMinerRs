@@ -42,6 +42,11 @@ pub(crate) enum ExpressionWork {
     ApplyMin,
     ApplyMax,
     ApplyBinary(Operator),
+    /// After evaluating `argc` arguments, invoke user function `name`.
+    InvokeCall {
+        name: String,
+        argc: usize,
+    },
 }
 
 pub(crate) fn schedule_expression(
@@ -163,11 +168,17 @@ pub(crate) fn schedule_expression(
         ExecutableExpressionKind::Action(action) => {
             push(work, ExpressionWork::PushAction(*action));
         }
-        ExecutableExpressionKind::Call { args, .. } => {
+        ExecutableExpressionKind::Call { name, args } => {
             for arg in args {
                 schedule_expression(work, arg);
             }
-            push(work, ExpressionWork::PushInt(0));
+            push(
+                work,
+                ExpressionWork::InvokeCall {
+                    name: name.clone(),
+                    argc: args.len(),
+                },
+            );
         }
     }
 }

@@ -45,7 +45,8 @@ impl ExecutableRunner {
             | ExpressionWork::PushDynamicRotate
             | ExpressionWork::PushDynamicDump
             | ExpressionWork::PushOreDistance
-            | ExpressionWork::PushOreType => Err(()),
+            | ExpressionWork::PushOreType
+            | ExpressionWork::InvokeCall { .. } => Err(()),
         }
     }
 

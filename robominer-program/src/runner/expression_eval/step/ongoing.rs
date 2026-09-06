@@ -177,10 +177,68 @@ impl ExecutableRunner {
             return self.complete_expression_work_if_done();
         }
 
+        if let ExpressionWork::InvokeCall { name, argc } = work {
+            self.last_step_span = work_span;
+            return self.invoke_user_call(name, argc);
+        }
+
         if let Err(()) = self.apply_expression_work(context, action_result, work) {
             return self.abort_with_fault();
         }
 
         self.complete_expression_work_if_done()
+    }
+
+    fn invoke_user_call(&mut self, name: String, argc: usize) -> StepOutcome {
+        let mut args = {
+            let Some(eval) = self.expression_eval.as_mut() else {
+                return self.abort_with_fault();
+            };
+            let mut args = Vec::with_capacity(argc);
+            for _ in 0..argc {
+                let Some(value) = eval.values.pop() else {
+                    return self.abort_with_fault();
+                };
+                args.push(value);
+            }
+            args.reverse();
+            args
+        };
+
+        if self.call_depth >= crate::runner::MAX_CALL_DEPTH {
+            return self.fault_program();
+        }
+
+        let Some(function) = self.functions.get(&name).cloned() else {
+            return self.abort_with_fault();
+        };
+        if function.params.len() != args.len() {
+            return self.abort_with_fault();
+        }
+
+        let mut bindings = Vec::with_capacity(function.params.len());
+        for (param, arg) in function.params.iter().zip(args.drain(..)) {
+            let (value_type, value) = match param.value_type {
+                Some(value_type) => (value_type, arg.coerce_to(value_type)),
+                None => {
+                    let value_type = match arg {
+                        CpuStepResult::Bool(_) => ValueType::Bool,
+                        CpuStepResult::Int(_) => ValueType::Int,
+                        CpuStepResult::Float(_) => ValueType::Double,
+                    };
+                    (value_type, arg)
+                }
+            };
+            bindings.push((param.name.clone(), value_type, value));
+        }
+
+        self.call_depth += 1;
+        let suspended = self.expression_eval.take();
+        let Some(suspended) = suspended else {
+            return self.abort_with_fault();
+        };
+        self.suspended_expression_evals.push(suspended);
+        self.push_function_call_frame(function.body, function.return_type, &bindings);
+        StepOutcome::Continue
     }
 }

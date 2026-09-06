@@ -58,6 +58,8 @@ pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram
     let mut input = CompileInput::new(source);
     input.functions = scan_input.functions;
     input.pending_function_bodies = scan_input.pending_function_bodies;
+    input.variables = scan_input.variables;
+    input.preloaded_top_level_vars = scan_input.preloaded_top_level_vars;
     input.allow_function_defs = true;
     let result = parse_executable_sequence(&mut input);
     if let Some(error) = input.unterminated_comment_error() {

@@ -5,8 +5,12 @@ use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::{PendingProgramMotion, ProgramMotionCompletion};
 
 use crate::types::*;
+use std::collections::BTreeMap;
 
 use expression_eval::{OngoingExpressionEval, RuntimeVariables};
+
+/// Maximum nested user-function call depth before the runner faults.
+pub(crate) const MAX_CALL_DEPTH: usize = 256;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct ExecutionFrame {
@@ -16,12 +20,20 @@ pub(crate) struct ExecutionFrame {
     /// Source location of the while/do that owns [`Self::repeat_condition`].
     repeat_source_span: Option<SourceSpan>,
     scoped: bool,
+    /// True when this frame is a user-function body (triggers return on fall-through).
+    is_function_call: bool,
+    /// Return type of the active function call; set when [`Self::is_function_call`].
+    call_return_type: Option<ValueType>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExecutableRunner {
     stack: Vec<ExecutionFrame>,
     variables: RuntimeVariables,
+    functions: BTreeMap<String, ExecutableFunction>,
+    call_depth: usize,
+    /// Suspended expression evaluations waiting for a user-call return (stack).
+    suspended_expression_evals: Vec<OngoingExpressionEval>,
     /// Set while the sim must finish a multi-cycle action before the runner advances.
     /// See [`pending_action_protocol`].
     awaits_action_result: bool,
@@ -63,8 +75,13 @@ impl ExecutableRunner {
                 repeat_condition: None,
                 repeat_source_span: None,
                 scoped: false,
+                is_function_call: false,
+                call_return_type: None,
             }],
             variables: RuntimeVariables::default(),
+            functions: program.functions,
+            call_depth: 0,
+            suspended_expression_evals: Vec::new(),
             awaits_action_result: false,
             pending_action: None,
             pending_program_motion: None,
@@ -172,15 +189,25 @@ impl ExecutableRunner {
         }
     }
 
-    /// Clear expression/pending state and report a recoverable runner fault.
-    pub(crate) fn abort_with_fault(&mut self) -> StepOutcome {
-        debug_assert!(false, "program runner invariant failed");
+    /// Clear expression/pending/call state and report a recoverable runner fault.
+    ///
+    /// Used for expected program faults (e.g. call-depth overflow). Prefer
+    /// [`Self::abort_with_fault`] for broken runner invariants (debug-asserted).
+    pub(crate) fn fault_program(&mut self) -> StepOutcome {
         self.expression_eval = None;
+        self.suspended_expression_evals.clear();
+        self.call_depth = 0;
         self.clear_pending_action_handshake();
         self.set_active_source(None);
         self.last_step_result = None;
         self.last_step_span = None;
         StepOutcome::Fault
+    }
+
+    /// Clear expression/pending state and report a recoverable runner fault.
+    pub(crate) fn abort_with_fault(&mut self) -> StepOutcome {
+        debug_assert!(false, "program runner invariant failed");
+        self.fault_program()
     }
 
     pub fn step(&mut self, context: &mut ExecutionContext) -> ProgramStep {
@@ -295,7 +322,66 @@ impl ExecutableRunner {
             repeat_condition,
             repeat_source_span,
             scoped,
+            is_function_call: false,
+            call_return_type: None,
         });
+    }
+
+    /// Push a scoped frame for a user-function body and bind parameters in that scope.
+    pub(super) fn push_function_call_frame(
+        &mut self,
+        body: Vec<ExecutableStatement>,
+        return_type: ValueType,
+        params: &[(String, ValueType, CpuStepResult)],
+    ) {
+        self.variables.push_scope();
+        for (name, value_type, value) in params {
+            self.variables.declare(name.clone(), *value, *value_type);
+        }
+        self.stack.push(ExecutionFrame {
+            statements: body,
+            index: 0,
+            repeat_condition: None,
+            repeat_source_span: None,
+            scoped: true,
+            is_function_call: true,
+            call_return_type: Some(return_type),
+        });
+    }
+
+    pub(super) fn current_function_return_type(&self) -> Option<ValueType> {
+        self.stack
+            .iter()
+            .rev()
+            .find_map(|frame| frame.call_return_type)
+    }
+
+    /// Pop frames until the active function-call frame is gone, restore the suspended
+    /// caller expression, and push `value` as the call result.
+    pub(super) fn complete_function_return(&mut self, value: CpuStepResult) -> StepOutcome {
+        loop {
+            let Some(frame) = self.stack.last() else {
+                return self.abort_with_fault();
+            };
+            let is_call = frame.is_function_call;
+            self.pop_frame();
+            if is_call {
+                break;
+            }
+        }
+
+        if self.call_depth == 0 {
+            return self.abort_with_fault();
+        }
+        self.call_depth -= 1;
+
+        let Some(mut eval) = self.suspended_expression_evals.pop() else {
+            return self.abort_with_fault();
+        };
+        eval.values.push(value);
+        eval.index += 1;
+        self.expression_eval = Some(eval);
+        StepOutcome::Continue
     }
 
     pub(super) fn set_active_source(&mut self, span: Option<SourceSpan>) {

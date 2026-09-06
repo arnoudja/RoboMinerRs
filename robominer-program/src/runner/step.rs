@@ -1,3 +1,4 @@
+use crate::cpu_step_result::CpuStepResult;
 use crate::pending_program_motion::{PendingProgramMotion, ProgramMotionCompletion};
 use crate::runner::expression_eval::ExpressionResume;
 use crate::runner::{ExecutableRunner, StepOutcome};
@@ -55,6 +56,20 @@ impl ExecutableRunner {
             .last()
             .is_some_and(|frame| frame.index >= frame.statements.len())
         {
+            if self
+                .stack
+                .last()
+                .is_some_and(|frame| frame.is_function_call)
+            {
+                let return_type = self
+                    .stack
+                    .last()
+                    .and_then(|frame| frame.call_return_type)
+                    .unwrap_or(ValueType::Int);
+                return Some(
+                    self.complete_function_return(CpuStepResult::Int(0).coerce_to(return_type)),
+                );
+            }
             self.pop_frame();
             return Some(StepOutcome::Continue);
         }
@@ -95,9 +110,24 @@ impl ExecutableRunner {
                 body,
                 is_do_while,
             } => self.step_while_statement(source_span, condition, body, is_do_while),
-            ExecutableStatementKind::Return(_) => {
-                self.advance_current_statement();
-                StepOutcome::Fault
+            ExecutableStatementKind::Return(value) => self.step_return_statement(value),
+        }
+    }
+
+    fn step_return_statement(&mut self, value: Option<ExecutableExpression>) -> StepOutcome {
+        if self.current_function_return_type().is_none() {
+            return self.abort_with_fault();
+        }
+        match value {
+            Some(expression) => {
+                self.start_expression_evaluation(expression, ExpressionResume::Return);
+                StepOutcome::Continue
+            }
+            None => {
+                let return_type = self
+                    .current_function_return_type()
+                    .unwrap_or(ValueType::Int);
+                self.complete_function_return(CpuStepResult::Int(0).coerce_to(return_type))
             }
         }
     }

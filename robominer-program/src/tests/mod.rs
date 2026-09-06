@@ -5,6 +5,7 @@ mod helpers;
 mod pose;
 mod runner_control_flow;
 mod runner_expressions;
+mod runner_functions;
 mod runner_move_pending;
 mod runner_rotate_pending;
 mod runner_scan;

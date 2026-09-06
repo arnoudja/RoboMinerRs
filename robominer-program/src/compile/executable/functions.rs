@@ -26,12 +26,18 @@ pub(super) fn collect_function_signatures(input: &mut CompileInput) -> Result<()
             Ok(true) => {
                 input.eat_char(';', true);
             }
-            Ok(false) => {
-                if skip_top_level_item(input).is_err() {
-                    return Ok(());
+            Ok(false) => match try_collect_top_level_var(input) {
+                Ok(true) => {
+                    input.eat_char(';', true);
                 }
-                input.eat_char(';', true);
-            }
+                Ok(false) => {
+                    if skip_top_level_item(input).is_err() {
+                        return Ok(());
+                    }
+                    input.eat_char(';', true);
+                }
+                Err(error) => return Err(error),
+            },
             Err(error) => return Err(error),
         }
     }
@@ -80,6 +86,40 @@ fn try_collect_one_signature(input: &mut CompileInput) -> Result<bool, CompileEr
     }
 
     register_signature_skipping_body(input, name, Some(return_type))?;
+    Ok(true)
+}
+
+/// Register a top-level `const? T name ...` declaration during the signature scan so
+/// function bodies can resolve globals declared later in source order.
+fn try_collect_top_level_var(input: &mut CompileInput) -> Result<bool, CompileError> {
+    let checkpoint = input.checkpoint();
+    let is_const = input.use_next_word("const");
+    let Some(value_type) = parse_optional_value_type(input) else {
+        input.restore(checkpoint);
+        return Ok(false);
+    };
+    if input.get_next_word() == "fn" {
+        input.restore(checkpoint);
+        return Ok(false);
+    }
+    let name = input.use_next_word_any();
+    if name.is_empty() || input.peek() == Some('(') {
+        input.restore(checkpoint);
+        return Ok(false);
+    }
+
+    if input.variables.exists_at_current_level(&name) {
+        return Err(CompileError::new(format!(
+            "Duplicate variable declaration at line {}: {}",
+            input.current_line, name
+        )));
+    }
+
+    input.variables.declare(name.clone(), value_type, is_const);
+    input.preloaded_top_level_vars.insert(name);
+
+    input.restore(checkpoint);
+    skip_top_level_item(input)?;
     Ok(true)
 }
 
