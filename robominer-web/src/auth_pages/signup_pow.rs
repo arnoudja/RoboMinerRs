@@ -17,6 +17,7 @@ pub(crate) fn verify_solution(challenge: &str, nonce: &str) -> bool {
 }
 
 /// Brute-force a nonce for tests / tooling. Panics if the search bound is exceeded.
+#[cfg(any(test, debug_assertions))]
 pub(crate) fn solve_challenge(challenge: &str) -> String {
     let mut nonce = 0u64;
     loop {
