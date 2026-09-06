@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::html::{EscapedHtml, format_utc_millis, html_attr};
+use crate::html::{EscapedHtml, html_attr, local_absolute_time_html};
 use crate::mining_results_page::{
     MINING_RESULTS_INITIAL_VISIBLE, MINING_RESULTS_LOAD_MORE_STEP, MiningResultsPageState,
 };
@@ -92,7 +92,7 @@ fn render_mining_result_log_card(
         r#"<span class="mining-results-run-stats"><span class="mining-results-run-reward">+{} net</span><span class="mining-results-run-score">Score {:.1}</span><span class="mining-results-run-ended">Ended {}</span></span>"#,
         result.total_reward,
         result.score,
-        EscapedHtml::from(format_utc_millis(result.mining_end_time_millis))
+        local_absolute_time_html(result.mining_end_time_millis)
     ));
     body.push_str("</button>");
 }

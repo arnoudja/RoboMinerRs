@@ -1,4 +1,4 @@
-use crate::html::{EscapedHtml, format_utc_millis};
+use crate::html::{EscapedHtml, local_absolute_time_html};
 
 use super::score::render_mining_result_score_breakdown;
 
@@ -65,8 +65,8 @@ pub(super) fn render_mining_result_breakdown(
     body.push_str(r#"<section class="mining-results-breakdown-section"><h3 class="mining-results-breakdown-title">Timeline</h3><ul class="mining-results-timeline-list">"#);
     body.push_str(&format!(
         r#"<li><span class="mining-results-timeline-label">Queued</span><span class="mining-results-timeline-value">{}</span></li><li><span class="mining-results-timeline-label">Mining end</span><span class="mining-results-timeline-value">{}</span></li></ul></section></div>"#,
-        format_utc_millis(result.creation_time_millis),
-        format_utc_millis(result.mining_end_time_millis)
+        local_absolute_time_html(result.creation_time_millis),
+        local_absolute_time_html(result.mining_end_time_millis)
     ));
 }
 

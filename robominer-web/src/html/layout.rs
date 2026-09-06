@@ -3,6 +3,7 @@ use super::shell::{app_shell_header, page_footer};
 use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags, script_src_tag};
 
 const APP_DIALOG_JS: &str = include_str!("../../static/js/common/app_dialog.js");
+const LOCAL_TIME_JS: &str = include_str!("../../static/js/common/local_time.js");
 const SHELL_NAV_JS: &str = include_str!("../../static/js/common/shell_nav.js");
 
 pub(crate) fn layout(
@@ -34,6 +35,7 @@ pub(crate) fn layout(
         {}
         {}
         {}
+        {}
     </body>
 </html>"##,
         robominer_stylesheet_tags(styles),
@@ -43,6 +45,7 @@ pub(crate) fn layout(
         page_footer(),
         app_dialog_markup(),
         script_src_tag("js/common/app_dialog.js", APP_DIALOG_JS),
+        script_src_tag("js/common/local_time.js", LOCAL_TIME_JS),
         script_src_tag("js/common/shell_nav.js", SHELL_NAV_JS)
     )
 }

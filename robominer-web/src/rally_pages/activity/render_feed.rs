@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::super::ACTIVITY_RALLY_MAX_LIMIT;
 use crate::html::{
-    AreaFilterOption, EscapedHtml, format_relative_time_millis, format_utc_millis,
+    AreaFilterOption, EscapedHtml, format_relative_or_local_absolute_html, local_time_title_attrs,
     render_area_filter_select,
 };
 use crate::rally_pages::{ActivityFeedQuery, ActivityPageState, ActivityRallyFilter};
@@ -121,13 +121,9 @@ fn render_activity_feed_stats(
         .iter()
         .filter(|rally| rally.rally_result_id.is_some())
         .count();
-    let latest_relative = recent_rallies
+    let latest_millis = recent_rallies
         .first()
-        .map(|rally| format_relative_time_millis(rally.mining_end_time_millis, now_millis))
-        .unwrap_or_else(|| "none yet".to_string());
-    let latest_absolute = recent_rallies
-        .first()
-        .map(|rally| format_utc_millis(rally.mining_end_time_millis));
+        .map(|rally| rally.mining_end_time_millis);
 
     body.push_str(r#"<dl class="activity-feed-stats">"#);
     body.push_str(&format!(
@@ -138,17 +134,14 @@ fn render_activity_feed_stats(
         r#"<div class="activity-feed-stat"><dt>Replays</dt><dd>{} ready</dd></div>"#,
         replay_count
     ));
-    if let Some(absolute) = latest_absolute {
+    if let Some(millis) = latest_millis {
         body.push_str(&format!(
-            r#"<div class="activity-feed-stat"><dt>Latest</dt><dd title="{}">{}</dd></div>"#,
-            EscapedHtml::from(absolute.as_str()),
-            EscapedHtml::from(latest_relative.as_str()),
+            r#"<div class="activity-feed-stat"><dt>Latest</dt><dd{}>{}</dd></div>"#,
+            local_time_title_attrs(millis),
+            format_relative_or_local_absolute_html(millis, now_millis),
         ));
     } else {
-        body.push_str(&format!(
-            r#"<div class="activity-feed-stat"><dt>Latest</dt><dd>{}</dd></div>"#,
-            EscapedHtml::from(latest_relative.as_str()),
-        ));
+        body.push_str(r#"<div class="activity-feed-stat"><dt>Latest</dt><dd>none yet</dd></div>"#);
     }
     body.push_str("</dl>");
 }
@@ -207,8 +200,8 @@ fn render_activity_rally_card(
     let rally_participants = rally_participants_for_card(rally, participant_map);
     let viewer_participated = viewer_participated_in_rally(viewer_username, &rally_participants);
     let player_count_label = activity_player_count_label(rally_participants.len());
-    let ended_relative = format_relative_time_millis(rally.mining_end_time_millis, now_millis);
-    let ended_absolute = format_utc_millis(rally.mining_end_time_millis);
+    let ended_label =
+        format_relative_or_local_absolute_html(rally.mining_end_time_millis, now_millis);
     let replay_available = rally.rally_result_id.is_some();
     let card_tag = if replay_available { "a" } else { "article" };
     let card_class = if replay_available {
@@ -236,9 +229,9 @@ fn render_activity_rally_card(
         EscapedHtml::from(rally.mining_area_name.as_str()),
     ));
     body.push_str(&format!(
-        r#"<p class="activity-rally-ended" title="{}">Ended {}</p>"#,
-        EscapedHtml::from(ended_absolute.as_str()),
-        EscapedHtml::from(ended_relative.as_str()),
+        r#"<p class="activity-rally-ended"{}>Ended {}</p>"#,
+        local_time_title_attrs(rally.mining_end_time_millis),
+        ended_label,
     ));
     body.push_str("</div>");
     body.push_str(r#"<div class="activity-rally-badges">"#);
