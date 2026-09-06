@@ -1,6 +1,7 @@
 [package]
 name = "robominer-program"
 version.workspace = true
+rust-version.workspace = true
 edition = "2024"
 license = "MIT OR Apache-2.0"
 

@@ -13,6 +13,7 @@ resolver = "2"
 
 [workspace.package]
 version = "1.0.2"
+rust-version = "1.85"
 
 [workspace.dependencies]
 anyhow = "1.0.104"
@@ -20,7 +21,7 @@ argon2 = { version = "0.5.3", features = ["std"] }
 # Unifies with argon2's password-hash so SaltString::generate(OsRng) works.
 password-hash = { version = "0.6", features = ["alloc", "rand_core", "getrandom"] }
 axum = "0.8.9"
-clap = { version = "4.6.6", features = ["derive"] }
+clap = { version = "4.6.6", features = ["derive", "env"] }
 hmac = "0.13.0"
 rand = "0.10.2"
 robominer-db = { path = "robominer-db" }
@@ -40,7 +41,7 @@ tokio = { version = "1.53.1", features = ["macros", "rt", "rt-multi-thread"] }
 tower-http = { version = "0.7.0", features = ["timeout"] }
 thiserror = "2.0.17"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 [workspace.lints.clippy]
 unwrap_used = "deny"
