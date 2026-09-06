@@ -30,7 +30,7 @@ async fn leaderboard_states_report_ranked_rows() {
         &pool,
         sqlx::query(
             "INSERT INTO User (username, email, password, achievementPoints) \
-             VALUES (?, ?, 'test-password', 999999)",
+             VALUES (?, ?, 'test-password-1', 999999)",
         )
         .bind(format!("{prefix}-user"))
         .bind(format!("{prefix}@example.invalid")),

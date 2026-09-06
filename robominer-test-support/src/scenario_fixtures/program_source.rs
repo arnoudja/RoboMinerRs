@@ -26,7 +26,7 @@ impl ProgramSourceFixture {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-user"))
                 .bind(format!("{prefix}@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         let other_user_id = insert_row_id(
@@ -34,7 +34,7 @@ impl ProgramSourceFixture {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-other-user"))
                 .bind(format!("{prefix}-other@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         let program_source_id = insert_row_id(

@@ -74,10 +74,10 @@ mod tests {
 
     #[test]
     fn modern_password_hashes_verify_successfully() {
-        let hash = hash_password("test-password").expect("hash");
+        let hash = hash_password("test-password-1").expect("hash");
 
         assert!(hash.starts_with("$argon2"));
-        assert!(verify_argon2_password("test-password", &hash));
+        assert!(verify_argon2_password("test-password-1", &hash));
         assert!(!verify_argon2_password("wrong-password", &hash));
     }
 

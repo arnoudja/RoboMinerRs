@@ -6,6 +6,7 @@ use crate::session::{self, cookie_value};
 use crate::{Request, Response, is_post};
 
 use super::LoginPageState;
+use super::signup_pow;
 
 pub(super) async fn process_login_request(
     pool: &robominer_db::MySqlPool,
@@ -67,11 +68,12 @@ pub(super) async fn process_login_request(
                     verified.session_version,
                     &username,
                     remember_login,
-                    remember_cookie(&login_name, remember_login),
+                    remember_set_cookie_headers(&login_name, remember_login),
                 ));
             }
             Err(_) => {
                 log_auth_failure(&ip, &login_name, "invalid_credentials");
+                crate::metrics::record_auth_failure();
                 return Ok(login_html(
                     request,
                     &LoginPageState {
@@ -111,6 +113,20 @@ pub(super) async fn process_login_request(
             Some(signup_disabled_message().to_string())
         } else if new_password != confirm_password {
             Some(signup_password_mismatch_message().to_string())
+        } else if !signup_pow::verify_solution(
+            request
+                .form
+                .get(crate::csrf::CSRF_FIELD_NAME)
+                .map(String::as_str)
+                .unwrap_or(""),
+            request
+                .form
+                .get(signup_pow::POW_NONCE_FIELD)
+                .map(String::as_str)
+                .unwrap_or(""),
+        ) {
+            crate::metrics::record_signup_failure();
+            Some(signup_pow_failed_message().to_string())
         } else {
             match robominer_db::create_user(
                 pool,
@@ -130,11 +146,12 @@ pub(super) async fn process_login_request(
                         created.session_version,
                         &new_username,
                         false,
-                        None,
+                        Vec::new(),
                     ));
                 }
                 Err(rejection) => {
                     log_auth_failure(&ip, &new_username, "signup_rejected");
+                    crate::metrics::record_signup_failure();
                     Some(
                         robominer_domain::rejection_messages::create_user_rejection_player_message(
                             rejection,
@@ -165,7 +182,7 @@ pub(super) async fn process_login_request(
             login_name: request
                 .headers
                 .get("cookie")
-                .and_then(|cookies| cookie_value(cookies, "remember"))
+                .and_then(|cookies| cookie_value(cookies, remember_cookie_name()))
                 .unwrap_or_default(),
             new_username: String::new(),
             email: String::new(),
@@ -196,7 +213,7 @@ pub(super) fn auth_redirect_response(
     session_version: i32,
     username: &str,
     persistent_session: bool,
-    remember_cookie: Option<String>,
+    remember_cookies: Vec<String>,
 ) -> Response {
     let mut response = Response::redirect(location)
         .with_header(
@@ -209,29 +226,58 @@ pub(super) fn auth_redirect_response(
         response =
             session::with_set_cookies(response, crate::csrf::anonymous_csrf_clear_cookie_headers());
     }
-    if let Some(cookie) = remember_cookie {
-        response = response.with_header("Set-Cookie", cookie);
-    }
+    response = session::with_set_cookies(response, remember_cookies);
     response
 }
 
-pub(super) fn remember_cookie(login_name: &str, remember: bool) -> Option<String> {
+const LEGACY_REMEMBER_COOKIE_NAME: &str = "remember";
+const HOST_REMEMBER_COOKIE_NAME: &str = "__Host-robominer_remember";
+
+pub(super) fn remember_cookie_name() -> &'static str {
+    if session::secure_cookies_enabled() {
+        HOST_REMEMBER_COOKIE_NAME
+    } else {
+        LEGACY_REMEMBER_COOKIE_NAME
+    }
+}
+
+/// Set-Cookie headers for remember (primary + legacy clear when Secure).
+pub(super) fn remember_set_cookie_headers(login_name: &str, remember: bool) -> Vec<String> {
     let secure = session::secure_cookie_suffix();
     if remember {
-        Some(format!(
-            "remember={}; Max-Age=2678400; Path=/; HttpOnly; SameSite=Lax{secure}",
+        let mut headers = vec![format!(
+            "{}={}; Max-Age=2678400; Path=/; HttpOnly; SameSite=Lax{secure}",
+            remember_cookie_name(),
             session::cookie_encode(login_name)
-        ))
+        )];
+        if session::secure_cookies_enabled() {
+            headers.push(format!(
+                "{LEGACY_REMEMBER_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{secure}"
+            ));
+        }
+        headers
     } else {
-        Some(remember_clear_cookie_header())
+        remember_clear_cookie_headers()
     }
 }
 
 pub(super) fn remember_clear_cookie_header() -> String {
     format!(
-        "remember=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        "{}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+        remember_cookie_name(),
         session::secure_cookie_suffix()
     )
+}
+
+pub(super) fn remember_clear_cookie_headers() -> Vec<String> {
+    let mut headers = vec![remember_clear_cookie_header()];
+    if session::secure_cookies_enabled() {
+        headers.push(format!(
+            "{LEGACY_REMEMBER_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax{}",
+            session::secure_cookie_suffix()
+        ));
+    }
+    headers
 }
 
 pub(super) fn login_failure_message() -> &'static str {
@@ -244,4 +290,8 @@ pub(super) fn signup_password_mismatch_message() -> &'static str {
 
 fn signup_disabled_message() -> &'static str {
     "Sign up is not available on this server."
+}
+
+fn signup_pow_failed_message() -> &'static str {
+    "Sign-up verification failed. Please try again."
 }

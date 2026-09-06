@@ -33,14 +33,14 @@ impl CancelMiningQueueFixture {
             pool,
             &format!("{prefix}-user"),
             &format!("{prefix}@example.invalid"),
-            "test-password",
+            "test-password-1",
         )
         .await;
         let other_user_id = insert_user_with_credentials(
             pool,
             &format!("{prefix}-other-user"),
             &format!("{prefix}-other@example.invalid"),
-            "test-password",
+            "test-password-1",
         )
         .await;
         let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 600).await;

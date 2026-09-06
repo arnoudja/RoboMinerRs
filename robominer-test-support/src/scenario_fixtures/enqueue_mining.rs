@@ -46,7 +46,7 @@ impl EnqueueMiningFixture {
             )
             .bind(format!("{prefix}-user"))
             .bind(format!("{prefix}@example.invalid"))
-            .bind("test-password")
+            .bind("test-password-1")
             .bind(queue_size),
         )
         .await;
@@ -58,7 +58,7 @@ impl EnqueueMiningFixture {
             )
             .bind(format!("{prefix}-other-user"))
             .bind(format!("{prefix}-other@example.invalid"))
-            .bind("test-password")
+            .bind("test-password-1")
             .bind(queue_size),
         )
         .await;

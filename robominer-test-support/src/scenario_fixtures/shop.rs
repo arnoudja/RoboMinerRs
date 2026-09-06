@@ -32,7 +32,7 @@ impl ShopFixture {
             pool,
             &format!("{prefix}-user"),
             &format!("{prefix}@example.invalid"),
-            "test-password",
+            "test-password-1",
         )
         .await;
         attach_user_shop_assets(

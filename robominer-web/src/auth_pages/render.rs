@@ -19,6 +19,9 @@ pub(super) fn render_login_page(state: &LoginPageState) -> String {
     body.push_str(r#"<p class="auth-tagline">Program robots. Mine ore. Compete in rallies.</p>"#);
     body.push_str("</div></div>");
     render_password_toggle_script(&mut body);
+    if state.allow_signup {
+        body.push_str(&super::signup_pow::signup_pow_script());
+    }
 
     format!(
         r##"<!DOCTYPE html>
@@ -199,8 +202,8 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
         "newpassword",
         "Password",
         "Choose a password",
-        r#" required pattern=".{12,}" autocomplete="new-password""#,
-        Some("At least 12 characters."),
+        r#" required pattern="(?=.*[A-Za-z])(?=.*[0-9]).{12,}" autocomplete="new-password""#,
+        Some("At least 12 characters, with a letter and a number."),
     );
     render_password_field(
         body,
@@ -211,6 +214,10 @@ fn render_signup_form(body: &mut String, state: &LoginPageState) {
         r#" required autocomplete="new-password""#,
         None,
     );
+    body.push_str(&format!(
+        r#"<input type="hidden" name="{}" value="" />"#,
+        super::signup_pow::POW_NONCE_FIELD
+    ));
     body.push_str(r#"<button type="submit" class="auth-submit">Sign up</button>"#);
     body.push_str(&format!(
         r#"<p class="auth-switch">Already have an account? <a class="auth-switch-link" href="{}">Log in</a>.</p>"#,

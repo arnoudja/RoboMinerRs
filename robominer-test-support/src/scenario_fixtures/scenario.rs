@@ -20,7 +20,7 @@ impl Scenario {
             pool,
             &format!("{prefix}-user"),
             &format!("{prefix}@example.invalid"),
-            "test-password",
+            "test-password-1",
         )
         .await;
         let catalog = ensure_base_catalog(pool, &prefix, 1).await;

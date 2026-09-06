@@ -5,7 +5,7 @@ use crate::html::{assert_contains_all, assert_html_contains, assert_html_not_con
 use crate::{Request, ServerConfig};
 
 use super::process::{
-    auth_redirect_response, login_failure_message, remember_cookie,
+    auth_redirect_response, login_failure_message, remember_set_cookie_headers,
     signup_password_mismatch_message,
 };
 use super::render::render_login_page;
@@ -280,7 +280,7 @@ fn auth_redirect_sets_rust_auth_and_remember_cookies() {
         0,
         "User Name",
         true,
-        remember_cookie("user@example.com", true),
+        remember_set_cookie_headers("user@example.com", true),
     );
     let cookie_headers: Vec<_> = response
         .headers
@@ -330,13 +330,13 @@ fn signup_rejection_messages_match_legacy_copy() {
         robominer_domain::rejection_messages::create_user_rejection_player_message(
             robominer_db::CreateUserRejection::DuplicateUsername
         ),
-        "Username already taken, please choose another one"
+        "Could not create that account. Try a different username or e-mail, or log in if you already have one."
     );
     assert_eq!(
         robominer_domain::rejection_messages::create_user_rejection_player_message(
             robominer_db::CreateUserRejection::DuplicateEmail
         ),
-        "You already have an account, please login using your e-mail address"
+        "Could not create that account. Try a different username or e-mail, or log in if you already have one."
     );
     assert_eq!(
         robominer_domain::rejection_messages::create_user_rejection_player_message(

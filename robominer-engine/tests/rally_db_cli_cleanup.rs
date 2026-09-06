@@ -19,7 +19,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_recent_history() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let robot_id = insert_robot(&pool, user_id, &format!("{prefix}-robot"), "mine();").await;
@@ -115,7 +115,7 @@ async fn cleanup_old_claimed_mining_queue_items_keeps_shared_rally_results() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let robot_a_id = insert_robot(&pool, user_id, &format!("{prefix}-robot-a"), "mine();").await;

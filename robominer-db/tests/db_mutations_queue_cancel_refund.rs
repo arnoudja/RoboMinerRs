@@ -20,7 +20,7 @@ async fn cancel_mining_queue_deletes_only_queued_item() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
@@ -69,7 +69,7 @@ async fn cancel_mining_queue_refunds_ore_cost() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
@@ -115,7 +115,7 @@ async fn cancel_mining_queue_refund_clamps_to_max_allowed() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
@@ -160,7 +160,7 @@ async fn cancel_mining_queue_require_refund_fits_skips_clamp() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;
@@ -206,7 +206,7 @@ async fn ore_refund_fits_without_clamp_detects_wallet_cap() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let fixture = QueuedMiningAreaFixture::create(&pool, user_id).await;

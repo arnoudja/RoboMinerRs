@@ -18,7 +18,7 @@ async fn create_program_source_rejects_empty_source_name() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
 
@@ -60,7 +60,7 @@ async fn create_program_source_inserts_verifiable_row() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
 

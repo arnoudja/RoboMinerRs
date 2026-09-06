@@ -26,7 +26,7 @@ async fn create_user_rejects_invalid_profile_fields() {
         CreateUserRequest {
             username: "ab".to_string(),
             email: "player@example.invalid".to_string(),
-            password: "test-password".to_string(),
+            password: "test-password-1".to_string(),
         },
     )
     .await
@@ -131,7 +131,7 @@ async fn create_user_rejects_duplicate_username() {
         &pool,
         &username,
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
 
@@ -267,14 +267,14 @@ async fn update_user_account_rejects_duplicate_email() {
         &pool,
         &format!("{prefix}-first"),
         &format!("{prefix}-first@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let second_user_id = insert_user_with_credentials(
         &pool,
         &format!("{prefix}-second"),
         &format!("{prefix}-second@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
 
