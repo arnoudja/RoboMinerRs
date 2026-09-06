@@ -63,6 +63,33 @@ fn omitted_return_type_requires_agreement() {
 }
 
 #[test]
+fn untyped_param_return_requires_explicit_return_type() {
+    let bad = verify_source("fn id(x) { return x; } move(id(3));");
+    assert!(
+        !bad.verified,
+        "untyped param is not a concrete type for inference"
+    );
+    assert!(
+        bad.error_description.to_lowercase().contains("infer")
+            || bad.error_description.to_lowercase().contains("return type"),
+        "expected cannot-infer-return-type style error, got: {}",
+        bad.error_description
+    );
+}
+
+#[test]
+fn explicit_return_type_allows_untyped_param_passthrough() {
+    assert!(
+        verify_source("fn int id(x) { return x; } move(id(3));").verified,
+        "explicit int return must compile with untyped param"
+    );
+    assert!(
+        verify_source("fn double id(x) { return x; } move(id(3.7));").verified,
+        "explicit double return must compile with untyped param"
+    );
+}
+
+#[test]
 fn rejects_top_level_use_before_declare() {
     assert!(
         !verify_source("move(x); int x = 1;").verified,

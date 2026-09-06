@@ -490,7 +490,9 @@ fn clamp_u16(value: usize) -> u16 {
 
 #[derive(Debug, Clone)]
 struct Variable {
-    value_type: ValueType,
+    /// `None` for untyped function parameters (runtime type is per-call; not
+    /// concrete for return-type inference).
+    value_type: Option<ValueType>,
     is_const: bool,
 }
 
@@ -507,6 +509,14 @@ impl VariableStorage {
     }
 
     pub(super) fn declare(&mut self, name: String, value_type: ValueType, is_const: bool) {
+        self.declare_maybe_typed(name, Some(value_type), is_const);
+    }
+
+    pub(super) fn declare_untyped(&mut self, name: String) {
+        self.declare_maybe_typed(name, None, false);
+    }
+
+    fn declare_maybe_typed(&mut self, name: String, value_type: Option<ValueType>, is_const: bool) {
         self.variables.entry(self.scope_depth).or_default().insert(
             name,
             Variable {
@@ -533,7 +543,7 @@ impl VariableStorage {
             .values()
             .filter_map(|scope| scope.get(name))
             .next_back()
-            .map(|variable| variable.value_type)
+            .and_then(|variable| variable.value_type)
     }
 
     pub(super) fn is_const(&self, name: &str) -> bool {

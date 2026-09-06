@@ -29,6 +29,18 @@ fn untyped_param_is_by_value_and_dynamic() {
 }
 
 #[test]
+fn explicit_double_return_coerces_untyped_param() {
+    let program =
+        compile_executable_source("fn double id(x) { return x; } move(id(3.7));").expect("compile");
+    let mut runner = program.runner();
+    let mut ctx = test_context(20, None);
+    assert!(matches!(
+        runner.next_action(&mut ctx),
+        Some(ExecutableAction::Move(d)) if (d - 3.7).abs() < 1e-9
+    ));
+}
+
+#[test]
 fn function_reads_and_writes_top_level_var() {
     let program = compile_executable_source("fn bump() { x = x + 1; } int x = 0; bump(); move(x);")
         .expect("compile");

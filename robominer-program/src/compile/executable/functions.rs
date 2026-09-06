@@ -394,7 +394,6 @@ fn parse_function_after_name(
     let outer_depth = input.variables.scope_depth;
     input.variables.set_scope_depth(outer_depth + 1);
     for param in &params {
-        let value_type = param.value_type.unwrap_or(ValueType::Int);
         if input.variables.exists_at_current_level(&param.name) {
             input.variables.set_scope_depth(outer_depth);
             if !replacing_stub {
@@ -406,9 +405,15 @@ fn parse_function_after_name(
                 input.current_line, param.name
             )));
         }
-        input
-            .variables
-            .declare(param.name.clone(), value_type, false);
+        // Untyped params are known names but not a concrete type for inference.
+        match param.value_type {
+            Some(value_type) => {
+                input
+                    .variables
+                    .declare(param.name.clone(), value_type, false);
+            }
+            None => input.variables.declare_untyped(param.name.clone()),
+        }
     }
 
     let was_in_function = input.in_function_body;
