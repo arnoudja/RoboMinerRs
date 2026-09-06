@@ -13,8 +13,9 @@ pub(crate) enum UserCommand {
         #[arg(long)]
         email: String,
 
-        #[arg(long)]
-        password: String,
+        /// Prefer env `ROBOMINER_USER_PASSWORD` or a TTY prompt over argv.
+        #[arg(long, env = "ROBOMINER_USER_PASSWORD")]
+        password: Option<String>,
     },
     UpdateAccount {
         #[arg(long)]
@@ -26,7 +27,8 @@ pub(crate) enum UserCommand {
         #[arg(long)]
         email: String,
 
-        #[arg(long)]
+        /// Prefer env `ROBOMINER_USER_PASSWORD` or a TTY prompt over argv.
+        #[arg(long, env = "ROBOMINER_USER_PASSWORD")]
         password: Option<String>,
 
         /// Required when `--password` is set (resets credentials / invalidates sessions).
@@ -37,14 +39,16 @@ pub(crate) enum UserCommand {
         #[arg(long)]
         login_name: String,
 
-        #[arg(long)]
-        password: String,
+        /// Prefer env `ROBOMINER_USER_PASSWORD` or a TTY prompt over argv.
+        #[arg(long, env = "ROBOMINER_USER_PASSWORD")]
+        password: Option<String>,
     },
     VerifyPassword {
         #[arg(long)]
         user_id: i64,
 
-        #[arg(long)]
-        password: String,
+        /// Prefer env `ROBOMINER_USER_PASSWORD` or a TTY prompt over argv.
+        #[arg(long, env = "ROBOMINER_USER_PASSWORD")]
+        password: Option<String>,
     },
 }

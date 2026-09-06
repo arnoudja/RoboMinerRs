@@ -34,7 +34,7 @@ async fn update_user_account_updates_profile_and_password() {
         "--email".to_string(),
         new_email.clone(),
         "--password".to_string(),
-        "new-password".to_string(),
+        "new-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&output);
 
@@ -61,7 +61,7 @@ async fn update_user_account_updates_profile_and_password() {
         "unexpected password hash: {}",
         user.2
     );
-    assert_ne!(user.2, "new-password");
+    assert_ne!(user.2, "new-password-1");
 
     let session_version: i32 = sqlx::query_scalar("SELECT sessionVersion FROM User WHERE id = ?")
         .bind(user_id)

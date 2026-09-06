@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wait until robominer-web answers 200 on GET /health (loopback readiness).
+# Wait until robominer-web answers 200 on GET /health/ready (loopback readiness).
 #
 # Usage:
 #   robominer-wait-web-health
@@ -39,14 +39,14 @@ probe_health() {
     local response=""
     if command -v curl >/dev/null 2>&1; then
         response="$(
-            curl -fsS --max-time 2 "http://${HOST}:${PORT}/health" 2>/dev/null || true
+            curl -fsS --max-time 2 "http://${HOST}:${PORT}/health/ready" 2>/dev/null || true
         )"
     else
         # Fallback without curl: raw HTTP over bash /dev/tcp.
         response="$(
             {
                 exec 3<>"/dev/tcp/${HOST}/${PORT}" || exit 1
-                printf 'GET /health HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n' "${HOST}" >&3
+                printf 'GET /health/ready HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n' "${HOST}" >&3
                 timeout 2 cat <&3 || true
                 exec 3<&- 3>&- || true
             } 2>/dev/null || true
@@ -62,11 +62,11 @@ probe_health() {
 
 for _ in $(seq 1 "${ATTEMPTS}"); do
     if probe_health; then
-        echo "robominer-web health ok at http://${HOST}:${PORT}/health"
+        echo "robominer-web health ok at http://${HOST}:${PORT}/health/ready"
         exit 0
     fi
     sleep "${SLEEP_SECS}"
 done
 
-echo "robominer-web health check failed at http://${HOST}:${PORT}/health after ${ATTEMPTS} attempts" >&2
+echo "robominer-web health check failed at http://${HOST}:${PORT}/health/ready after ${ATTEMPTS} attempts" >&2
 exit 1

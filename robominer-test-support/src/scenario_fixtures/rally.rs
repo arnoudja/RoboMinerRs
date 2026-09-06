@@ -29,7 +29,7 @@ impl RallyFixture {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-user"))
                 .bind(format!("{prefix}@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         let ai_robot_id = insert_ai_robot(pool, &format!("{prefix}-ai"), "rotate(90);", 600).await;

@@ -18,7 +18,7 @@ async fn verify_login_accepts_username_and_email_and_updates_last_login() {
     let prefix = unique_test_prefix("rust-verify-login-cli");
     let username = format!("{prefix}-user");
     let email = format!("{prefix}@example.invalid");
-    let password = "test-password";
+    let password = "test-password-1";
 
     let create = run_engine(&[
         "--database-url".to_string(),
@@ -127,7 +127,7 @@ async fn verify_login_rejects_unknown_user_and_bad_password() {
         "--email".to_string(),
         email,
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&create);
     assert!(
@@ -164,7 +164,7 @@ async fn verify_login_rejects_unknown_user_and_bad_password() {
         "--login-name".to_string(),
         format!("{prefix}-missing"),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&unknown_user);
     assert!(
@@ -204,7 +204,7 @@ async fn verify_user_password_checks_current_password_without_touching_login_tim
         "--email".to_string(),
         email,
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&create);
     assert!(
@@ -227,7 +227,7 @@ async fn verify_user_password_checks_current_password_without_touching_login_tim
         "--user-id".to_string(),
         user_id.to_string(),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&verify);
     assert!(

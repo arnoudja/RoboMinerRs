@@ -319,6 +319,14 @@ crate root). Existing flat re-exports stay for compatibility. See
 
 ### Schema changes
 
+Migrations are **forward-only**. There are no down migrations. To roll back a
+failed schema change, restore a pre-migration database dump (see
+`resources/scripts/restore-database.sh`) and redeploy application binaries that
+match that schema era. Take a backup before `migrate apply` in production.
+
+Prefer `robominer-engine migrate apply` as the primary migrate path; treat
+`resources/scripts/migrate-database.sh` as bootstrap/fallback.
+
 A schema change needs three synchronized artifacts:
 
 1. Fresh DDL in `resources/database/createDatabase.sql`

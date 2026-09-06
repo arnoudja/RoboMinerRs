@@ -37,15 +37,15 @@ fn create_user_rejection_message(
         (robominer_db::CreateUserRejection::InvalidPassword, Audience::Cli) => {
             "invalid password".into()
         }
-        // Distinct duplicate messages are intentional player UX (account enumeration trade-off).
+        // Generic duplicate copy for public signup (avoids account enumeration).
         (robominer_db::CreateUserRejection::DuplicateUsername, Audience::Player) => {
-            "Username already taken, please choose another one".into()
+            "Could not create that account. Try a different username or e-mail, or log in if you already have one.".into()
         }
         (robominer_db::CreateUserRejection::DuplicateUsername, Audience::Cli) => {
             "duplicate username".into()
         }
         (robominer_db::CreateUserRejection::DuplicateEmail, Audience::Player) => {
-            "You already have an account, please login using your e-mail address".into()
+            "Could not create that account. Try a different username or e-mail, or log in if you already have one.".into()
         }
         (robominer_db::CreateUserRejection::DuplicateEmail, Audience::Cli) => {
             "duplicate email".into()
@@ -87,15 +87,15 @@ pub fn update_user_account_rejection_message(
         (robominer_db::UpdateUserAccountRejection::InvalidPassword, Audience::Cli) => {
             "invalid password"
         }
-        // Distinct duplicate messages are intentional player UX (account enumeration trade-off).
+        // Generic duplicate copy (avoids account enumeration).
         (robominer_db::UpdateUserAccountRejection::DuplicateUsername, Audience::Player) => {
-            "That username is already taken"
+            "Could not update that account. Try a different username or e-mail."
         }
         (robominer_db::UpdateUserAccountRejection::DuplicateUsername, Audience::Cli) => {
             "duplicate username"
         }
         (robominer_db::UpdateUserAccountRejection::DuplicateEmail, Audience::Player) => {
-            "Only one account per e-mail address is allowed"
+            "Could not update that account. Try a different username or e-mail."
         }
         (robominer_db::UpdateUserAccountRejection::DuplicateEmail, Audience::Cli) => {
             "duplicate email"

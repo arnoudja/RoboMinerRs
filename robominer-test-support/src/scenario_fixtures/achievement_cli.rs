@@ -31,7 +31,7 @@ impl AchievementCliFixture {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-user"))
                 .bind(format!("{prefix}@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         let ore_id = insert_ore(pool, &format!("{prefix}-ore")).await;

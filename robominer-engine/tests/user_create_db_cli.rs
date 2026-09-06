@@ -18,7 +18,7 @@ async fn create_user_inserts_initial_user_state() {
     let prefix = unique_test_prefix("rust-create-user-cli");
     let username = format!("{prefix}-user");
     let email = format!("{prefix}@example.invalid");
-    let password = "test-password";
+    let password = "test-password-1";
 
     let output = run_engine(&[
         "--database-url".to_string(),
@@ -135,7 +135,7 @@ async fn create_user_rejects_duplicate_username_and_email() {
         "--email".to_string(),
         email.clone(),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (first_stdout, first_stderr) = output_text(&first);
     assert!(
@@ -157,7 +157,7 @@ async fn create_user_rejects_duplicate_username_and_email() {
         "--email".to_string(),
         format!("{prefix}-other@example.invalid"),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&duplicate_username);
     assert!(
@@ -179,7 +179,7 @@ async fn create_user_rejects_duplicate_username_and_email() {
         "--email".to_string(),
         email,
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (stdout, stderr) = output_text(&duplicate_email);
     assert!(
@@ -211,7 +211,7 @@ async fn create_user_rejects_invalid_profile_fields() {
         "--email".to_string(),
         "valid@example.invalid".to_string(),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (_, stderr) = output_text(&invalid_username);
     assert!(
@@ -233,7 +233,7 @@ async fn create_user_rejects_invalid_profile_fields() {
         "--email".to_string(),
         "invalid-email".to_string(),
         "--password".to_string(),
-        "test-password".to_string(),
+        "test-password-1".to_string(),
     ]);
     let (_, stderr) = output_text(&invalid_email);
     assert!(

@@ -15,6 +15,7 @@ const PAGE_SCRIPTS = [
     'common/local_time.js',
     'common/area_filter.js',
     'common/password_toggle.js',
+    'common/signup_pow.js',
     'common/shell_nav.js',
     'edit_code/editor.js',
     'edit_code/url_sync.js',

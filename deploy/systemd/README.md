@@ -274,6 +274,11 @@ Watch for repeated errors, unexpectedly high skipped counts, or missing
 
 ### 5. Rollback
 
+Schema migrations are forward-only. A schema rollback is a **database restore**
+from a pre-migration dump (`resources/scripts/restore-database.sh`), then
+redeploying binaries that match that schema. Always take a backup before
+`migrate apply`.
+
 To roll back this deployment:
 
 ```bash

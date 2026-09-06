@@ -56,7 +56,7 @@ impl AchievementScenario {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-user"))
                 .bind(format!("{prefix}@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         Self::attach_to_user(pool, &prefix, user_id).await

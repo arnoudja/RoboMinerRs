@@ -53,8 +53,38 @@ pub(super) fn valid_email(email: &str) -> bool {
 }
 
 pub(super) fn valid_password(password: &str) -> bool {
-    (12..=128).contains(&password.len())
+    if !(12..=128).contains(&password.len()) {
+        return false;
+    }
+    let has_letter = password.chars().any(|ch| ch.is_ascii_alphabetic());
+    let has_digit = password.chars().any(|ch| ch.is_ascii_digit());
+    if !has_letter || !has_digit {
+        return false;
+    }
+    !is_common_password(password)
 }
+
+fn is_common_password(password: &str) -> bool {
+    let normalized = password.to_ascii_lowercase();
+    COMMON_PASSWORDS.iter().any(|entry| *entry == normalized)
+}
+
+/// Small denylist of very common passwords (normalized to lowercase).
+const COMMON_PASSWORDS: &[&str] = &[
+    "password",
+    "password123",
+    "password1234",
+    "123456789012",
+    "1234567890123",
+    "qwertyuiopas",
+    "qwertyuiopasd",
+    "letmein12345",
+    "welcome12345",
+    "adminadmin12",
+    "changeme1234",
+    "robominer123",
+    "robominer1234",
+];
 
 /// Passwords accepted into Argon2 verify / timing-burn paths.
 ///
@@ -109,12 +139,15 @@ mod tests {
     }
 
     #[test]
-    fn valid_password_requires_at_least_twelve_and_at_most_128_characters() {
+    fn valid_password_requires_length_letter_digit_and_rejects_common() {
         assert!(!valid_password("12345678"));
         assert!(!valid_password("12345678901"));
-        assert!(valid_password("123456789012"));
+        assert!(!valid_password("123456789012")); // digits only
+        assert!(!valid_password("abcdefghijkl")); // letters only
+        assert!(valid_password("abcdefghijk1"));
+        assert!(!valid_password("password1234"));
         assert!(!valid_password("short"));
-        assert!(valid_password(&"a".repeat(128)));
+        assert!(valid_password(&format!("{}1", "a".repeat(127))));
         assert!(!valid_password(&"a".repeat(129)));
     }
 

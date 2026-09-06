@@ -58,7 +58,7 @@ pub async fn insert_user(pool: &MySqlPool, prefix: &str) -> i64 {
         pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await
 }

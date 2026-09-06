@@ -12,11 +12,13 @@ mod assets;
 mod leaderboard;
 mod migrate;
 mod mining;
+mod password;
 mod program;
 mod rally;
 mod robot;
 mod shop;
 mod user;
+pub(crate) use password::resolve_user_password;
 
 pub(crate) use achievement::AchievementCommand;
 pub(crate) use activity::ActivityCommand;

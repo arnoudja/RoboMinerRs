@@ -101,13 +101,13 @@ fn account_update_rejection_messages_match_legacy_copy() {
         robominer_domain::rejection_messages::update_user_account_rejection_player_message(
             robominer_db::UpdateUserAccountRejection::DuplicateUsername
         ),
-        "That username is already taken"
+        "Could not update that account. Try a different username or e-mail."
     );
     assert_eq!(
         robominer_domain::rejection_messages::update_user_account_rejection_player_message(
             robominer_db::UpdateUserAccountRejection::DuplicateEmail
         ),
-        "Only one account per e-mail address is allowed"
+        "Could not update that account. Try a different username or e-mail."
     );
     assert_eq!(
         robominer_domain::rejection_messages::update_user_account_rejection_player_message(

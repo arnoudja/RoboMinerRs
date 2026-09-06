@@ -1,7 +1,7 @@
 use anyhow::{Result, ensure};
 
 use super::{ensure_destructive_confirmed, ensure_positive_user_id};
-use crate::cli::UserCommand;
+use crate::cli::{UserCommand, resolve_user_password};
 use crate::database::connect_database;
 use crate::user::{
     account_state, create_user, update_user_account, verify_login, verify_user_password,
@@ -24,7 +24,7 @@ pub(crate) async fn dispatch_user(
         } => {
             ensure!(!username.is_empty(), "--username must not be empty");
             ensure!(!email.is_empty(), "--email must not be empty");
-            ensure!(!password.is_empty(), "--password must not be empty");
+            let password = resolve_user_password(password, "New user password")?;
             let pool = connect_database(database_url).await?;
             create_user(
                 &pool,
@@ -46,10 +46,14 @@ pub(crate) async fn dispatch_user(
             ensure_positive_user_id(user_id)?;
             ensure!(!username.is_empty(), "--username must not be empty");
             ensure!(!email.is_empty(), "--email must not be empty");
-            if let Some(password) = &password {
-                ensure!(!password.is_empty(), "--password must not be empty");
-                ensure_destructive_confirmed(i_understand, "user update-account --password")?;
-            }
+            let password = match password {
+                None => None,
+                Some(value) => {
+                    let password = resolve_user_password(Some(value), "New password")?;
+                    ensure_destructive_confirmed(i_understand, "user update-account --password")?;
+                    Some(password)
+                }
+            };
             let pool = connect_database(database_url).await?;
             update_user_account(
                 &pool,
@@ -67,7 +71,7 @@ pub(crate) async fn dispatch_user(
             password,
         } => {
             ensure!(!login_name.is_empty(), "--login-name must not be empty");
-            ensure!(!password.is_empty(), "--password must not be empty");
+            let password = resolve_user_password(password, "Password")?;
             let pool = connect_database(database_url).await?;
             verify_login(
                 &pool,
@@ -80,7 +84,7 @@ pub(crate) async fn dispatch_user(
         }
         UserCommand::VerifyPassword { user_id, password } => {
             ensure_positive_user_id(user_id)?;
-            ensure!(!password.is_empty(), "--password must not be empty");
+            let password = resolve_user_password(password, "Password")?;
             let pool = connect_database(database_url).await?;
             verify_user_password(
                 &pool,

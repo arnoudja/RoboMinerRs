@@ -112,6 +112,30 @@ cargo run -p robominer-engine -- migrate status --check
 `migrate status --check` exits non-zero while migrations are pending. The web host
 exposes loopback readiness at `GET /health` (database ping + migration currency).
 
+
+
+### Backup and restore
+
+Create a full logical dump (password is passed via `MYSQL_PWD`, not argv):
+
+```sh
+resources/scripts/backup-database.sh
+# or:
+resources/scripts/backup-database.sh /path/to/backup.sql.gz
+```
+
+Restore a dump (forward-only migrations — rollback means restore a pre-change
+backup and matching binaries):
+
+```sh
+resources/scripts/restore-database.sh /path/to/backup.sql.gz
+robominer-engine migrate status --check
+# Confirm readiness: GET /health/ready (or GET /health)
+```
+
+Prefer `robominer-engine migrate apply` for day-to-day schema upgrades. The shell
+`resources/scripts/migrate-database.sh` remains a bootstrap/fallback path.
+
 Versioned SQL lives under `resources/database/migrations/` (`NNN_description.sql`).
 `run-tests-with-db.sh` resolves MySQL via an existing URL, local schema, or a
 persistent Docker container—details in [CONTRIBUTING.md](CONTRIBUTING.md).

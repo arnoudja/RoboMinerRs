@@ -19,7 +19,7 @@ async fn claim_next_mining_rally_leases_at_most_rally_size() {
         &pool,
         &format!("{prefix}-user"),
         &format!("{prefix}@example.invalid"),
-        "test-password",
+        "test-password-1",
     )
     .await;
     let ore_id = insert_row_id(
@@ -65,7 +65,7 @@ async fn claim_next_mining_rally_leases_at_most_rally_size() {
             &pool,
             &format!("{prefix}-user-{index}"),
             &format!("{prefix}-{index}@example.invalid"),
-            "test-password",
+            "test-password-1",
         )
         .await;
         user_ids.push(owner_id);

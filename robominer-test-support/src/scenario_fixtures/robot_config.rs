@@ -68,7 +68,7 @@ impl RobotConfigFixture {
             sqlx::query("INSERT INTO User (username, email, password) VALUES (?, ?, ?)")
                 .bind(format!("{prefix}-user"))
                 .bind(format!("{prefix}@example.invalid"))
-                .bind("test-password"),
+                .bind("test-password-1"),
         )
         .await;
         let program_source_id = insert_row_id(
