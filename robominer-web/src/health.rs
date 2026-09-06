@@ -3,11 +3,31 @@ use std::sync::Arc;
 use crate::ServerConfig;
 use crate::http::Response;
 
-/// Liveness / readiness probe for loopback and reverse-proxy checks.
+/// Process liveness: always 200 if the HTTP server can answer.
+pub async fn live_response(_config: &ServerConfig) -> Response {
+    plain(200, "OK", "ok\nliveness=ok\n")
+}
+
+/// Readiness: database configured, reachable, and migrations current.
+///
+/// Unlike [`health_response`], an unconfigured database is **not** ready (503).
+pub async fn ready_response(config: &ServerConfig) -> Response {
+    match config.database_pool.as_ref() {
+        None => plain(503, "Service Unavailable", "unavailable\n"),
+        Some(pool) => match check_database(pool).await {
+            Ok(()) => plain(200, "OK", "ok\ndatabase=ok\nmigrations=ok\n"),
+            Err(()) => plain(503, "Service Unavailable", "unavailable\n"),
+        },
+    }
+}
+
+/// Combined probe kept for systemd / existing monitors.
 ///
 /// - No database configured: process is up → 200 (`database=unconfigured`).
 /// - Database configured: requires a live ping and all embedded migrations
 ///   applied → otherwise 503 with an opaque body (details stay in server logs).
+///
+/// Prefer [`live_response`] / [`ready_response`] for new orchestrator probes.
 pub async fn health_response(config: &ServerConfig) -> Response {
     match config.database_pool.as_ref() {
         None => plain(200, "OK", "ok\ndatabase=unconfigured\nmigrations=skipped\n"),
@@ -64,22 +84,38 @@ fn plain(status: u16, reason: &'static str, body: &str) -> Response {
 mod tests {
     use std::path::PathBuf;
 
-    use super::health_response;
+    use super::{health_response, live_response, ready_response};
     use crate::ServerConfig;
 
-    #[tokio::test(flavor = "current_thread")]
-    async fn health_without_database_reports_unconfigured() {
-        let config = ServerConfig {
+    fn config_without_db() -> ServerConfig {
+        ServerConfig {
             static_root: PathBuf::from("robominer-web/static"),
             database_pool: None,
             allow_signup: false,
             trust_proxy: false,
-        };
+        }
+    }
 
-        let response = health_response(&config).await;
+    #[tokio::test(flavor = "current_thread")]
+    async fn health_without_database_reports_unconfigured() {
+        let response = health_response(&config_without_db()).await;
         assert_eq!(response.status, 200);
         let body = String::from_utf8_lossy(&response.body);
         assert!(body.starts_with("ok\n"), "body={body}");
         assert!(body.contains("database=unconfigured"), "body={body}");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn live_without_database_is_ok() {
+        let response = live_response(&config_without_db()).await;
+        assert_eq!(response.status, 200);
+        let body = String::from_utf8_lossy(&response.body);
+        assert!(body.contains("liveness=ok"), "body={body}");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn ready_without_database_is_unavailable() {
+        let response = ready_response(&config_without_db()).await;
+        assert_eq!(response.status, 503);
     }
 }

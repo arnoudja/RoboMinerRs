@@ -10,7 +10,7 @@ mod tests;
 use std::borrow::Cow;
 
 use crate::Request;
-use crate::{Response, ServerConfig, health};
+use crate::{Response, ServerConfig, health, metrics};
 
 use session_gate::{SessionStrip, clear_stale_session_cookies, strip_stale_session_cookie};
 
@@ -23,9 +23,23 @@ async fn root_redirect(request: &Request) -> Response {
 }
 
 pub async fn route(request: &Request, config: &ServerConfig) -> Response {
-    if request.path == "/health" && matches!(request.method.as_str(), "GET" | "HEAD") {
-        return health::health_response(config).await;
+    if matches!(request.method.as_str(), "GET" | "HEAD") {
+        match request.path.as_str() {
+            "/health/live" => return health::live_response(config).await,
+            "/health/ready" => return health::ready_response(config).await,
+            "/health" => return health::health_response(config).await,
+            "/metrics" => {
+                metrics::record_http_request();
+                if metrics::is_loopback_peer(request) {
+                    return metrics::metrics_response();
+                }
+                return Response::forbidden("metrics is loopback-only");
+            }
+            _ => {}
+        }
     }
+
+    metrics::record_http_request();
 
     let (session_strip, effective_request) = match config.database_pool.as_ref() {
         Some(pool) if crate::session::session_from_request(request).is_some() => {

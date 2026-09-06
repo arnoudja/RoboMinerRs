@@ -19,6 +19,7 @@ mod help_pages;
 mod html;
 mod http;
 mod leaderboard_page;
+mod metrics;
 mod mining_area_atlas;
 mod mining_area_overview_page;
 mod mining_queue_page;

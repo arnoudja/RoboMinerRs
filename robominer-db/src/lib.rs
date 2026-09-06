@@ -168,10 +168,20 @@ fn mysql_url_host(database_url: &str) -> Option<String> {
 pub fn init_default_tracing() {
     let filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn"));
-    tracing_subscriber::fmt()
+    let json = std::env::var("ROBOMINER_LOG_FORMAT")
+        .map(|value| {
+            let normalized = value.trim().to_ascii_lowercase();
+            normalized == "json" || normalized == "structured"
+        })
+        .unwrap_or(false);
+    let subscriber = tracing_subscriber::fmt()
         .with_env_filter(filter)
-        .with_writer(std::io::stderr)
-        .init();
+        .with_writer(std::io::stderr);
+    if json {
+        subscriber.json().init();
+    } else {
+        subscriber.init();
+    }
 }
 
 /// Resolve pool size from env (`ROBOMINER_DB_MAX_CONNECTIONS`).
