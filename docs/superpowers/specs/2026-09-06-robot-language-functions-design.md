@@ -148,9 +148,9 @@ Add:
 - `ExecutableStatementKind::Return(Option<ExecutableExpression>)`
 - `ExecutableExpressionKind::Call { name: String, args: Vec<ExecutableExpression> }`
 
-`ExecutableProgram` gains `functions: BTreeMap<String, ExecutableFunction>` (or
-equivalent ordered map). Parsed function definitions are **removed** from the
-main `statements` list used as the entry script.
+`ExecutableProgram` gains `functions: BTreeMap<String, ExecutableFunction>`.
+Parsed function definitions are **removed** from the main `statements` list
+used as the entry script.
 
 Store the **resolved** return `ValueType` on each function after inference so the
 runner does not re-infer.
