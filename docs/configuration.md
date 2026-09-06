@@ -30,13 +30,15 @@ CLI override: `--database-url` on engine/web when supported.
 | `ROBOMINER_SESSION_TTL_SECS` | _(unset)_ | Session TTL in seconds (wins over hours when set) |
 | `ROBOMINER_SESSION_TTL_HOURS` | _(implementation default)_ | Session TTL in hours |
 | `ROBOMINER_SECURE_COOKIES` | off on loopback | Set `Secure` on cookies; **required** for non-loopback binds and when trusting a proxy |
-| `ROBOMINER_ALLOW_SIGNUP` | off | Enable public self-registration |
+| `ROBOMINER_ALLOW_SIGNUP` | off | Enable public self-registration (signup uses PoW + stronger password rules) |
 | `ROBOMINER_TRUST_PROXY` | off | Trust `X-Real-Ip` only; requires loopback bind + secure cookies |
 
 ## Logging / tests
 
 | Variable | Used by | Purpose |
 | --- | --- | --- |
+| `ROBOMINER_LOG_FORMAT` | web, engine | text | Set to `json` for structured JSON logs on stderr |
+| `ROBOMINER_USER_PASSWORD` | engine user commands | _(unset)_ | Password for `user create` / verify without argv |
 | `RUST_LOG` | web, engine | `tracing` filter (default is quiet/`warn`-oriented) |
 | `SQLX_OFFLINE` | CI / local offline builds | Use committed `.sqlx/` metadata |
 | `ROBOMINER_COVERAGE_FAIL_UNDER_LINES` | CI coverage | Line coverage floor |
