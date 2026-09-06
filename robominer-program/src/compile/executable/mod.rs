@@ -48,7 +48,16 @@ fn collect_static_actions(statements: &[ExecutableStatement], actions: &mut Vec<
 }
 
 pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram, CompileError> {
+    let mut scan_input = CompileInput::new(source);
+    let scan_result = functions::collect_function_signatures(&mut scan_input);
+    if let Some(error) = scan_input.unterminated_comment_error() {
+        return Err(error);
+    }
+    scan_result?;
+
     let mut input = CompileInput::new(source);
+    input.functions = scan_input.functions;
+    input.pending_function_bodies = scan_input.pending_function_bodies;
     input.allow_function_defs = true;
     let result = parse_executable_sequence(&mut input);
     if let Some(error) = input.unterminated_comment_error() {

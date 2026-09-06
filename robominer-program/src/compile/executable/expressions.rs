@@ -236,10 +236,20 @@ fn parse_single_expression_kind(
     let name = input.use_next_word_any();
     if !name.is_empty() {
         if variable_operator == VariableOperator::None {
-            // Task 2: recognize calls to already-registered functions. Full call
-            // expression parsing / forward refs land in Task 3.
+            // User-function call: registry is populated by the signature scan so
+            // forward references resolve; arity is checked at the call site.
             if input.peek() == Some('(') && input.functions.contains_key(&name) {
+                let expected_arity = input.functions[&name].params.len();
                 let args = parse_call_arguments(input)?;
+                if args.len() != expected_arity {
+                    return Err(CompileError::new(format!(
+                        "Error at line {}: function '{}' expects {} argument(s), got {}",
+                        input.current_line,
+                        name,
+                        expected_arity,
+                        args.len()
+                    )));
+                }
                 return Ok(Some(ExecutableExpressionKind::Call { name, args }));
             }
 

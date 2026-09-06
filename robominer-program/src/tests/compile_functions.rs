@@ -37,3 +37,27 @@ fn rejects_nested_function_and_reserved_names() {
     assert!(!verify_source("fn move() { } move(1);").verified);
     assert!(!verify_source("fn while() { } move(1);").verified);
 }
+
+#[test]
+fn compiles_calls_and_forward_reference() {
+    assert!(verify_source("move(f()); fn int f() { return 2; }").verified);
+    assert!(verify_source("fn int add(int a, b) { return a + b; } move(add(1, 2));").verified);
+}
+
+#[test]
+fn rejects_arity_mismatch_and_name_clash() {
+    assert!(!verify_source("fn int f(a) { return a; } move(f());").verified);
+    assert!(!verify_source("fn int f() { return 1; } int f; move(1);").verified);
+    assert!(!verify_source("int f; fn int f() { return 1; } move(1);").verified);
+}
+
+#[test]
+fn rejects_return_outside_function() {
+    assert!(!verify_source("return 1;").verified);
+}
+
+#[test]
+fn omitted_return_type_requires_agreement() {
+    assert!(verify_source("fn f() { return 1; } move(f());").verified);
+    assert!(!verify_source("fn f() { if (true) { return 1; } return 1.5; } move(f());").verified);
+}

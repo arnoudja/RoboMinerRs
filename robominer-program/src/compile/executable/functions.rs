@@ -8,6 +8,261 @@ use super::super::input::{CompileInput, VariableStorage, expect_char};
 use super::expressions::parse_executable_expression;
 use super::statements::parse_executable_sequence;
 
+/// Phase 1a: register every top-level function signature (brace-skip bodies) so later
+/// full parse can resolve forward calls and check arity.
+///
+/// Skip failures on malformed non-function code return `Ok` with whatever signatures were
+/// collected so the full parse can report the real diagnostic. Definite function-header
+/// problems (duplicates, reserved names, committed `fn` forms) still return `Err`.
+pub(super) fn collect_function_signatures(input: &mut CompileInput) -> Result<(), CompileError> {
+    if input.peek() != Some('{') {
+        return Ok(());
+    }
+    let _ = input.eat_char('{', false);
+    input.eat_char(';', true);
+
+    while input.peek() != Some('}') && !input.eof() {
+        match try_collect_one_signature(input) {
+            Ok(true) => {
+                input.eat_char(';', true);
+            }
+            Ok(false) => {
+                if skip_top_level_item(input).is_err() {
+                    return Ok(());
+                }
+                input.eat_char(';', true);
+            }
+            Err(error) => return Err(error),
+        }
+    }
+
+    let _ = input.eat_char('}', false);
+    Ok(())
+}
+
+fn try_collect_one_signature(input: &mut CompileInput) -> Result<bool, CompileError> {
+    let checkpoint = input.checkpoint();
+
+    if input.use_next_word("fn") {
+        let explicit_return = parse_optional_value_type(input);
+        let name = input.use_next_word_any();
+        if name.is_empty() {
+            return Err(CompileError::new(format!(
+                "Syntax error at line {}. Function name expected",
+                input.current_line
+            )));
+        }
+        if input.peek() != Some('(') {
+            return Err(CompileError::new(format!(
+                "Syntax error at line {}. '(' expected",
+                input.current_line
+            )));
+        }
+        register_signature_skipping_body(input, name, explicit_return)?;
+        return Ok(true);
+    }
+
+    let Some(return_type) = parse_optional_value_type(input) else {
+        input.restore(checkpoint);
+        return Ok(false);
+    };
+
+    if input.get_next_word() == "fn" {
+        // `T fn name` is rejected during the full parse; skip this item instead.
+        input.restore(checkpoint);
+        return Ok(false);
+    }
+
+    let name = input.use_next_word_any();
+    if name.is_empty() || input.peek() != Some('(') {
+        input.restore(checkpoint);
+        return Ok(false);
+    }
+
+    register_signature_skipping_body(input, name, Some(return_type))?;
+    Ok(true)
+}
+
+fn register_signature_skipping_body(
+    input: &mut CompileInput,
+    name: String,
+    explicit_return: Option<ValueType>,
+) -> Result<(), CompileError> {
+    if is_reserved_name(&name) {
+        return Err(CompileError::new(format!(
+            "Error at line {}: '{}' is a reserved name and cannot be used as a function",
+            input.current_line, name
+        )));
+    }
+
+    if input.functions.contains_key(&name) {
+        return Err(CompileError::new(format!(
+            "Duplicate function declaration at line {}: {}",
+            input.current_line, name
+        )));
+    }
+
+    expect_char(input, '(', "'(' expected")?;
+    let params = parse_function_params(input)?;
+    expect_char(input, ')', "')' expected")?;
+
+    if input.peek() != Some('{') {
+        return Err(CompileError::new(format!(
+            "Syntax error at line {}. '{{' expected",
+            input.current_line
+        )));
+    }
+    skip_braced_block(input)?;
+
+    input.functions.insert(
+        name.clone(),
+        ExecutableFunction {
+            name: name.clone(),
+            return_type: explicit_return.unwrap_or(ValueType::Int),
+            params,
+            body: Vec::new(),
+        },
+    );
+    input.pending_function_bodies.insert(name);
+    Ok(())
+}
+
+fn skip_braced_block(input: &mut CompileInput) -> Result<(), CompileError> {
+    expect_char(input, '{', "'{' expected")?;
+    let mut depth = 1;
+    while depth > 0 {
+        match input.peek() {
+            None => {
+                return Err(CompileError::new(format!(
+                    "Syntax error at line {}. '}}' expected",
+                    input.current_line
+                )));
+            }
+            Some('{') => {
+                depth += 1;
+                input.bump_token_or_char();
+            }
+            Some('}') => {
+                depth -= 1;
+                input.bump_token_or_char();
+            }
+            _ => input.bump_token_or_char(),
+        }
+    }
+    Ok(())
+}
+
+fn skip_balanced_parens(input: &mut CompileInput) -> Result<(), CompileError> {
+    expect_char(input, '(', "'(' expected")?;
+    let mut depth = 1;
+    while depth > 0 {
+        match input.peek() {
+            None => {
+                return Err(CompileError::new(format!(
+                    "Syntax error at line {}. ')' expected",
+                    input.current_line
+                )));
+            }
+            Some('(') => {
+                depth += 1;
+                input.bump_token_or_char();
+            }
+            Some(')') => {
+                depth -= 1;
+                input.bump_token_or_char();
+            }
+            Some('{') => skip_braced_block(input)?,
+            _ => input.bump_token_or_char(),
+        }
+    }
+    Ok(())
+}
+
+fn skip_top_level_item(input: &mut CompileInput) -> Result<(), CompileError> {
+    if input.peek() == Some('{') {
+        skip_braced_block(input)?;
+        return Ok(());
+    }
+
+    let word = input.get_next_word().to_owned();
+    match word.as_str() {
+        "if" => {
+            input.use_next_word_any();
+            skip_balanced_parens(input)?;
+            skip_embedded_statement(input)?;
+            if input.use_next_word("else") {
+                skip_embedded_statement(input)?;
+            }
+            Ok(())
+        }
+        "while" => {
+            input.use_next_word_any();
+            skip_balanced_parens(input)?;
+            if input.eat_char(';', false) {
+                return Ok(());
+            }
+            skip_embedded_statement(input)
+        }
+        "do" => {
+            input.use_next_word_any();
+            skip_embedded_statement(input)?;
+            if !input.use_next_word("while") {
+                return Err(CompileError::new(format!(
+                    "Syntax error at line {}. 'while' expected",
+                    input.current_line
+                )));
+            }
+            skip_balanced_parens(input)?;
+            Ok(())
+        }
+        _ => skip_simple_statement(input),
+    }
+}
+
+fn skip_embedded_statement(input: &mut CompileInput) -> Result<(), CompileError> {
+    if input.peek() == Some('{') {
+        skip_braced_block(input)
+    } else if input.eat_char(';', false) {
+        Ok(())
+    } else {
+        skip_simple_statement(input)
+    }
+}
+
+fn skip_simple_statement(input: &mut CompileInput) -> Result<(), CompileError> {
+    let mut paren_depth = 0;
+    loop {
+        match input.peek() {
+            None => {
+                return Err(CompileError::new(format!(
+                    "Syntax error at line {}. ';' expected",
+                    input.current_line
+                )));
+            }
+            Some(';') if paren_depth == 0 => {
+                input.eat_char(';', false);
+                return Ok(());
+            }
+            Some('}') if paren_depth == 0 => return Ok(()),
+            Some('(') => {
+                paren_depth += 1;
+                input.bump_token_or_char();
+            }
+            Some(')') => {
+                paren_depth -= 1;
+                input.bump_token_or_char();
+            }
+            Some('{') if paren_depth == 0 => {
+                // End of a brace-terminated construct (`T fn name() { ... }` skip path).
+                skip_braced_block(input)?;
+                return Ok(());
+            }
+            Some('{') => skip_braced_block(input)?,
+            _ => input.bump_token_or_char(),
+        }
+    }
+}
+
 /// Try to parse a top-level `fn [T] name(...)` definition.
 ///
 /// Returns `Ok(Some(terminated))` when a definition was consumed, `Ok(None)` when the
@@ -53,7 +308,8 @@ fn parse_function_after_name(
         )));
     }
 
-    if input.functions.contains_key(&name) {
+    let replacing_stub = input.pending_function_bodies.contains(&name);
+    if input.functions.contains_key(&name) && !replacing_stub {
         return Err(CompileError::new(format!(
             "Duplicate function declaration at line {}: {}",
             input.current_line, name
@@ -78,7 +334,7 @@ fn parse_function_after_name(
         )));
     }
 
-    // Register a stub so recursive / later calls in this body can resolve the name.
+    // Register / refresh a stub so recursive calls in this body can resolve the name.
     input.functions.insert(
         name.clone(),
         ExecutableFunction {
@@ -88,6 +344,7 @@ fn parse_function_after_name(
             body: Vec::new(),
         },
     );
+    input.pending_function_bodies.insert(name.clone());
 
     let outer_depth = input.variables.scope_depth;
     input.variables.set_scope_depth(outer_depth + 1);
@@ -95,7 +352,10 @@ fn parse_function_after_name(
         let value_type = param.value_type.unwrap_or(ValueType::Int);
         if input.variables.exists_at_current_level(&param.name) {
             input.variables.set_scope_depth(outer_depth);
-            input.functions.remove(&name);
+            if !replacing_stub {
+                input.functions.remove(&name);
+                input.pending_function_bodies.remove(&name);
+            }
             return Err(CompileError::new(format!(
                 "Duplicate parameter declaration at line {}: {}",
                 input.current_line, param.name
@@ -118,7 +378,10 @@ fn parse_function_after_name(
         Ok(statement) => statement,
         Err(error) => {
             input.variables.set_scope_depth(outer_depth);
-            input.functions.remove(&name);
+            if !replacing_stub {
+                input.functions.remove(&name);
+                input.pending_function_bodies.remove(&name);
+            }
             return Err(error);
         }
     };
@@ -134,13 +397,17 @@ fn parse_function_after_name(
             Ok(value_type) => value_type,
             Err(error) => {
                 input.variables.set_scope_depth(outer_depth);
-                input.functions.remove(&name);
+                if !replacing_stub {
+                    input.functions.remove(&name);
+                    input.pending_function_bodies.remove(&name);
+                }
                 return Err(error);
             }
         },
     };
 
     input.variables.set_scope_depth(outer_depth);
+    input.pending_function_bodies.remove(&name);
     input.functions.insert(
         name.clone(),
         ExecutableFunction {

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::types::{CompileError, ExecutableFunction, Operator, SourceSpan, ValueType};
 
@@ -78,6 +78,15 @@ pub(super) struct SourceMark {
     raw_pos: usize,
 }
 
+/// Cursor snapshot for speculative signature scanning (restore on mismatch).
+#[derive(Debug, Clone)]
+pub(super) struct CompileCheckpoint {
+    pos: usize,
+    next_word: String,
+    current_line: usize,
+    unterminated_block_comment_line: Option<usize>,
+}
+
 pub(super) struct CompileInput {
     pub(super) source: Vec<char>,
     pub(super) pos: usize,
@@ -90,6 +99,8 @@ pub(super) struct CompileInput {
     pub(super) in_function_body: bool,
     /// Function registry filled during parse (moved into [`ExecutableProgram`] at the end).
     pub(super) functions: BTreeMap<String, ExecutableFunction>,
+    /// Names registered by the signature scan whose bodies are not filled yet.
+    pub(super) pending_function_bodies: BTreeSet<String>,
     unterminated_block_comment_line: Option<usize>,
 }
 
@@ -104,6 +115,33 @@ impl CompileInput {
             line: self.current_line,
             display_col: self.display_column_at(raw_pos),
             raw_pos,
+        }
+    }
+
+    pub(super) fn checkpoint(&self) -> CompileCheckpoint {
+        CompileCheckpoint {
+            pos: self.pos,
+            next_word: self.next_word.clone(),
+            current_line: self.current_line,
+            unterminated_block_comment_line: self.unterminated_block_comment_line,
+        }
+    }
+
+    pub(super) fn restore(&mut self, checkpoint: CompileCheckpoint) {
+        self.pos = checkpoint.pos;
+        self.next_word = checkpoint.next_word;
+        self.current_line = checkpoint.current_line;
+        self.unterminated_block_comment_line = checkpoint.unterminated_block_comment_line;
+    }
+
+    /// Consume the next identifier token, or a single source character.
+    pub(super) fn bump_token_or_char(&mut self) {
+        if !self.get_next_word().is_empty() {
+            self.next_word.clear();
+            return;
+        }
+        if let Some(ch) = self.peek() {
+            let _ = self.eat_char(ch, false);
         }
     }
 
@@ -190,6 +228,7 @@ impl CompileInput {
             allow_function_defs: false,
             in_function_body: false,
             functions: BTreeMap::new(),
+            pending_function_bodies: BTreeSet::new(),
             unterminated_block_comment_line: None,
         };
         input.extract_next_word();
