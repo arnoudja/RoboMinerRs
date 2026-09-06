@@ -61,3 +61,31 @@ fn omitted_return_type_requires_agreement() {
     assert!(verify_source("fn f() { return 1; } move(f());").verified);
     assert!(!verify_source("fn f() { if (true) { return 1; } return 1.5; } move(f());").verified);
 }
+
+#[test]
+fn rejects_top_level_use_before_declare() {
+    assert!(
+        !verify_source("move(x); int x = 1;").verified,
+        "top-level use before declare must fail"
+    );
+    assert!(
+        !verify_source("int y = x; int x = 1;").verified,
+        "top-level initializer must not see later globals"
+    );
+    assert!(
+        !verify_source("int x = x + 1;").verified,
+        "self-reference in top-level initializer must fail"
+    );
+}
+
+#[test]
+fn function_body_can_reference_later_top_level_var() {
+    assert!(
+        verify_source("fn bump() { x = x + 1; } int x = 0; bump(); move(x);").verified,
+        "function bodies may see top-level vars declared later"
+    );
+    assert!(
+        verify_source("fn int get() { return x; } int x = 3; move(get());").verified,
+        "typed function return may read later top-level var"
+    );
+}

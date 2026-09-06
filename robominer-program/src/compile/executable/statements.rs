@@ -325,9 +325,7 @@ fn parse_executable_variable_statement(
             )));
         }
 
-        if input.variables.exists_at_current_level(&name)
-            && !input.preloaded_top_level_vars.remove(&name)
-        {
+        if input.variables.exists_at_current_level(&name) {
             return Err(CompileError::new(format!(
                 "Duplicate variable declaration at line {}: {}",
                 input.current_line, name
@@ -426,7 +424,7 @@ fn parse_executable_variable_statement(
 
     if input.eat_char('=', false) {
         expect_declared_variable(input, &name)?;
-        if input.variables.is_const(&name) {
+        if input.variable_is_const(&name) {
             return Err(CompileError::new(format!(
                 "Error at line {}: The value of a const variable cannot be changed.",
                 input.current_line
@@ -494,7 +492,7 @@ fn parse_compound_assignment(
     operator: Operator,
 ) -> Result<ExecutableStatement, CompileError> {
     expect_declared_variable(input, &name)?;
-    if input.variables.is_const(&name) {
+    if input.variable_is_const(&name) {
         return Err(CompileError::new(format!(
             "Error at line {}: The value of a const variable cannot be changed.",
             input.current_line

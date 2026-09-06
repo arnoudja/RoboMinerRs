@@ -4,7 +4,7 @@ use crate::types::{
     ExecutableStatement, ExecutableStatementKind, FunctionParam, Operator, ValueType,
 };
 
-use super::super::input::{CompileInput, VariableStorage, expect_char};
+use super::super::input::{CompileInput, ProgramGlobal, expect_char};
 use super::expressions::parse_executable_expression;
 use super::statements::parse_executable_sequence;
 
@@ -108,15 +108,20 @@ fn try_collect_top_level_var(input: &mut CompileInput) -> Result<bool, CompileEr
         return Ok(false);
     }
 
-    if input.variables.exists_at_current_level(&name) {
+    if input.program_globals.contains_key(&name) {
         return Err(CompileError::new(format!(
             "Duplicate variable declaration at line {}: {}",
             input.current_line, name
         )));
     }
 
-    input.variables.declare(name.clone(), value_type, is_const);
-    input.preloaded_top_level_vars.insert(name);
+    input.program_globals.insert(
+        name,
+        ProgramGlobal {
+            value_type,
+            is_const,
+        },
+    );
 
     input.restore(checkpoint);
     skip_top_level_item(input)?;
@@ -356,7 +361,7 @@ fn parse_function_after_name(
         )));
     }
 
-    if input.variables.contains(&name) {
+    if input.variables.contains(&name) || input.program_globals.contains_key(&name) {
         return Err(CompileError::new(format!(
             "Error at line {}: function name '{}' conflicts with a variable",
             input.current_line, name
@@ -433,7 +438,7 @@ fn parse_function_after_name(
 
     let return_type = match explicit_return {
         Some(value_type) => value_type,
-        None => match infer_return_type(&body, &input.variables) {
+        None => match infer_return_type(&body, input) {
             Ok(value_type) => value_type,
             Err(error) => {
                 input.variables.set_scope_depth(outer_depth);
@@ -500,22 +505,22 @@ pub(super) fn parse_optional_value_type(input: &mut CompileInput) -> Option<Valu
 
 fn infer_return_type(
     body: &[ExecutableStatement],
-    variables: &VariableStorage,
+    input: &CompileInput,
 ) -> Result<ValueType, CompileError> {
     let mut inferred: Option<ValueType> = None;
-    collect_valued_return_types(body, variables, &mut inferred)?;
+    collect_valued_return_types(body, input, &mut inferred)?;
     Ok(inferred.unwrap_or(ValueType::Int))
 }
 
 fn collect_valued_return_types(
     statements: &[ExecutableStatement],
-    variables: &VariableStorage,
+    input: &CompileInput,
     inferred: &mut Option<ValueType>,
 ) -> Result<(), CompileError> {
     for statement in statements {
         match &statement.kind {
             ExecutableStatementKind::Return(Some(expr)) => {
-                let Some(value_type) = expression_value_type(expr, variables) else {
+                let Some(value_type) = expression_value_type(expr, input) else {
                     return Err(CompileError::new(
                         "cannot infer return type; give an explicit return type".to_string(),
                     ));
@@ -529,25 +534,21 @@ fn collect_valued_return_types(
                 }
             }
             ExecutableStatementKind::Sequence(inner) => {
-                collect_valued_return_types(inner, variables, inferred)?;
+                collect_valued_return_types(inner, input, inferred)?;
             }
             ExecutableStatementKind::If {
                 true_body,
                 false_body,
                 ..
             } => {
-                collect_valued_return_types(std::slice::from_ref(true_body), variables, inferred)?;
+                collect_valued_return_types(std::slice::from_ref(true_body), input, inferred)?;
                 if let Some(false_body) = false_body {
-                    collect_valued_return_types(
-                        std::slice::from_ref(false_body),
-                        variables,
-                        inferred,
-                    )?;
+                    collect_valued_return_types(std::slice::from_ref(false_body), input, inferred)?;
                 }
             }
             ExecutableStatementKind::While { body, .. } => {
                 if let Some(body) = body {
-                    collect_valued_return_types(std::slice::from_ref(body), variables, inferred)?;
+                    collect_valued_return_types(std::slice::from_ref(body), input, inferred)?;
                 }
             }
             ExecutableStatementKind::Return(None)
@@ -563,31 +564,33 @@ fn collect_valued_return_types(
 
 fn expression_value_type(
     expression: &ExecutableExpression,
-    variables: &VariableStorage,
+    input: &CompileInput,
 ) -> Option<ValueType> {
     match &expression.kind {
         ExecutableExpressionKind::Int(_) => Some(ValueType::Int),
         ExecutableExpressionKind::Float(_) => Some(ValueType::Double),
         ExecutableExpressionKind::Bool(_) => Some(ValueType::Bool),
         ExecutableExpressionKind::Variable(name)
-        | ExecutableExpressionKind::VariableUpdate { name, .. } => variables.value_type(name),
+        | ExecutableExpressionKind::VariableUpdate { name, .. } => {
+            input.ast_variable_value_type(name)
+        }
         ExecutableExpressionKind::UnaryNot(_) => Some(ValueType::Bool),
         ExecutableExpressionKind::UnaryMinus(inner)
         | ExecutableExpressionKind::Abs(inner)
         | ExecutableExpressionKind::Sqrt(inner)
         | ExecutableExpressionKind::Sin(inner)
         | ExecutableExpressionKind::Cos(inner)
-        | ExecutableExpressionKind::Tan(inner) => expression_value_type(inner, variables),
+        | ExecutableExpressionKind::Tan(inner) => expression_value_type(inner, input),
         ExecutableExpressionKind::Min(left, right) | ExecutableExpressionKind::Max(left, right) => {
-            let left_type = expression_value_type(left, variables)?;
-            let right_type = expression_value_type(right, variables)?;
+            let left_type = expression_value_type(left, input)?;
+            let right_type = expression_value_type(right, input)?;
             Some(promote_numeric(left_type, right_type))
         }
         ExecutableExpressionKind::Binary {
             operator,
             left,
             right,
-        } => binary_result_type(*operator, left, right, variables),
+        } => binary_result_type(*operator, left, right, input),
         ExecutableExpressionKind::Time
         | ExecutableExpressionKind::OreDistance
         | ExecutableExpressionKind::Scan(_)
@@ -607,7 +610,7 @@ fn binary_result_type(
     operator: Operator,
     left: &ExecutableExpression,
     right: &ExecutableExpression,
-    variables: &VariableStorage,
+    input: &CompileInput,
 ) -> Option<ValueType> {
     match operator {
         Operator::Larger
@@ -620,8 +623,8 @@ fn binary_result_type(
         | Operator::Or => Some(ValueType::Bool),
         Operator::Mod => Some(ValueType::Int),
         Operator::Addition | Operator::Subtraction | Operator::Multiply | Operator::Division => {
-            let left_type = expression_value_type(left, variables)?;
-            let right_type = expression_value_type(right, variables)?;
+            let left_type = expression_value_type(left, input)?;
+            let right_type = expression_value_type(right, input)?;
             Some(promote_numeric(left_type, right_type))
         }
         Operator::Undefined => None,

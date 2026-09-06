@@ -16,7 +16,7 @@ pub(super) fn expect_declared_variable(
     input: &CompileInput,
     name: &str,
 ) -> Result<(), CompileError> {
-    if input.variables.contains(name) {
+    if input.resolves_variable(name) {
         Ok(())
     } else {
         Err(CompileError::new(format!(
@@ -58,8 +58,7 @@ pub(super) fn parse_executable_program(source: &str) -> Result<ExecutableProgram
     let mut input = CompileInput::new(source);
     input.functions = scan_input.functions;
     input.pending_function_bodies = scan_input.pending_function_bodies;
-    input.variables = scan_input.variables;
-    input.preloaded_top_level_vars = scan_input.preloaded_top_level_vars;
+    input.program_globals = scan_input.program_globals;
     input.allow_function_defs = true;
     let result = parse_executable_sequence(&mut input);
     if let Some(error) = input.unterminated_comment_error() {

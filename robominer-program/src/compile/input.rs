@@ -101,11 +101,18 @@ pub(super) struct CompileInput {
     pub(super) functions: BTreeMap<String, ExecutableFunction>,
     /// Names registered by the signature scan whose bodies are not filled yet.
     pub(super) pending_function_bodies: BTreeSet<String>,
-    /// Top-level variable names pre-registered during the signature scan so function
-    /// bodies can resolve globals declared later in source. Cleared as real declares
-    /// are parsed so duplicate `int x; int x;` still errors.
-    pub(super) preloaded_top_level_vars: BTreeSet<String>,
+    /// Top-level globals discovered by the signature scan. Consulted only while
+    /// `in_function_body` so function bodies can resolve later-declared globals
+    /// without weakening top-level temporal declare (TDZ).
+    pub(super) program_globals: BTreeMap<String, ProgramGlobal>,
     unterminated_block_comment_line: Option<usize>,
+}
+
+/// Compile-time metadata for a top-level variable collected before full parse.
+#[derive(Debug, Clone, Copy)]
+pub(super) struct ProgramGlobal {
+    pub(super) value_type: ValueType,
+    pub(super) is_const: bool,
 }
 
 impl CompileInput {
@@ -233,7 +240,7 @@ impl CompileInput {
             in_function_body: false,
             functions: BTreeMap::new(),
             pending_function_bodies: BTreeSet::new(),
-            preloaded_top_level_vars: BTreeSet::new(),
+            program_globals: BTreeMap::new(),
             unterminated_block_comment_line: None,
         };
         input.extract_next_word();
@@ -447,6 +454,33 @@ impl CompileInput {
         self.unterminated_block_comment_line.map(|line| {
             CompileError::new(format!("Syntax error at line {line}. Unterminated comment"))
         })
+    }
+
+    /// True when `name` is in scope via normal temporal storage, or (inside a
+    /// function body) via the signature-scan `program_globals` map.
+    pub(super) fn resolves_variable(&self, name: &str) -> bool {
+        self.variables.contains(name)
+            || (self.in_function_body && self.program_globals.contains_key(name))
+    }
+
+    pub(super) fn variable_is_const(&self, name: &str) -> bool {
+        if self.variables.contains(name) {
+            self.variables.is_const(name)
+        } else if self.in_function_body {
+            self.program_globals
+                .get(name)
+                .is_some_and(|global| global.is_const)
+        } else {
+            false
+        }
+    }
+
+    /// Type lookup for already-parsed ASTs (return-type inference): temporal
+    /// storage first, then program globals regardless of `in_function_body`.
+    pub(super) fn ast_variable_value_type(&self, name: &str) -> Option<ValueType> {
+        self.variables
+            .value_type(name)
+            .or_else(|| self.program_globals.get(name).map(|g| g.value_type))
     }
 }
 
