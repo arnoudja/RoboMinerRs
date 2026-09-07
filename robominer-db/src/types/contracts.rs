@@ -51,6 +51,39 @@ pub enum CancelMiningQueueRejection {
     RefundWouldClamp,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReorderMiningQueueRequest {
+    pub user_id: i64,
+    pub robot_id: i64,
+    pub ordered_queue_ids: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ReorderedMiningQueue {
+    pub robot_id: i64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MoveMiningQueueRequest {
+    pub user_id: i64,
+    pub mining_queue_id: i64,
+    pub direction: MiningQueueMoveDirection,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MiningQueueMoveDirection {
+    Up,
+    Down,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ReorderMiningQueueRejection {
+    UnknownRobot,
+    UnknownQueue,
+    WrongOwner,
+    NotReorderable,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RobotPartTransactionRequest {
     pub user_id: i64,

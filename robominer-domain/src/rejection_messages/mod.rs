@@ -165,6 +165,16 @@ mod tests {
         }
 
         for rejection in [
+            robominer_db::ReorderMiningQueueRejection::UnknownRobot,
+            robominer_db::ReorderMiningQueueRejection::UnknownQueue,
+            robominer_db::ReorderMiningQueueRejection::WrongOwner,
+            robominer_db::ReorderMiningQueueRejection::NotReorderable,
+        ] {
+            assert!(!reorder_mining_queue_rejection_player_message(rejection).is_empty());
+            assert!(!reorder_mining_queue_rejection_cli_message(rejection).is_empty());
+        }
+
+        for rejection in [
             robominer_db::ClaimAchievementStepRejection::UnknownUserAchievement,
             robominer_db::ClaimAchievementStepRejection::NoNextStep,
             robominer_db::ClaimAchievementStepRejection::RequirementsNotMet,

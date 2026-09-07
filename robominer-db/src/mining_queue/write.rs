@@ -1,4 +1,5 @@
 use sqlx::MySqlPool;
+use std::collections::HashSet;
 
 use crate::users::touch_user_last_login_time;
 
@@ -10,7 +11,8 @@ use crate::assets::{
 use crate::{
     CancelMiningQueueBatchResult, CancelMiningQueueRejection, CancelMiningQueueRequest,
     CanceledMiningQueue, DbOutcome, EnqueueMiningRejection, EnqueueMiningRequest, EnqueuedMining,
-    db_ok, db_reject,
+    MiningQueueMoveDirection, MoveMiningQueueRequest, ReorderMiningQueueRejection,
+    ReorderMiningQueueRequest, ReorderedMiningQueue, db_ok, db_reject,
 };
 
 pub async fn enqueue_mining(
@@ -139,22 +141,199 @@ pub async fn cancel_mining_queue_batch(
     Ok(batch)
 }
 
+pub async fn reorder_mining_queue(
+    pool: &MySqlPool,
+    request: ReorderMiningQueueRequest,
+) -> Result<DbOutcome<ReorderedMiningQueue, ReorderMiningQueueRejection>, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+    if !lock_robot_for_enqueue(&mut transaction, request.robot_id, request.user_id).await? {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::UnknownRobot);
+    }
+
+    match reorder_mining_queue_in_transaction(&mut transaction, &request).await? {
+        DbOutcome::Success(value) => {
+            touch_user_last_login_time(&mut transaction, request.user_id).await?;
+            transaction.commit().await?;
+            db_ok(value)
+        }
+        DbOutcome::Rejected(rejection) => {
+            transaction.rollback().await?;
+            db_reject(rejection)
+        }
+    }
+}
+
+pub async fn move_mining_queue_item(
+    pool: &MySqlPool,
+    request: MoveMiningQueueRequest,
+) -> Result<DbOutcome<ReorderedMiningQueue, ReorderMiningQueueRejection>, sqlx::Error> {
+    let mut transaction = pool.begin().await?;
+    let Some((robot_id, owner_id)) = sqlx::query_as::<_, (i64, i64)>(
+        "SELECT MiningQueue.robotId, Robot.userId \
+         FROM MiningQueue \
+         INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
+         WHERE MiningQueue.id = ?",
+    )
+    .bind(request.mining_queue_id)
+    .fetch_optional(&mut *transaction)
+    .await?
+    else {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::UnknownQueue);
+    };
+
+    if owner_id != request.user_id {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::WrongOwner);
+    }
+
+    if !lock_robot_for_enqueue(&mut transaction, robot_id, request.user_id).await? {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::UnknownRobot);
+    }
+
+    let unfinished = list_unfinished_queue_ids_for_update(&mut transaction, robot_id).await?;
+    if unfinished.is_empty() {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::NotReorderable);
+    }
+
+    let queued_ids = &unfinished[1..];
+    let Some(index) = queued_ids
+        .iter()
+        .position(|id| *id == request.mining_queue_id)
+    else {
+        transaction.rollback().await?;
+        return db_reject(ReorderMiningQueueRejection::NotReorderable);
+    };
+
+    let swap_index = match request.direction {
+        MiningQueueMoveDirection::Up if index > 0 => index - 1,
+        MiningQueueMoveDirection::Down if index + 1 < queued_ids.len() => index + 1,
+        MiningQueueMoveDirection::Up | MiningQueueMoveDirection::Down => {
+            transaction.rollback().await?;
+            return db_reject(ReorderMiningQueueRejection::NotReorderable);
+        }
+    };
+
+    let mut ordered_queue_ids = queued_ids.to_vec();
+    ordered_queue_ids.swap(index, swap_index);
+
+    match reorder_mining_queue_in_transaction(
+        &mut transaction,
+        &ReorderMiningQueueRequest {
+            user_id: request.user_id,
+            robot_id,
+            ordered_queue_ids,
+        },
+    )
+    .await?
+    {
+        DbOutcome::Success(value) => {
+            touch_user_last_login_time(&mut transaction, request.user_id).await?;
+            transaction.commit().await?;
+            db_ok(value)
+        }
+        DbOutcome::Rejected(rejection) => {
+            transaction.rollback().await?;
+            db_reject(rejection)
+        }
+    }
+}
+
+async fn reorder_mining_queue_in_transaction(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    request: &ReorderMiningQueueRequest,
+) -> Result<DbOutcome<ReorderedMiningQueue, ReorderMiningQueueRejection>, sqlx::Error> {
+    let unfinished = list_unfinished_queue_ids_for_update(transaction, request.robot_id).await?;
+    if unfinished.is_empty() {
+        return db_reject(ReorderMiningQueueRejection::NotReorderable);
+    }
+
+    let head_id = unfinished[0];
+    let queued_ids = &unfinished[1..];
+    if request.ordered_queue_ids.contains(&head_id) {
+        return db_reject(ReorderMiningQueueRejection::NotReorderable);
+    }
+
+    let mut seen = HashSet::with_capacity(request.ordered_queue_ids.len());
+    for id in &request.ordered_queue_ids {
+        if !seen.insert(*id) {
+            return db_reject(ReorderMiningQueueRejection::NotReorderable);
+        }
+        if !queued_ids.contains(id) {
+            return db_reject(ReorderMiningQueueRejection::UnknownQueue);
+        }
+    }
+
+    let mut expected = queued_ids.to_vec();
+    expected.sort_unstable();
+    let mut got = request.ordered_queue_ids.clone();
+    got.sort_unstable();
+    if expected != got {
+        return db_reject(ReorderMiningQueueRejection::NotReorderable);
+    }
+
+    let head_order: i64 = sqlx::query_scalar("SELECT queueOrder FROM MiningQueue WHERE id = ?")
+        .bind(head_id)
+        .fetch_one(&mut **transaction)
+        .await?;
+
+    for (index, id) in request.ordered_queue_ids.iter().enumerate() {
+        let queue_order = head_order + 1 + index as i64;
+        sqlx::query("UPDATE MiningQueue SET queueOrder = ? WHERE id = ?")
+            .bind(queue_order)
+            .bind(id)
+            .execute(&mut **transaction)
+            .await?;
+    }
+
+    db_ok(ReorderedMiningQueue {
+        robot_id: request.robot_id,
+    })
+}
+
+async fn list_unfinished_queue_ids_for_update(
+    transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
+    robot_id: i64,
+) -> Result<Vec<i64>, sqlx::Error> {
+    sqlx::query_scalar(
+        "SELECT id \
+         FROM MiningQueue \
+         WHERE robotId = ? \
+           AND (miningEndTime IS NULL OR miningEndTime > NOW()) \
+         ORDER BY queueOrder, id \
+         FOR UPDATE",
+    )
+    .bind(robot_id)
+    .fetch_all(&mut **transaction)
+    .await
+}
+
 async fn cancel_mining_queue_in_transaction(
     transaction: &mut sqlx::Transaction<'_, sqlx::MySql>,
     request: CancelMiningQueueRequest,
 ) -> Result<DbOutcome<CanceledMiningQueue, CancelMiningQueueRejection>, sqlx::Error> {
-    let Some((robot_id, owner_id, rally_result_id, mining_end_time_is_null, mining_area_id)) =
-        sqlx::query_as::<_, (i64, i64, Option<i64>, bool, i64)>(
-            "SELECT MiningQueue.robotId, Robot.userId, MiningQueue.rallyResultId, \
-                    MiningQueue.miningEndTime IS NULL, MiningQueue.miningAreaId \
+    let Some((
+        robot_id,
+        owner_id,
+        rally_result_id,
+        mining_end_time_is_null,
+        mining_area_id,
+        queue_order,
+    )) = sqlx::query_as::<_, (i64, i64, Option<i64>, bool, i64, i64)>(
+        "SELECT MiningQueue.robotId, Robot.userId, MiningQueue.rallyResultId, \
+                    MiningQueue.miningEndTime IS NULL, MiningQueue.miningAreaId, \
+                    MiningQueue.queueOrder \
              FROM MiningQueue \
              INNER JOIN Robot ON Robot.id = MiningQueue.robotId \
              WHERE MiningQueue.id = ? \
              FOR UPDATE",
-        )
-        .bind(request.mining_queue_id)
-        .fetch_optional(&mut **transaction)
-        .await?
+    )
+    .bind(request.mining_queue_id)
+    .fetch_optional(&mut **transaction)
+    .await?
     else {
         return db_reject(CancelMiningQueueRejection::UnknownQueue);
     };
@@ -167,10 +346,12 @@ async fn cancel_mining_queue_in_transaction(
         "SELECT COUNT(*) \
          FROM MiningQueue \
          WHERE robotId = ? \
-           AND id < ? \
+           AND (queueOrder < ? OR (queueOrder = ? AND id < ?)) \
            AND (miningEndTime IS NULL OR miningEndTime > NOW())",
     )
     .bind(robot_id)
+    .bind(queue_order)
+    .bind(queue_order)
     .bind(request.mining_queue_id)
     .fetch_one(&mut **transaction)
     .await?;
@@ -293,6 +474,10 @@ VALUES (?, ?)
     )
     .execute(&mut **transaction)
     .await?;
+
+    sqlx::query("UPDATE MiningQueue SET queueOrder = LAST_INSERT_ID() WHERE id = LAST_INSERT_ID()")
+        .execute(&mut **transaction)
+        .await?;
 
     Ok(())
 }

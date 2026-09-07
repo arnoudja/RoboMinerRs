@@ -56,6 +56,62 @@ pub(crate) async fn cancel_mining_queue(
     )
 }
 
+pub(crate) fn parse_queue_move_direction(
+    direction: &str,
+) -> Result<robominer_db::MiningQueueMoveDirection> {
+    match direction {
+        "up" => Ok(robominer_db::MiningQueueMoveDirection::Up),
+        "down" => Ok(robominer_db::MiningQueueMoveDirection::Down),
+        _ => anyhow::bail!("--direction must be up or down"),
+    }
+}
+
+pub(crate) async fn move_mining_queue_item(
+    pool: &robominer_db::MySqlPool,
+    request: robominer_db::MoveMiningQueueRequest,
+) -> Result<()> {
+    let mining_queue_id = request.mining_queue_id;
+    let outcome = robominer_db::mining_queue::move_mining_queue_item(pool, request)
+        .await
+        .context("failed to reorder mining queue item")?;
+    crate::db_outcome::finish_db_outcome(
+        outcome,
+        |result| {
+            println!(
+                "Reordered mining queue {} for robot {}",
+                mining_queue_id, result.robot_id
+            );
+            Ok(())
+        },
+        |rejection| {
+            format!(
+                "unable to reorder mining queue item: {}",
+                robominer_domain::rejection_messages::reorder_mining_queue_rejection_cli_message(
+                    rejection
+                )
+            )
+        },
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_queue_move_direction;
+
+    #[test]
+    fn parse_queue_move_direction_accepts_up_and_down() {
+        assert!(matches!(
+            parse_queue_move_direction("up"),
+            Ok(robominer_db::MiningQueueMoveDirection::Up)
+        ));
+        assert!(matches!(
+            parse_queue_move_direction("down"),
+            Ok(robominer_db::MiningQueueMoveDirection::Down)
+        ));
+        assert!(parse_queue_move_direction("sideways").is_err());
+    }
+}
+
 pub(crate) async fn mining_queue_states(
     pool: &robominer_db::MySqlPool,
     user_id: i64,

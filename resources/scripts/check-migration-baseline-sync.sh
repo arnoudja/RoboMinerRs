@@ -56,6 +56,7 @@ REQUIRED_MARKERS=(
   "processingLeaseUntil"
   "idx_mining_queue_claimable"
   "RobotLifetimeResult"
+  "queueOrder"
 )
 
 for marker in "${REQUIRED_MARKERS[@]}"; do

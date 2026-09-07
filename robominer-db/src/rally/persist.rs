@@ -89,7 +89,7 @@ pub async fn claim_next_mining_rally_queue_for_area(
     expiry_start_seconds: i32,
 ) -> Result<Option<Vec<MiningRallyQueueRecord>>, sqlx::Error> {
     let mut transaction = pool.begin().await?;
-    let rows = sqlx::query_as::<_, MiningRallyQueueRow>(
+    let claim_sql = format!(
         "SELECT MiningQueue.id, MiningQueue.miningAreaId, MiningQueue.robotId, \
                 Robot.userId, \
                 MiningQueue.rallyResultId, MiningQueue.playerNumber, MiningQueue.score, \
@@ -110,16 +110,16 @@ pub async fn claim_next_mining_rally_queue_for_area(
            AND NOT EXISTS ( \
                SELECT prev.id \
                FROM MiningQueue prev \
-               WHERE prev.id < MiningQueue.id \
-                 AND prev.robotId = MiningQueue.robotId \
-                 AND prev.miningEndTime IS NULL \
+               WHERE {pred} \
            ) \
          ORDER BY secondsLeft, MiningQueue.id \
          FOR UPDATE SKIP LOCKED",
-    )
-    .bind(mining_area_id)
-    .fetch_all(&mut *transaction)
-    .await?;
+        pred = crate::mining_queue::EARLIER_UNFINISHED_QUEUE_PRED
+    );
+    let rows = sqlx::query_as::<_, MiningRallyQueueRow>(crate::assert_sql_safe(claim_sql))
+        .bind(mining_area_id)
+        .fetch_all(&mut *transaction)
+        .await?;
 
     let mut queue_rows = mining_rally_queue_rows(rows);
     let ready = !queue_rows.is_empty()
@@ -157,7 +157,7 @@ pub async fn claim_next_mining_rally_queue_for_area(
 pub async fn list_next_claim_rally_candidates(
     pool: &MySqlPool,
 ) -> Result<Vec<crate::NextClaimRallyCandidate>, sqlx::Error> {
-    sqlx::query_as::<_, (i64, i64, i32, i32)>(
+    let sql = format!(
         "SELECT MiningQueue.miningAreaId, Robot.userId, \
                 GREATEST( \
                     0, \
@@ -176,26 +176,26 @@ pub async fn list_next_claim_rally_candidates(
            AND NOT EXISTS ( \
                SELECT prev.id \
                FROM MiningQueue prev \
-               WHERE prev.id < MiningQueue.id \
-                 AND prev.robotId = MiningQueue.robotId \
-                 AND prev.miningEndTime IS NULL \
+               WHERE {pred} \
            ) \
          ORDER BY MiningQueue.miningAreaId, busySeconds, secondsLeft, MiningQueue.id",
-    )
-    .fetch_all(pool)
-    .await
-    .map(|rows| {
-        rows.into_iter()
-            .map(|(mining_area_id, user_id, busy_seconds, seconds_left)| {
-                crate::NextClaimRallyCandidate {
-                    mining_area_id,
-                    user_id,
-                    busy_seconds,
-                    seconds_left,
-                }
-            })
-            .collect()
-    })
+        pred = crate::mining_queue::EARLIER_UNFINISHED_QUEUE_PRED
+    );
+    sqlx::query_as::<_, (i64, i64, i32, i32)>(crate::assert_sql_safe(sql))
+        .fetch_all(pool)
+        .await
+        .map(|rows| {
+            rows.into_iter()
+                .map(|(mining_area_id, user_id, busy_seconds, seconds_left)| {
+                    crate::NextClaimRallyCandidate {
+                        mining_area_id,
+                        user_id,
+                        busy_seconds,
+                        seconds_left,
+                    }
+                })
+                .collect()
+        })
 }
 
 async fn update_robot_for_completed_rally(

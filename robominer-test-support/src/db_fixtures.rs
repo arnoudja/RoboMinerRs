@@ -247,7 +247,7 @@ pub async fn insert_committed_pending_changes(pool: &MySqlPool, robot_id: i64) {
 }
 
 pub async fn insert_mining_queue(pool: &MySqlPool, mining_area_id: i64, robot_id: i64) -> i64 {
-    insert_row_id(
+    let mining_queue_id = insert_row_id(
         pool,
         sqlx::query(
             "INSERT INTO MiningQueue (miningAreaId, robotId, miningEndTime) \
@@ -256,7 +256,9 @@ pub async fn insert_mining_queue(pool: &MySqlPool, mining_area_id: i64, robot_id
         .bind(mining_area_id)
         .bind(robot_id),
     )
-    .await
+    .await;
+    set_mining_queue_order_to_id(pool, mining_queue_id).await;
+    mining_queue_id
 }
 
 pub async fn insert_claimed_mining_queue(
@@ -265,7 +267,7 @@ pub async fn insert_claimed_mining_queue(
     robot_id: i64,
     rally_result_id: i64,
 ) -> i64 {
-    insert_row_id(
+    let mining_queue_id = insert_row_id(
         pool,
         sqlx::query(
             "INSERT INTO MiningQueue \
@@ -276,7 +278,18 @@ pub async fn insert_claimed_mining_queue(
         .bind(robot_id)
         .bind(rally_result_id),
     )
-    .await
+    .await;
+    set_mining_queue_order_to_id(pool, mining_queue_id).await;
+    mining_queue_id
+}
+
+pub async fn set_mining_queue_order_to_id(pool: &MySqlPool, mining_queue_id: i64) {
+    sqlx::query("UPDATE MiningQueue SET queueOrder = ? WHERE id = ?")
+        .bind(mining_queue_id)
+        .bind(mining_queue_id)
+        .execute(pool)
+        .await
+        .expect("failed to set mining queue order");
 }
 
 pub async fn cleanup_created_user(pool: &MySqlPool, user_id: i64) {

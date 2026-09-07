@@ -40,6 +40,17 @@ pub(crate) enum MiningCommand {
         #[arg(long)]
         mining_queue_id: i64,
     },
+    ReorderQueue {
+        #[arg(long)]
+        user_id: i64,
+
+        #[arg(long)]
+        mining_queue_id: i64,
+
+        /// `up` or `down` among queued runs (the current run cannot move).
+        #[arg(long)]
+        direction: String,
+    },
     QueueStates {
         #[arg(long)]
         user_id: i64,

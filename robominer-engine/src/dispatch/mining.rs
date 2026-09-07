@@ -6,7 +6,7 @@ use crate::database::connect_database;
 use crate::mining::{
     RunClaimAllOptions, cancel_mining_queue, claim_results, enqueue_mining,
     mining_area_overview_states, mining_area_scores, mining_queue_page_states, mining_queue_states,
-    mining_result_states, run_claim_all,
+    mining_result_states, move_mining_queue_item, parse_queue_move_direction, run_claim_all,
 };
 
 pub(crate) async fn dispatch_mining(
@@ -79,6 +79,28 @@ pub(crate) async fn dispatch_mining(
                     user_id,
                     mining_queue_id,
                     require_refund_fits: false,
+                },
+            )
+            .await
+        }
+        MiningCommand::ReorderQueue {
+            user_id,
+            mining_queue_id,
+            direction,
+        } => {
+            ensure_positive_user_id(user_id)?;
+            ensure!(
+                mining_queue_id > 0,
+                "--mining-queue-id must be greater than zero"
+            );
+            let direction = parse_queue_move_direction(&direction)?;
+            let pool = connect_database(database_url).await?;
+            move_mining_queue_item(
+                &pool,
+                robominer_db::MoveMiningQueueRequest {
+                    user_id,
+                    mining_queue_id,
+                    direction,
                 },
             )
             .await

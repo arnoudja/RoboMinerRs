@@ -224,6 +224,66 @@ async fn cancel_mining_queue_deletes_queued_item() {
 
 #[tokio::test]
 #[serial]
+async fn reorder_queue_moves_queued_item_down() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let fixture = TestCancelMiningQueueFixture::create(&pool).await;
+    let third_queued = robominer_test_support::insert_mining_queue(
+        &pool,
+        fixture.mining_area_id,
+        fixture.robot_id,
+    )
+    .await;
+
+    let output = run_engine(&[
+        "--database-url".to_string(),
+        database_url,
+        "mining".to_string(),
+        "reorder-queue".to_string(),
+        "--user-id".to_string(),
+        fixture.user_id.to_string(),
+        "--mining-queue-id".to_string(),
+        fixture.queued_queue_id.to_string(),
+        "--direction".to_string(),
+        "down".to_string(),
+    ]);
+    let (stdout, stderr) = output_text(&output);
+
+    assert!(
+        output.status.success(),
+        "expected mining reorder-queue to succeed\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stdout.contains("Reordered mining queue"),
+        "unexpected stdout:\n{stdout}"
+    );
+    assert!(stderr.is_empty(), "unexpected stderr:\n{stderr}");
+
+    let ids: Vec<i64> = robominer_db::list_mining_queue_page_items(&pool, fixture.user_id)
+        .await
+        .expect("list queue items")
+        .into_iter()
+        .map(|item| item.mining_queue_id)
+        .collect();
+    assert_eq!(
+        ids,
+        vec![
+            fixture.active_queue_id,
+            third_queued,
+            fixture.queued_queue_id
+        ]
+    );
+
+    fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
 async fn cancel_mining_queue_rejects_wrong_owner_and_unknown_queue() {
     let Some(database_url) = robominer_test_support::require_test_db() else {
         return;

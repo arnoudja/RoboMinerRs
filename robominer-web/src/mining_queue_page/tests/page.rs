@@ -189,9 +189,101 @@ fn mining_queue_rendering_preserves_controls_and_escapes_fields() {
         r#"<button type="submit">Show details</button>"#,
         "Historic yield:",
         ">12.3%<",
+        r#"name="moveUp""#,
+        r#"name="moveDown""#,
+        r#"mining-queue-upcoming-list-reorderable"#,
     ] {
         assert_html_not_contains(&html, absent);
     }
+}
+
+#[test]
+fn mining_queue_queued_rows_include_reorder_controls_when_two_queued() {
+    let mut selected_robot_area_ids = HashMap::new();
+    selected_robot_area_ids.insert(1, 20);
+    let html = render_mining_queue_page(
+        "Player".to_string(),
+        None,
+        &MiningQueuePageState {
+            asset_summary: MiningQueueAssetSummaryView {
+                mining_queue_size: 3,
+            },
+            ore_assets: vec![],
+            robots: vec![MiningQueueRobotView {
+                robot_id: 1,
+                robot_name: "Bot".to_string(),
+                recharge_time: 60,
+            }],
+            areas: vec![MiningQueueAreaView {
+                mining_area_id: 20,
+                area_name: "Area One".to_string(),
+                tax_rate: 0,
+                depot_tax_rate: 0,
+                mining_time: 120,
+                max_moves: 10,
+                size_x: 5,
+                size_y: 5,
+                score_ore_target: 30,
+            }],
+            costs: vec![],
+            supplies: vec![],
+            scores: vec![],
+            items: vec![
+                MiningQueueDisplayItem {
+                    mining_queue_id: 100,
+                    robot_id: 1,
+                    mining_area_id: 20,
+                    area_name: "Area One".to_string(),
+                    rally_result_id: None,
+                    status: robominer_db::MiningQueueStatus::Mining,
+                    time_left_seconds: 60,
+                },
+                MiningQueueDisplayItem {
+                    mining_queue_id: 101,
+                    robot_id: 1,
+                    mining_area_id: 20,
+                    area_name: "Area Two".to_string(),
+                    rally_result_id: None,
+                    status: robominer_db::MiningQueueStatus::Queued,
+                    time_left_seconds: 180,
+                },
+                MiningQueueDisplayItem {
+                    mining_queue_id: 102,
+                    robot_id: 1,
+                    mining_area_id: 20,
+                    area_name: "Area Three".to_string(),
+                    rally_result_id: None,
+                    status: robominer_db::MiningQueueStatus::Queued,
+                    time_left_seconds: 300,
+                },
+            ],
+            selected_info_area_id: 20,
+            selected_robot_area_ids,
+            error_message: None,
+        },
+    );
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"class="mining-queue-upcoming-list mining-queue-upcoming-list-reorderable""#,
+            r#"draggable="true" data-queue-item-id="101""#,
+            r#"draggable="true" data-queue-item-id="102""#,
+            r#"name="moveUp" value="101""#,
+            r#"name="moveDown" value="101""#,
+            r#"name="moveUp" value="102""#,
+            r#"name="moveDown" value="102""#,
+            r#"aria-label="Move queued run in Area Two up" disabled"#,
+            r#"aria-label="Move queued run in Area Three down" disabled"#,
+            r#"<span class="mining-queue-drag-handle""#,
+        ],
+    );
+    assert_html_not_contains(
+        &html,
+        r#"<button type="button" class="mining-queue-drag-handle""#,
+    );
+    assert_html_not_contains(&html, r#"name="moveUp" value="100""#);
+    assert_html_not_contains(&html, r#"draggable="true" data-queue-item-id="100""#);
 }
 
 #[test]

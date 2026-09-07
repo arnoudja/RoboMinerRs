@@ -120,7 +120,8 @@ schema_already_current() {
         && table_exists AchievementStepDepotTotalRequirement \
         && column_exists MiningQueue processingLeaseUntil \
         && index_exists MiningQueue idx_mining_queue_claimable \
-        && column_exists RobotLifetimeResult depotAmount
+        && column_exists RobotLifetimeResult depotAmount \
+        && column_exists MiningQueue queueOrder
 }
 
 index_exists() {

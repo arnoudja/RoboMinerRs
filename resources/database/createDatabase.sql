@@ -302,8 +302,10 @@ miningEndTime TIMESTAMP NULL,
 claimed BOOL NOT NULL DEFAULT FALSE,
 executedSourceCode TEXT NULL,
 processingLeaseUntil TIMESTAMP NULL,
+queueOrder INT NOT NULL DEFAULT 0,
 INDEX (miningAreaId, rallyResultId),
-INDEX idx_mining_queue_claimable (claimed, miningEndTime)
+INDEX idx_mining_queue_claimable (claimed, miningEndTime),
+INDEX idx_mining_queue_robot_order (robotId, queueOrder)
 );
 
 

@@ -6,6 +6,14 @@ use crate::mining_queue_page::{MiningQueueAreaView, MiningQueueDisplayItem, Mini
 use crate::mining_queue_page::mining_queue_status_description;
 
 const MINING_QUEUE_TRASH_ICON: &str = r#"<svg class="mining-queue-remove-icon" viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 5h1v10h-1V8zm3 0h1v10h-1V8zM6 8h12l-1 12H7L6 8z"/></svg>"#;
+const MINING_QUEUE_DRAG_ICON: &str = r#"<svg class="mining-queue-drag-icon" viewBox="0 0 16 16" width="14" height="14" focusable="false" aria-hidden="true"><circle cx="5" cy="3.5" r="1.4" fill="currentColor"/><circle cx="11" cy="3.5" r="1.4" fill="currentColor"/><circle cx="5" cy="8" r="1.4" fill="currentColor"/><circle cx="11" cy="8" r="1.4" fill="currentColor"/><circle cx="5" cy="12.5" r="1.4" fill="currentColor"/><circle cx="11" cy="12.5" r="1.4" fill="currentColor"/></svg>"#;
+const MINING_QUEUE_MOVE_UP_ICON: &str = r#"<svg class="mining-queue-move-icon" viewBox="0 0 16 16" width="14" height="14" focusable="false" aria-hidden="true"><path fill="currentColor" d="M8 3.5 3.5 9h9L8 3.5z"/></svg>"#;
+const MINING_QUEUE_MOVE_DOWN_ICON: &str = r#"<svg class="mining-queue-move-icon" viewBox="0 0 16 16" width="14" height="14" focusable="false" aria-hidden="true"><path fill="currentColor" d="M8 12.5 12.5 7h-9L8 12.5z"/></svg>"#;
+
+pub(super) struct QueueRowReorder {
+    pub can_move_up: bool,
+    pub can_move_down: bool,
+}
 
 pub(super) fn render_queue_run_row(
     body: &mut String,
@@ -13,8 +21,26 @@ pub(super) fn render_queue_run_row(
     show_remove_button: bool,
     refresh_on_complete: bool,
     progress_total_seconds: Option<i64>,
+    reorder: Option<QueueRowReorder>,
 ) {
-    body.push_str(r#"<div class="mining-queue-run-row">"#);
+    if reorder.is_some() {
+        body.push_str(r#"<div class="mining-queue-run-row mining-queue-run-row-reorderable">"#);
+    } else {
+        body.push_str(r#"<div class="mining-queue-run-row">"#);
+    }
+    if let Some(reorder) = reorder {
+        let area = EscapedHtml::from(item.area_name.as_str());
+        let up_disabled = if reorder.can_move_up { "" } else { " disabled" };
+        let down_disabled = if reorder.can_move_down {
+            ""
+        } else {
+            " disabled"
+        };
+        body.push_str(&format!(
+            r#"<span class="mining-queue-reorder"><span class="mining-queue-drag-handle" aria-label="Drag to reorder queued run in {area}">{MINING_QUEUE_DRAG_ICON}</span><span class="mining-queue-move-buttons"><button type="submit" class="mining-queue-move-btn mining-queue-move-up" name="moveUp" value="{id}" aria-label="Move queued run in {area} up"{up_disabled}>{MINING_QUEUE_MOVE_UP_ICON}</button><button type="submit" class="mining-queue-move-btn mining-queue-move-down" name="moveDown" value="{id}" aria-label="Move queued run in {area} down"{down_disabled}>{MINING_QUEUE_MOVE_DOWN_ICON}</button></span></span>"#,
+            id = item.mining_queue_id,
+        ));
+    }
     if show_remove_button {
         body.push_str(&format!(
             r#"<input type="checkbox" class="mining-queue-item-check" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Select queued run in {}"/><button type="button" class="mining-queue-remove-btn" data-queue-item-id="{}" data-mining-area-id="{}" aria-label="Remove queued run in {}">{MINING_QUEUE_TRASH_ICON}</button>"#,

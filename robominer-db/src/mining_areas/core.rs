@@ -177,7 +177,7 @@ pub async fn list_next_mining_rally_queue_for_area(
     pool: &MySqlPool,
     mining_area_id: i64,
 ) -> Result<Vec<MiningRallyQueueRecord>, sqlx::Error> {
-    sqlx::query_as::<_, MiningRallyQueueRow>(
+    let sql = format!(
         "SELECT MiningQueue.id, MiningQueue.miningAreaId, MiningQueue.robotId, \
                 Robot.userId, \
                 MiningQueue.rallyResultId, MiningQueue.playerNumber, MiningQueue.score, \
@@ -198,14 +198,14 @@ pub async fn list_next_mining_rally_queue_for_area(
            AND NOT EXISTS ( \
                SELECT prev.id \
                FROM MiningQueue prev \
-               WHERE prev.id < MiningQueue.id \
-                 AND prev.robotId = MiningQueue.robotId \
-                 AND prev.miningEndTime IS NULL \
+               WHERE {pred} \
            ) \
          ORDER BY secondsLeft, MiningQueue.id",
-    )
-    .bind(mining_area_id)
-    .fetch_all(pool)
-    .await
-    .map(mining_rally_queue_rows)
+        pred = crate::mining_queue::EARLIER_UNFINISHED_QUEUE_PRED
+    );
+    sqlx::query_as::<_, MiningRallyQueueRow>(crate::assert_sql_safe(sql))
+        .bind(mining_area_id)
+        .fetch_all(pool)
+        .await
+        .map(mining_rally_queue_rows)
 }

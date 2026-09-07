@@ -41,3 +41,19 @@ fn cancel_mining_rejection_messages_match_legacy_copy() {
         "Unable to cancel mining queue item: refund would exceed your wallet maximum."
     );
 }
+
+#[test]
+fn reorder_mining_rejection_messages_are_player_safe() {
+    assert_eq!(
+        robominer_domain::rejection_messages::reorder_mining_queue_rejection_player_message(
+            robominer_db::ReorderMiningQueueRejection::NotReorderable
+        ),
+        "Unable to reorder mining queue items."
+    );
+    assert_eq!(
+        robominer_domain::rejection_messages::reorder_mining_queue_rejection_player_message(
+            robominer_db::ReorderMiningQueueRejection::UnknownQueue
+        ),
+        "Unknown mining queue item."
+    );
+}

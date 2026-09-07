@@ -104,6 +104,10 @@
     width: 100%;
 }
 
+.mining-queue-run-row-reorderable {
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto auto;
+}
+
 .mining-queue-run-active .mining-queue-run-row {
     grid-template-columns: minmax(0, 1fr) auto auto;
 }
@@ -194,6 +198,57 @@
     max-width: 100%;
     min-width: 0;
     padding: 8px 0;
+}
+
+.mining-queue-upcoming-item[draggable="true"] {
+    cursor: grab;
+    user-select: none;
+}
+
+.mining-queue-upcoming-item-dragging {
+    cursor: grabbing;
+    opacity: 0.55;
+}
+
+.mining-queue-reorder {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+}
+
+.mining-queue-drag-handle,
+.mining-queue-move-btn {
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(42, 58, 92, 0.85);
+    border-radius: 6px;
+    color: var(--mq-text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    line-height: 0;
+    padding: 4px;
+}
+
+.mining-queue-drag-handle {
+    cursor: grab;
+}
+
+.mining-queue-drag-handle:hover,
+.mining-queue-move-btn:hover:not(:disabled) {
+    border-color: var(--mq-accent);
+    color: var(--mq-accent);
+}
+
+.mining-queue-move-btn:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.mining-queue-move-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .mining-queue-upcoming-list li:first-child {

@@ -30,6 +30,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
     // Migration 012: claimable wallet-index on MiningQueue.
     let has_claimable_index =
         index_exists(pool, "MiningQueue", "idx_mining_queue_claimable").await?;
+    // Migration 014: explicit queue order for unfinished MiningQueue rows.
+    let has_queue_order = column_exists(pool, "MiningQueue", "queueOrder").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
@@ -41,7 +43,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
         && has_depot_total_requirement
         && has_processing_lease
         && has_lifetime_depot_amount
-        && has_claimable_index)
+        && has_claimable_index
+        && has_queue_order)
 }
 
 pub(super) async fn ensure_schema_migration_table(pool: &MySqlPool) -> Result<(), MigrateError> {

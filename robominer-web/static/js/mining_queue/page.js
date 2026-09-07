@@ -193,6 +193,13 @@
     });
 
     document.addEventListener('click', function(event) {
+        if (actions.consumeDragClickSuppression()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, true);
+
+    document.addEventListener('click', function(event) {
         const removeButton = event.target.closest('.mining-queue-remove-btn');
         if (removeButton) {
             event.preventDefault();
@@ -204,6 +211,19 @@
             event.preventDefault();
             actions.clearQueuedRuns(clearButton);
         }
+    });
+
+    document.addEventListener('dragstart', function(event) {
+        actions.onDragStart(event);
+    });
+    document.addEventListener('dragover', function(event) {
+        actions.onDragOver(event);
+    });
+    document.addEventListener('drop', function(event) {
+        actions.onDrop(event);
+    });
+    document.addEventListener('dragend', function(event) {
+        actions.onDragEnd(event);
     });
 
     document.addEventListener('submit', function(event) {

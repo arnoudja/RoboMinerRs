@@ -87,3 +87,45 @@ pub fn cancel_mining_queue_rejection_cli_message(
 ) -> &'static str {
     cancel_mining_queue_rejection_message(rejection, Audience::Cli)
 }
+
+pub fn reorder_mining_queue_rejection_message(
+    rejection: robominer_db::ReorderMiningQueueRejection,
+    audience: Audience,
+) -> &'static str {
+    match (rejection, audience) {
+        (robominer_db::ReorderMiningQueueRejection::UnknownRobot, Audience::Player) => {
+            "Unknown robot"
+        }
+        (robominer_db::ReorderMiningQueueRejection::UnknownRobot, Audience::Cli) => "unknown robot",
+        (robominer_db::ReorderMiningQueueRejection::UnknownQueue, Audience::Player) => {
+            "Unknown mining queue item."
+        }
+        (robominer_db::ReorderMiningQueueRejection::UnknownQueue, Audience::Cli) => {
+            "unknown mining queue item"
+        }
+        (robominer_db::ReorderMiningQueueRejection::WrongOwner, Audience::Player) => {
+            "Unable to reorder mining queue items."
+        }
+        (robominer_db::ReorderMiningQueueRejection::WrongOwner, Audience::Cli) => {
+            "mining queue item belongs to another user"
+        }
+        (robominer_db::ReorderMiningQueueRejection::NotReorderable, Audience::Player) => {
+            "Unable to reorder mining queue items."
+        }
+        (robominer_db::ReorderMiningQueueRejection::NotReorderable, Audience::Cli) => {
+            "mining queue items cannot be reordered"
+        }
+    }
+}
+
+pub fn reorder_mining_queue_rejection_player_message(
+    rejection: robominer_db::ReorderMiningQueueRejection,
+) -> &'static str {
+    reorder_mining_queue_rejection_message(rejection, Audience::Player)
+}
+
+pub fn reorder_mining_queue_rejection_cli_message(
+    rejection: robominer_db::ReorderMiningQueueRejection,
+) -> &'static str {
+    reorder_mining_queue_rejection_message(rejection, Audience::Cli)
+}

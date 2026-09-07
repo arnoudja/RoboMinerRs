@@ -90,6 +90,69 @@ pub(super) fn format_cancel_batch_message(batch: &CancelBatchResult) -> Option<S
     Some(parts.join(" "))
 }
 
+pub(super) async fn apply_queue_reorder(
+    pool: &robominer_db::MySqlPool,
+    user_id: i64,
+    robot_id: i64,
+    ordered_queue_ids: Vec<i64>,
+) -> Result<Option<String>, crate::page_context::PageLoadError> {
+    if robot_id <= 0 {
+        return Ok(Some("Unknown robot".to_string()));
+    }
+    let outcome = robominer_db::mining_queue::reorder_mining_queue(
+        pool,
+        robominer_db::ReorderMiningQueueRequest {
+            user_id,
+            robot_id,
+            ordered_queue_ids,
+        },
+    )
+    .await?;
+    Ok(match outcome {
+        robominer_db::DbOutcome::Rejected(rejection) => Some(
+            robominer_domain::rejection_messages::reorder_mining_queue_rejection_player_message(
+                rejection,
+            )
+            .to_string(),
+        ),
+        robominer_db::DbOutcome::Success(_) => None,
+    })
+}
+
+pub(super) async fn apply_queue_move(
+    pool: &robominer_db::MySqlPool,
+    user_id: i64,
+    mining_queue_id: Option<i64>,
+    direction: robominer_db::MiningQueueMoveDirection,
+) -> Result<Option<String>, crate::page_context::PageLoadError> {
+    let Some(mining_queue_id) = mining_queue_id else {
+        return Ok(Some(
+            robominer_domain::rejection_messages::reorder_mining_queue_rejection_player_message(
+                robominer_db::ReorderMiningQueueRejection::UnknownQueue,
+            )
+            .to_string(),
+        ));
+    };
+    let outcome = robominer_db::mining_queue::move_mining_queue_item(
+        pool,
+        robominer_db::MoveMiningQueueRequest {
+            user_id,
+            mining_queue_id,
+            direction,
+        },
+    )
+    .await?;
+    Ok(match outcome {
+        robominer_db::DbOutcome::Rejected(rejection) => Some(
+            robominer_domain::rejection_messages::reorder_mining_queue_rejection_player_message(
+                rejection,
+            )
+            .to_string(),
+        ),
+        robominer_db::DbOutcome::Success(_) => None,
+    })
+}
+
 #[cfg(test)]
 mod batch_message_tests {
     use super::*;

@@ -12,7 +12,9 @@ mod view_model;
 #[cfg(test)]
 mod tests;
 
-use actions::{cancel_queued_items, format_cancel_batch_message};
+use actions::{
+    apply_queue_move, apply_queue_reorder, cancel_queued_items, format_cancel_batch_message,
+};
 use view_model::{
     area_cost_view, area_supply_view, area_view, asset_summary_view,
     load_mining_queue_display_items, ore_asset_view, robot_view, score_view,
@@ -86,7 +88,8 @@ async fn load_mining_queue_page_state(
 ) -> Result<MiningQueuePageState, crate::page_context::PageLoadError> {
     let mut error_message = None;
     if is_post(request) {
-        match request.form.get("submitType").map(String::as_str) {
+        let submit_type = last_form_value(request, "submitType");
+        match submit_type {
             Some("add") | Some("fill") => {
                 let robot_id = mutation_i64(request, "robotId").unwrap_or(0);
                 let mining_area_id =
@@ -96,10 +99,7 @@ async fn load_mining_queue_page_state(
                 } else if mining_area_id <= 0 {
                     error_message = Some("Unknown mining area".to_string());
                 } else {
-                    let fill = request
-                        .form
-                        .get("submitType")
-                        .is_some_and(|value| value == "fill");
+                    let fill = submit_type == Some("fill");
                     if let robominer_db::DbOutcome::Rejected(rejection) =
                         robominer_db::mining_queue::enqueue_mining(
                             pool,
@@ -157,7 +157,48 @@ async fn load_mining_queue_page_state(
                     error_message = format_cancel_batch_message(&batch);
                 }
             }
-            _ => {}
+            Some("reorder") => {
+                let robot_id = mutation_i64(request, "robotId").unwrap_or(0);
+                let ordered_ids = form_i64_values(request, "orderedQueueItemId");
+                error_message = apply_queue_reorder(pool, user_id, robot_id, ordered_ids).await?;
+            }
+            Some("moveUp") => {
+                error_message = apply_queue_move(
+                    pool,
+                    user_id,
+                    mutation_i64(request, "moveQueueItemId"),
+                    robominer_db::MiningQueueMoveDirection::Up,
+                )
+                .await?;
+            }
+            Some("moveDown") => {
+                error_message = apply_queue_move(
+                    pool,
+                    user_id,
+                    mutation_i64(request, "moveQueueItemId"),
+                    robominer_db::MiningQueueMoveDirection::Down,
+                )
+                .await?;
+            }
+            _ => {
+                if let Some(queue_id) = mutation_i64(request, "moveUp") {
+                    error_message = apply_queue_move(
+                        pool,
+                        user_id,
+                        Some(queue_id),
+                        robominer_db::MiningQueueMoveDirection::Up,
+                    )
+                    .await?;
+                } else if let Some(queue_id) = mutation_i64(request, "moveDown") {
+                    error_message = apply_queue_move(
+                        pool,
+                        user_id,
+                        Some(queue_id),
+                        robominer_db::MiningQueueMoveDirection::Down,
+                    )
+                    .await?;
+                }
+            }
         }
     }
 
@@ -212,6 +253,15 @@ async fn load_mining_queue_page_state(
         selected_robot_area_ids,
         error_message,
     })
+}
+
+fn last_form_value<'a>(request: &'a Request, name: &str) -> Option<&'a str> {
+    request
+        .form_values
+        .get(name)
+        .and_then(|values| values.last())
+        .map(String::as_str)
+        .or_else(|| request.form.get(name).map(String::as_str))
 }
 
 fn form_i64_values(request: &Request, name: &str) -> Vec<i64> {

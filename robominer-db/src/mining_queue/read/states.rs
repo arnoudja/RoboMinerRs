@@ -44,7 +44,7 @@ pub async fn list_mining_queue_states_for_user(
          INNER JOIN MiningArea ON MiningArea.id = MiningQueue.miningAreaId \
          WHERE Robot.userId = ? \
            AND (MiningQueue.miningEndTime IS NULL OR MiningQueue.miningEndTime > NOW()) \
-         ORDER BY MiningQueue.robotId, MiningQueue.id",
+         ORDER BY MiningQueue.robotId, MiningQueue.queueOrder, MiningQueue.id",
     )
     .bind(user_id)
     .fetch_all(pool)

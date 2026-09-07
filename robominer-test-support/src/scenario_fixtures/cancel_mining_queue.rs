@@ -2,7 +2,7 @@ use robominer_db::MySqlPool;
 
 use crate::{
     insert_ai_robot, insert_cli_robot, insert_mining_queue, insert_ore, insert_row_id,
-    insert_user_with_credentials, unique_prefix,
+    insert_user_with_credentials, set_mining_queue_order_to_id, unique_prefix,
 };
 
 pub struct CancelMiningQueueFixture {
@@ -93,6 +93,7 @@ impl CancelMiningQueueFixture {
             .bind(rally_result_id),
         )
         .await;
+        set_mining_queue_order_to_id(pool, queue_id).await;
         self.rally_result_id.set(Some(rally_result_id));
         self.rally_backed_queue_id.set(Some(queue_id));
         queue_id

@@ -7,7 +7,9 @@ use crate::mining_queue_page::{
 };
 
 use super::enqueue_block_reason;
-use super::queue_row::{active_run_progress_total, render_queue_run_row, render_run_progress};
+use super::queue_row::{
+    QueueRowReorder, active_run_progress_total, render_queue_run_row, render_run_progress,
+};
 use crate::mining_queue_page::inspector::render_mining_queue_selection_state_inputs;
 
 pub(in crate::mining_queue_page) fn render_robot_card(
@@ -65,7 +67,7 @@ pub(in crate::mining_queue_page) fn render_robot_card(
         body.push_str(r#"<p class="mining-queue-section-label">Current run</p>"#);
         body.push_str(r#"<div class="mining-queue-run mining-queue-run-active">"#);
         let progress_total = active_run_progress_total(active_item, robot, area_map);
-        render_queue_run_row(body, active_item, false, true, progress_total);
+        render_queue_run_row(body, active_item, false, true, progress_total, None);
         if let Some(total_seconds) = progress_total {
             render_run_progress(
                 body,
@@ -77,12 +79,31 @@ pub(in crate::mining_queue_page) fn render_robot_card(
     }
 
     if queue_items.len() > 1 {
+        let queued = &queue_items[1..];
+        let can_reorder = queued.len() > 1;
         body.push_str(r#"<div class="mining-queue-upcoming">"#);
         body.push_str(r#"<p class="mining-queue-section-label">Queued</p>"#);
-        body.push_str(r#"<ul class="mining-queue-upcoming-list">"#);
-        for item in &queue_items[1..] {
-            body.push_str("<li>");
-            render_queue_run_row(body, item, true, false, None);
+        if can_reorder {
+            body.push_str(
+                r#"<ul class="mining-queue-upcoming-list mining-queue-upcoming-list-reorderable">"#,
+            );
+        } else {
+            body.push_str(r#"<ul class="mining-queue-upcoming-list">"#);
+        }
+        for (index, item) in queued.iter().enumerate() {
+            if can_reorder {
+                body.push_str(&format!(
+                    r#"<li class="mining-queue-upcoming-item" draggable="true" data-queue-item-id="{}">"#,
+                    item.mining_queue_id
+                ));
+            } else {
+                body.push_str(r#"<li class="mining-queue-upcoming-item">"#);
+            }
+            let reorder = can_reorder.then_some(QueueRowReorder {
+                can_move_up: index > 0,
+                can_move_down: index + 1 < queued.len(),
+            });
+            render_queue_run_row(body, item, true, false, None, reorder);
             body.push_str("</li>");
         }
         body.push_str("</ul></div>");
