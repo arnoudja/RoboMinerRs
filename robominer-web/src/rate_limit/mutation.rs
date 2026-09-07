@@ -110,6 +110,31 @@ pub(crate) fn mutation_action_family(path: &str) -> &'static str {
     }
 }
 
+fn last_form_value<'a>(request: &'a Request, name: &str) -> Option<&'a str> {
+    request
+        .form_values
+        .get(name)
+        .and_then(|values| values.last())
+        .map(String::as_str)
+        .or_else(|| request.form.get(name).map(String::as_str))
+}
+
+fn skip_authenticated_mutation_rate_limit(request: &Request) -> bool {
+    if mutation_action_family(&request.path) != "mining_queue" {
+        return false;
+    }
+    match last_form_value(request, "submitType") {
+        Some("reorder" | "moveUp" | "moveDown") => true,
+        Some(_) => false,
+        None => {
+            request.form.contains_key("moveUp")
+                || request.form.contains_key("moveDown")
+                || request.form_values.contains_key("moveUp")
+                || request.form_values.contains_key("moveDown")
+        }
+    }
+}
+
 /// Returns true when an authenticated mutation should receive HTTP 429.
 pub(crate) fn mutation_attempt_is_rate_limited(
     ip: &str,
@@ -136,6 +161,9 @@ pub(crate) fn reject_rate_limited_mutation(
     user_id: i64,
     client_ip: &str,
 ) -> Option<Response> {
+    if skip_authenticated_mutation_rate_limit(request) {
+        return None;
+    }
     let action = mutation_action_family(&request.path);
     if mutation_attempt_is_rate_limited(client_ip, user_id, action) {
         return Some(Response::too_many_requests(

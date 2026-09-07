@@ -660,4 +660,22 @@ describe('mining queue page partial updates', () => {
         assert.equal(fetches.length, 1);
         assert.match(fetches[0].url, /fragment=queue/);
     });
+
+    it('fetchFragment keeps the page and shows a 429 as a queue error', async () => {
+        const { context, doc } = loadMiningQueuePage();
+        context.fetch = function() {
+            return Promise.resolve({
+                ok: false,
+                status: 429,
+                text() {
+                    return Promise.resolve('Too many requests. Please wait a moment and try again.');
+                },
+            });
+        };
+        await context.RoboMinerMiningQueuePage.fetchFragment('POST', 'miningQueue?fragment=queue', null);
+        const error = doc.page.querySelector('.mining-queue-error');
+        assert.ok(error, 'expected in-page rate limit error');
+        assert.match(error.textContent, /Too many requests/);
+        assert.match(doc.page.querySelector('.mining-queue-robots').innerHTML, /old-robot/);
+    });
 });

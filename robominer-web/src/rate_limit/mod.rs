@@ -269,6 +269,74 @@ mod tests {
         assert_eq!(mutation_action_family("/unknown"), "other");
     }
 
+    fn mining_queue_post(submit_type: &str) -> Request {
+        let mut form = HashMap::new();
+        form.insert("submitType".to_string(), submit_type.to_string());
+        Request {
+            method: "POST".to_string(),
+            path: "/miningQueue".to_string(),
+            query: HashMap::new(),
+            form_values: form
+                .iter()
+                .map(|(name, value)| (name.clone(), vec![value.clone()]))
+                .collect(),
+            form,
+            headers: HashMap::new(),
+        }
+    }
+
+    #[test]
+    fn mining_queue_reorder_posts_are_not_rate_limited() {
+        let _guard = lock_mutation_rate_limiter_for_tests();
+        reset_mutation_rate_limiter_for_tests();
+        let request = mining_queue_post("reorder");
+        for _ in 0..(MAX_MUTATIONS_PER_USER_ACTION + 5) {
+            assert!(
+                reject_rate_limited_mutation(&request, 7, "198.51.100.80").is_none(),
+                "reorder should not consume the mutation budget"
+            );
+        }
+        let clear = mining_queue_post("clear");
+        assert!(
+            reject_rate_limited_mutation(&clear, 7, "198.51.100.80").is_none(),
+            "skipped reorders must not exhaust the mining-queue family"
+        );
+    }
+
+    #[test]
+    fn mining_queue_move_button_posts_are_not_rate_limited() {
+        let _guard = lock_mutation_rate_limiter_for_tests();
+        reset_mutation_rate_limiter_for_tests();
+        let mut form = HashMap::new();
+        form.insert("moveUp".to_string(), "101".to_string());
+        let request = Request {
+            method: "POST".to_string(),
+            path: "/miningQueue".to_string(),
+            query: HashMap::new(),
+            form_values: form
+                .iter()
+                .map(|(name, value)| (name.clone(), vec![value.clone()]))
+                .collect(),
+            form,
+            headers: HashMap::new(),
+        };
+        for _ in 0..(MAX_MUTATIONS_PER_USER_ACTION + 1) {
+            assert!(reject_rate_limited_mutation(&request, 7, "198.51.100.81").is_none());
+        }
+    }
+
+    #[test]
+    fn mining_queue_clear_posts_are_still_rate_limited() {
+        let _guard = lock_mutation_rate_limiter_for_tests();
+        reset_mutation_rate_limiter_for_tests();
+        let request = mining_queue_post("clear");
+        for _ in 0..MAX_MUTATIONS_PER_USER_ACTION {
+            assert!(reject_rate_limited_mutation(&request, 7, "198.51.100.82").is_none());
+        }
+        let rejected = reject_rate_limited_mutation(&request, 7, "198.51.100.82");
+        assert_eq!(rejected.map(|response| response.status), Some(429));
+    }
+
     #[test]
     fn enforce_map_cap_evicts_coldest_keys() {
         use std::collections::{HashMap, VecDeque};

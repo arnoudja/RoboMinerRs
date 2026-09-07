@@ -249,6 +249,25 @@
             return params.toString();
         }
 
+        function showQueueError(message) {
+            const fragmentRoot = ctx.pageRoot || document;
+            const existing = fragmentRoot.querySelectorAll('.mining-queue-error');
+            for (let index = 0; index < existing.length; index += 1) {
+                existing[index].remove();
+            }
+            const text = String(message || '').trim();
+            if (!text) {
+                return;
+            }
+            const error = document.createElement('p');
+            error.setAttribute('class', 'error mining-queue-error');
+            error.textContent = text;
+            const deck = fragmentRoot.querySelector('.mining-queue-deck');
+            if (deck) {
+                fragmentRoot.insertBefore(error, deck);
+            }
+        }
+
         function fetchFragment(method, url, body) {
             const scrollEl = document.getElementById('main-content');
             const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
@@ -264,16 +283,23 @@
             }
 
             return window.fetch(url, options).then(function(response) {
+                if (response.status === 429) {
+                    return response.text().then(function(text) {
+                        showQueueError(
+                            text || 'Too many requests. Please wait a moment and try again.'
+                        );
+                    });
+                }
                 if (!response.ok) {
                     throw new Error('mining queue fragment request failed');
                 }
-                return response.text();
-            }).then(function(html) {
-                applyFragment(html);
-                ctx.init({ skipRestore: true });
-                if (scrollEl) {
-                    scrollEl.scrollTop = scrollTop;
-                }
+                return response.text().then(function(html) {
+                    applyFragment(html);
+                    ctx.init({ skipRestore: true });
+                    if (scrollEl) {
+                        scrollEl.scrollTop = scrollTop;
+                    }
+                });
             });
         }
 

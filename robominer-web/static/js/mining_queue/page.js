@@ -260,6 +260,7 @@
         showWalletCreditFeedback: claimPoll.showWalletCreditFeedback,
         buildFragmentUrl: buildFragmentUrl,
         formDataToUrlEncoded: view.formDataToUrlEncoded,
+        fetchFragment: view.fetchFragment,
         init: init,
         refreshQueue: claimPoll.refreshQueue,
         performRefresh: claimPoll.performRefresh,
