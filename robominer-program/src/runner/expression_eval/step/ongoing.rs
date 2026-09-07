@@ -239,6 +239,6 @@ impl ExecutableRunner {
         };
         self.suspended_expression_evals.push(suspended);
         self.push_function_call_frame(function.body, function.return_type, &bindings);
-        StepOutcome::Continue
+        StepOutcome::Cpu
     }
 }

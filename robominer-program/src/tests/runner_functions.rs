@@ -93,3 +93,42 @@ fn fallthrough_returns_zero() {
         matches!(runner.next_action(&mut ctx), Some(ExecutableAction::Move(d)) if d.abs()<1e-9)
     );
 }
+
+#[test]
+fn function_call_costs_one_cpu_instruction() {
+    // move(0 + 0): two PushInts charge Cpu; ApplyBinary is folded into issuing Move.
+    let baseline = compile_executable_source("move(0 + 0);").expect("compile");
+    let mut runner = baseline.runner();
+    let mut baseline_cpu = 0;
+    loop {
+        let mut ctx = test_context(50, None);
+        match runner.step(&mut ctx) {
+            ProgramStep::Cpu => baseline_cpu += 1,
+            ProgramStep::Action(ExecutableAction::Move(_)) => break,
+            other => panic!("unexpected {other:?}"),
+        }
+    }
+
+    // Empty f() is a zero-arg InvokeCall + free fallthrough return, then PushInt + ApplyBinary.
+    // InvokeCall must cost one Cpu like other expression nodes (same total as 0 + 0).
+    let with_call = compile_executable_source("fn int f() { } move(f() + 0);").expect("compile");
+    let mut runner = with_call.runner();
+    let mut call_cpu = 0;
+    loop {
+        let mut ctx = test_context(50, None);
+        match runner.step(&mut ctx) {
+            ProgramStep::Cpu => call_cpu += 1,
+            ProgramStep::Action(ExecutableAction::Move(_)) => break,
+            other => panic!("unexpected {other:?}"),
+        }
+    }
+
+    assert_eq!(
+        baseline_cpu, 2,
+        "sanity: two literals charge before move(0 + 0)"
+    );
+    assert_eq!(
+        call_cpu, baseline_cpu,
+        "InvokeCall should cost one CPU (f() + 0 matches 0 + 0)"
+    );
+}
