@@ -178,12 +178,14 @@ function makeItem(id, extraClass) {
     }
     const moveUp = { disabled: false };
     const moveDown = { disabled: false };
+    const check = { checked: false };
     const item = {
         attrs: { 'data-queue-item-id': String(id), draggable: 'true', class: 'mining-queue-upcoming-item' },
         parentNode: null,
         nextSibling: null,
         moveUp,
         moveDown,
+        check,
         classList: {
             tokens: classTokens,
             add(name) {
@@ -203,7 +205,13 @@ function makeItem(id, extraClass) {
             if (selector.indexOf('mining-queue-move-down') !== -1) {
                 return moveDown;
             }
+            if (selector.indexOf('mining-queue-item-check') !== -1) {
+                return check;
+            }
             return null;
+        },
+        getBoundingClientRect() {
+            return { top: 0, height: 10 };
         },
         closest(selector) {
             if (selector.indexOf('mining-queue-upcoming-item') !== -1) {
@@ -259,6 +267,7 @@ function makeList(ids) {
             const to = items.indexOf(ref);
             items.splice(to < 0 ? items.length : to, 0, node);
             node.parentNode = list;
+            relinkSiblings(items);
         },
         appendChild(node) {
             const from = items.indexOf(node);
@@ -267,8 +276,14 @@ function makeList(ids) {
             }
             items.push(node);
             node.parentNode = list;
+            relinkSiblings(items);
         },
     };
+    function relinkSiblings(nodes) {
+        nodes.forEach((item, index) => {
+            item.nextSibling = nodes[index + 1] || null;
+        });
+    }
     items.forEach((item, index) => {
         item.parentNode = list;
         item.nextSibling = items[index + 1] || null;
@@ -370,6 +385,60 @@ describe('mining queue actions module', () => {
         assert.equal(items[0].moveDown.disabled, false);
         assert.equal(items[1].moveUp.disabled, false);
         assert.equal(items[1].moveDown.disabled, true);
+    });
+
+    it('moves all selected queued items as a block when dragging one of them', () => {
+        const { actions, posted } = installActions();
+        const { list, items } = makeList(['101', '102', '103', '104']);
+        items[0].check.checked = true;
+        items[2].check.checked = true;
+        actions.onDragStart({
+            target: items[2],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        items[3].getBoundingClientRect = function() {
+            return { top: 40, height: 10 };
+        };
+        actions.onDragOver({
+            target: items[3],
+            clientY: 48,
+            preventDefault() {},
+            dataTransfer: {},
+        });
+        actions.onDrop({
+            target: list,
+            preventDefault() {},
+        });
+        assert.equal(posted.length, 1);
+        assert.deepEqual(posted[0].fields.field('orderedQueueItemId'), ['102', '104', '101', '103']);
+    });
+
+    it('moves only the dragged item when it is not selected', () => {
+        const { actions, posted } = installActions();
+        const { list, items } = makeList(['101', '102', '103', '104']);
+        items[0].check.checked = true;
+        items[2].check.checked = true;
+        actions.onDragStart({
+            target: items[1],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        items[3].getBoundingClientRect = function() {
+            return { top: 40, height: 10 };
+        };
+        actions.onDragOver({
+            target: items[3],
+            clientY: 48,
+            preventDefault() {},
+            dataTransfer: {},
+        });
+        actions.onDrop({
+            target: list,
+            preventDefault() {},
+        });
+        assert.equal(posted.length, 1);
+        assert.deepEqual(posted[0].fields.field('orderedQueueItemId'), ['101', '103', '104', '102']);
     });
 
     it('allows dragstart from the drag handle', () => {

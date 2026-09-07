@@ -231,13 +231,73 @@
             });
         }
 
+        function queuedItems(list) {
+            const items = [];
+            const nodes = list.querySelectorAll('.mining-queue-upcoming-item[data-queue-item-id]');
+            for (let index = 0; index < nodes.length; index += 1) {
+                items.push(nodes[index]);
+            }
+            return items;
+        }
+
         function queuedItemIds(list) {
             const ids = [];
-            const items = list.querySelectorAll('.mining-queue-upcoming-item[data-queue-item-id]');
+            const items = queuedItems(list);
             for (let index = 0; index < items.length; index += 1) {
                 ids.push(items[index].getAttribute('data-queue-item-id'));
             }
             return ids;
+        }
+
+        function isQueuedItemSelected(item) {
+            const check = item && item.querySelector && item.querySelector('.mining-queue-item-check');
+            return !!(check && check.checked);
+        }
+
+        function movingItemsForDrag(list, dragged) {
+            const items = queuedItems(list);
+            if (!isQueuedItemSelected(dragged)) {
+                return [dragged];
+            }
+            const selected = [];
+            for (let index = 0; index < items.length; index += 1) {
+                if (isQueuedItemSelected(items[index])) {
+                    selected.push(items[index]);
+                }
+            }
+            return selected.length > 0 ? selected : [dragged];
+        }
+
+        function itemIsMoving(moving, item) {
+            for (let index = 0; index < moving.length; index += 1) {
+                if (moving[index] === item) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function placeMovingItems(list, moving, over, before) {
+            const items = queuedItems(list);
+            const rest = [];
+            for (let index = 0; index < items.length; index += 1) {
+                if (!itemIsMoving(moving, items[index])) {
+                    rest.push(items[index]);
+                }
+            }
+            let insertAt = rest.length;
+            if (over && !itemIsMoving(moving, over)) {
+                insertAt = rest.indexOf(over);
+                if (insertAt < 0) {
+                    insertAt = rest.length;
+                } else if (!before) {
+                    insertAt += 1;
+                }
+            }
+            const nextOrder = rest.slice(0, insertAt).concat(moving, rest.slice(insertAt));
+            for (let index = 0; index < nextOrder.length; index += 1) {
+                list.appendChild(nextOrder[index]);
+            }
         }
 
         function isInteractiveDragTarget(target) {
@@ -312,8 +372,10 @@
             }
             const list = item.closest('.mining-queue-upcoming-list-reorderable');
             const form = item.closest('.mining-queue-card');
+            const moving = list ? movingItemsForDrag(list, item) : [item];
             activeDrag = {
                 item: item,
+                moving: moving,
                 list: list,
                 form: form,
                 originalIds: list ? queuedItemIds(list) : [],
@@ -323,7 +385,9 @@
                 event.dataTransfer.effectAllowed = 'move';
                 event.dataTransfer.setData('text/plain', item.getAttribute('data-queue-item-id') || '');
             }
-            item.classList.add('mining-queue-upcoming-item-dragging');
+            for (let index = 0; index < moving.length; index += 1) {
+                moving[index].classList.add('mining-queue-upcoming-item-dragging');
+            }
         }
 
         function onDragOver(event) {
@@ -343,24 +407,26 @@
                 return;
             }
             const dragging = activeDrag.item;
+            const moving = activeDrag.moving || [dragging];
             const over = event.target.closest && event.target.closest('.mining-queue-upcoming-item');
-            if (!dragging || !over || over === dragging || over.parentNode !== list) {
+            if (!dragging || !over || over.parentNode !== list || itemIsMoving(moving, over)) {
                 return;
             }
             const rect = over.getBoundingClientRect ? over.getBoundingClientRect() : { top: 0, height: 0 };
             const before = event.clientY < rect.top + rect.height / 2;
-            if (before) {
-                list.insertBefore(dragging, over);
-            } else if (over.nextSibling) {
-                list.insertBefore(dragging, over.nextSibling);
-            } else {
-                list.appendChild(dragging);
-            }
+            placeMovingItems(list, moving, over, before);
             syncMoveButtonState(list);
         }
 
         function finishDrag() {
-            if (activeDrag && activeDrag.item && activeDrag.item.classList) {
+            const moving = activeDrag && activeDrag.moving;
+            if (moving) {
+                for (let index = 0; index < moving.length; index += 1) {
+                    if (moving[index] && moving[index].classList) {
+                        moving[index].classList.remove('mining-queue-upcoming-item-dragging');
+                    }
+                }
+            } else if (activeDrag && activeDrag.item && activeDrag.item.classList) {
                 activeDrag.item.classList.remove('mining-queue-upcoming-item-dragging');
             }
             activeDrag = null;
@@ -415,6 +481,13 @@
             const item = event.target.closest && event.target.closest('.mining-queue-upcoming-item');
             if (item) {
                 item.classList.remove('mining-queue-upcoming-item-dragging');
+            }
+            if (activeDrag && activeDrag.moving) {
+                for (let index = 0; index < activeDrag.moving.length; index += 1) {
+                    if (activeDrag.moving[index] && activeDrag.moving[index].classList) {
+                        activeDrag.moving[index].classList.remove('mining-queue-upcoming-item-dragging');
+                    }
+                }
             }
             if (activeDrag) {
                 restoreDragOrder();
