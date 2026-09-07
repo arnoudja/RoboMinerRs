@@ -232,10 +232,7 @@
             return;
         }
         event.preventDefault();
-        const formData = new FormData(form);
-        if (event.submitter && event.submitter.name) {
-            formData.set(event.submitter.name, event.submitter.value);
-        }
+        const formData = actions.cardSubmitFormData(form, event.submitter);
         view.fetchFragment('POST', buildFragmentUrl(), formData).catch(function() {
             form.submit();
         });

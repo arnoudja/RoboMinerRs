@@ -53,12 +53,32 @@
         }
 
         function submitFormPartial(form, markerAttr, fields) {
-            appendHiddenFields(form, markerAttr, fields);
+            stripMutationFields(form);
             const formData = new FormData(form);
             applyFieldsToFormData(formData, fields);
             return view.fetchFragment('POST', ctx.buildFragmentUrl(), formData).catch(function() {
+                appendHiddenFields(form, markerAttr, fields);
                 form.submit();
             });
+        }
+
+        function cardSubmitFormData(form, submitter) {
+            stripMutationFields(form);
+            const formData = new FormData(form);
+            if (!submitter || !submitter.name) {
+                return formData;
+            }
+            if (submitter.name === 'moveUp' || submitter.name === 'moveDown') {
+                applyFieldsToFormData(formData, {
+                    submitType: submitter.name,
+                    moveQueueItemId: submitter.value
+                });
+                return formData;
+            }
+            if (typeof formData.set === 'function') {
+                formData.set(submitter.name, submitter.value);
+            }
+            return formData;
         }
 
         function updateClearButtonLabel(form) {
@@ -263,6 +283,24 @@
             return true;
         }
 
+        function syncMoveButtonState(list) {
+            if (!list) {
+                return;
+            }
+            const items = list.querySelectorAll('.mining-queue-upcoming-item[data-queue-item-id]');
+            const lastIndex = items.length - 1;
+            for (let index = 0; index < items.length; index += 1) {
+                const up = items[index].querySelector('.mining-queue-move-up');
+                const down = items[index].querySelector('.mining-queue-move-down');
+                if (up) {
+                    up.disabled = index === 0;
+                }
+                if (down) {
+                    down.disabled = index === lastIndex;
+                }
+            }
+        }
+
         function onDragStart(event) {
             const item = event.target.closest && event.target.closest('.mining-queue-upcoming-item[draggable="true"]');
             if (!item) {
@@ -318,6 +356,7 @@
             } else {
                 list.appendChild(dragging);
             }
+            syncMoveButtonState(list);
         }
 
         function finishDrag() {
@@ -327,28 +366,44 @@
             activeDrag = null;
         }
 
+        function droppedOnControl(target) {
+            return !!(target && target.closest && target.closest('button, input, a, label'));
+        }
+
+        function armClickSuppression() {
+            suppressClickAfterDrag = true;
+            setTimeout(function() {
+                suppressClickAfterDrag = false;
+            }, 0);
+        }
+
         function onDrop(event) {
             if (!activeDrag) {
                 return;
             }
             event.preventDefault();
-            suppressClickAfterDrag = true;
+            if (droppedOnControl(event.target)) {
+                armClickSuppression();
+            }
             const list = activeDrag.list;
             const form = activeDrag.form;
             const originalIds = activeDrag.originalIds;
             const overList = event.target.closest && event.target.closest('.mining-queue-upcoming-list-reorderable');
             if (!list || overList !== list || !form) {
                 restoreDragOrder();
+                syncMoveButtonState(list);
                 finishDrag();
                 return;
             }
             const ids = queuedItemIds(list);
             if (ids.length < 2 || !sameIdSet(ids, originalIds)) {
                 restoreDragOrder();
+                syncMoveButtonState(list);
                 finishDrag();
                 return;
             }
             const unchanged = ids.join(',') === originalIds.join(',');
+            syncMoveButtonState(list);
             finishDrag();
             if (unchanged) {
                 return;
@@ -363,6 +418,7 @@
             }
             if (activeDrag) {
                 restoreDragOrder();
+                syncMoveButtonState(activeDrag.list);
                 finishDrag();
             }
         }
@@ -381,6 +437,7 @@
             clearQueuedRuns: clearQueuedRuns,
             removeQueuedRun: removeQueuedRun,
             submitFormPartial: submitFormPartial,
+            cardSubmitFormData: cardSubmitFormData,
             submitQueuedReorder: submitQueuedReorder,
             onDragStart: onDragStart,
             onDragOver: onDragOver,

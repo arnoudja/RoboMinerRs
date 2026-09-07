@@ -52,6 +52,7 @@ class FakeFormData {
 }
 
 function loadActions() {
+    const timeouts = [];
     const sandbox = {
         window: null,
         console,
@@ -79,15 +80,19 @@ function loadActions() {
             },
         },
         FormData: FakeFormData,
+        setTimeout(fn) {
+            timeouts.push(fn);
+            return timeouts.length;
+        },
     };
     sandbox.window = sandbox;
     vm.createContext(sandbox);
     vm.runInContext(ACTIONS_JS, sandbox);
-    return sandbox;
+    return { sandbox, timeouts };
 }
 
 function installActions(viewOverrides) {
-    const sandbox = loadActions();
+    const { sandbox, timeouts } = loadActions();
     const posted = [];
     const ctx = {
         buildFragmentUrl() {
@@ -102,7 +107,7 @@ function installActions(viewOverrides) {
         },
     }, viewOverrides || {});
     const actions = sandbox.RoboMinerMiningQueueInstall.actions(ctx, view);
-    return { sandbox, actions, posted };
+    return { sandbox, actions, posted, timeouts };
 }
 
 function hiddenInput(name, value, markerAttr) {
@@ -171,10 +176,14 @@ function makeItem(id, extraClass) {
     if (extraClass) {
         classTokens.add(extraClass);
     }
+    const moveUp = { disabled: false };
+    const moveDown = { disabled: false };
     const item = {
         attrs: { 'data-queue-item-id': String(id), draggable: 'true', class: 'mining-queue-upcoming-item' },
         parentNode: null,
         nextSibling: null,
+        moveUp,
+        moveDown,
         classList: {
             tokens: classTokens,
             add(name) {
@@ -186,6 +195,15 @@ function makeItem(id, extraClass) {
         },
         getAttribute(name) {
             return item.attrs[name];
+        },
+        querySelector(selector) {
+            if (selector.indexOf('mining-queue-move-up') !== -1) {
+                return moveUp;
+            }
+            if (selector.indexOf('mining-queue-move-down') !== -1) {
+                return moveDown;
+            }
+            return null;
         },
         closest(selector) {
             if (selector.indexOf('mining-queue-upcoming-item') !== -1) {
@@ -254,13 +272,15 @@ function makeList(ids) {
     items.forEach((item, index) => {
         item.parentNode = list;
         item.nextSibling = items[index + 1] || null;
+        item.moveUp.disabled = index === 0;
+        item.moveDown.disabled = index === items.length - 1;
     });
     return { list, items, form };
 }
 
 describe('mining queue actions module', () => {
     it('registers clear/remove helpers and wires updateClearButtonLabel on ctx', () => {
-        const sandbox = loadActions();
+        const { sandbox } = loadActions();
         const ctx = {
             buildFragmentUrl() {
                 return 'miningQueue?fragment=queue';
@@ -275,6 +295,7 @@ describe('mining queue actions module', () => {
         assert.equal(typeof actions.clearQueuedRuns, 'function');
         assert.equal(typeof actions.removeQueuedRun, 'function');
         assert.equal(typeof actions.submitFormPartial, 'function');
+        assert.equal(typeof actions.cardSubmitFormData, 'function');
         assert.equal(typeof actions.submitQueuedReorder, 'function');
         assert.equal(typeof actions.onDragStart, 'function');
         assert.equal(typeof ctx.updateClearButtonLabel, 'function');
@@ -288,8 +309,6 @@ describe('mining queue actions module', () => {
         assert.equal(posted[0].method, 'POST');
         assert.equal(posted[0].fields.field('submitType'), 'reorder');
         assert.deepEqual(posted[0].fields.field('orderedQueueItemId'), ['102', '101']);
-        assert.equal(form.fields.submitType, 'reorder');
-        assert.deepEqual(form.fields.orderedQueueItemId, ['102', '101']);
     });
 
     it('submitQueuedReorder ignores leftover clear fields from a previous action', () => {
@@ -303,6 +322,54 @@ describe('mining queue actions module', () => {
         assert.equal(posted[0].fields.field('submitType'), 'reorder');
         assert.equal(posted[0].fields.field('clearMode'), undefined);
         assert.deepEqual(posted[0].fields.field('orderedQueueItemId'), ['102', '101']);
+    });
+
+    it('cardSubmitFormData lets a move button win over leftover reorder fields', () => {
+        const { actions } = installActions();
+        const form = makeForm([
+            hiddenInput('submitType', 'reorder', 'data-mining-queue-reorder'),
+            hiddenInput('orderedQueueItemId', '102', 'data-mining-queue-reorder'),
+            hiddenInput('orderedQueueItemId', '101', 'data-mining-queue-reorder'),
+        ]);
+        const formData = actions.cardSubmitFormData(form, { name: 'moveUp', value: '102' });
+        assert.equal(formData.field('submitType'), 'moveUp');
+        assert.equal(formData.field('moveQueueItemId'), '102');
+        assert.equal(formData.field('orderedQueueItemId'), undefined);
+        assert.equal(formData.field('moveUp'), undefined);
+    });
+
+    it('cardSubmitFormData keeps add/fill submitType from the clicked button', () => {
+        const { actions } = installActions();
+        const form = makeForm([
+            hiddenInput('submitType', 'reorder', 'data-mining-queue-reorder'),
+            hiddenInput('orderedQueueItemId', '101', 'data-mining-queue-reorder'),
+        ]);
+        const formData = actions.cardSubmitFormData(form, { name: 'submitType', value: 'add' });
+        assert.equal(formData.field('submitType'), 'add');
+        assert.equal(formData.field('orderedQueueItemId'), undefined);
+    });
+
+    it('disables edge move buttons after dropping a queued item', () => {
+        const { actions } = installActions();
+        const { list, items } = makeList(['101', '102']);
+        assert.equal(items[0].moveUp.disabled, true);
+        assert.equal(items[0].moveDown.disabled, false);
+        assert.equal(items[1].moveUp.disabled, false);
+        assert.equal(items[1].moveDown.disabled, true);
+        actions.onDragStart({
+            target: items[1],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        list.insertBefore(items[1], items[0]);
+        actions.onDrop({
+            target: list,
+            preventDefault() {},
+        });
+        assert.equal(items[0].moveUp.disabled, true);
+        assert.equal(items[0].moveDown.disabled, false);
+        assert.equal(items[1].moveUp.disabled, false);
+        assert.equal(items[1].moveDown.disabled, true);
     });
 
     it('allows dragstart from the drag handle', () => {
@@ -369,6 +436,59 @@ describe('mining queue actions module', () => {
         assert.equal(posted.length, 1);
         assert.equal(posted[0].fields.field('submitType'), 'reorder');
         assert.deepEqual(posted[0].fields.field('orderedQueueItemId'), ['102', '101']);
+        assert.equal(actions.consumeDragClickSuppression(), false);
+    });
+
+    it('does not swallow a later click after a successful queued drop', () => {
+        const { actions } = installActions();
+        const { list, items } = makeList(['101', '102']);
+        actions.onDragStart({
+            target: items[1],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        list.insertBefore(items[1], items[0]);
+        actions.onDrop({
+            target: list,
+            preventDefault() {},
+        });
+        assert.equal(actions.consumeDragClickSuppression(), false);
+    });
+
+    it('suppresses only the same-turn click when a drop lands on a control', () => {
+        const { actions, timeouts } = installActions();
+        const { items } = makeList(['101', '102']);
+        const clearButton = {
+            closest(selector) {
+                if (selector === 'button, input, a, label') {
+                    return clearButton;
+                }
+                return null;
+            },
+        };
+        actions.onDragStart({
+            target: items[1],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        actions.onDrop({
+            target: clearButton,
+            preventDefault() {},
+        });
+        assert.equal(actions.consumeDragClickSuppression(), true);
+        assert.equal(actions.consumeDragClickSuppression(), false);
+
+        actions.onDragStart({
+            target: items[1],
+            dataTransfer: { effectAllowed: '', setData() {} },
+            preventDefault() {},
+        });
+        actions.onDrop({
+            target: clearButton,
+            preventDefault() {},
+        });
+        timeouts.forEach((fn) => fn());
+        assert.equal(actions.consumeDragClickSuppression(), false);
     });
 
     it('does not post a reorder when the dropped list is missing queue ids', () => {
