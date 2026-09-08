@@ -57,6 +57,11 @@ assets = [
         "644",
     ],
     [
+        "../deploy/systemd/package-post-install.sh",
+        "usr/share/robominer/package-post-install.sh",
+        "755",
+    ],
+    [
         "../deploy/systemd/README.md",
         "opt/robominer/deploy/systemd/README.md",
         "644",
