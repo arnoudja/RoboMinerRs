@@ -8,6 +8,29 @@ RoboMiner is an online programming game. Improve the program for your robot to m
 - **MySQL 8.4** (CI and supported target). MariaDB may work but is best-effort /
   untested against the current schema and SQL dialect.
 
+### Arch / Omarchy
+
+Omarchy (and other Arch Linux systems) can develop and run from source without
+Debian tooling:
+
+```sh
+sudo pacman -S --needed base-devel rust nodejs npm docker python
+# Optional MySQL client tools (gameData.sql / mysql CLI):
+sudo pacman -S --needed mariadb-clients
+```
+
+Prefer **Docker MySQL 8.4** for the supported dialect (host MariaDB remains
+best-effort). The usual test entry point starts or reuses a container when
+needed:
+
+```sh
+resources/scripts/run-tests-with-db.sh
+```
+
+Day-to-day builds are unchanged (`cargo build --workspace`). To install with
+systemd using an Arch package (same layout as the `.deb`), see
+[deploy/arch/README.md](deploy/arch/README.md).
+
 The database scripts are kept under `resources/database/`:
 
 - `createDatabase.sql` — database schema
@@ -59,6 +82,15 @@ sudo apt install ./target/debian/robominer_*.deb
 On a Pi, copy the `aarch64` `.deb` from the build output and install the same way.
 If `/etc/robominer/robominer.env` already exists, the package `postinst` runs
 `migrate apply`, applies `gameData.sql`, and starts the systemd units.
+
+On Arch / Omarchy, build an installable package instead of a `.deb`:
+
+```sh
+cd deploy/arch
+./makepkg-local.sh -si
+```
+
+Details and an AUR publish checklist: [deploy/arch/README.md](deploy/arch/README.md).
 
 The main binaries are:
 

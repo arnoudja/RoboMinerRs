@@ -51,6 +51,20 @@ When `robominer.env` already exists, `postinst`
 runs `migrate apply`, applies `/usr/share/robominer/gameData.sql`, and starts
 `robominer-engine` / `robominer-web`.
 
+### Arch / Omarchy package
+
+On Arch Linux or Omarchy, use the AUR-ready source package instead of a `.deb`:
+
+```bash
+cd deploy/arch
+./makepkg-local.sh -si
+```
+
+That installs the same `/opt/robominer` layout, systemd units, and shared
+post-install hook (`/usr/share/robominer/package-post-install.sh`). See
+[../arch/README.md](../arch/README.md) for dependencies, local vs AUR builds,
+and the manual AUR publish checklist.
+
 Set `ROBOMINER_DATABASE_URL` (preferred) or `ROBOMINER_DB_SERVER` /
 `ROBOMINER_DB_USER` / `ROBOMINER_DB_PASSWORD` / `ROBOMINER_DB_DATABASE` so the
 install scripts can create `/etc/robominer/robominer.env` automatically.

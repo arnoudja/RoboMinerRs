@@ -13,6 +13,12 @@ Supported database target is **MySQL 8.4** (CI and Docker test image). MariaDB m
 work but is best-effort. Some Cloud Agent VMs ship a host MySQL 8.0 package; that
 is a local convenience, not the supported dialect—see [AGENTS.md](AGENTS.md).
 
+On **Arch / Omarchy**, install `base-devel`, a Rust toolchain, `nodejs`/`npm`,
+`docker`, and optionally `mariadb-clients` via `pacman` (see the Arch / Omarchy
+section in [README.md](README.md)). Prefer Docker MySQL 8.4 through
+`resources/scripts/run-tests-with-db.sh` rather than host MariaDB. Packaging:
+[deploy/arch/README.md](deploy/arch/README.md).
+
 ## Pull requests
 
 Before opening or updating a PR:

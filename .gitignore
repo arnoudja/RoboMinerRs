@@ -5,3 +5,11 @@ __pycache__/
 /local/
 node_modules/
 .tmp/
+
+# Arch makepkg local build artifacts
+/deploy/arch/PKGBUILD.local
+/deploy/arch/*.tar.gz
+/deploy/arch/*.tar.zst
+/deploy/arch/*.pkg.tar*
+/deploy/arch/src/
+/deploy/arch/pkg/
