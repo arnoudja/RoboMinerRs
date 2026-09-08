@@ -1,0 +1,21 @@
+pkgbase = robominer
+	pkgdesc = Online programming game: code robots to mine efficiently
+	pkgver = 1.1.0
+	pkgrel = 1
+	url = https://github.com/arnoudja/RoboMinerRs
+	install = robominer.install
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	license = Apache-2.0
+	makedepends = rust
+	makedepends = cargo
+	depends = systemd
+	optdepends = mariadb-clients: mysql client for applying gameData.sql
+	optdepends = docker: run MySQL 8.4 (supported database target)
+	optdepends = python: parse ROBOMINER_DATABASE_URL when applying gameData.sql
+	options = !lto
+	source = robominer-1.1.0.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/475ee5e5b2f1b406515aae93c3504eb02561262e.tar.gz
+	sha256sums = SKIP
+
+pkgname = robominer

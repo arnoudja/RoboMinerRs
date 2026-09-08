@@ -1,0 +1,74 @@
+# Maintainer: RoboMiner maintainers
+# AUR-ready source package. Update `_commit` and checksums on each release
+# (see README.md). For builds from a local checkout, use ./makepkg-local.sh.
+
+pkgname=robominer
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="Online programming game: code robots to mine efficiently"
+arch=('x86_64' 'aarch64')
+url="https://github.com/arnoudja/RoboMinerRs"
+license=('MIT' 'Apache-2.0')
+depends=('systemd')
+makedepends=('rust' 'cargo')
+optdepends=(
+  'mariadb-clients: mysql client for applying gameData.sql'
+  'docker: run MySQL 8.4 (supported database target)'
+  'python: parse ROBOMINER_DATABASE_URL when applying gameData.sql'
+)
+install=robominer.install
+options=('!lto')
+
+# Pin the upstream git revision packaged by this PKGBUILD (update on release).
+_commit=475ee5e5b2f1b406515aae93c3504eb02561262e
+_srcdir="RoboMinerRs-${_commit}"
+
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/${_commit}.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "${srcdir}/${_srcdir}"
+  export CARGO_HOME="${srcdir}/cargo-home"
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+  cd "${srcdir}/${_srcdir}"
+  export CARGO_HOME="${srcdir}/cargo-home"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+  cargo build --release --locked --offline \
+    -p robominer-engine \
+    -p robominer-web
+}
+
+package() {
+  cd "${srcdir}/${_srcdir}"
+  local target="${srcdir}/target/release"
+
+  install -Dm755 "${target}/robominer-engine" \
+    "${pkgdir}/opt/robominer/bin/robominer-engine"
+  install -Dm755 "${target}/robominer-web" \
+    "${pkgdir}/opt/robominer/bin/robominer-web"
+  install -Dm755 deploy/systemd/wait-web-health.sh \
+    "${pkgdir}/opt/robominer/bin/robominer-wait-web-health"
+
+  install -d "${pkgdir}/opt/robominer/static"
+  cp -a robominer-web/static/. "${pkgdir}/opt/robominer/static/"
+
+  install -Dm644 deploy/systemd/robominer-engine.service \
+    "${pkgdir}/usr/lib/systemd/system/robominer-engine.service"
+  install -Dm644 deploy/systemd/robominer-web.service \
+    "${pkgdir}/usr/lib/systemd/system/robominer-web.service"
+  install -Dm644 deploy/systemd/robominer-engine.sysusers \
+    "${pkgdir}/usr/lib/sysusers.d/robominer.conf"
+
+  install -Dm644 resources/database/gameData.sql \
+    "${pkgdir}/usr/share/robominer/gameData.sql"
+  install -Dm755 deploy/systemd/package-post-install.sh \
+    "${pkgdir}/usr/share/robominer/package-post-install.sh"
+
+  install -Dm644 deploy/systemd/README.md \
+    "${pkgdir}/opt/robominer/deploy/systemd/README.md"
+  install -Dm644 LICENSE-MIT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-MIT"
+  install -Dm644 LICENSE-APACHE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-APACHE"
+}
