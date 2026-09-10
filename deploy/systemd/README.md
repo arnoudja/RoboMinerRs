@@ -39,6 +39,10 @@ That builds a native `robominer_*.deb` and, when the host is not already
 `aarch64`, a cross-built Pi package (needs `gcc-aarch64-linux-gnu` and the
 `aarch64-unknown-linux-gnu` Rust target).
 
+On a Raspberry Pi, **MariaDB** is the common database package (supported at
+**10.11+**, same as Arch host MariaDB). Point `ROBOMINER_DATABASE_URL` at it with
+the `mysql://` scheme. MySQL 8.4 remains supported where you prefer it.
+
 On the target system:
 
 ```bash

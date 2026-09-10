@@ -1,12 +1,12 @@
-name: MySQL test setup
-description: Install mysql client and initialize RoboMiner schema for CI jobs.
+name: MySQL/MariaDB test setup
+description: Install a MySQL-compatible client and initialize RoboMiner schema for CI jobs.
 
 runs:
   using: composite
   steps:
-    - name: Install MySQL client
+    - name: Install MySQL-compatible client
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y mysql-client
+      run: sudo apt-get update && sudo apt-get install -y default-mysql-client
 
     - name: Initialize database schema
       shell: bash

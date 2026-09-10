@@ -28,7 +28,18 @@ pub fn connect_database(
 }
 
 pub fn default_web_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("static")
+    // Packaged installs bake CARGO_MANIFEST_DIR from the build tree, which is
+    // gone at runtime. Prefer that path when it still exists (cargo run / tests),
+    // otherwise the systemd package layout under /opt/robominer.
+    let crate_static = Path::new(env!("CARGO_MANIFEST_DIR")).join("static");
+    if crate_static.is_dir() {
+        return crate_static;
+    }
+    let packaged = Path::new("/opt/robominer/static");
+    if packaged.is_dir() {
+        return packaged.to_path_buf();
+    }
+    crate_static
 }
 
 /// Apply session settings and build the Axum `ServerConfig` (without binding a listener).

@@ -7,10 +7,18 @@ on:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db: mysql
+            image: mysql:8.4
+          - db: mariadb
+            image: mariadb:11.4
 
     services:
       mysql:
-        image: mysql:8.4
+        image: ${{ matrix.image }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: RoboMiner
@@ -42,6 +50,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.db }}
 
       - uses: taiki-e/install-action@nextest
 
@@ -70,7 +80,7 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
 
-      - name: Test
+      - name: Test (${{ matrix.db }})
         run: resources/scripts/run-tests-with-db.sh
 
   fast-tests:

@@ -206,12 +206,12 @@ main() {
     fi
 
     cat >&2 <<EOF
-Could not find a usable MySQL instance for RoboMiner tests.
+Could not find a usable MySQL/MariaDB instance for RoboMiner tests.
 
 Options:
-  1. Start local MySQL and run: resources/scripts/init-ci-database.sh
+  1. Start local MySQL or MariaDB and run: resources/scripts/init-ci-database.sh
   2. Set ROBOMINER_DATABASE_URL to an initialized RoboMiner database
-  3. Install Docker so a persistent test container can be created automatically
+  3. Install Docker so a persistent MySQL 8.4 test container can be created automatically
 
 Default test URL when using the Docker helper:
   mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:${DOCKER_PORT}/${MYSQL_DATABASE}

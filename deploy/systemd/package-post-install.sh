@@ -144,19 +144,20 @@ apply_database_updates() {
     fi
 
     echo "RoboMiner: applying gameData.sql..."
+    # Strip obsolete SET storage_engine= (removed in modern MySQL/MariaDB).
     if [ -n "$dbport" ]; then
-        MYSQL_PWD="$dbpassword" mysql \
+        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" mysql \
             --protocol=TCP \
             -h "$dbserver" \
             -P "$dbport" \
             -u "$dbuser" \
-            "$dbdatabase" < "$GAMEDATA_SQL"
+            "$dbdatabase"
     else
-        MYSQL_PWD="$dbpassword" mysql \
+        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" mysql \
             --protocol=TCP \
             -h "$dbserver" \
             -u "$dbuser" \
-            "$dbdatabase" < "$GAMEDATA_SQL"
+            "$dbdatabase"
     fi
 }
 

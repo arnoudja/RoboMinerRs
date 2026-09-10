@@ -56,8 +56,9 @@ sudo /usr/share/robominer/package-post-install.sh configure
 sudo systemctl start robominer-engine robominer-web
 ```
 
-Supported database target remains **MySQL 8.4**. On Omarchy, prefer Docker
-(`docker run` / the repo test helpers) rather than host MariaDB.
+Supported database targets remain **MySQL 8.4** and **MariaDB 10.11+**. On
+Omarchy / Arch, prefer **host MariaDB** (`pacman -S mariadb`); Docker MySQL 8.4
+remains a supported alternative via the repo test helpers.
 
 ## AUR publish checklist (manual)
 

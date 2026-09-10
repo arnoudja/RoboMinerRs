@@ -12,8 +12,9 @@ license=('MIT' 'Apache-2.0')
 depends=('systemd')
 makedepends=('rust' 'cargo')
 optdepends=(
+  'mariadb: host database (supported with MariaDB 10.11+)'
   'mariadb-clients: mysql client for applying gameData.sql'
-  'docker: run MySQL 8.4 (supported database target)'
+  'docker: optional MySQL 8.4 container instead of host MariaDB'
   'python: parse ROBOMINER_DATABASE_URL when applying gameData.sql'
 )
 install=robominer.install

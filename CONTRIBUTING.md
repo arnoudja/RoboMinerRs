@@ -9,14 +9,16 @@ Orientation for contributors:
 - [AGENTS.md](AGENTS.md) — Cursor Cloud / VM environment caveats
 - Agent automation also follows [`.cursor/rules/`](.cursor/rules/); keep process docs here rather than forking them into PRs
 
-Supported database target is **MySQL 8.4** (CI and Docker test image). MariaDB may
-work but is best-effort. Some Cloud Agent VMs ship a host MySQL 8.0 package; that
-is a local convenience, not the supported dialect—see [AGENTS.md](AGENTS.md).
+Supported database targets are **MySQL 8.4** and **MariaDB 10.11+**. CI runs the
+DB-backed rust job against both `mysql:8.4` and `mariadb:11.4`. Coverage stays on
+MySQL 8.4. Some Cloud Agent VMs ship a host MySQL 8.0 package; that is a local
+convenience—prefer 8.4 / MariaDB 10.11+ dialect features—see [AGENTS.md](AGENTS.md).
 
 On **Arch / Omarchy**, install `base-devel`, a Rust toolchain, `nodejs`/`npm`,
-`docker`, and optionally `mariadb-clients` via `pacman` (see the Arch / Omarchy
-section in [README.md](README.md)). Prefer Docker MySQL 8.4 through
-`resources/scripts/run-tests-with-db.sh` rather than host MariaDB. Packaging:
+`mariadb` / `mariadb-clients`, and optionally `docker` via `pacman` (see the
+Arch / Omarchy section in [README.md](README.md)). Prefer host MariaDB for
+day-to-day and Pi-like setups; Docker MySQL 8.4 remains available through
+`resources/scripts/run-tests-with-db.sh`. Packaging:
 [deploy/arch/README.md](deploy/arch/README.md).
 
 ## Pull requests

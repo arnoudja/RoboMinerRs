@@ -5,8 +5,8 @@ RoboMiner is an online programming game. Improve the program for your robot to m
 ## Prerequisites
 
 - Rust toolchain with Cargo.
-- **MySQL 8.4** (CI and supported target). MariaDB may work but is best-effort /
-  untested against the current schema and SQL dialect.
+- A supported database: **MySQL 8.4** or **MariaDB 10.11+** (CI exercises
+  MySQL 8.4 and MariaDB 11.4; connection URLs use the `mysql://` scheme for both).
 
 ### Arch / Omarchy
 
@@ -14,14 +14,15 @@ Omarchy (and other Arch Linux systems) can develop and run from source without
 Debian tooling:
 
 ```sh
-sudo pacman -S --needed base-devel rust nodejs npm docker python
-# Optional MySQL client tools (gameData.sql / mysql CLI):
-sudo pacman -S --needed mariadb-clients
+sudo pacman -S --needed base-devel rust nodejs npm python mariadb mariadb-clients
+# Optional: Docker when you prefer containerized MySQL 8.4 instead of host MariaDB
+sudo pacman -S --needed docker
 ```
 
-Prefer **Docker MySQL 8.4** for the supported dialect (host MariaDB remains
-best-effort). The usual test entry point starts or reuses a container when
-needed:
+Prefer **host MariaDB** on Arch and Raspberry Pi (common system package). Docker
+**MySQL 8.4** remains a supported alternative via the test helpers. The usual
+test entry point reuses local MySQL/MariaDB on `127.0.0.1:3306` when the schema
+is present, or starts a Docker MySQL container when needed:
 
 ```sh
 resources/scripts/run-tests-with-db.sh
@@ -107,7 +108,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full test workflow, route-to-test
 matrix, coverage floor (93), golden fixtures, git hooks, and crate-boundary rules.
 
 ```sh
-resources/scripts/run-tests-with-db.sh   # same entry point as CI (MySQL 8.4)
+resources/scripts/run-tests-with-db.sh   # same entry point as CI (MySQL 8.4 + MariaDB)
 resources/scripts/run-fast-tests.sh      # no database
 cargo fmt --all -- --check
 cargo clippy --workspace -- -D warnings

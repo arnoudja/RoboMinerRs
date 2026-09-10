@@ -2,11 +2,11 @@
 
 ## Cursor Cloud specific instructions
 
-RoboMiner is a Rust workspace: a web game backed by MySQL. The two runnable
-binaries are `robominer-web` (the HTTP host) and `robominer-engine` (a CLI +
-rally/mining worker). Standard build/test/lint/run commands live in `README.md`
-and `CONTRIBUTING.md` — use those; only the non-obvious environment caveats are
-noted here.
+RoboMiner is a Rust workspace: a web game backed by MySQL or MariaDB. The two
+runnable binaries are `robominer-web` (the HTTP host) and `robominer-engine` (a
+CLI + rally/mining worker). Standard build/test/lint/run commands live in
+`README.md` and `CONTRIBUTING.md` — use those; only the non-obvious environment
+caveats are noted here.
 
 ### Toolchain
 
@@ -17,9 +17,9 @@ noted here.
 
 ### MySQL (must be started manually each session)
 
-- This Cloud VM installs a **host** MySQL **8.0** package; CI and the supported
-  target use **MySQL 8.4** (see README / CONTRIBUTING). Prefer dialect features
-  that work on 8.4; treat the host 8.0 as a local convenience.
+- Supported engines are **MySQL 8.4** and **MariaDB 10.11+** (CI matrix uses
+  both). This Cloud VM may install a **host** MySQL **8.0** package as a local
+  convenience—prefer dialect features that work on MySQL 8.4 and MariaDB 10.11+.
 - There is no systemd/auto-start in the VM. Start MySQL with
   `sudo service mysql start` at the beginning of a session (check with
   `sudo mysqladmin ping`).
@@ -52,8 +52,8 @@ noted here.
   ```
 
   Fresh files on the same overlay root work; only the stale snapshot datadir
-  fails. Prefer Docker MySQL 8.4 via `ensure-test-mysql.sh` when `docker` is
-  available.
+  fails. Prefer a supported MySQL 8.4 or MariaDB instance; Docker MySQL 8.4 via
+  `ensure-test-mysql.sh` works when `docker` is available.
 
 ### Running the web host
 
