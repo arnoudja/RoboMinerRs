@@ -11,11 +11,12 @@ pkgbase = robominer
 	makedepends = rust
 	makedepends = cargo
 	depends = systemd
+	optdepends = mariadb: host database (supported with MariaDB 10.11+)
 	optdepends = mariadb-clients: mysql client for applying gameData.sql
-	optdepends = docker: run MySQL 8.4 (supported database target)
+	optdepends = docker: optional MySQL 8.4 container instead of host MariaDB
 	optdepends = python: parse ROBOMINER_DATABASE_URL when applying gameData.sql
 	options = !lto
-	source = robominer-1.1.0.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/42fcacfdffd291195bc57cd4157cd64ef25b1a7f.tar.gz
+	source = robominer-1.1.0.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/a8ef1711aed018d17c8d4bd975c25f1edb9706ed.tar.gz
 	sha256sums = SKIP
 
 pkgname = robominer

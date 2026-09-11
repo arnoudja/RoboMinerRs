@@ -21,7 +21,7 @@ install=robominer.install
 options=('!lto')
 
 # Pin the upstream git revision packaged by this PKGBUILD (update on release).
-_commit=42fcacfdffd291195bc57cd4157cd64ef25b1a7f
+_commit=a8ef1711aed018d17c8d4bd975c25f1edb9706ed
 _srcdir="RoboMinerRs-${_commit}"
 
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/${_commit}.tar.gz")
