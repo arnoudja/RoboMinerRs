@@ -1519,7 +1519,7 @@ insert into AchievementStepDepotTotalRequirement (achievementId, step, oreId, am
                                            values (3,             11,   2,     100);
 
 insert into AchievementStep (achievementId, step, achievementPoints, oreId, maxOreReward)
-                     values (3,             12,   10,                2,     9999);
+                     values (3,             12,   25,                2,     9999);
 insert into AchievementStepMiningScoreRequirement (achievementId, step, miningAreaId, minimumScore)
                                            values (3,             12,   1102,         900.0),
                                                   (3,             12,   1103,         900.0);
