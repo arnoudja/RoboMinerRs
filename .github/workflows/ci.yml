@@ -11,10 +11,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # mysqladmin ping works on Oracle MySQL; MariaDB images need their
+          # native healthcheck.sh or the service stays unhealthy forever.
           - db: mysql
             image: mysql:8.4
+            health_cmd: mysqladmin ping -h 127.0.0.1 -uroot -proot
           - db: mariadb
             image: mariadb:11.4
+            health_cmd: healthcheck.sh --connect --innodb_initialized
 
     services:
       mysql:
@@ -27,10 +31,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-cmd="${{ matrix.health_cmd }}"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=10
+          --health-retries=12
 
     env:
       ROBOMINER_DATABASE_URL: mysql://robominer:password@127.0.0.1:3306/RoboMiner
