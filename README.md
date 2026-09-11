@@ -5,8 +5,32 @@ RoboMiner is an online programming game. Improve the program for your robot to m
 ## Prerequisites
 
 - Rust toolchain with Cargo.
-- **MySQL 8.4** (CI and supported target). MariaDB may work but is best-effort /
-  untested against the current schema and SQL dialect.
+- A supported database: **MySQL 8.4** or **MariaDB 10.11+** (CI exercises
+  MySQL 8.4 and MariaDB 11.4; connection URLs use the `mysql://` scheme for both).
+
+### Arch / Omarchy
+
+Omarchy (and other Arch Linux systems) can develop and run from source without
+Debian tooling:
+
+```sh
+sudo pacman -S --needed base-devel rust nodejs npm python mariadb mariadb-clients
+# Optional: Docker when you prefer containerized MySQL 8.4 instead of host MariaDB
+sudo pacman -S --needed docker
+```
+
+Prefer **host MariaDB** on Arch and Raspberry Pi (common system package). Docker
+**MySQL 8.4** remains a supported alternative via the test helpers. The usual
+test entry point reuses local MySQL/MariaDB on `127.0.0.1:3306` when the schema
+is present, or starts a Docker MySQL container when needed:
+
+```sh
+resources/scripts/run-tests-with-db.sh
+```
+
+Day-to-day builds are unchanged (`cargo build --workspace`). To install with
+systemd using an Arch package (same layout as the `.deb`), see
+[deploy/arch/README.md](deploy/arch/README.md).
 
 The database scripts are kept under `resources/database/`:
 
@@ -60,6 +84,15 @@ On a Pi, copy the `aarch64` `.deb` from the build output and install the same wa
 If `/etc/robominer/robominer.env` already exists, the package `postinst` runs
 `migrate apply`, applies `gameData.sql`, and starts the systemd units.
 
+On Arch / Omarchy, build an installable package instead of a `.deb`:
+
+```sh
+cd deploy/arch
+./makepkg-local.sh -si
+```
+
+Details and an AUR publish checklist: [deploy/arch/README.md](deploy/arch/README.md).
+
 The main binaries are:
 
 - `target/debug/robominer-engine`
@@ -75,7 +108,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full test workflow, route-to-test
 matrix, coverage floor (93), golden fixtures, git hooks, and crate-boundary rules.
 
 ```sh
-resources/scripts/run-tests-with-db.sh   # same entry point as CI (MySQL 8.4)
+resources/scripts/run-tests-with-db.sh   # same entry point as CI (MySQL 8.4 + MariaDB)
 resources/scripts/run-fast-tests.sh      # no database
 cargo fmt --all -- --check
 cargo clippy --workspace -- -D warnings

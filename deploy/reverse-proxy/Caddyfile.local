@@ -1,0 +1,38 @@
+# Local HTTPS for RoboMiner (Caddy internal CA — no public DNS).
+#
+# Copy to /etc/caddy/Caddyfile or include it from there, then:
+#   sudo systemctl enable --now caddy
+#   sudo systemctl reload caddy
+#
+# /etc/hosts:
+#   127.0.0.1 robominer.test
+#
+# Prefer .test (not .local): many Linux nsswitch configs resolve *.local via
+# mDNS and never fall through to /etc/hosts.
+#
+# Trust Caddy's local CA (Arch / systemd install):
+#   sudo caddy trust
+#
+# App config behind this proxy (see deploy/reverse-proxy/README.md):
+#   HOST=127.0.0.1
+#   ROBOMINER_SECURE_COOKIES=1
+#   ROBOMINER_TRUST_PROXY=1
+
+robominer.test {
+	tls internal
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy 127.0.0.1:8080 {
+		# RoboMiner trustproxy reads only X-Real-IP (peer falls back otherwise).
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

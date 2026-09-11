@@ -39,6 +39,10 @@ That builds a native `robominer_*.deb` and, when the host is not already
 `aarch64`, a cross-built Pi package (needs `gcc-aarch64-linux-gnu` and the
 `aarch64-unknown-linux-gnu` Rust target).
 
+On a Raspberry Pi, **MariaDB** is the common database package (supported at
+**10.11+**, same as Arch host MariaDB). Point `ROBOMINER_DATABASE_URL` at it with
+the `mysql://` scheme. MySQL 8.4 remains supported where you prefer it.
+
 On the target system:
 
 ```bash
@@ -50,6 +54,20 @@ units, and sysusers. It does **not** create `/etc/robominer/robominer.env`.
 When `robominer.env` already exists, `postinst`
 runs `migrate apply`, applies `/usr/share/robominer/gameData.sql`, and starts
 `robominer-engine` / `robominer-web`.
+
+### Arch / Omarchy package
+
+On Arch Linux or Omarchy, use the AUR-ready source package instead of a `.deb`:
+
+```bash
+cd deploy/arch
+./makepkg-local.sh -si
+```
+
+That installs the same `/opt/robominer` layout, systemd units, and shared
+post-install hook (`/usr/share/robominer/package-post-install.sh`). See
+[../arch/README.md](../arch/README.md) for dependencies, local vs AUR builds,
+and the manual AUR publish checklist.
 
 Set `ROBOMINER_DATABASE_URL` (preferred) or `ROBOMINER_DB_SERVER` /
 `ROBOMINER_DB_USER` / `ROBOMINER_DB_PASSWORD` / `ROBOMINER_DB_DATABASE` so the

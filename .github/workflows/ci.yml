@@ -7,10 +7,22 @@ on:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # mysqladmin ping works on Oracle MySQL; MariaDB images need their
+          # native healthcheck.sh or the service stays unhealthy forever.
+          - db: mysql
+            image: mysql:8.4
+            health_cmd: mysqladmin ping -h 127.0.0.1 -uroot -proot
+          - db: mariadb
+            image: mariadb:11.4
+            health_cmd: healthcheck.sh --connect --innodb_initialized
 
     services:
       mysql:
-        image: mysql:8.4
+        image: ${{ matrix.image }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: RoboMiner
@@ -19,10 +31,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-cmd="${{ matrix.health_cmd }}"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=10
+          --health-retries=12
 
     env:
       ROBOMINER_DATABASE_URL: mysql://robominer:password@127.0.0.1:3306/RoboMiner
@@ -42,6 +54,8 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.db }}
 
       - uses: taiki-e/install-action@nextest
 
@@ -70,7 +84,7 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
 
-      - name: Test
+      - name: Test (${{ matrix.db }})
         run: resources/scripts/run-tests-with-db.sh
 
   fast-tests:

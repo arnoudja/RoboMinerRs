@@ -12,9 +12,9 @@ and hardening notes in [`deploy/INTERNET-HARDENING.md`](../deploy/INTERNET-HARDE
 
 | Variable | Used by | Default | Purpose |
 | --- | --- | --- | --- |
-| `ROBOMINER_DATABASE_URL` | web, engine, scripts | _(required)_ | MySQL URL (`mysql://user:pass@host:3306/RoboMiner`) |
+| `ROBOMINER_DATABASE_URL` | web, engine, scripts | _(required)_ | MySQL/MariaDB URL (`mysql://user:pass@host:3306/RoboMiner`; scheme is `mysql://` for both engines) |
 | `ROBOMINER_DB_MAX_CONNECTIONS` | web, engine | implementation default | sqlx pool size |
-| `ROBOMINER_ALLOW_INSECURE_MYSQL` | db connect | off | Allow non-TLS MySQL to a remote host (loopback is fine without this) |
+| `ROBOMINER_ALLOW_INSECURE_MYSQL` | db connect | off | Allow non-TLS MySQL/MariaDB to a remote host (loopback is fine without this) |
 
 CLI override: `--database-url` on engine/web when supported.
 
@@ -24,7 +24,7 @@ CLI override: `--database-url` on engine/web when supported.
 | --- | --- | --- |
 | `HOST` | `127.0.0.1` | Bind address |
 | `PORT` | `8080` | Bind port |
-| `ROBOMINER_WEB_ROOT` | crate `static/` | Static asset root |
+| `ROBOMINER_WEB_ROOT` | crate `static/` (or `/opt/robominer/static` when that exists and the crate path does not) | Static asset root |
 | `ROBOMINER_SESSION_SECRET` | _(required off loopback)_ | HMAC session secret (≥32 chars) |
 | `ROBOMINER_ALLOW_INSECURE_DEV_SECRET` | off | Permit built-in insecure secret on loopback only |
 | `ROBOMINER_SESSION_TTL_SECS` | _(unset)_ | Session TTL in seconds (wins over hours when set) |

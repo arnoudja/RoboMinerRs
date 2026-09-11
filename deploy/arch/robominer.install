@@ -1,0 +1,28 @@
+post_install() {
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl enable robominer-engine.service robominer-web.service >/dev/null 2>&1 || true
+  fi
+  /usr/share/robominer/package-post-install.sh configure
+}
+
+post_upgrade() {
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl enable robominer-engine.service robominer-web.service >/dev/null 2>&1 || true
+  fi
+  /usr/share/robominer/package-post-install.sh configure
+}
+
+pre_remove() {
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl stop robominer-engine.service robominer-web.service >/dev/null 2>&1 || true
+    systemctl disable robominer-engine.service robominer-web.service >/dev/null 2>&1 || true
+  fi
+}
+
+post_remove() {
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+  fi
+}

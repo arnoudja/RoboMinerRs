@@ -62,6 +62,29 @@ include the `Secure` attribute. Set `securecookies 1` in config or export
 
 Caddy obtains Let's Encrypt certificates automatically for public hostnames.
 
+## Caddy (local HTTPS, no public DNS)
+
+For a machine without a public hostname (laptop / LAN-only), use the internal
+CA example:
+
+1. Install Caddy (`sudo pacman -S caddy` on Arch).
+2. Add a hosts entry: `127.0.0.1 robominer.test`
+   (use `.test`, not `.local` — many Linux installs resolve `*.local` via mDNS
+   and ignore `/etc/hosts` for that suffix).
+3. Copy and install the local Caddyfile:
+
+   ```bash
+   sudo cp deploy/reverse-proxy/Caddyfile.local /etc/caddy/Caddyfile
+   sudo systemctl enable --now caddy
+   sudo caddy trust
+   ```
+
+4. Browse `https://robominer.test/` (after trusting the local CA).
+
+Set the same app env as the public proxy layout (`ROBOMINER_TRUST_PROXY=1`,
+`ROBOMINER_SECURE_COOKIES=1`, loopback `HOST`). `ROBOMINER_ALLOW_SIGNUP` can stay
+`1` for local installs.
+
 ## nginx (bring your own certificates)
 
 1. Install nginx and obtain a certificate (for example with

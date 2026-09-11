@@ -33,7 +33,7 @@ and `FOR UPDATE` locks still use runtime `sqlx::query` this way.
 1. Read the [sqlx changelog](https://github.com/launchbadge/sqlx/blob/main/CHANGELOG.md).
 2. Update the workspace dependency pin and matching `sqlx-cli`.
 3. `cargo update -p sqlx` and fix compile errors crate-by-crate.
-4. Re-run `cargo sqlx prepare --workspace -- --package robominer-db --lib` against MySQL 8.4.
+4. Re-run `cargo sqlx prepare --workspace -- --package robominer-db --lib` against MySQL 8.4 or MariaDB 10.11+.
 5. `cargo fmt --all` and `cargo clippy --workspace -- -D warnings`.
 6. `resources/scripts/run-tests-with-db.sh`.
 
@@ -42,8 +42,9 @@ and `FOR UPDATE` locks still use runtime `sqlx::query` this way.
 - Rally claim batch upserts (`robominer-db/src/rally/claim/`)
 - Mining queue enqueue/cancel concurrency (`robominer-db/tests/db_mining_queue.rs`)
 - Shop sell-all batch paths (`robominer-db/src/shop/`)
-- Migration runner (`robominer-db/src/migrate/`) against MySQL 8.4 (CI target)
+- Migration runner (`robominer-db/src/migrate/`) against MySQL 8.4 and MariaDB (CI matrix)
 
 ## CI note
 
-CI targets **MySQL 8.4** only. MariaDB compatibility is not exercised in CI.
+CI runs the DB-backed rust job against **MySQL 8.4** and **MariaDB 11.4**. Coverage
+uses MySQL 8.4 only.
