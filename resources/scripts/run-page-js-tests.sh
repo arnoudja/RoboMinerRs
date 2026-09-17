@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Run Node-based page JS tests (rally animation, shop, mining, atlas, …).
-# Each listed tests/ directory is discovered via Node's test-file patterns
-# (`*.test.js`, …) so new files are not omitted from CI.
+# Each listed tests/ directory expands `*.test.js` so new files are not omitted
+# from CI (helpers that are not `*.test.js` stay unexecuted).
 
 set -euo pipefail
 
@@ -15,7 +15,18 @@ fi
 
 run_dir_tests() {
     local dir="$1"
-    (cd "${dir}" && node --test .)
+    local -a tests=()
+    local f
+    shopt -s nullglob
+    for f in "${dir}"/*.test.js; do
+        tests+=("${f}")
+    done
+    shopt -u nullglob
+    if [[ ${#tests[@]} -eq 0 ]]; then
+        echo "no *.test.js files in ${dir}" >&2
+        exit 1
+    fi
+    node --test "${tests[@]}"
 }
 
 run_dir_tests "${ROOT}/robominer-web/static/js/rally_animation/tests"
