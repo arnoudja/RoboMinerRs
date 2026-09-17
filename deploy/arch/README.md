@@ -31,9 +31,12 @@ cd deploy/arch
 ./makepkg-local.sh -si
 ```
 
-`makepkg-local.sh` archives the current git `HEAD`, writes `PKGBUILD.local`,
-and runs `makepkg`. Pass any `makepkg` flags after the script name (`-s`
-installs make-deps, `-i` installs the package).
+`makepkg-local.sh` packs the **current working tree** (including uncommitted
+edits; respects `.gitignore`), sets `pkgver` from the workspace `Cargo.toml`
+(via `sync-pkgver-from-cargo.sh` into `PKGBUILD` / `.SRCINFO`), writes
+`PKGBUILD.local`, and runs `makepkg`. Pass any `makepkg` flags after the script
+name (`-s` installs make-deps, `-i` installs the package). For local builds and
+`./update.sh`, bump the version only in the root `Cargo.toml`.
 
 ## Build from the AUR-style PKGBUILD
 

@@ -1,8 +1,10 @@
 # Maintainer: RoboMiner maintainers
 # AUR-ready source package. Update `_commit` and checksums on each release
-# (see README.md). For builds from a local checkout, use ./makepkg-local.sh.
+# (see README.md). For builds from a local checkout, use ./makepkg-local.sh
+# (it overwrites pkgver from the workspace Cargo.toml).
 
 pkgname=robominer
+# Kept in sync for AUR metadata; makepkg-local.sh overwrites from Cargo.toml.
 pkgver=1.1.0
 pkgrel=1
 pkgdesc="Online programming game: code robots to mine efficiently"

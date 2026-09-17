@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# Rebuild and reinstall RoboMiner for the current OS.
+# Rebuild and reinstall RoboMiner for the current OS from the working tree
+# (uncommitted changes included). Version comes from workspace Cargo.toml.
 # Ubuntu/Debian: cargo-deb + apt. Omarchy/Arch: makepkg + pacman.
 
 set -euo pipefail
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "### Syncing package version from Cargo.toml ###"
+deploy/arch/sync-pkgver-from-cargo.sh
 
 # shellcheck disable=SC1091
 . /etc/os-release
