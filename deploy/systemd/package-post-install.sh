@@ -95,6 +95,34 @@ PY
     exit 1
 }
 
+# Prefer mariadb(1) on Arch/MariaDB hosts; mysql(1) is a deprecated alias there.
+mysql_cli() {
+    if command -v mariadb >/dev/null 2>&1; then
+        command -v mariadb
+        return 0
+    fi
+    if command -v mysql >/dev/null 2>&1; then
+        command -v mysql
+        return 0
+    fi
+    return 1
+}
+
+# Local packaged installs typically use plain TCP to loopback; skip TLS noise.
+mysql_local_ssl_args() {
+    host="$1"
+    case "$host" in
+        localhost | 127.0.0.1 | ::1 | "")
+            cli="$(mysql_cli)" || return 0
+            if "$cli" --help 2>/dev/null | grep -q -- '--skip-ssl'; then
+                printf '%s\n' --skip-ssl
+            elif "$cli" --help 2>/dev/null | grep -q -- '--ssl-mode'; then
+                printf '%s\n' --ssl-mode=DISABLED
+            fi
+            ;;
+    esac
+}
+
 apply_database_updates() {
     if ! config_is_ready; then
         echo "RoboMiner: no $ENV_FILE; skipping migrate/gameData."
@@ -138,25 +166,29 @@ apply_database_updates() {
         exit 1
     fi
 
-    if ! command -v mysql >/dev/null 2>&1; then
-        echo "RoboMiner: mysql client not found; cannot apply gameData.sql" >&2
+    mysql_bin="$(mysql_cli)" || {
+        echo "RoboMiner: mariadb/mysql client not found; cannot apply gameData.sql" >&2
         exit 1
-    fi
+    }
 
     echo "RoboMiner: applying gameData.sql..."
     # Strip obsolete SET storage_engine= (removed in modern MySQL/MariaDB).
+    ssl_args="$(mysql_local_ssl_args "$dbserver")"
+    # shellcheck disable=SC2086 # intentional optional flag expansion
     if [ -n "$dbport" ]; then
-        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" mysql \
+        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" "$mysql_bin" \
             --protocol=TCP \
             -h "$dbserver" \
             -P "$dbport" \
             -u "$dbuser" \
+            $ssl_args \
             "$dbdatabase"
     else
-        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" mysql \
+        sed '/^SET storage_engine=/d' "$GAMEDATA_SQL" | MYSQL_PWD="$dbpassword" "$mysql_bin" \
             --protocol=TCP \
             -h "$dbserver" \
             -u "$dbuser" \
+            $ssl_args \
             "$dbdatabase"
     fi
 }
