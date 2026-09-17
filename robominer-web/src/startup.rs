@@ -28,18 +28,30 @@ pub fn connect_database(
 }
 
 pub fn default_web_root() -> PathBuf {
-    // Packaged installs bake CARGO_MANIFEST_DIR from the build tree, which is
-    // gone at runtime. Prefer that path when it still exists (cargo run / tests),
-    // otherwise the systemd package layout under /opt/robominer.
-    let crate_static = Path::new(env!("CARGO_MANIFEST_DIR")).join("static");
-    if crate_static.is_dir() {
-        return crate_static;
+    // Never bake `CARGO_MANIFEST_DIR` into release binaries: makepkg flags those
+    // absolute build paths as "$srcdir" references in the package.
+    #[cfg(test)]
+    {
+        let crate_static = Path::new(env!("CARGO_MANIFEST_DIR")).join("static");
+        if crate_static.is_dir() {
+            return crate_static;
+        }
     }
+
     let packaged = Path::new("/opt/robominer/static");
     if packaged.is_dir() {
         return packaged.to_path_buf();
     }
-    crate_static
+
+    // `cargo run` from the workspace root or the crate directory.
+    for candidate in ["robominer-web/static", "static"] {
+        let path = Path::new(candidate);
+        if path.is_dir() {
+            return path.to_path_buf();
+        }
+    }
+
+    PathBuf::from("robominer-web/static")
 }
 
 /// Apply session settings and build the Axum `ServerConfig` (without binding a listener).
