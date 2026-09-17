@@ -41,6 +41,9 @@ build() {
   cd "${srcdir}/${_srcdir}"
   export CARGO_HOME="${srcdir}/cargo-home"
   export CARGO_TARGET_DIR="${srcdir}/target"
+  # Rust embeds absolute dependency paths (panic/tracing file!()) under
+  # $srcdir/cargo-home; remap so makepkg does not warn about $srcdir refs.
+  export RUSTFLAGS="${RUSTFLAGS:+${RUSTFLAGS} }--remap-path-prefix=${srcdir}="
   cargo build --release --locked --offline \
     -p robominer-engine \
     -p robominer-web
