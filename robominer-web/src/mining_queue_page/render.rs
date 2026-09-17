@@ -99,28 +99,7 @@ pub(super) fn render_mining_queue_page(
     }
     body.push_str("</select></label></div>");
     body.push_str(r#"<table class="mining-queue-inspector-table">"#);
-
-    for area in &state.areas {
-        render_mining_area_details(
-            &mut body,
-            area,
-            context
-                .cost_map
-                .get(&area.mining_area_id)
-                .map(Vec::as_slice)
-                .unwrap_or(&[]),
-            context
-                .supply_map
-                .get(&area.mining_area_id)
-                .map(Vec::as_slice)
-                .unwrap_or(&[]),
-            &state.robots,
-            &context.score_map,
-            &context.ore_amount_map,
-            area.mining_area_id == state.selected_info_area_id,
-        );
-    }
-
+    render_mining_queue_inspector_panels(&mut body, state, &context);
     body.push_str("</table></div></div>");
     render_mining_queue_clear_config(&mut body, state);
     body.push_str(&super::scripts::mining_queue_page_script_tag());
@@ -148,8 +127,40 @@ pub(super) fn render_mining_queue_fragment(hud: &str, state: &MiningQueuePageSta
     render_mining_queue_robots(&mut body, state, &context);
     body.push_str("</div>");
     render_mining_queue_clear_config(&mut body, state);
-    body.push_str("</div></div>");
+    body.push_str("</div>");
+    body.push_str(
+        r#"<table id="mining-queue-area-details-fragment" class="mining-queue-inspector-table">"#,
+    );
+    render_mining_queue_inspector_panels(&mut body, state, &context);
+    body.push_str("</table></div>");
     body
+}
+
+fn render_mining_queue_inspector_panels(
+    body: &mut String,
+    state: &MiningQueuePageState,
+    context: &MiningQueueRenderContext<'_>,
+) {
+    for area in &state.areas {
+        render_mining_area_details(
+            body,
+            area,
+            context
+                .cost_map
+                .get(&area.mining_area_id)
+                .map(Vec::as_slice)
+                .unwrap_or(&[]),
+            context
+                .supply_map
+                .get(&area.mining_area_id)
+                .map(Vec::as_slice)
+                .unwrap_or(&[]),
+            &state.robots,
+            &context.score_map,
+            &context.ore_amount_map,
+            area.mining_area_id == state.selected_info_area_id,
+        );
+    }
 }
 
 fn render_mining_queue_dynamic_sections(body: &mut String, state: &MiningQueuePageState) {

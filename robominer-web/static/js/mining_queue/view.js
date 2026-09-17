@@ -89,6 +89,16 @@
             if (configSource && configTarget) {
                 configTarget.textContent = configSource.textContent;
             }
+
+            const inspectorSource = doc.getElementById('mining-queue-area-details-fragment');
+            const inspectorTable = fragmentRoot.querySelector('table.mining-queue-inspector-table');
+            if (inspectorSource && inspectorTable) {
+                inspectorTable.innerHTML = inspectorSource.innerHTML;
+                const selectedId = ctx.inspectorSelect && ctx.inspectorSelect.value;
+                if (selectedId) {
+                    showMiningAreaDetails(selectedId);
+                }
+            }
         }
 
         function cardRobotId(card) {

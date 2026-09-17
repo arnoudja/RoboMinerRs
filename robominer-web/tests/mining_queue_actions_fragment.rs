@@ -139,8 +139,19 @@ async fn mining_queue_fragment_get_returns_dynamic_sections_only() {
         "expected HUD markup in fragment:\n{body}"
     );
     assert!(
-        !body.contains("mining-queue-inspector"),
-        "fragment should omit inspector:\n{body}"
+        body.contains("mining-queue-area-details-fragment"),
+        "expected area details in fragment so stock can refresh:\n{body}"
+    );
+    assert!(
+        body.contains(&format!(
+            "miningAreaDetails{}",
+            fixture.inner.mining_area_id
+        )),
+        "expected mining area details panel in fragment:\n{body}"
+    );
+    assert!(
+        !body.contains("mining-queue-inspector-title"),
+        "fragment should omit inspector chrome:\n{body}"
     );
     assert!(
         !body.contains("<!DOCTYPE html>"),
@@ -283,6 +294,10 @@ async fn mining_queue_fragment_post_add_inserts_queue_item() {
     assert!(
         body.contains("mining-queue-run-active") || body.contains(&fixture.inner.area_name),
         "expected active run in fragment after add:\n{body}"
+    );
+    assert!(
+        body.contains(r#"class="sufficientbalance">(24)"#),
+        "expected inspector stock to drop by the area cost after add:\n{body}"
     );
 
     let queue_count: i64 = sqlx::query_scalar(
