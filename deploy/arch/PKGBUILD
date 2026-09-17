@@ -20,7 +20,9 @@ optdepends=(
   'python: parse ROBOMINER_DATABASE_URL when applying gameData.sql'
 )
 install=robominer.install
-options=('!lto')
+# Rust release builds have no DWARF suitable for makepkg's debug split /
+# gdb-add-index; leave !debug so packaging stays quiet.
+options=('!lto' '!debug')
 
 # Pin the upstream git revision packaged by this PKGBUILD (update on release).
 _commit=4adc07c254f90f49c7d18c66af999d9e61374a57

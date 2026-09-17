@@ -16,6 +16,7 @@ pkgbase = robominer
 	optdepends = docker: optional MySQL 8.4 container instead of host MariaDB
 	optdepends = python: parse ROBOMINER_DATABASE_URL when applying gameData.sql
 	options = !lto
+	options = !debug
 	source = robominer-1.1.0.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/4adc07c254f90f49c7d18c66af999d9e61374a57.tar.gz
 	sha256sums = SKIP
 
