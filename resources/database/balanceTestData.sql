@@ -1,3 +1,5 @@
+-- Optional offline balance-experiment seed (pool fixtures). Not loaded by
+-- resources/scripts/init-ci-database.sh; apply manually when needed.
 
 delete from PoolItemMiningTotals;
 delete from PoolItem;

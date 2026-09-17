@@ -8,8 +8,11 @@ export ROBOMINER_DATABASE_URL="$("${ROOT}/resources/scripts/ensure-test-mysql.sh
 
 cd "${ROOT}"
 
-# Headless rally replay viewer logic (no MySQL).
-"${ROOT}/resources/scripts/run-page-js-tests.sh"
+# Page JS tests (Node `node:test`; no MySQL). Skip when CI already ran them
+# in the fast-tests job (ROBOMINER_SKIP_PAGE_JS_TESTS=1).
+if [[ "${ROBOMINER_SKIP_PAGE_JS_TESTS:-}" != "1" ]]; then
+    "${ROOT}/resources/scripts/run-page-js-tests.sh"
+fi
 
 if cargo nextest --version >/dev/null 2>&1; then
     cargo nextest run --workspace --profile ci "$@"

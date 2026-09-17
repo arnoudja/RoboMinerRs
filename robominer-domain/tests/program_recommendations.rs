@@ -5,12 +5,10 @@
 //! recommending player strategies, or validating a new program idea.
 //!
 //! ```sh
-//! cargo test -p robominer-domain benchmark_recommended_programs -- --nocapture
+//! cargo test -p robominer-domain benchmark_recommended_programs -- --ignored --nocapture
 //! ```
 //!
-//! To benchmark custom programs or areas, edit the `programs`, `cases`, and robot
-//! profile helpers in `benchmark_recommended_programs` below. Scores are printed
-//! after tax; each case averages 20 seeds (0..19).
+//! The benchmark is `#[ignore]` so it stays out of the default CI suite.
 
 use robominer_db::{
     MiningAreaOreSupplyRecord, MiningAreaRecord, MiningRallyQueueRecord, RobotRecord,
@@ -328,6 +326,7 @@ fn benchmark_case(
 }
 
 #[test]
+#[ignore = "diagnostic harness; run with --ignored --nocapture"]
 fn benchmark_recommended_programs() {
     let seeds: Vec<u64> = (0..20).map(|seed| seed as u64).collect();
 

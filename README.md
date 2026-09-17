@@ -36,6 +36,7 @@ The database scripts are kept under `resources/database/`:
 
 - `createDatabase.sql` — database schema
 - `gameData.sql` — seed data (ores, parts, areas, achievements)
+- `balanceTestData.sql` — optional offline balance-experiment seed (not loaded by `init-ci-database.sh`)
 
 Further docs: [CONTRIBUTING.md](CONTRIBUTING.md) (tests, coverage, **db vs domain
 boundary**), [docs/architecture.md](docs/architecture.md) (crate layers and request

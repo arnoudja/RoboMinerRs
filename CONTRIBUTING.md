@@ -29,8 +29,10 @@ Before opening or updating a PR:
 2. Run tests: `resources/scripts/run-tests-with-db.sh` (or `run-fast-tests.sh` when the change cannot affect DB paths)
 3. Do not commit golden fixture updates unless the behavior change is deliberate
 4. If you change SQL dialect assumptions, note them in the PR description
-5. CI also runs a fast (no-DB) job, line coverage with floor
-   `ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93`, `cargo audit`, and `cargo deny`
+5. CI also runs a dedicated `lint` job (`fmt`, Clippy, `cargo audit`, `cargo deny`),
+   a fast (no-DB) job that includes page JS tests + ESLint, DB-backed tests on
+   MySQL and MariaDB (JS skipped there via `ROBOMINER_SKIP_PAGE_JS_TESTS=1`), and
+   line coverage with floor `ROBOMINER_COVERAGE_FAIL_UNDER_LINES=93`
    (see `.cargo/audit.toml` and `deny.toml`)
 
 ## Git hooks
@@ -64,7 +66,9 @@ resources/scripts/run-tests-with-db.sh
 That script:
 
 1. Resolves `ROBOMINER_DATABASE_URL` via `ensure-test-mysql.sh` (existing URL, local MySQL, or persistent Docker).
-2. Runs rally animation JS tests (`resources/scripts/run-page-js-tests.sh`; requires Node).
+2. Runs page JS tests (`resources/scripts/run-page-js-tests.sh`; requires Node),
+   unless `ROBOMINER_SKIP_PAGE_JS_TESTS=1` (used by the CI DB matrix after
+   `fast-tests` already ran them).
 3. Runs `cargo nextest run --workspace --profile ci` when nextest is installed, otherwise `cargo test --workspace` with a single test thread.
 
 The `ci` profile uses a single test thread so DB integration binaries that share MySQL stay serialized via `#[serial]`.
@@ -123,7 +127,7 @@ For library unit tests and simulation goldens that do not need MySQL:
 resources/scripts/run-fast-tests.sh
 ```
 
-That also runs the rally animation JS tests (Node `node:test`, no npm packages).
+That also runs the page JS tests (Node `node:test`, no npm packages).
 
 Install [`cargo-nextest`](https://nexte.st/) for faster runs. `run-fast-tests.sh` uses the `fast` profile; `run-tests-with-db.sh` uses the `ci` profile when nextest is present. Both scripts fall back to `cargo test` when nextest is absent.
 
