@@ -530,7 +530,7 @@ fn mining_queue_shows_no_robots_empty_state() {
 }
 
 #[test]
-fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
+fn mining_queue_fragment_renders_dynamic_sections_and_area_stock() {
     let mut selected_robot_area_ids = HashMap::new();
     selected_robot_area_ids.insert(1, 20);
     let state = MiningQueuePageState {
@@ -560,7 +560,12 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
             size_y: 5,
             score_ore_target: 30,
         }],
-        costs: vec![],
+        costs: vec![MiningQueueAreaCostView {
+            mining_area_id: 20,
+            ore_id: 2,
+            ore_name: "Iron".to_string(),
+            amount: 30,
+        }],
         supplies: vec![],
         scores: vec![],
         items: vec![MiningQueueDisplayItem {
@@ -586,6 +591,9 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
             r#"id="mining-queue-hud-fragment""#,
             r#"id="mining-queue-dynamic-fragment""#,
             r#"id="mining-queue-robots-fragment""#,
+            r#"id="mining-queue-area-details-fragment""#,
+            r#"id="miningAreaDetails20""#,
+            r#"class="sufficientbalance">(40)"#,
             r#"class="page-wallet mining-queue-wallet""#,
             r#"class="mining-queue-card" data-robot-id="1""#,
             r#"class="mining-queue-card-status""#,
@@ -594,7 +602,7 @@ fn mining_queue_fragment_renders_dynamic_sections_without_inspector() {
             r#"app-shell-hud-item">2/6</a>"#,
         ],
     );
-    assert_html_not_contains(&html, "mining-queue-inspector");
-    assert_html_not_contains(&html, "miningAreaDetails");
+    assert_html_not_contains(&html, "mining-queue-inspector-title");
+    assert_html_not_contains(&html, "mining-queue-inspector-select");
     assert_html_not_contains(&html, "<!DOCTYPE html>");
 }

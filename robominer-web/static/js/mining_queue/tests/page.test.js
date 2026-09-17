@@ -74,6 +74,78 @@ describe('mining queue page partial updates', () => {
         assert.equal(doc.inspector.textContent, 'inspector stays');
     });
 
+    it('applyFragment updates inspector upfront stock without replacing inspector chrome', () => {
+        const { context, doc } = loadMiningQueuePage();
+        const inspectorTable = createElement('table', { class: 'mining-queue-inspector-table' });
+        const livePanel = createElement('tbody', {
+            id: 'miningAreaDetails20',
+            class: 'mining-queue-area-panel mining-queue-area-panel-active',
+        });
+        livePanel.textContent = 'Upfront costs: Iron 30 (40)';
+        inspectorTable.appendChild(livePanel);
+        doc.inspector.appendChild(inspectorTable);
+
+        const incomingDetails = createElement('table', {
+            id: 'mining-queue-area-details-fragment',
+            class: 'mining-queue-inspector-table',
+        });
+        const incomingPanel = createElement('tbody', {
+            id: 'miningAreaDetails20',
+            class: 'mining-queue-area-panel mining-queue-area-panel-active',
+        });
+        incomingPanel.textContent = 'Upfront costs: Iron 30 (10)';
+        incomingDetails.appendChild(incomingPanel);
+
+        const fragmentDoc = {
+            getElementById(id) {
+                if (id === 'mining-queue-fragment') {
+                    return { id: id };
+                }
+                if (id === 'mining-queue-hud-fragment') {
+                    return createElement('div', { id: id });
+                }
+                if (id === 'mining-queue-dynamic-fragment') {
+                    const dynamic = createElement('div', { id: id });
+                    const wallet = createElement('section', { class: 'page-wallet mining-queue-wallet' });
+                    wallet.appendChild(createElement('span', { id: 'wallet', textContent: 'w' }));
+                    dynamic.appendChild(wallet);
+                    return dynamic;
+                }
+                if (id === 'mining-queue-robots-fragment') {
+                    const robots = createElement('div', { id: id, class: 'mining-queue-robots' });
+                    robots.innerHTML = '<form class="mining-queue-card"><span id="new-robot">new</span></form>';
+                    return robots;
+                }
+                if (id === 'mining-queue-clear-config') {
+                    const config = createElement('script', { id: id });
+                    config.textContent = '{}';
+                    return config;
+                }
+                if (id === 'mining-queue-area-details-fragment') {
+                    return incomingDetails;
+                }
+                return null;
+            },
+        };
+        context.DOMParser = class {
+            parseFromString() {
+                return fragmentDoc;
+            }
+        };
+
+        context.RoboMinerMiningQueuePage.applyFragment('<fragment>', doc.page);
+
+        assert.equal(doc.inspector.textContent, 'inspector stays');
+        assert.match(
+            doc.page.querySelector('table.mining-queue-inspector-table').innerHTML,
+            /Upfront costs: Iron 30 \(10\)/
+        );
+        assert.ok(
+            doc.page.querySelector('.mining-queue-inspector'),
+            'inspector chrome must stay in place'
+        );
+    });
+
     it('applyFragment preserves live area select nodes when robot cards match', () => {
         const { context, doc } = loadMiningQueuePage();
         doc.robots.innerHTML = '';
