@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 cd "${ROOT}"
 
-# Headless rally replay viewer logic (no MySQL).
+# Page JS tests (Node `node:test`; no MySQL).
 "${ROOT}/resources/scripts/run-page-js-tests.sh"
 
 if cargo nextest --version >/dev/null 2>&1; then

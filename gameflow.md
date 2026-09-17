@@ -12,8 +12,12 @@ Signup auto-claims achievement **1 / step 1**:
   **301**, memory **401**, CPU **501**, engine **601**, scanner **701**)
 - Default program: `move(1);` + `mine();` (fits memory size **4**)
 - Ore container capacity **2** on the robot (wallet is separate)
-- Mining speed **1**, CPU **1** i/t, engine forward **15** / backward **3** /
-  rotate **8** → effective move speed **1.0**
+- Mining speed **1**, CPU **1** i/t, Standard Engine (**601**) capacities
+  forward **11** / backward **5** / rotate **55**
+- Effective speeds (starter weight **23**): forward ≈ **1.43**, backward ≈
+  **0.65**, rotate **47**/turn — from
+  `3 * capacity / weight` and `20 * capacity / weight` (rotate truncated to
+  `i32`) in `robominer-db` robot parameters
 - Battery capacity **140**, recharge time **5** s
 - **1** mining queue slot
 - Access to **Cerbonium-mini** (`1001`)
@@ -24,13 +28,13 @@ Signup auto-claims achievement **1 / step 1**:
 - 10×10 area, **20** turns (`maxMoves`), **5** s mining time per action, **25%**
   container tax, **10%** depot tax, mining target **2**
 - One Cerbonium heap (supply 4, radius 4)
-- Queue cost: **2** Cerbonium (from `OrePrice` 101) — needs wallet cap ≥ 2 after
-  first claim
+- Queue cost: **free** (`OrePrice` `10001` has no `OrePriceAmount` rows)
 
 ## Suggested early progression
 
-1. **Queue one session** in Cerbonium-mini. After tax, first claim may add ~1–2
-   Cerbonium to the wallet (capped at **5** until achievements raise it).
+1. **Queue one session** in Cerbonium-mini (no entry fee). After tax, first claim
+   may add ~1–2 Cerbonium to the wallet (capped at **5** until achievements
+   raise it).
 
 2. **Achievement 2 step 1** — mine **1** Cerbonium lifetime → **+1 queue** (2
    slots total).
