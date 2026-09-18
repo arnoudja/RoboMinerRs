@@ -1,5 +1,3 @@
-SET storage_engine=InnoDB;
-
 drop view if exists TopRobotsView;
 
 drop table if exists SchemaMigration;
