@@ -36,8 +36,17 @@ resources/scripts/build-deb.sh
 ```
 
 That builds a native `robominer_*.deb` and, when the host is not already
-`aarch64`, a cross-built Pi package (needs `gcc-aarch64-linux-gnu` and the
-`aarch64-unknown-linux-gnu` Rust target).
+`aarch64`, a cross-built Pi package. The linker binary is
+`aarch64-linux-gnu-gcc`. Install it plus the `aarch64-unknown-linux-gnu` Rust
+target (the script adds the target via rustup when missing):
+
+- **Ubuntu / Debian:** `sudo apt install gcc-aarch64-linux-gnu`
+- **Omarchy / Arch:** `omarchy pkg add aarch64-linux-gnu-gcc dpkg`
+  (or `sudo pacman -S --needed aarch64-linux-gnu-gcc dpkg`), then
+  `cargo install cargo-deb --locked`
+
+See [README.md](../../README.md#raspberry-pi-64-bit-cross-compile) for the
+full host-package list.
 
 On a Raspberry Pi, **MariaDB** is the common database package (supported at
 **10.11+**, same as Arch host MariaDB). Point `ROBOMINER_DATABASE_URL` at it with

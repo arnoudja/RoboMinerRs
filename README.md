@@ -14,10 +14,15 @@ Omarchy (and other Arch Linux systems) can develop and run from source without
 Debian tooling:
 
 ```sh
-sudo pacman -S --needed base-devel rust nodejs npm python mariadb mariadb-clients
+sudo pacman -S --needed base-devel rustup nodejs npm python mariadb mariadb-clients
 # Optional: Docker when you prefer containerized MySQL 8.4 instead of host MariaDB
 sudo pacman -S --needed docker
 ```
+
+Omarchy already ships **rustup**. Use that instead of the pacman `rust` package
+(they conflict). The Pi cross-compile scripts require rustup so they can add
+the `aarch64-unknown-linux-gnu` target. Extra packages for that path are listed
+under [Raspberry Pi (64-bit) cross-compile](#raspberry-pi-64-bit-cross-compile).
 
 Prefer **host MariaDB** on Arch and Raspberry Pi (common system package). Docker
 **MySQL 8.4** remains a supported alternative via the test helpers. The usual
@@ -59,21 +64,55 @@ Build optimized release binaries:
 cargo build --workspace --release
 ```
 
-Build native release binaries and cross-compile for 64-bit Raspberry Pi
-(`aarch64-unknown-linux-gnu`):
+### Raspberry Pi (64-bit) cross-compile
+
+From an x86_64 machine, `resources/scripts/build-release.sh` builds native
+release binaries and then cross-compiles `robominer-engine` / `robominer-web`
+for `aarch64-unknown-linux-gnu`. `resources/scripts/build-deb.sh` does the same
+and packages `.deb` files for a Raspberry Pi running Debian/Raspberry Pi OS.
+
+Both scripts look for the linker **binary** `aarch64-linux-gnu-gcc` (see
+`.cargo/config.toml`). They also require **rustup** and will run
+`rustup target add aarch64-unknown-linux-gnu` if that target is missing.
+
+Install the host packages first. Package **names** differ by distro; the linker
+binary name does not.
+
+**Ubuntu / Debian**
+
+```sh
+sudo apt install gcc-aarch64-linux-gnu
+cargo install cargo-deb --locked   # once; only needed for build-deb.sh
+```
+
+`dpkg-deb` is already present with `dpkg` on Ubuntu/Debian.
+
+**Omarchy / Arch**
+
+```sh
+omarchy pkg add aarch64-linux-gnu-gcc dpkg
+# or: sudo pacman -S --needed aarch64-linux-gnu-gcc dpkg
+cargo install cargo-deb --locked   # once; only needed for build-deb.sh
+```
+
+`aarch64-linux-gnu-gcc` pulls `aarch64-linux-gnu-binutils` and
+`aarch64-linux-gnu-glibc` and installs the same `aarch64-linux-gnu-gcc` linker
+the scripts call. `dpkg` provides `dpkg-deb`. Confirm with
+`command -v aarch64-linux-gnu-gcc` and `command -v dpkg-deb`. Binaries-only
+builds (`build-release.sh`) need only the cross gcc, not `dpkg` / `cargo-deb`.
+
+Then build:
 
 ```sh
 resources/scripts/build-release.sh
-```
-
-Build installable Debian packages for this machine and for 64-bit Raspberry Pi
-(requires [`cargo-deb`](https://crates.io/crates/cargo-deb) and `dpkg-deb`;
-Pi builds also need `gcc-aarch64-linux-gnu`):
-
-```sh
-cargo install cargo-deb --locked   # once
+# or, with cargo-deb + dpkg-deb installed:
 resources/scripts/build-deb.sh
 ```
+
+On a Pi that is already aarch64, the scripts skip the cross step and build
+natively. To install RoboMiner as an Arch package *on* an aarch64 Arch/Omarchy
+Pi, use [deploy/arch/README.md](deploy/arch/README.md) (`makepkg`) instead of
+cross-building a `.deb`.
 
 Install on the target host (example for a native build artifact):
 

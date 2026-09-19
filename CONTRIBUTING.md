@@ -14,11 +14,17 @@ DB-backed rust job against both `mysql:8.4` and `mariadb:11.4`. Coverage stays o
 MySQL 8.4. Some Cloud Agent VMs ship a host MySQL 8.0 package; that is a local
 convenience—prefer 8.4 / MariaDB 10.11+ dialect features—see [AGENTS.md](AGENTS.md).
 
-On **Arch / Omarchy**, install `base-devel`, a Rust toolchain, `nodejs`/`npm`,
-`mariadb` / `mariadb-clients`, and optionally `docker` via `pacman` (see the
-Arch / Omarchy section in [README.md](README.md)). Prefer host MariaDB for
-day-to-day and Pi-like setups; Docker MySQL 8.4 remains available through
-`resources/scripts/run-tests-with-db.sh`. Packaging:
+On **Arch / Omarchy**, install `base-devel`, a Rust toolchain via **rustup**
+(Omarchy already has it; do not install pacman `rust` alongside rustup),
+`nodejs`/`npm`, `mariadb` / `mariadb-clients`, and optionally `docker` via
+`omarchy pkg add` or `pacman` (see the Arch / Omarchy section in
+[README.md](README.md)). Prefer host MariaDB for day-to-day and Pi-like setups;
+Docker MySQL 8.4 remains available through
+`resources/scripts/run-tests-with-db.sh`. To cross-compile for a 64-bit
+Raspberry Pi from Omarchy, also install `aarch64-linux-gnu-gcc` (and `dpkg` plus
+`cargo-deb` if you are building `.deb` files); exact commands are in the
+[Raspberry Pi (64-bit) cross-compile](README.md#raspberry-pi-64-bit-cross-compile)
+section of the README. Packaging:
 [deploy/arch/README.md](deploy/arch/README.md).
 
 ## Pull requests

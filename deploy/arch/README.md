@@ -74,7 +74,18 @@ remains a supported alternative via the repo test helpers.
 
 ## Pi / aarch64 note
 
-`arch=('x86_64' 'aarch64')` builds natively on each architecture. Cross-building
-the Debian Pi `.deb` still uses `resources/scripts/build-deb.sh` and the
-Debian-named `aarch64-linux-gnu-gcc` linker; that path is separate from this
-PKGBUILD.
+`arch=('x86_64' 'aarch64')` builds natively on each architecture. Use this
+PKGBUILD on an aarch64 Arch/Omarchy Pi; do not cross-build it from x86_64.
+
+To cross-compile **Debian** Pi artifacts from an x86_64 Omarchy/Arch machine,
+use `resources/scripts/build-release.sh` or `resources/scripts/build-deb.sh`.
+Those scripts need the linker binary `aarch64-linux-gnu-gcc`:
+
+```sh
+omarchy pkg add aarch64-linux-gnu-gcc
+# or: sudo pacman -S --needed aarch64-linux-gnu-gcc
+```
+
+For `.deb` packaging also install `dpkg` and `cargo-deb`. Package names and
+commands: [README.md](../../README.md#raspberry-pi-64-bit-cross-compile).
+That path is separate from this PKGBUILD.
