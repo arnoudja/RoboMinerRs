@@ -13,7 +13,17 @@ log() {
 require_command() {
     if ! command -v "$1" >/dev/null 2>&1; then
         echo "Required command not found: $1" >&2
-        if [[ "$1" == "cargo-deb" ]]; then
+        exit 1
+    fi
+}
+
+# cargo-deb installs to $CARGO_HOME/bin (usually ~/.cargo/bin). Pacman/Omarchy
+# rustup does not put that directory on PATH, but `cargo deb` still finds it.
+require_cargo_subcommand() {
+    local sub="$1"
+    if ! cargo --list | awk '{print $1}' | grep -qx "${sub}"; then
+        echo "Required cargo subcommand not found: cargo ${sub}" >&2
+        if [[ "${sub}" == "deb" ]]; then
             echo "Install with: cargo install cargo-deb --locked" >&2
         fi
         exit 1
@@ -79,7 +89,7 @@ build_deb() {
 require_command cargo
 require_command rustc
 require_command rustup
-require_command cargo-deb
+require_cargo_subcommand deb
 require_command dpkg-deb
 
 cd "${ROOT}"

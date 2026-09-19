@@ -98,8 +98,11 @@ cargo install cargo-deb --locked   # once; only needed for build-deb.sh
 `aarch64-linux-gnu-gcc` pulls `aarch64-linux-gnu-binutils` and
 `aarch64-linux-gnu-glibc` and installs the same `aarch64-linux-gnu-gcc` linker
 the scripts call. `dpkg` provides `dpkg-deb`. Confirm with
-`command -v aarch64-linux-gnu-gcc` and `command -v dpkg-deb`. Binaries-only
-builds (`build-release.sh`) need only the cross gcc, not `dpkg` / `cargo-deb`.
+`command -v aarch64-linux-gnu-gcc` and `command -v dpkg-deb`. Confirm
+`cargo-deb` with `cargo deb --version` (not `command -v cargo-deb`): Omarchy
+rustup does not put `~/.cargo/bin` on `PATH`, but `cargo deb` still finds the
+plugin. Binaries-only builds (`build-release.sh`) need only the cross gcc, not
+`dpkg` / `cargo-deb`.
 
 Then build:
 
