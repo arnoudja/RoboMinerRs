@@ -1,6 +1,6 @@
 pkgbase = robominer
 	pkgdesc = Online programming game: code robots to mine efficiently
-	pkgver = 1.1.1
+	pkgver = 1.1.2
 	pkgrel = 1
 	url = https://github.com/arnoudja/RoboMinerRs
 	install = robominer.install
@@ -17,7 +17,7 @@ pkgbase = robominer
 	optdepends = python: parse ROBOMINER_DATABASE_URL when applying gameData.sql
 	options = !lto
 	options = !debug
-	source = robominer-1.1.1.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/4adc07c254f90f49c7d18c66af999d9e61374a57.tar.gz
+	source = robominer-1.1.2.tar.gz::https://github.com/arnoudja/RoboMinerRs/archive/4adc07c254f90f49c7d18c66af999d9e61374a57.tar.gz
 	sha256sums = SKIP
 
 pkgname = robominer

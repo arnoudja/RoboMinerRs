@@ -5,7 +5,7 @@
 
 pkgname=robominer
 # Kept in sync for AUR metadata; makepkg-local.sh overwrites from Cargo.toml.
-pkgver=1.1.1
+pkgver=1.1.2
 pkgrel=1
 pkgdesc="Online programming game: code robots to mine efficiently"
 arch=('x86_64' 'aarch64')
