@@ -1342,8 +1342,8 @@ insert into Achievement (id, title,              description)
                  values (1,  'Your first robot', 'Claim your first robot')
 ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description);
 
-insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward, robotReward, miningAreaId)
-                     values (1,             1,    10,                1,                 1,           1001);
+insert into AchievementStep (achievementId, step, achievementPoints, miningQueueReward, oreId, maxOreReward, robotReward, miningAreaId)
+                     values (1,             1,    10,                1,                 1,     5,            1,           1001);
 
 
 -- Achievements - Cerbonium Mastery
