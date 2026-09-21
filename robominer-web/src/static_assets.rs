@@ -31,6 +31,14 @@ pub(crate) fn stylesheet_href_tag(href_path: &str, file_contents: &str) -> Strin
     format!(r#"<link rel="stylesheet" type="text/css" href="{href_path}?v={hash}">"#)
 }
 
+const FAVICON_SVG: &str = include_str!("../static/favicon.svg");
+
+/// Tab icon for every HTML shell (app layout, login, logoff).
+pub(crate) fn favicon_link_tags() -> String {
+    let hash = content_hash_hex(FAVICON_SVG.as_bytes());
+    format!(r#"<link rel="icon" href="favicon.svg?v={hash}" type="image/svg+xml">"#)
+}
+
 /// Concatenate several script tags (order preserved).
 pub(crate) fn script_src_tags(entries: &[(&str, &str)]) -> String {
     let mut out = String::new();
@@ -209,6 +217,18 @@ mod tests {
             stylesheet_href_tag("css/pages/layout_shell.css", css).contains(&format!("?v={hash}"))
         );
         assert!(script_src_tag("js/x.js", css).contains(&format!("?v={hash}")));
+    }
+
+    #[test]
+    fn favicon_link_tags_point_at_hashed_svg() {
+        let hash = content_hash_hex(FAVICON_SVG.as_bytes());
+        let tags = favicon_link_tags();
+        assert!(
+            tags.contains(r#"rel="icon" href="favicon.svg?v="#),
+            "expected favicon link, got {tags}"
+        );
+        assert!(tags.contains(&format!("?v={hash}")));
+        assert!(tags.contains(r#"type="image/svg+xml""#));
     }
 
     #[test]

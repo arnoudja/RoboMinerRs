@@ -1,7 +1,7 @@
 use crate::html::page_footer;
 use crate::request_helpers::{is_post, request_user_id};
 use crate::session;
-use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags};
+use crate::static_assets::{PageStylesheet, favicon_link_tags, robominer_stylesheet_tags};
 use crate::{Request, Response, ServerConfig};
 
 #[derive(Debug)]
@@ -68,6 +68,7 @@ fn logoff_html_response() -> Response {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         {}
+        {}
         <title>RoboMiner - Logged off</title>
     </head>
     <body>
@@ -80,6 +81,7 @@ fn logoff_html_response() -> Response {
     </body>
 </html>"##,
         robominer_stylesheet_tags(&[PageStylesheet::Auth]),
+        favicon_link_tags(),
         render::render_logoff_body(),
         page_footer()
     ))

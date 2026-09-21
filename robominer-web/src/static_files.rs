@@ -171,4 +171,22 @@ mod tests {
         assert_eq!(not_modified.status, 304);
         assert!(not_modified.body.is_empty());
     }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn favicon_svg_is_served_as_svg() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static");
+        let request = Request {
+            method: "GET".to_string(),
+            path: "/favicon.svg".to_string(),
+            query: HashMap::new(),
+            form: HashMap::new(),
+            form_values: HashMap::new(),
+            headers: HashMap::new(),
+        };
+        let response = static_response("/favicon.svg", &root, &request).await;
+        assert_eq!(response.status, 200);
+        assert_eq!(response.content_type, "image/svg+xml");
+        let body = std::str::from_utf8(&response.body).expect("svg utf-8");
+        assert!(body.contains("<svg"), "expected SVG markup, got:\n{body}");
+    }
 }

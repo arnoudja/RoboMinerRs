@@ -85,6 +85,7 @@ fn app_shell_header_marks_active_page_and_includes_atlas() {
             r#"aria-describedby="robominerDialogMessage""#,
             r#"src="js/common/app_dialog.js?v="#,
             r#"src="js/common/local_time.js?v="#,
+            r#"rel="icon" href="favicon.svg?v="#,
         ],
     );
     for absent in ["menuitemselected", r#"nav class="logoff""#] {

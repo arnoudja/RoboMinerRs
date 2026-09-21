@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="RoboMiner">
+  <!-- Dark tile + cyan robot disc with heading tick, matching the rally viewer. -->
+  <rect width="32" height="32" rx="8" fill="#0d1422"/>
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="none" stroke="#243657" stroke-width="2"/>
+  <circle cx="16" cy="16" r="11" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+  <circle cx="16" cy="16" r="7.5" fill="#00e5ff"/>
+  <circle cx="16" cy="16" r="7.5" fill="none" stroke="#070b12" stroke-width="1.75"/>
+  <line x1="16" y1="16" x2="23" y2="16" stroke="#070b12" stroke-width="2" stroke-linecap="round"/>
+</svg>

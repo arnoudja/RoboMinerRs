@@ -50,6 +50,7 @@ async fn get_logoff_page_does_not_expire_session_cookies() {
         &[
             r#"class="auth-page auth-logoff-page""#,
             r#"href="login">Log in again</a>"#,
+            r#"rel="icon" href="favicon.svg?v="#,
         ],
     );
 }
@@ -167,6 +168,7 @@ fn login_rendering_preserves_forms_remembered_name_and_signup_errors() {
         &[
             r#"class="auth-page""#,
             r#"name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover""#,
+            r#"rel="icon" href="favicon.svg?v="#,
             r#"id="loginmenuitem" class="auth-tab""#,
             r#"id="signupmenuitem" class="auth-tab auth-tab-active""#,
             r#"id="loginForm" class="auth-form" action="login" method="post" hidden="hidden""#,

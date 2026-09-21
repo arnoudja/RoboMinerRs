@@ -1,6 +1,8 @@
 use super::format::EscapedHtml;
 use super::shell::{app_shell_header, page_footer};
-use crate::static_assets::{PageStylesheet, robominer_stylesheet_tags, script_src_tag};
+use crate::static_assets::{
+    PageStylesheet, favicon_link_tags, robominer_stylesheet_tags, script_src_tag,
+};
 
 const APP_DIALOG_JS: &str = include_str!("../../static/js/common/app_dialog.js");
 const LOCAL_TIME_JS: &str = include_str!("../../static/js/common/local_time.js");
@@ -21,6 +23,7 @@ pub(crate) fn layout(
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         {}
+        {}
         <title>{}</title>
     </head>
     <body>
@@ -39,6 +42,7 @@ pub(crate) fn layout(
     </body>
 </html>"##,
         robominer_stylesheet_tags(styles),
+        favicon_link_tags(),
         EscapedHtml::from(title),
         app_shell_header(current_form, username, hud_markup),
         body,
