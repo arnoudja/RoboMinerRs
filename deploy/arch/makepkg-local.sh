@@ -9,6 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${SCRIPT_DIR}"
 
+# Omarchy /tmp is a tmpfs with a small per-user quota. Keep file lists,
+# rustc scratch, and any inherited Cargo target off that filesystem.
+export TMPDIR="${ROOT}/target/makepkg-local"
+mkdir -p "${TMPDIR}"
+case "${CARGO_TARGET_DIR:-}" in
+    /tmp | /tmp/*) unset CARGO_TARGET_DIR ;;
+esac
+
 pkgver="$(sed -n 's/^version = "\(.*\)"/\1/p' "${ROOT}/Cargo.toml" | head -n1)"
 if [[ -z "${pkgver}" ]]; then
     echo "Could not read version from ${ROOT}/Cargo.toml" >&2

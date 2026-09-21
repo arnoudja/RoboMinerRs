@@ -34,9 +34,11 @@ cd deploy/arch
 `makepkg-local.sh` packs the **current working tree** (including uncommitted
 edits; respects `.gitignore`), sets `pkgver` from the workspace `Cargo.toml`
 (via `sync-pkgver-from-cargo.sh` into `PKGBUILD` / `.SRCINFO`), writes
-`PKGBUILD.local`, and runs `makepkg`. Pass any `makepkg` flags after the script
-name (`-s` installs make-deps, `-i` installs the package). For local builds and
-`./update.sh`, bump the version only in the root `Cargo.toml`.
+`PKGBUILD.local`, and runs `makepkg`. Scratch files (`mktemp`, rustc) go under
+`target/makepkg-local/` on the workspace disk so Omarchy's small `/tmp` tmpfs
+is not used. Pass any `makepkg` flags after the script name (`-s` installs
+make-deps, `-i` installs the package). For local builds and `./update.sh`, bump
+the version only in the root `Cargo.toml`.
 
 ## Build from the AUR-style PKGBUILD
 

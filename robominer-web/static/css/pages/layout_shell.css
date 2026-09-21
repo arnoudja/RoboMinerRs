@@ -101,8 +101,8 @@ div.interface {
     display: flex;
     flex-wrap: wrap;
     gap: 12px 20px;
-    margin: 0 auto;
-    max-width: 1400px;
+    /* Left-aligned with page tiles (no centered max-width). */
+    margin: 0;
     padding: 10px 16px;
     width: 100%;
 }
@@ -168,15 +168,17 @@ div.interface {
 .app-shell-nav-panel {
     align-items: center;
     display: flex;
-    flex: 1 1 auto;
+    /* Always sit on the row below the title, even when the header is wide. */
+    flex: 1 1 100%;
     gap: 12px 20px;
     min-width: 0;
+    width: 100%;
 }
 
 .app-shell-hud {
     align-items: center;
     display: flex;
-    flex: 1 1 280px;
+    flex: 0 1 auto;
     flex-wrap: wrap;
     gap: 8px 12px;
     min-width: 0;
@@ -272,7 +274,7 @@ div.interface {
 }
 
 .app-shell-nav {
-    flex: 1 1 420px;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
