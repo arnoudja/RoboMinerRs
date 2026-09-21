@@ -3,7 +3,7 @@ use robominer_db::{
     list_activity_rally_participants_for_queues, list_activity_recent_rally_feed,
     list_activity_recent_users, rally_view_metadata, rally_view_state,
 };
-use robominer_test_support::{CancelMiningQueueFixture, insert_row_id};
+use robominer_test_support::{CancelMiningQueueFixture, insert_row_id, unique_prefix};
 use serial_test::serial;
 
 #[tokio::test]
@@ -141,4 +141,73 @@ async fn rally_view_state_requires_claimed_viewer_result_when_requested() {
     assert_eq!(metadata.viewer_player_number, Some(0));
 
     fixture.cleanup(&pool).await;
+}
+
+#[tokio::test]
+#[serial]
+async fn list_activity_recent_users_includes_user_id_1() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let created = ensure_user_id_1(&pool).await;
+    let original_login: String = sqlx::query_scalar(
+        "SELECT DATE_FORMAT(lastLoginTime, '%Y-%m-%d %H:%i:%s') FROM User WHERE id = 1",
+    )
+    .fetch_one(&pool)
+    .await
+    .expect("user 1 login time should load");
+
+    sqlx::query("UPDATE User SET lastLoginTime = TIMESTAMPADD(DAY, 1, NOW()) WHERE id = 1")
+        .execute(&pool)
+        .await
+        .expect("failed to bump user 1 login time");
+
+    let recent_users = list_activity_recent_users(&pool, 10)
+        .await
+        .expect("recent users should load");
+
+    sqlx::query("UPDATE User SET lastLoginTime = ? WHERE id = 1")
+        .bind(&original_login)
+        .execute(&pool)
+        .await
+        .expect("failed to restore user 1 login time");
+    cleanup_created_user_id_1(&pool, created).await;
+
+    assert!(
+        recent_users.iter().any(|user| user.user_id == 1),
+        "user id 1 should appear among recent players"
+    );
+}
+
+async fn ensure_user_id_1(pool: &robominer_db::MySqlPool) -> bool {
+    let exists: Option<i64> = sqlx::query_scalar("SELECT id FROM User WHERE id = 1")
+        .fetch_optional(pool)
+        .await
+        .expect("user 1 lookup should succeed");
+    if exists.is_some() {
+        return false;
+    }
+
+    let prefix = unique_prefix("rust-db-user-id-1");
+    sqlx::query(
+        "INSERT INTO User (id, username, email, password) VALUES (1, ?, ?, 'test-password-1')",
+    )
+    .bind(format!("{prefix}-user"))
+    .bind(format!("{prefix}@example.invalid"))
+    .execute(pool)
+    .await
+    .expect("failed to insert user id 1");
+    true
+}
+
+async fn cleanup_created_user_id_1(pool: &robominer_db::MySqlPool, created: bool) {
+    if created {
+        let _ = sqlx::query("DELETE FROM User WHERE id = 1")
+            .execute(pool)
+            .await;
+    }
 }

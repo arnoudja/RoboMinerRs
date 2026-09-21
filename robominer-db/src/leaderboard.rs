@@ -154,7 +154,6 @@ pub async fn list_leaderboard_top_users(
     sqlx::query_as::<_, (String, i32)>(
         "SELECT username, achievementPoints \
          FROM User \
-         WHERE id > 1 \
          ORDER BY achievementPoints DESC, id \
          LIMIT ?",
     )
@@ -179,10 +178,9 @@ pub async fn load_leaderboard_viewer_standing(
         "SELECT achievementPoints, \
                 (SELECT COUNT(*) + 1 \
                  FROM User RankUser \
-                 WHERE RankUser.id > 1 \
-                   AND (RankUser.achievementPoints > User.achievementPoints \
-                        OR (RankUser.achievementPoints = User.achievementPoints \
-                            AND RankUser.id < User.id))) \
+                 WHERE RankUser.achievementPoints > User.achievementPoints \
+                    OR (RankUser.achievementPoints = User.achievementPoints \
+                        AND RankUser.id < User.id)) \
          FROM User \
          WHERE User.id = ?",
     )

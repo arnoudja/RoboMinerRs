@@ -90,7 +90,6 @@ pub async fn list_activity_recent_users(
         "SELECT id, username, \
                 CAST(UNIX_TIMESTAMP(lastLoginTime) * 1000 AS SIGNED) AS lastLoginTimeMillis \
          FROM User \
-         WHERE id > 1 \
          ORDER BY lastLoginTime DESC \
          LIMIT ?",
     )
