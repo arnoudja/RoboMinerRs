@@ -1195,6 +1195,8 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1701,         1,     15,     15),
                                 (1701,         5,     20,     15),
                                 (1701,         8,     3,      3),
+                                (1701,         8,     3,      3),
+                                (1701,         8,     4,      4),
                                 (1701,         8,     4,      4),
                                 (1701,         8,     5,      4),
                                 (1701,         8,     6,      4),
@@ -1322,7 +1324,7 @@ insert into OrePriceAmount (orePriceId, oreId, amount)
                            (20002,     10,     40),
                            (20002,     11,     30);
 insert into MiningArea (id,   areaName,      orePriceId, sizeX, sizeY, maxMoves, miningTime, taxRate, depotTaxRate, scoreOreTarget, aiRobotId)
-                values (2002, 'Etaxy-Large', 20002,      120,   120,   7500,     21600,      90,      20,           180,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
+                values (2002, 'Etaxy-Large', 20002,      120,   120,   7500,     32400,      90,      20,           180,            1902) ON DUPLICATE KEY UPDATE areaName = VALUES(areaName), orePriceId = VALUES(orePriceId), sizeX = VALUES(sizeX), sizeY = VALUES(sizeY), maxMoves = VALUES(maxMoves), miningTime = VALUES(miningTime), taxRate = VALUES(taxRate), depotTaxRate = VALUES(depotTaxRate), scoreOreTarget = VALUES(scoreOreTarget), aiRobotId = VALUES(aiRobotId);
 insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                          values (2002,         6,     15,     15),
                                 (2002,         6,     15,     15),
