@@ -33,6 +33,9 @@ function focusSourceLine(panel, lineNumber) {
     syncLineNumbersForTextarea(textarea);
 }
 
+// Same row count as edit_code_line_count in editor.rs. A trailing newline is an
+// empty textarea row; dropping it shifts the gutter once the editor scrolls, so
+// the last line of code no longer sits beside its number.
 function sourceCodeLineCount(value) {
     if (!value) {
         return 1;

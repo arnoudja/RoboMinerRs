@@ -309,6 +309,29 @@ fn edit_code_line_numbers_match_source_line_count() {
 }
 
 #[test]
+fn edit_code_line_numbers_include_the_last_line_of_code() {
+    // No trailing newline: the last row is code, and it must be numbered.
+    assert_eq!(edit_code_line_count("alpha();\nbeta();\ngamma();"), 3);
+    assert_eq!(
+        render_edit_code_line_numbers("alpha();\nbeta();\ngamma();"),
+        "1<br>2<br>3"
+    );
+    // A trailing newline is an empty textarea row. Omitting it shifts the gutter
+    // by one line once the editor scrolls, so the last line of code loses its number.
+    assert_eq!(edit_code_line_count("alpha();\nbeta();\ngamma();\n"), 4);
+    assert_eq!(
+        render_edit_code_line_numbers("alpha();\nbeta();\ngamma();\n"),
+        "1<br>2<br>3<br>4"
+    );
+    assert_eq!(
+        edit_code_line_count("alpha();\r\nbeta();\r\ngamma();\r\n"),
+        4
+    );
+    assert_eq!(edit_code_line_count("alpha();\n\nbeta();"), 3);
+    assert_eq!(edit_code_line_count("alpha();\n\nbeta();\n"), 4);
+}
+
+#[test]
 fn edit_code_save_block_reason_matches_server_rejections() {
     assert_eq!(
         edit_code_save_block_reason("", "mine();"),
