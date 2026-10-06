@@ -175,7 +175,11 @@ pub(crate) async fn program_source_robot_count(
 }
 
 /// Maximum accepted robot program source length (UTF-8 bytes).
-pub const MAX_PROGRAM_SOURCE_CODE_BYTES: usize = 16_384;
+///
+/// Large enough for a program whose compiled size is 24_576 (Enhanced Etaxy,
+/// the biggest memory module). The densest such program is about 172 KiB of
+/// `mine();` statements; 512 KiB leaves room for ordinary formatting.
+pub const MAX_PROGRAM_SOURCE_CODE_BYTES: usize = 512 * 1024;
 
 pub(crate) fn validate_program_source_write(
     source_name: &str,
@@ -220,5 +224,10 @@ mod tests {
         );
         let at_limit = "a".repeat(MAX_PROGRAM_SOURCE_CODE_BYTES);
         assert_eq!(validate_program_source_write("main", &at_limit), None);
+        let above_old_etaxy_cap = "a".repeat(16_384 + 1);
+        assert_eq!(
+            validate_program_source_write("main", &above_old_etaxy_cap),
+            None
+        );
     }
 }

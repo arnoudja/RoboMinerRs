@@ -8,7 +8,7 @@ use std::time::Duration;
 use robominer_web::{ServerConfig, serve};
 
 /// Must match `robominer_web::http::MAX_REQUEST_BODY_BYTES`.
-const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
+const MAX_REQUEST_BODY_BYTES: usize = 2_097_152;
 
 fn static_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("static")

@@ -105,6 +105,9 @@ pub(super) struct CompileInput {
     /// `in_function_body` so function bodies can resolve later-declared globals
     /// without weakening top-level temporal declare (TDZ).
     pub(super) program_globals: BTreeMap<String, ProgramGlobal>,
+    /// Indices of `\n` in [`Self::source`]. Column lookup is per statement, so
+    /// scanning the prefix each time is quadratic on a max-size program.
+    newline_positions: Vec<usize>,
     unterminated_block_comment_line: Option<usize>,
 }
 
@@ -200,18 +203,27 @@ impl CompileInput {
     }
 
     fn line_start(&self, pos: usize) -> usize {
-        self.source[..pos.min(self.source.len())]
-            .iter()
-            .rposition(|character| *character == '\n')
-            .map_or(0, |index| index + 1)
+        let pos = pos.min(self.source.len());
+        let newline_index = self
+            .newline_positions
+            .partition_point(|newline| *newline < pos);
+        if newline_index == 0 {
+            0
+        } else {
+            self.newline_positions[newline_index - 1] + 1
+        }
     }
 
     fn end_of_line(&self, pos: usize) -> usize {
-        let start = pos.min(self.source.len());
-        self.source[start..]
-            .iter()
-            .position(|character| *character == '\n')
-            .map_or(self.source.len(), |offset| start + offset)
+        let pos = pos.min(self.source.len());
+        match self.newline_positions.binary_search(&pos) {
+            Ok(index) => self.newline_positions[index],
+            Err(index) => self
+                .newline_positions
+                .get(index)
+                .copied()
+                .unwrap_or(self.source.len()),
+        }
     }
 
     fn trim_whitespace_before(&self, mut pos: usize) -> usize {
@@ -223,15 +235,21 @@ impl CompileInput {
     }
 
     fn line_of(&self, pos: usize) -> usize {
-        self.source[..pos.min(self.source.len())]
-            .iter()
-            .filter(|character| **character == '\n')
-            .count()
+        let pos = pos.min(self.source.len());
+        self.newline_positions
+            .partition_point(|newline| *newline < pos)
     }
 
     pub(super) fn new(source: &str) -> Self {
+        let source: Vec<char> = format!("{{{}\n}}", source).chars().collect();
+        let newline_positions = source
+            .iter()
+            .enumerate()
+            .filter(|(_, character)| **character == '\n')
+            .map(|(index, _)| index)
+            .collect();
         let mut input = Self {
-            source: format!("{{{}\n}}", source).chars().collect(),
+            source,
             pos: 0,
             next_word: String::new(),
             current_line: 1,
@@ -241,6 +259,7 @@ impl CompileInput {
             functions: BTreeMap::new(),
             pending_function_bodies: BTreeSet::new(),
             program_globals: BTreeMap::new(),
+            newline_positions,
             unterminated_block_comment_line: None,
         };
         input.extract_next_word();

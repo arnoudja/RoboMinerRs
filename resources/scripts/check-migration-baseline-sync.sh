@@ -57,6 +57,7 @@ REQUIRED_MARKERS=(
   "idx_mining_queue_claimable"
   "RobotLifetimeResult"
   "queueOrder"
+  "MEDIUMTEXT"
 )
 
 for marker in "${REQUIRED_MARKERS[@]}"; do

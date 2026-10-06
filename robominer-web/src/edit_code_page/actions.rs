@@ -11,6 +11,14 @@ use super::{
 pub(super) struct EditCodeMutationOutcome {
     pub(super) message: Option<String>,
     pub(super) next_program_source_id: Option<i64>,
+    /// Submitted name and source when create/update was rejected, so the
+    /// editor can show the player's text instead of the last stored copy.
+    pub(super) rejected_draft: Option<RejectedProgramDraft>,
+}
+
+pub(super) struct RejectedProgramDraft {
+    pub(super) source_name: String,
+    pub(super) source_code: String,
 }
 
 pub(super) async fn apply_edit_code_mutations(
@@ -19,6 +27,7 @@ pub(super) async fn apply_edit_code_mutations(
     request: &Request,
 ) -> Result<EditCodeMutationOutcome, crate::page_context::PageLoadError> {
     let mut message = None;
+    let mut rejected_draft = None;
     let mut next_program_source_id = query_signed_i64(request, "nextProgramSourceId");
     let program_source_id = if is_post(request) {
         mutation_i64(request, "programSourceId").unwrap_or(0)
@@ -64,6 +73,8 @@ pub(super) async fn apply_edit_code_mutations(
                             "Unable to save program: {}",
                             robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
                         ));
+                        rejected_draft = Some(rejected_program_draft(request));
+                        next_program_source_id = Some(program_source_id);
                     } else {
                         let applied = robominer_db::apply_verified_program_source_to_idle_robots(
                             pool,
@@ -108,6 +119,8 @@ pub(super) async fn apply_edit_code_mutations(
                                 "Unable to save program: {}",
                                 robominer_domain::rejection_messages::program_source_write_rejection_player_message(rejection)
                             ));
+                            rejected_draft = Some(rejected_program_draft(request));
+                            next_program_source_id = Some(-1);
                         }
                     }
                 }
@@ -119,7 +132,15 @@ pub(super) async fn apply_edit_code_mutations(
     Ok(EditCodeMutationOutcome {
         message,
         next_program_source_id,
+        rejected_draft,
     })
+}
+
+fn rejected_program_draft(request: &Request) -> RejectedProgramDraft {
+    RejectedProgramDraft {
+        source_name: request.form.get("sourceName").cloned().unwrap_or_default(),
+        source_code: request.form.get("sourceCode").cloned().unwrap_or_default(),
+    }
 }
 
 pub(super) async fn load_edit_code_page_state(
@@ -127,7 +148,7 @@ pub(super) async fn load_edit_code_page_state(
     user_id: i64,
     request: &Request,
 ) -> Result<EditCodePageState, crate::page_context::PageLoadError> {
-    let mutation = apply_edit_code_mutations(pool, user_id, request).await?;
+    let mut mutation = apply_edit_code_mutations(pool, user_id, request).await?;
     let prefer_stored_selection = !is_post(request)
         && !mutation
             .next_program_source_id
@@ -137,9 +158,13 @@ pub(super) async fn load_edit_code_page_state(
     let selected_source =
         selected_edit_code_source(&program_sources, mutation.next_program_source_id);
 
-    let selected_program_source = selected_source
+    let mut selected_program_source = selected_source
         .map(edit_code_program_source_from_state)
         .unwrap_or_else(default_edit_code_program_source);
+    if let Some(draft) = mutation.rejected_draft.take() {
+        selected_program_source.source_name = draft.source_name;
+        selected_program_source.source_code = draft.source_code;
+    }
     let selected_program_source_id = selected_source.map(|state| state.source.id).unwrap_or(-1);
 
     Ok(EditCodePageState {

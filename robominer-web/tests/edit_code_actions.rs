@@ -503,3 +503,165 @@ async fn edit_code_delete_post_rejects_foreign_program_source() {
             .await;
     }
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn edit_code_save_post_accepts_source_above_old_sixteen_kib_cap() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let scenario = Scenario::user_with_robot_and_wallet(&pool).await;
+    let username = format!("{}-user", scenario.prefix);
+    let config = server_config(pool.clone());
+    let cookie = format_authenticated_cookie(scenario.user_id, &username);
+    let source_code = "mine();\n".repeat(3_000);
+    assert!(source_code.len() > 16_384);
+    assert!(source_code.len() <= robominer_db::MAX_PROGRAM_SOURCE_CODE_BYTES);
+
+    let mut form = HashMap::new();
+    form.insert("requestType".to_string(), "update".to_string());
+    form.insert("programSourceId".to_string(), "-1".to_string());
+    form.insert(
+        "sourceName".to_string(),
+        format!("{}-larger", scenario.prefix),
+    );
+    form.insert("sourceCode".to_string(), source_code);
+
+    let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "edit code page should render");
+    assert!(
+        body.contains("Program created."),
+        "source above 16 KiB should save"
+    );
+    assert!(
+        body.contains(r#"<span class="edit-code-meta-value">3001</span>"#),
+        "3000 mine statements compile to size 3001"
+    );
+
+    let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+#[serial]
+async fn edit_code_save_post_keeps_submitted_source_when_too_long() {
+    let Some(database_url) = robominer_test_support::require_test_db() else {
+        return;
+    };
+
+    ensure_session_configured();
+
+    let pool = robominer_db::connect(&database_url)
+        .await
+        .expect("failed to connect to test database");
+    let scenario = Scenario::user_with_robot_and_wallet(&pool).await;
+    let username = format!("{}-user", scenario.prefix);
+    let config = server_config(pool.clone());
+    let cookie = format_authenticated_cookie(scenario.user_id, &username);
+    let original_name = format!("{}-kept-base", scenario.prefix);
+    let original_source = "move(1);";
+
+    let mut create_form = HashMap::new();
+    create_form.insert("requestType".to_string(), "update".to_string());
+    create_form.insert("programSourceId".to_string(), "-1".to_string());
+    create_form.insert("sourceName".to_string(), original_name.clone());
+    create_form.insert("sourceCode".to_string(), original_source.to_string());
+    let create_response = route(
+        &post_request("/editCode", create_form, Some(&cookie)),
+        &config,
+    )
+    .await;
+    assert_eq!(
+        create_response.status, 200,
+        "edit code create should render"
+    );
+    let cookie = apply_set_cookies(&cookie, &create_response);
+
+    let program_source_id: i64 =
+        sqlx::query_scalar("SELECT id FROM ProgramSource WHERE userId = ? AND sourceName = ?")
+            .bind(scenario.user_id)
+            .bind(&original_name)
+            .fetch_one(&pool)
+            .await
+            .expect("failed to load created program source id");
+
+    let marker = "<KEEP-THIS-SOURCE";
+    let submitted_name = format!("{}-kept", scenario.prefix);
+    let cap = robominer_db::MAX_PROGRAM_SOURCE_CODE_BYTES;
+    let mut submitted_source = String::with_capacity(cap + 1);
+    submitted_source.push_str(marker);
+    submitted_source.push_str(&"a".repeat(cap + 1 - marker.len()));
+    assert_eq!(submitted_source.len(), cap + 1);
+
+    let mut form = HashMap::new();
+    form.insert("requestType".to_string(), "update".to_string());
+    form.insert("programSourceId".to_string(), program_source_id.to_string());
+    form.insert(
+        "nextProgramSourceId".to_string(),
+        program_source_id.to_string(),
+    );
+    form.insert("sourceName".to_string(), submitted_name.clone());
+    form.insert("sourceCode".to_string(), submitted_source);
+
+    let response = route(&post_request("/editCode", form, Some(&cookie)), &config).await;
+    let body = response_body(&response);
+
+    assert_eq!(response.status, 200, "edit code page should render");
+    assert!(
+        body.contains("Unable to save program: Program source is too long."),
+        "expected source-too-long banner"
+    );
+    assert!(
+        body.contains("&lt;KEEP-THIS-SOURCE"),
+        "rejected source should stay in the editor, escaped"
+    );
+    assert!(
+        !body.contains("<KEEP-THIS-SOURCE"),
+        "rejected source must not be inserted as raw HTML"
+    );
+    assert!(
+        body.contains(&format!(r#"value="{submitted_name}""#)),
+        "rejected program name should stay in the editor"
+    );
+
+    let row = sqlx::query("SELECT sourceName, sourceCode FROM ProgramSource WHERE id = ?")
+        .bind(program_source_id)
+        .fetch_one(&pool)
+        .await
+        .expect("load stored program");
+    let stored_name: String = sqlx::Row::try_get(&row, "sourceName").unwrap();
+    let stored_source: String = sqlx::Row::try_get(&row, "sourceCode").unwrap();
+    assert_eq!(stored_name, original_name);
+    assert_eq!(stored_source, original_source);
+
+    let _ = sqlx::query("DELETE FROM ProgramSource WHERE userId = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM Robot WHERE userId = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+    let _ = sqlx::query("DELETE FROM User WHERE id = ?")
+        .bind(scenario.user_id)
+        .execute(&pool)
+        .await;
+}

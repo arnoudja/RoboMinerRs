@@ -53,7 +53,7 @@ pub(super) fn render_edit_code_page(
     body.push_str(r#"<p class="edit-code-library-hint">Select a program to edit source code.</p>"#);
     body.push_str(r#"<div class="edit-code-program-cards">"#);
     for program_source in &program_sources {
-        let program = edit_code_program_source_from_state(program_source);
+        let program = program_for_render(state, program_source);
         render_edit_code_program_card(
             &mut body,
             program_source.source.id,
@@ -66,7 +66,7 @@ pub(super) fn render_edit_code_page(
     body.push_str(r#"<div class="edit-code-editor-area">"#);
     body.push_str(r#"<div class="edit-code-panels">"#);
     for program_source in &program_sources {
-        let program = edit_code_program_source_from_state(program_source);
+        let program = program_for_render(state, program_source);
         render_edit_code_panel(
             &mut body,
             program_source.source.id,
@@ -74,10 +74,15 @@ pub(super) fn render_edit_code_page(
             program_source.source.id == state.selected_program_source_id,
         );
     }
+    let new_program = if state.selected_program_source_id <= 0 {
+        state.selected_program_source.clone()
+    } else {
+        default_edit_code_program_source()
+    };
     render_edit_code_panel(
         &mut body,
         -1,
-        &default_edit_code_program_source(),
+        &new_program,
         state.selected_program_source_id <= 0,
     );
     body.push_str("</div></div></div>");
@@ -93,6 +98,19 @@ pub(super) fn render_edit_code_page(
         &body,
         &[PageStylesheet::EditCode],
     )
+}
+
+/// The selected editor shows the page-state program, which may be a rejected
+/// save with the submitted name and source. Other cards stay on stored rows.
+fn program_for_render(
+    state: &EditCodePageState,
+    record: &robominer_db::ProgramSourceStateRecord,
+) -> super::EditCodeProgramSource {
+    if record.source.id == state.selected_program_source_id {
+        state.selected_program_source.clone()
+    } else {
+        edit_code_program_source_from_state(record)
+    }
 }
 
 fn render_edit_code_summary(

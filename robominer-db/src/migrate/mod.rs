@@ -37,6 +37,7 @@ mod tests {
         "012_mining_queue_claimable_index",
         "013_robot_lifetime_depot_amount",
         "014_mining_queue_order",
+        "015_program_source_mediumtext",
     ];
 
     /// Migrations intentionally without their own probe (covered by later markers).
@@ -110,6 +111,7 @@ mod tests {
             "idx_mining_queue_claimable",
             "RobotLifetimeResult",
             "queueOrder",
+            "MEDIUMTEXT",
         ];
         for marker in required {
             assert!(

@@ -88,6 +88,18 @@ applied_count() {
     mysql_app -N -e "SELECT COUNT(*) FROM SchemaMigration" 2>/dev/null || echo 0
 }
 
+column_type_is() {
+    local table="$1"
+    local column="$2"
+    local data_type="$3"
+    mysql_app -N -e \
+        "SELECT COUNT(*) FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = '${table}'
+           AND column_name = '${column}'
+           AND LOWER(data_type) = LOWER('${data_type}')" 2>/dev/null | grep -qx '1'
+}
+
 column_exists() {
     local table="$1"
     local column="$2"
@@ -121,7 +133,8 @@ schema_already_current() {
         && column_exists MiningQueue processingLeaseUntil \
         && index_exists MiningQueue idx_mining_queue_claimable \
         && column_exists RobotLifetimeResult depotAmount \
-        && column_exists MiningQueue queueOrder
+        && column_exists MiningQueue queueOrder \
+        && column_type_is ProgramSource sourceCode MEDIUMTEXT
 }
 
 index_exists() {
