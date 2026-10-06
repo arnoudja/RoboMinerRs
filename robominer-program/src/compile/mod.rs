@@ -18,7 +18,7 @@ pub use fixtures::{
 
 /// Matches `robominer_db::MAX_PROGRAM_SOURCE_CODE_BYTES` — defense in depth for
 /// compile callers that do not go through DB validation.
-pub const MAX_COMPILE_SOURCE_BYTES: usize = 16_384;
+pub const MAX_COMPILE_SOURCE_BYTES: usize = 512 * 1024;
 
 /// Soft wall-clock budget for a single compile; oversized/pathological sources
 /// should already be rejected by [`MAX_COMPILE_SOURCE_BYTES`].

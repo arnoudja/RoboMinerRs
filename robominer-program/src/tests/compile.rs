@@ -243,3 +243,32 @@ fn unterminated_block_comment_is_a_syntax_error() {
         "block comments do not nest, so `still` is parsed as code"
     );
 }
+
+/// Densest program whose compiled size is 24_576 (Enhanced Etaxy).
+/// A sequence of n>1 statements costs 1 + n, and each `mine();` costs 1.
+fn largest_memory_module_program_source() -> String {
+    const STATEMENT_COUNT: usize = 24_575;
+    let mut source = String::with_capacity(STATEMENT_COUNT * 7);
+    for _ in 0..STATEMENT_COUNT {
+        source.push_str("mine();\n");
+    }
+    source
+}
+
+#[test]
+fn verify_source_accepts_compiled_size_of_largest_memory_module() {
+    let source = largest_memory_module_program_source();
+    assert!(
+        source.len() > 16_384,
+        "this program is larger than the old 16 KiB source cap"
+    );
+    assert!(
+        source.len() <= crate::compile::MAX_COMPILE_SOURCE_BYTES,
+        "compiled size 24576 must fit in the source cap, len={}",
+        source.len()
+    );
+
+    let result = verify_source(&source);
+    assert!(result.verified, "{}", result.error_description);
+    assert_eq!(result.compiled_size, 24_576);
+}

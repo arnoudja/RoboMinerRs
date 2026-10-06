@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Upper bound for HTTP request bodies (program saves are the largest forms).
-pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 1_048_576;
+///
+/// Headroom over the 512 KiB program-source cap so a percent-encoded save
+/// reaches validation instead of HTTP 413.
+pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 2 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 pub struct Request {

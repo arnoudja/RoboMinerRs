@@ -32,6 +32,9 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
         index_exists(pool, "MiningQueue", "idx_mining_queue_claimable").await?;
     // Migration 014: explicit queue order for unfinished MiningQueue rows.
     let has_queue_order = column_exists(pool, "MiningQueue", "queueOrder").await?;
+    // Migration 015: player program source columns are MEDIUMTEXT.
+    let has_program_source_mediumtext =
+        column_data_type_is(pool, "ProgramSource", "sourceCode", "MEDIUMTEXT").await?;
     Ok(!has_scan_speed
         && has_scan_time
         && has_session_version
@@ -44,7 +47,8 @@ pub(super) async fn schema_already_current(pool: &MySqlPool) -> Result<bool, Mig
         && has_processing_lease
         && has_lifetime_depot_amount
         && has_claimable_index
-        && has_queue_order)
+        && has_queue_order
+        && has_program_source_mediumtext)
 }
 
 pub(super) async fn ensure_schema_migration_table(pool: &MySqlPool) -> Result<(), MigrateError> {
@@ -112,6 +116,27 @@ async fn column_exists(
     )
     .bind(table_name)
     .bind(column_name)
+    .fetch_one(pool)
+    .await?;
+    Ok(count > 0)
+}
+
+async fn column_data_type_is(
+    pool: &MySqlPool,
+    table_name: &str,
+    column_name: &str,
+    data_type: &str,
+) -> Result<bool, MigrateError> {
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = ?
+           AND column_name = ?
+           AND LOWER(data_type) = LOWER(?)",
+    )
+    .bind(table_name)
+    .bind(column_name)
+    .bind(data_type)
     .fetch_one(pool)
     .await?;
     Ok(count > 0)
