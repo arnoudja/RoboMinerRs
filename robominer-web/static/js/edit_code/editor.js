@@ -33,6 +33,9 @@ function focusSourceLine(panel, lineNumber) {
     syncLineNumbersForTextarea(textarea);
 }
 
+// Same row count as edit_code_line_count in editor.rs. A trailing newline is an
+// empty textarea row; dropping it shifts the gutter once the editor scrolls, so
+// the last line of code no longer sits beside its number.
 function sourceCodeLineCount(value) {
     if (!value) {
         return 1;
@@ -40,12 +43,113 @@ function sourceCodeLineCount(value) {
     return value.split('\n').length;
 }
 
-function renderLineNumbers(gutter, lineCount) {
-    const lines = [];
-    for (let line = 1; line <= lineCount; line += 1) {
-        lines.push(String(line));
+function gutterHtmlForWrapCounts(wrapCounts) {
+    const rows = [];
+    for (let index = 0; index < wrapCounts.length; index += 1) {
+        const parsed = Math.round(wrapCounts[index]);
+        const visualRows = parsed >= 1 ? parsed : 1;
+        rows.push(String(index + 1));
+        for (let extra = 1; extra < visualRows; extra += 1) {
+            rows.push('');
+        }
     }
-    gutter.innerHTML = lines.join('<br>');
+    return rows.join('<br>');
+}
+
+function wrapCountsFromLineHeights(heights, lineHeight) {
+    const safeLineHeight = lineHeight > 0 ? lineHeight : 1;
+    const counts = [];
+    for (let index = 0; index < heights.length; index += 1) {
+        const rows = Math.round(heights[index] / safeLineHeight);
+        counts.push(rows >= 1 ? rows : 1);
+    }
+    return counts;
+}
+
+function renderLineNumbers(gutter, lineCountOrWraps) {
+    let html;
+    if (Array.isArray(lineCountOrWraps)) {
+        html = gutterHtmlForWrapCounts(lineCountOrWraps);
+    } else {
+        const lineCount = lineCountOrWraps > 0 ? lineCountOrWraps : 1;
+        const rows = [];
+        for (let line = 1; line <= lineCount; line += 1) {
+            rows.push(String(line));
+        }
+        html = rows.join('<br>');
+    }
+    if (gutter.innerHTML !== html) {
+        gutter.innerHTML = html;
+    }
+}
+
+function fallbackWrapCounts(value) {
+    const count = sourceCodeLineCount(value);
+    const wraps = [];
+    for (let index = 0; index < count; index += 1) {
+        wraps.push(1);
+    }
+    return wraps;
+}
+
+// A source line that is wider than the textarea wraps onto extra visual rows.
+// Those rows have no number of their own; the gutter inserts a blank row for
+// each one so the next number stays level with the next source line.
+function measureSourceLineWraps(textarea) {
+    const value = textarea.value || '';
+    const lines = value ? value.split('\n') : [''];
+    if (typeof document === 'undefined' || !document.body || !window.getComputedStyle) {
+        return fallbackWrapCounts(value);
+    }
+    const style = window.getComputedStyle(textarea);
+    let lineHeight = parseFloat(style.lineHeight);
+    if (!lineHeight || isNaN(lineHeight)) {
+        const fontSize = parseFloat(style.fontSize);
+        lineHeight = (fontSize && !isNaN(fontSize) ? fontSize : 14) * 1.45;
+    }
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingRight = parseFloat(style.paddingRight) || 0;
+    const contentWidth = textarea.clientWidth - paddingLeft - paddingRight;
+    if (!(contentWidth > 0)) {
+        return fallbackWrapCounts(value);
+    }
+
+    const mirror = document.createElement('div');
+    mirror.setAttribute('aria-hidden', 'true');
+    mirror.style.position = 'absolute';
+    mirror.style.left = '-9999px';
+    mirror.style.top = '0';
+    mirror.style.visibility = 'hidden';
+    mirror.style.boxSizing = 'content-box';
+    mirror.style.width = contentWidth + 'px';
+    mirror.style.padding = '0';
+    mirror.style.border = '0';
+    mirror.style.font = style.font;
+    mirror.style.lineHeight = lineHeight + 'px';
+    mirror.style.letterSpacing = style.letterSpacing || 'normal';
+    mirror.style.whiteSpace = 'pre-wrap';
+    mirror.style.wordWrap = 'break-word';
+    mirror.style.overflowWrap = 'break-word';
+    if (style.tabSize) {
+        mirror.style.tabSize = style.tabSize;
+    }
+
+    const rowElements = [];
+    for (let index = 0; index < lines.length; index += 1) {
+        const row = document.createElement('div');
+        row.style.whiteSpace = 'pre-wrap';
+        row.style.overflowWrap = 'break-word';
+        row.textContent = lines[index].length ? lines[index] : '\u00a0';
+        mirror.appendChild(row);
+        rowElements.push(row);
+    }
+    document.body.appendChild(mirror);
+    const heights = [];
+    for (let index = 0; index < rowElements.length; index += 1) {
+        heights.push(rowElements[index].offsetHeight);
+    }
+    document.body.removeChild(mirror);
+    return wrapCountsFromLineHeights(heights, lineHeight);
 }
 
 function syncLineNumbersForTextarea(textarea) {
@@ -57,7 +161,7 @@ function syncLineNumbersForTextarea(textarea) {
     if (!gutter) {
         return;
     }
-    renderLineNumbers(gutter, sourceCodeLineCount(textarea.value));
+    renderLineNumbers(gutter, measureSourceLineWraps(textarea));
     gutter.scrollTop = textarea.scrollTop;
 }
 
@@ -77,6 +181,16 @@ function attachLineNumberListeners(textarea) {
             gutter.scrollTop = textarea.scrollTop;
         }
     });
+    if (typeof ResizeObserver === 'function') {
+        const observer = new ResizeObserver(function() {
+            syncLineNumbersForTextarea(textarea);
+        });
+        observer.observe(textarea);
+    } else if (window.addEventListener) {
+        window.addEventListener('resize', function() {
+            syncLineNumbersForTextarea(textarea);
+        });
+    }
     syncLineNumbersForTextarea(textarea);
 }
 

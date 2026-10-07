@@ -3,8 +3,15 @@ use crate::html::{EscapedHtml, optional_title_attr};
 
 use super::edit_code_save_block_reason;
 
+/// Rows in the edit-code textarea, including the last line of code.
+///
+/// A trailing newline is an empty row the textarea still shows (`"a\n"` is two
+/// rows). `str::lines()` drops that row, leaving the gutter one short. After the
+/// editor scrolls, every number sits on the previous row, so the last line of
+/// code has no number of its own. Counting newlines the way `split('\n')` does
+/// keeps that line beside its number whether or not the source ends in a newline.
 pub(super) fn edit_code_line_count(source_code: &str) -> usize {
-    source_code.lines().count().max(1)
+    source_code.matches('\n').count() + 1
 }
 
 pub(super) fn render_edit_code_line_numbers(source_code: &str) -> String {
