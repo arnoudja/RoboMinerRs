@@ -47,4 +47,107 @@ describe('edit code line gutter', () => {
         );
         assert.equal(gutter.innerHTML, '1<br>2<br>3<br>4');
     });
+
+    it('inserts blank gutter rows where a source line wraps', () => {
+        const editor = loadEditor();
+        assert.equal(
+            JSON.stringify(editor.wrapCountsFromLineHeights([21, 42, 21], 21)),
+            JSON.stringify([1, 2, 1])
+        );
+        assert.equal(
+            JSON.stringify(editor.wrapCountsFromLineHeights([21, 63, 21], 21)),
+            JSON.stringify([1, 3, 1])
+        );
+        assert.equal(
+            JSON.stringify(editor.wrapCountsFromLineHeights([21, 0], 21)),
+            JSON.stringify([1, 1])
+        );
+        assert.equal(editor.gutterHtmlForWrapCounts([1, 1, 1]), '1<br>2<br>3');
+        // Middle source line uses two visual rows: number, then a blank row.
+        assert.equal(editor.gutterHtmlForWrapCounts([1, 2, 1]), '1<br>2<br><br>3');
+        // More than one extra visual row.
+        assert.equal(editor.gutterHtmlForWrapCounts([1, 3, 1]), '1<br>2<br><br><br>3');
+
+        const gutter = { innerHTML: '' };
+        editor.renderLineNumbers(gutter, [1, 2, 1]);
+        assert.equal(gutter.innerHTML, '1<br>2<br><br>3');
+    });
+
+    it('recomputes blank gutter rows when the text changes or the editor resizes', () => {
+        const editor = loadEditor();
+        const rowHeights = { one: 21, WRAP: 21, three: 21 };
+        const gutter = { innerHTML: '', scrollTop: 0 };
+        const listeners = {};
+        let resizeCallback = null;
+        editor.document = {
+            body: {
+                appendChild() {},
+                removeChild() {}
+            },
+            createElement() {
+                const el = {
+                    style: {},
+                    textContent: '',
+                    setAttribute() {},
+                    appendChild() {},
+                    removeChild() {}
+                };
+                Object.defineProperty(el, 'offsetHeight', {
+                    get() {
+                        return rowHeights[el.textContent] || 21;
+                    }
+                });
+                return el;
+            }
+        };
+        editor.getComputedStyle = function() {
+            return {
+                lineHeight: '21px',
+                fontSize: '14px',
+                font: '14px monospace',
+                paddingLeft: '0',
+                paddingRight: '0',
+                letterSpacing: 'normal',
+                tabSize: '8'
+            };
+        };
+        editor.ResizeObserver = function(callback) {
+            resizeCallback = callback;
+            this.observe = function() {};
+        };
+        const textarea = {
+            value: 'one\nWRAP\nthree',
+            clientWidth: 80,
+            scrollTop: 0,
+            closest() {
+                return {
+                    querySelector() {
+                        return gutter;
+                    }
+                };
+            },
+            getAttribute() {
+                return null;
+            },
+            setAttribute() {},
+            addEventListener(type, listener) {
+                listeners[type] = listener;
+            }
+        };
+
+        editor.attachLineNumberListeners(textarea);
+        assert.equal(gutter.innerHTML, '1<br>2<br>3');
+
+        rowHeights.WRAP = 42;
+        listeners.input();
+        assert.equal(gutter.innerHTML, '1<br>2<br><br>3');
+
+        rowHeights.WRAP = 63;
+        resizeCallback();
+        assert.equal(gutter.innerHTML, '1<br>2<br><br><br>3');
+
+        rowHeights.WRAP = 21;
+        listeners.input();
+        assert.equal(gutter.innerHTML, '1<br>2<br>3');
+    });
 });
