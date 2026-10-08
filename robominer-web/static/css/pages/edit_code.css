@@ -279,6 +279,13 @@
     user-select: none;
 }
 
+/* JS sets each row's height to the textarea's used line height. Block rows
+   stack by that height, so a wrap blank stays level with the editor line box. */
+.edit-code-line-numbers .edit-code-gutter-row {
+    margin: 0;
+    padding: 0;
+}
+
 .edit-code-page .edit-code-source-editor .edit-code-textarea {
     background: transparent;
     border: none;

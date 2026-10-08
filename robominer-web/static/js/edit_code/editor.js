@@ -20,17 +20,60 @@ function focusSourceLine(panel, lineNumber) {
         textarea.setSelectionRange(start, end);
     }
     const style = window.getComputedStyle(textarea);
-    let lineHeight = parseFloat(style.lineHeight);
-    if (!lineHeight || isNaN(lineHeight)) {
-        const fontSize = parseFloat(style.fontSize);
-        lineHeight = (fontSize && !isNaN(fontSize) ? fontSize : 14) * 1.4;
-    }
+    const lineHeight = editorLineHeightPx(style);
     let paddingTop = parseFloat(style.paddingTop);
     if (!paddingTop || isNaN(paddingTop)) {
         paddingTop = 0;
     }
-    textarea.scrollTop = Math.max(0, paddingTop + (targetLine - 1) * lineHeight - textarea.clientHeight / 3);
+    // Scroll by visual rows. An earlier wrapped line pushes the target down by
+    // each extra row; the target's own wrap stays below this anchor.
+    const wrapCounts = measureSourceLineWraps(textarea);
+    const visualRowsAbove = wrapCounts
+        ? visualRowsBeforeLine(wrapCounts, targetLine)
+        : (targetLine - 1);
+    textarea.scrollTop = Math.max(0, paddingTop + visualRowsAbove * lineHeight - textarea.clientHeight / 3);
     syncLineNumbersForTextarea(textarea);
+}
+
+function editorLineHeightPx(style) {
+    let lineHeight = parseFloat(style.lineHeight);
+    if (!lineHeight || isNaN(lineHeight)) {
+        const fontSize = parseFloat(style.fontSize);
+        lineHeight = (fontSize && !isNaN(fontSize) ? fontSize : 14) * 1.45;
+    }
+    return lineHeight;
+}
+
+function editorContentWidth(textarea, style) {
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingRight = parseFloat(style.paddingRight) || 0;
+    return textarea.clientWidth - paddingLeft - paddingRight;
+}
+
+// The mirror has to wrap with the same rules as the textarea. Hardcoded
+// white-space or overflow-wrap drifts on tabs and on tokens with no spaces.
+function applyMeasuredWrapStyles(element, style, contentWidth) {
+    const whiteSpace = style.whiteSpace || 'pre-wrap';
+    const overflowWrap = style.overflowWrap || style.wordWrap || 'break-word';
+    element.style.whiteSpace = whiteSpace;
+    element.style.wordWrap = style.wordWrap || overflowWrap;
+    element.style.overflowWrap = overflowWrap;
+    if (style.tabSize) {
+        element.style.tabSize = style.tabSize;
+    }
+    if (contentWidth > 0) {
+        element.style.width = contentWidth + 'px';
+    }
+}
+
+function visualRowsBeforeLine(wrapCounts, targetLine) {
+    let rows = 0;
+    const last = Math.min(Math.max(targetLine - 1, 0), wrapCounts.length);
+    for (let index = 0; index < last; index += 1) {
+        const parsed = Math.round(wrapCounts[index]);
+        rows += parsed >= 1 ? parsed : 1;
+    }
+    return rows;
 }
 
 // Same row count as edit_code_line_count in editor.rs. A trailing newline is an
@@ -43,7 +86,7 @@ function sourceCodeLineCount(value) {
     return value.split('\n').length;
 }
 
-function gutterHtmlForWrapCounts(wrapCounts) {
+function gutterRowLabels(wrapCounts) {
     const rows = [];
     for (let index = 0; index < wrapCounts.length; index += 1) {
         const parsed = Math.round(wrapCounts[index]);
@@ -53,7 +96,26 @@ function gutterHtmlForWrapCounts(wrapCounts) {
             rows.push('');
         }
     }
-    return rows.join('<br>');
+    return rows;
+}
+
+function gutterHtmlForWrapCounts(wrapCounts, lineHeightPx) {
+    const rows = gutterRowLabels(wrapCounts);
+    if (!(lineHeightPx > 0)) {
+        return rows.join('<br>');
+    }
+    // Each visual row, including a wrap blank, is a fixed box the same height
+    // as the textarea line box. <br> blanks are shorter, so scrollTop drifts.
+    const height = lineHeightPx + 'px';
+    const html = [];
+    for (let index = 0; index < rows.length; index += 1) {
+        html.push(
+            '<div class="edit-code-gutter-row" style="height:' + height + ';line-height:' + height + '">'
+            + rows[index]
+            + '</div>'
+        );
+    }
+    return html.join('');
 }
 
 function wrapCountsFromLineHeights(heights, lineHeight) {
@@ -66,10 +128,10 @@ function wrapCountsFromLineHeights(heights, lineHeight) {
     return counts;
 }
 
-function renderLineNumbers(gutter, lineCountOrWraps) {
+function renderLineNumbers(gutter, lineCountOrWraps, lineHeightPx) {
     let html;
     if (Array.isArray(lineCountOrWraps)) {
-        html = gutterHtmlForWrapCounts(lineCountOrWraps);
+        html = gutterHtmlForWrapCounts(lineCountOrWraps, lineHeightPx);
     } else {
         const lineCount = lineCountOrWraps > 0 ? lineCountOrWraps : 1;
         const rows = [];
@@ -102,16 +164,12 @@ function measureSourceLineWraps(textarea) {
         return fallbackWrapCounts(value);
     }
     const style = window.getComputedStyle(textarea);
-    let lineHeight = parseFloat(style.lineHeight);
-    if (!lineHeight || isNaN(lineHeight)) {
-        const fontSize = parseFloat(style.fontSize);
-        lineHeight = (fontSize && !isNaN(fontSize) ? fontSize : 14) * 1.45;
-    }
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    const paddingRight = parseFloat(style.paddingRight) || 0;
-    const contentWidth = textarea.clientWidth - paddingLeft - paddingRight;
+    const lineHeight = editorLineHeightPx(style);
+    const contentWidth = editorContentWidth(textarea, style);
+    // Width 0 means the panel is hidden (or not laid out yet). A measurement
+    // taken then is all single rows and must not replace a real one.
     if (!(contentWidth > 0)) {
-        return fallbackWrapCounts(value);
+        return null;
     }
 
     const mirror = document.createElement('div');
@@ -121,24 +179,20 @@ function measureSourceLineWraps(textarea) {
     mirror.style.top = '0';
     mirror.style.visibility = 'hidden';
     mirror.style.boxSizing = 'content-box';
-    mirror.style.width = contentWidth + 'px';
     mirror.style.padding = '0';
     mirror.style.border = '0';
     mirror.style.font = style.font;
     mirror.style.lineHeight = lineHeight + 'px';
     mirror.style.letterSpacing = style.letterSpacing || 'normal';
-    mirror.style.whiteSpace = 'pre-wrap';
-    mirror.style.wordWrap = 'break-word';
-    mirror.style.overflowWrap = 'break-word';
-    if (style.tabSize) {
-        mirror.style.tabSize = style.tabSize;
-    }
+    applyMeasuredWrapStyles(mirror, style, contentWidth);
 
     const rowElements = [];
     for (let index = 0; index < lines.length; index += 1) {
         const row = document.createElement('div');
-        row.style.whiteSpace = 'pre-wrap';
-        row.style.overflowWrap = 'break-word';
+        row.style.boxSizing = 'content-box';
+        row.style.padding = '0';
+        row.style.border = '0';
+        applyMeasuredWrapStyles(row, style, contentWidth);
         row.textContent = lines[index].length ? lines[index] : '\u00a0';
         mirror.appendChild(row);
         rowElements.push(row);
@@ -152,7 +206,7 @@ function measureSourceLineWraps(textarea) {
     return wrapCountsFromLineHeights(heights, lineHeight);
 }
 
-function syncLineNumbersForTextarea(textarea) {
+function syncLineNumbersForTextarea(textarea, allowRetry) {
     const editor = textarea.closest('.edit-code-source-editor');
     if (!editor) {
         return;
@@ -161,8 +215,40 @@ function syncLineNumbersForTextarea(textarea) {
     if (!gutter) {
         return;
     }
-    renderLineNumbers(gutter, measureSourceLineWraps(textarea));
+    const wraps = measureSourceLineWraps(textarea);
+    if (!wraps) {
+        if (allowRetry !== false) {
+            scheduleLineNumberMeasure(textarea);
+        }
+        return;
+    }
+    const lineHeight = window.getComputedStyle
+        ? editorLineHeightPx(window.getComputedStyle(textarea))
+        : 0;
+    renderLineNumbers(gutter, wraps, lineHeight);
     gutter.scrollTop = textarea.scrollTop;
+}
+
+function scheduleLineNumberMeasure(textarea) {
+    if (textarea.lineNumberMeasureQueued) {
+        return;
+    }
+    if (typeof requestAnimationFrame !== 'function') {
+        return;
+    }
+    textarea.lineNumberMeasureQueued = true;
+    requestAnimationFrame(function() {
+        textarea.lineNumberMeasureQueued = false;
+        syncLineNumbersForTextarea(textarea, false);
+    });
+}
+
+function refreshEditCodeLineNumbers(panel) {
+    const textarea = panel && panel.querySelector('textarea[name="sourceCode"]');
+    if (!textarea) {
+        return;
+    }
+    syncLineNumbersForTextarea(textarea);
 }
 
 function attachLineNumberListeners(textarea) {
