@@ -87,6 +87,7 @@
             }
             if (isActive) {
                 attachEditCodeFieldListeners(panel);
+                refreshEditCodeLineNumbers(panel);
                 syncEditCodeFormState(panel);
                 updateEditCodeSaveState(panel);
             }

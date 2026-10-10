@@ -14,6 +14,9 @@ pub(super) fn edit_code_line_count(source_code: &str) -> usize {
     source_code.matches('\n').count() + 1
 }
 
+/// One number per logical line. Wrapped visual rows are blank gutter rows the
+/// client inserts after it can measure the textarea; this HTML does not guess
+/// a width.
 pub(super) fn render_edit_code_line_numbers(source_code: &str) -> String {
     (1..=edit_code_line_count(source_code))
         .map(|line| line.to_string())

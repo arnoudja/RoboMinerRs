@@ -332,6 +332,22 @@ fn edit_code_line_numbers_include_the_last_line_of_code() {
 }
 
 #[test]
+fn edit_code_server_line_numbers_stay_one_per_logical_line() {
+    // Wrap blanks are a client layout concern. The server still emits one number
+    // per logical line, including a long token and a trailing empty row.
+    let long_line = "x".repeat(240);
+    let source = format!("first();\n{long_line}\nlast();\n");
+    assert_eq!(edit_code_line_count(&source), 4);
+    assert_eq!(render_edit_code_line_numbers(&source), "1<br>2<br>3<br>4");
+    let html = render_edit_code_source_field(4, &source, "");
+    assert_html_contains(
+        &html,
+        r#"<div class="edit-code-line-numbers" id="sourceCodeLines4" aria-hidden="true">1<br>2<br>3<br>4</div>"#,
+    );
+    assert_html_not_contains(&html, "<br><br>");
+}
+
+#[test]
 fn edit_code_save_block_reason_matches_server_rejections() {
     assert_eq!(
         edit_code_save_block_reason("", "mine();"),
