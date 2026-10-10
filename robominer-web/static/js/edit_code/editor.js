@@ -99,23 +99,11 @@ function gutterRowLabels(wrapCounts) {
     return rows;
 }
 
-function gutterHtmlForWrapCounts(wrapCounts, lineHeightPx) {
-    const rows = gutterRowLabels(wrapCounts);
-    if (!(lineHeightPx > 0)) {
-        return rows.join('<br>');
-    }
-    // Each visual row, including a wrap blank, is a fixed box the same height
-    // as the textarea line box. <br> blanks are shorter, so scrollTop drifts.
-    const height = lineHeightPx + 'px';
-    const html = [];
-    for (let index = 0; index < rows.length; index += 1) {
-        html.push(
-            '<div class="edit-code-gutter-row" style="height:' + height + ';line-height:' + height + '">'
-            + rows[index]
-            + '</div>'
-        );
-    }
-    return html.join('');
+function gutterHtmlForWrapCounts(wrapCounts) {
+    // <br> is the blank row. An empty div only has height when its style
+    // attribute applies, and style-src 'self' drops those attributes, so the
+    // blank collapses and the next number sits on the wrapped source line.
+    return gutterRowLabels(wrapCounts).join('<br>');
 }
 
 function wrapCountsFromLineHeights(heights, lineHeight) {
@@ -131,7 +119,7 @@ function wrapCountsFromLineHeights(heights, lineHeight) {
 function renderLineNumbers(gutter, lineCountOrWraps, lineHeightPx) {
     let html;
     if (Array.isArray(lineCountOrWraps)) {
-        html = gutterHtmlForWrapCounts(lineCountOrWraps, lineHeightPx);
+        html = gutterHtmlForWrapCounts(lineCountOrWraps);
     } else {
         const lineCount = lineCountOrWraps > 0 ? lineCountOrWraps : 1;
         const rows = [];
@@ -139,6 +127,15 @@ function renderLineNumbers(gutter, lineCountOrWraps, lineHeightPx) {
             rows.push(String(line));
         }
         html = rows.join('<br>');
+    }
+    // Each <br> row, including a wrap blank, uses this line box. Assign it
+    // through the CSSOM: the same policy that drops style attributes still
+    // applies element.style, so the blank stays as tall as a textarea row.
+    if (lineHeightPx > 0) {
+        if (!gutter.style) {
+            gutter.style = {};
+        }
+        gutter.style.lineHeight = lineHeightPx + 'px';
     }
     if (gutter.innerHTML !== html) {
         gutter.innerHTML = html;

@@ -137,12 +137,12 @@ describe('edit code line gutter', () => {
 
         editor.attachLineNumberListeners(textarea);
         assert.deepEqual(gutterLabels(gutter.innerHTML), ['1', '2', '3']);
-        assertGutterRowsMatchLineHeight(gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(gutter, 21);
 
         rowHeights.WRAP = 42;
         listeners.input();
         assert.deepEqual(gutterLabels(gutter.innerHTML), ['1', '2', '', '3']);
-        assertGutterRowsMatchLineHeight(gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(gutter, 21);
 
         rowHeights.WRAP = 63;
         resizeCallback();
@@ -166,7 +166,7 @@ describe('edit code line gutter', () => {
         layout.textarea.value = 'FIRST\nmid\nLAST';
         editorSync(layout);
         assert.deepEqual(gutterLabels(layout.gutter.innerHTML), ['1', '', '', '2', '3', '']);
-        assertGutterRowsMatchLineHeight(layout.gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(layout.gutter, 21);
     });
 });
 
@@ -313,31 +313,14 @@ function editorSync(layout) {
 }
 
 function gutterLabels(html) {
-    if (html.indexOf('edit-code-gutter-row') !== -1) {
-        const labels = [];
-        const pattern = /<div class="edit-code-gutter-row"[^>]*>([^<]*)<\/div>/g;
-        let match = pattern.exec(html);
-        while (match) {
-            labels.push(match[1]);
-            match = pattern.exec(html);
-        }
-        return labels;
-    }
-    return html.split('<br>');
+    return String(html).replace(/\sstyle="[^"]*"/g, '').split('<br>');
 }
 
-function assertGutterRowsMatchLineHeight(html, lineHeight) {
-    const pattern = /<div class="edit-code-gutter-row" style="([^"]*)">/g;
-    const styles = [];
-    let match = pattern.exec(html);
-    while (match) {
-        styles.push(match[1]);
-        match = pattern.exec(html);
-    }
-    assert.ok(styles.length > 0, 'gutter rows should be explicit boxes');
-    const expected = 'height:' + lineHeight + 'px;line-height:' + lineHeight + 'px';
-    for (let index = 0; index < styles.length; index += 1) {
-        assert.equal(styles[index], expected);
+function assertGutterRowsMatchLineHeight(gutter, lineHeight) {
+    const heights = appliedRowHeightsUnderStylePolicy(gutter);
+    assert.ok(heights.length > 0, 'gutter should have a row');
+    for (let index = 0; index < heights.length; index += 1) {
+        assert.equal(heights[index], lineHeight);
     }
 }
 
@@ -388,6 +371,23 @@ function expectedWraps(lines, metrics) {
     });
 }
 
+function appliedRowHeightsUnderStylePolicy(gutter) {
+    // style-src 'self' ignores style attributes. CSSOM assignments on the gutter
+    // still apply. An empty div then has no line box; a <br> row uses the
+    // gutter's line-height.
+    const html = String(gutter.innerHTML).replace(/\sstyle="[^"]*"/g, '');
+    const cssomLine = parseFloat(gutter.style && gutter.style.lineHeight) || 0;
+    if (html.indexOf('<br>') !== -1 && html.indexOf('<div') === -1) {
+        return html.split('<br>').map(function() {
+            return cssomLine;
+        });
+    }
+    const labels = gutterLabels(html);
+    return labels.map(function(label) {
+        return label === '' ? 0 : cssomLine;
+    });
+}
+
 describe('edit code line jump', () => {
     it('scrolls to the visual row when an earlier line wraps', () => {
         const layout = installMeasuredEditor(loadEditor(), {
@@ -423,6 +423,26 @@ describe('edit code line jump', () => {
 });
 
 describe('edit code gutter scroll sync', () => {
+    it('inserts a blank gutter row for one extra visual wrap when inline styles are blocked', () => {
+        // No offsetHeight map: the long token is wider than the content box, so
+        // the mirror measures two visual rows. style-src 'self' then drops any
+        // style attributes, and the blank row must still be a full line box.
+        const layout = installMeasuredEditor(loadEditor(), {
+            metrics: {
+                clientWidth: 80,
+                charPx: 10,
+                lineHeight: 21,
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'break-word'
+            },
+            serverHtml: '1<br>2'
+        });
+        layout.textarea.value = 'longwordword\nnext';
+        layout.editor.syncLineNumbersForTextarea(layout.textarea);
+        assert.deepEqual(gutterLabels(layout.gutter.innerHTML), ['1', '', '2']);
+        assert.deepEqual(appliedRowHeightsUnderStylePolicy(layout.gutter), [21, 21, 21]);
+    });
+
     it('sizes every gutter row, including wrap blanks, to the editor line height', () => {
         const layout = installMeasuredEditor(loadEditor(), {
             rowHeights: { one: 21, WRAP: 42, three: 21 },
@@ -432,7 +452,7 @@ describe('edit code gutter scroll sync', () => {
         layout.editor.attachLineNumberListeners(layout.textarea);
         assert.notEqual(layout.gutter.innerHTML, '1<br>2<br>3');
         assert.deepEqual(gutterLabels(layout.gutter.innerHTML), ['1', '2', '', '3']);
-        assertGutterRowsMatchLineHeight(layout.gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(layout.gutter, 21);
 
         layout.textarea.scrollTop = 84;
         layout.listeners.scroll();
@@ -456,7 +476,7 @@ describe('edit code gutter scroll sync', () => {
         layout.setClientWidth(80);
         layout.resize();
         assert.deepEqual(gutterLabels(layout.gutter.innerHTML), ['1', '2', '', '3']);
-        assertGutterRowsMatchLineHeight(layout.gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(layout.gutter, 21);
     });
 
     it('measures wrap rows after a hidden panel is shown', () => {
@@ -475,7 +495,7 @@ describe('edit code gutter scroll sync', () => {
         layout.setClientWidth(80);
         layout.queuedFrames[0]();
         assert.deepEqual(gutterLabels(layout.gutter.innerHTML), ['1', '2', '', '', '3']);
-        assertGutterRowsMatchLineHeight(layout.gutter.innerHTML, 21);
+        assertGutterRowsMatchLineHeight(layout.gutter, 21);
     });
 });
 

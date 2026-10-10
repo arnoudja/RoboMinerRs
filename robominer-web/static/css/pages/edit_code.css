@@ -263,6 +263,8 @@
     width: 100%;
 }
 
+/* editor.js sets line-height in px here. A wrap blank is a <br> row of that
+   line box; a style attribute on an empty div is dropped by style-src 'self'. */
 .edit-code-line-numbers {
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid var(--code-border);
@@ -277,13 +279,6 @@
     padding: 10px 10px 10px 12px;
     text-align: right;
     user-select: none;
-}
-
-/* JS sets each row's height to the textarea's used line height. Block rows
-   stack by that height, so a wrap blank stays level with the editor line box. */
-.edit-code-line-numbers .edit-code-gutter-row {
-    margin: 0;
-    padding: 0;
 }
 
 .edit-code-page .edit-code-source-editor .edit-code-textarea {
