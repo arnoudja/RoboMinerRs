@@ -1,5 +1,3 @@
-SET storage_engine=InnoDB;
-
 -- Structural index (major sections; see also docs/gameData.md):
 --   Ores                          ids 1–11
 --   Robot part types              ids 1–7
@@ -1201,7 +1199,7 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1701,         8,     5,      4),
                                 (1701,         8,     6,      4),
                                 (1701,         8,     6,      4),
-                                (1701,         8,     6,      5);
+                                (1701,         8,     7,      5);
 
 insert into OrePrice (id, description) values (17002, 'Mining Area Dipolir-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -1237,9 +1235,11 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1801,         9,     3,      4),
                                 (1801,         9,     4,      4),
                                 (1801,         9,     4,      4),
+                                (1801,         9,     4,      4),
                                 (1801,         9,     4,      5),
                                 (1801,         9,     5,      5),
-                                (1801,         9,     5,      5);
+                                (1801,         9,     5,      5),
+                                (1801,         9,     6,      5);
 
 insert into OrePrice (id, description) values (18002, 'Mining Area Asradon-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -1277,7 +1277,10 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1901,        10,     4,      4),
                                 (1901,        10,     4,      4),
                                 (1901,        10,     4,      4),
-                                (1901,        10,     5,      4);
+                                (1901,        10,     4,      4),
+                                (1901,        10,     5,      4),
+                                (1901,        10,     6,      4),
+                                (1901,        10,     6,      4);
 
 insert into OrePrice (id, description) values (19002, 'Mining Area Baratiem-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -1295,8 +1298,9 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (1902,        10,     4,      4),
                                 (1902,        10,     4,      4),
                                 (1902,        10,     4,      4),
+                                (1902,        10,     4,      4),
                                 (1902,        10,     5,      4),
-                                (1902,        10,     5,      4);
+                                (1902,        10,     6,      5);
 
 -- Etaxy
 insert into OrePrice (id, description) values (20001, 'Mining Area Etaxy-Small price') ON DUPLICATE KEY UPDATE description = VALUES(description);
@@ -1313,10 +1317,13 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (2001,        11,     3,      4),
                                 (2001,        11,     3,      4),
                                 (2001,        11,     3,      4),
+                                (2001,        11,     3,      4),
                                 (2001,        11,     4,      4),
                                 (2001,        11,     4,      4),
                                 (2001,        11,     4,      4),
-                                (2001,        11,     5,      4);
+                                (2001,        11,     5,      4),
+                                (2001,        11,     5,      4),
+                                (2001,        11,     6,      4);
 
 insert into OrePrice (id, description) values (20002, 'Mining Area Etaxy-Large price') ON DUPLICATE KEY UPDATE description = VALUES(description);
 insert into OrePriceAmount (orePriceId, oreId, amount)
@@ -1331,12 +1338,15 @@ insert into MiningAreaOreSupply (miningAreaId, oreId, supply, radius)
                                 (2002,         8,     25,     15),
                                 (2002,        11,     3,      4),
                                 (2002,        11,     3,      4),
+                                (2002,        11,     3,      4),
+                                (2002,        11,     4,      4),
+                                (2002,        11,     4,      4),
                                 (2002,        11,     4,      4),
                                 (2002,        11,     4,      4),
                                 (2002,        11,     4,      4),
                                 (2002,        11,     4,      4),
                                 (2002,        11,     5,      4),
-                                (2002,        11,     5,      4);
+                                (2002,        11,     6,      5);
 
 
 -- Achievements - Initial achievement
