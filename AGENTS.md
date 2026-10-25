@@ -10,7 +10,7 @@ caveats are noted here.
 
 ### Toolchain
 
-- The workspace uses Rust edition 2024, so it needs `rustc >= 1.85`. The default
+- The workspace MSRV is `rustc >= 1.94` (Rust edition 2024). The default
   `rustup` toolchain is set to `stable` (currently 1.97). `cargo-nextest` is
   installed (the test scripts use it via the `ci`/`fast` profiles and otherwise
   fall back to `cargo test`).
