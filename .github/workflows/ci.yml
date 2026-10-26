@@ -184,3 +184,27 @@ jobs:
         with:
           name: coverage-lcov
           path: lcov.info
+
+  # Compiles with the declared rust-version; the other jobs stay on stable.
+  msrv:
+    name: cargo check (rust-version)
+    runs-on: ubuntu-latest
+    env:
+      SQLX_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - id: rust-version
+        name: Read rust-version
+        run: |
+          version=$(grep -m1 '^rust-version' Cargo.toml | cut -d'"' -f2)
+          if [ -z "$version" ]; then
+            echo "rust-version not found in Cargo.toml" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.rust-version.outputs.version }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Check
+        run: cargo check --workspace --all-targets --locked
