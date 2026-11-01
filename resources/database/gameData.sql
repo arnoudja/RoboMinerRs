@@ -331,38 +331,38 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 -- Batteries - Prantum
 insert into RobotPart (id,  typeId, partName,                   orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (350, 3,      'Prantum Battery',          601,        29500,           110,          27,     26,      0),
+               values (350, 3,      'Prantum Battery',          601,        29500,           120,          27,     26,      0),
                       (351, 3,      'Enhanced Prantum Battery', 602,        43000,           140,          28,     27,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Batteries - Raxia
 insert into RobotPart (id,  typeId, partName,                 orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
                values (360, 3,      'Raxia Battery',          701,        57000,           180,          29,     28,      0),
-                      (361, 3,      'Enhanced Raxia Battery', 702,        78500,           220,          30,     29,      0)
+                      (361, 3,      'Enhanced Raxia Battery', 702,        78500,           240,          30,     29,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Batteries - Dipolir
 insert into RobotPart (id,  typeId, partName,                   orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (370, 3,      'Dipolir Battery',          801,        90000,           270,          31,     30,      0),
-                      (371, 3,      'Enhanced Dipolir Battery', 802,        122000,          320,          32,     31,      0)
+               values (370, 3,      'Dipolir Battery',          801,        90000,           300,          31,     30,      0),
+                      (371, 3,      'Enhanced Dipolir Battery', 802,        122000,          360,          32,     31,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Batteries - Asradon
 insert into RobotPart (id,  typeId, partName,                   orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (380, 3,      'Asradon Battery',          901,        145000,          380,          33,     32,      0),
+               values (380, 3,      'Asradon Battery',          901,        145000,          360,          33,     32,      0),
                       (381, 3,      'Enhanced Asradon Battery', 902,        190000,          420,          34,     33,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Batteries - Baratiem
 insert into RobotPart (id,  typeId, partName,                    orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (390, 3,      'Baratiem Battery',          1001,       280000,          450,          35,     34,      0),
+               values (390, 3,      'Baratiem Battery',          1001,       280000,          420,          35,     34,      0),
                       (391, 3,      'Enhanced Baratiem Battery', 1002,       460000,          480,          36,     35,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Batteries - Etaxy
 insert into RobotPart (id,   typeId, partName,                 orePriceId, batteryCapacity, rechargeTime, weight, volume, powerUsage)
-               values (3100, 3,      'Etaxy Battery',          1101,       650000,          520,          37,     36,      0),
-                      (3101, 3,      'Enhanced Etaxy Battery', 1102,       990000,          560,          38,     37,      0)
+               values (3100, 3,      'Etaxy Battery',          1101,       650000,          540,          37,     36,      0),
+                      (3101, 3,      'Enhanced Etaxy Battery', 1102,       990000,          600,          38,     37,      0)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), batteryCapacity = VALUES(batteryCapacity), rechargeTime = VALUES(rechargeTime), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 
@@ -449,26 +449,26 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 -- CPUs - Lithabine
 insert into RobotPart (id,  typeId, partName,                  orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (520, 5,      'Lithabine CPU',           301,        9,           1,      1,      4),
-                      (521, 5,      'Efficient Lithabine CPU', 302,        8,           1,      1,      3)
+               values (520, 5,      'Lithabine CPU',           301,        8,           1,      1,      4),
+                      (521, 5,      'Efficient Lithabine CPU', 302,        7,           1,      1,      3)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Neudralion
 insert into RobotPart (id,  typeId, partName,                   orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (530, 5,      'Neudralion CPU',           401,        11,          1,      1,      5),
-                      (531, 5,      'Efficient Neudralion CPU', 402,        10,          1,      1,      4)
+               values (530, 5,      'Neudralion CPU',           401,        10,          1,      1,      5),
+                      (531, 5,      'Efficient Neudralion CPU', 402,        9,           1,      1,      4)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Complatix
 insert into RobotPart (id,  typeId, partName,                  orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (540, 5,      'Complatix CPU',           501,        13,          1,      1,      6),
-                      (541, 5,      'Efficient Complatix CPU', 502,        12,          1,      1,      5)
+               values (540, 5,      'Complatix CPU',           501,        12,          1,      1,      6),
+                      (541, 5,      'Efficient Complatix CPU', 502,        11,          1,      1,      5)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Prantum
 insert into RobotPart (id,  typeId, partName,                orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (550, 5,      'Prantum CPU',           601,        15,          1,      1,      7),
-                      (551, 5,      'Efficient Prantum CPU', 602,        14,          1,      1,      6)
+               values (550, 5,      'Prantum CPU',           601,        14,          1,      1,      7),
+                      (551, 5,      'Efficient Prantum CPU', 602,        13,          1,      1,      6)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Raxia
@@ -479,26 +479,26 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 -- CPUs - Dipolir
 insert into RobotPart (id,  typeId, partName,                orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (570, 5,      'Dipolir CPU',           801,        19,          1,      1,      9),
-                      (571, 5,      'Efficient Dipolir CPU', 802,        18,          1,      1,      7)
+               values (570, 5,      'Dipolir CPU',           801,        20,          1,      1,      9),
+                      (571, 5,      'Efficient Dipolir CPU', 802,        19,          1,      1,      7)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Asradon
 insert into RobotPart (id,  typeId, partName,                orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (580, 5,      'Asradon CPU',           901,        21,          1,      1,      10),
-                      (581, 5,      'Efficient Asradon CPU', 902,        20,          1,      1,      7)
+               values (580, 5,      'Asradon CPU',           901,        24,          1,      1,      10),
+                      (581, 5,      'Efficient Asradon CPU', 902,        23,          1,      1,      7)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Baratiem
 insert into RobotPart (id,  typeId, partName,                 orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (590, 5,      'Baratiem CPU',           1001,       23,          1,      1,      11),
-                      (591, 5,      'Efficient Baratiem CPU', 1002,       22,          1,      1,      8)
+               values (590, 5,      'Baratiem CPU',           1001,       28,          1,      1,      11),
+                      (591, 5,      'Efficient Baratiem CPU', 1002,       27,          1,      1,      8)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- CPUs - Etaxy
 insert into RobotPart (id,   typeId, partName,              orePriceId, cpuCapacity, weight, volume, powerUsage)
-               values (5100, 5,      'Etaxy CPU',           1101,       25,          1,      1,      12),
-                      (5101, 5,      'Efficient Etaxy CPU', 1102,       24,          1,      1,      9)
+               values (5100, 5,      'Etaxy CPU',           1101,       32,          1,      1,      12),
+                      (5101, 5,      'Efficient Etaxy CPU', 1102,       35,          1,      1,      9)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), cpuCapacity = VALUES(cpuCapacity), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 
@@ -571,10 +571,10 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 
 
 -- Ore scanners - Cerbonium
-insert into RobotPart (id,  typeId, partName,               orePriceId, scanTime, scanDistance, weight, volume, powerUsage)
-               values (701, 7,      'Standard Ore Scanner', 101,        1,        1,            2,      2,      1),
-                      (702, 7,      'Enhanced Ore Scanner', 102,        2,        2,            3,      3,      2),
-                      (703, 7,      'Cerbonium Ore Scanner', 103,       2,        3,            4,      4,      3)
+insert into RobotPart (id,  typeId, partName,                orePriceId, scanTime, scanDistance, weight, volume, powerUsage)
+               values (701, 7,      'Standard Ore Scanner',  101,        1,        1,            2,      2,      1),
+                      (702, 7,      'Enhanced Ore Scanner',  102,        2,        2,            3,      3,      2),
+                      (703, 7,      'Cerbonium Ore Scanner', 103,        2,        3,            4,      4,      3)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Ore scanners - Oxaria
@@ -622,19 +622,19 @@ ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), or
 -- Ore scanners - Asradon
 insert into RobotPart (id,  typeId, partName,                         orePriceId, scanTime, scanDistance, weight, volume, powerUsage)
                values (780, 7,      'Asradon Ore Scanner',            901,        10,       18,           19,     19,     18),
-                      (781, 7,      'Enhanced Asradon Ore Scanner',   902,        11,       19,           20,     20,     19)
+                      (781, 7,      'Enhanced Asradon Ore Scanner',   902,        11,       20,           20,     20,     19)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Ore scanners - Baratiem
 insert into RobotPart (id,  typeId, partName,                         orePriceId, scanTime, scanDistance, weight, volume, powerUsage)
-               values (790, 7,      'Baratiem Ore Scanner',           1001,       11,       20,           21,     21,     20),
-                      (791, 7,      'Enhanced Baratiem Ore Scanner',  1002,       12,       21,           22,     22,     21)
+               values (790, 7,      'Baratiem Ore Scanner',           1001,       11,       22,           21,     21,     20),
+                      (791, 7,      'Enhanced Baratiem Ore Scanner',  1002,       12,       24,           22,     22,     21)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 -- Ore scanners - Etaxy
 insert into RobotPart (id,  typeId, partName,                         orePriceId, scanTime, scanDistance, weight, volume, powerUsage)
-               values (7100, 7,      'Etaxy Ore Scanner',             1101,       12,       22,           23,     23,     22),
-                      (7101, 7,      'Enhanced Etaxy Ore Scanner',    1102,       13,       23,           24,     24,     23)
+               values (7100, 7,      'Etaxy Ore Scanner',             1101,       12,       26,           23,     23,     22),
+                      (7101, 7,      'Enhanced Etaxy Ore Scanner',    1102,       13,       28,           24,     24,     23)
 ON DUPLICATE KEY UPDATE typeId = VALUES(typeId), partName = VALUES(partName), orePriceId = VALUES(orePriceId), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), weight = VALUES(weight), volume = VALUES(volume), powerUsage = VALUES(powerUsage);
 
 
@@ -657,7 +657,7 @@ scan(60); if (oreType() == 1) { rotate(60); move(oreDistance()); found = true; w
 scan(-60); if (oreType() == 1) { rotate(-60); move(oreDistance()); found = true; while (mine()); }
 if (!found) { while (move(robot.forwardSpeed) < 0.1) { rotate(2 *robot.rotateSpeed); }
 } else { dumpB(); dumpC(); }',
- 25,     2,           200,      8,        3.0,          1.0,           36,          3,        5,            2.01, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 25,     2,           200,      7,        3.0,          1.0,           36,          3,        5,            2.01, 0) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
@@ -920,28 +920,28 @@ insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1702, 'AI-Dipolir',
 '',
- 120,    9,           1450,    18,        12.1,         1.7,            24,         10,       17,            2.9,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 120,    9,           1450,    20,        12.1,         1.7,            24,         10,       17,            2.9,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1602) as src) where id = 1702;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1802, 'AI-Asradon',
 '',
- 140,    10,          2050,    20,        13.6,         1.6,            22,         11,       19,            3.0,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 140,    10,          2050,    24,        13.6,         1.6,            22,         11,       20,            3.0,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1702) as src) where id = 1802;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (1902, 'AI-Baratiem',
 '',
- 160,    11,          4400,    22,        17.4,         1.6,            22,         12,       21,            3.1,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 160,    11,          4400,    28,        17.4,         1.6,            22,         12,       24,            3.1,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1802) as src) where id = 1902;
 
 insert into AIRobot (id, robotName, sourceCode,
  maxOre, miningSpeed, maxTurns, cpuSpeed, forwardSpeed, backwardSpeed, rotateSpeed, scanTime, scanDistance, robotSize, depotSize)
 values (2002, 'AI-Etaxy',
 '',
- 180,    12,          8400,    24,        20.1,         1.6,            22,         13,       23,            3.2,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
+ 180,    12,          8400,    35,        20.1,         1.6,            22,         13,       28,            3.2,      300) ON DUPLICATE KEY UPDATE robotName = VALUES(robotName), sourceCode = VALUES(sourceCode), maxOre = VALUES(maxOre), miningSpeed = VALUES(miningSpeed), maxTurns = VALUES(maxTurns), cpuSpeed = VALUES(cpuSpeed), forwardSpeed = VALUES(forwardSpeed), backwardSpeed = VALUES(backwardSpeed), rotateSpeed = VALUES(rotateSpeed), scanTime = VALUES(scanTime), scanDistance = VALUES(scanDistance), robotSize = VALUES(robotSize), depotSize = VALUES(depotSize);
 update AIRobot set sourceCode = (select sourceCode from (select sourceCode from AIRobot where id = 1902) as src) where id = 2002;
 
 
