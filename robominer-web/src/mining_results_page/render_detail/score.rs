@@ -79,7 +79,7 @@ fn push_score_tier_row(
         .name
         .map(|name| EscapedHtml::from(name).to_string())
         .unwrap_or_else(|| "—".to_string());
-    let overflow = if tier.overflow_out > 0 {
+    let overflow = if tier.overflow_converted > 0 {
         format!("{} × 2 = {}", tier.overflow_out, tier.overflow_converted)
     } else {
         String::new()

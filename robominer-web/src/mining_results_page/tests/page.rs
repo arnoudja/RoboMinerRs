@@ -164,6 +164,66 @@ fn mining_results_score_breakdown_shows_overflow_conversion() {
 }
 
 #[test]
+fn mining_results_score_breakdown_leaves_low_tier_overflow_as_residual() {
+    let mut state = sample_mining_results_state();
+    state.results[0].score_ore_target = 30;
+    state.area_ores = vec![
+        robominer_db::MiningResultAreaOreRecord {
+            mining_area_id: 1,
+            ore_id: 30,
+            ore_name: "High".to_string(),
+        },
+        robominer_db::MiningResultAreaOreRecord {
+            mining_area_id: 1,
+            ore_id: 20,
+            ore_name: "Mid".to_string(),
+        },
+        robominer_db::MiningResultAreaOreRecord {
+            mining_area_id: 1,
+            ore_id: 10,
+            ore_name: "Low".to_string(),
+        },
+    ];
+    state.ore_results = vec![
+        robominer_db::MiningResultOreStateRecord {
+            mining_queue_id: 10,
+            ore_id: 30,
+            ore_name: "High".to_string(),
+            amount: 0,
+            tax: 0,
+            reward: 0,
+        },
+        robominer_db::MiningResultOreStateRecord {
+            mining_queue_id: 10,
+            ore_id: 20,
+            ore_name: "Mid".to_string(),
+            amount: 0,
+            tax: 0,
+            reward: 0,
+        },
+        robominer_db::MiningResultOreStateRecord {
+            mining_queue_id: 10,
+            ore_id: 10,
+            ore_name: "Low".to_string(),
+            amount: 683,
+            tax: 0,
+            reward: 0,
+        },
+    ];
+
+    let html = render_mining_results_page("Player".to_string(), None, &state);
+
+    assert_contains_all(
+        &html,
+        &[
+            r#"<td class="mining-results-score-col-ore">Low</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined">683 + 0 = 683</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">360 / 360</td><td class="mining-results-score-num mining-results-score-col-points">9.0</td><td class="mining-results-score-num mining-results-score-col-overflow"></td>"#,
+            r#"class="mining-results-score-residual"><td class="mining-results-score-col-ore">Residual</td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-mined"></td><td class="mining-results-score-num mining-results-score-start mining-results-score-col-counted">323</td>"#,
+        ],
+    );
+    assert_html_not_contains(&html, "× 2 = 0");
+}
+
+#[test]
 fn mining_results_renders_a_single_run_list_with_robot_names() {
     let html = render_mining_results_page(
         "Player".to_string(),
