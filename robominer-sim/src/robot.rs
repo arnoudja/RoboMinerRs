@@ -281,13 +281,13 @@ impl Robot {
             .min(self.spec.max_ore - self.total_ore());
         let mut ore_types = ground_unit.ore_type_count();
 
-        for ore_type in 0..MAX_ORE_TYPES {
+        for (ore_type, mined) in self.target_mining.iter_mut().enumerate() {
             if ground_unit.ore_at(ore_type) > 0 {
                 let max_allowed = total_allowed.min(((total_allowed - 1) / ore_types) + 1);
                 let available = ((ground_unit.ore_at(ore_type) - 1) / 2) + 1;
 
-                self.target_mining[ore_type] = available.min(max_allowed);
-                total_allowed -= self.target_mining[ore_type];
+                *mined = available.min(max_allowed);
+                total_allowed -= *mined;
                 ore_types -= 1;
             }
         }
